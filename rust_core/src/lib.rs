@@ -16,7 +16,7 @@ fn align_pair(
         mismatch_score,
         gap_score,
     };
-    py.allow_threads(|| {
+    py.detach(|| {
         let alignment = smith_waterman::smith_waterman(&seq1, &seq2, params);
         (alignment.score, alignment.token_start, alignment.token_end)
     })
@@ -36,7 +36,7 @@ fn align_pair_details(
         mismatch_score,
         gap_score,
     };
-    py.allow_threads(|| {
+    py.detach(|| {
         let alignment = smith_waterman::smith_waterman(&seq1, &seq2, params);
         (
             alignment.score,
@@ -63,7 +63,7 @@ fn align_best(
         mismatch_score,
         gap_score,
     };
-    let best = py.allow_threads(|| smith_waterman::align_best(&seq1, &seqs, params))?;
+    let best = py.detach(|| smith_waterman::align_best(&seq1, &seqs, params))?;
     Some((best.score, best.index, best.token_start, best.token_end))
 }
 
@@ -81,7 +81,7 @@ fn align_best_details(
         mismatch_score,
         gap_score,
     };
-    let best = py.allow_threads(|| smith_waterman::align_best(&seq1, &seqs, params))?;
+    let best = py.detach(|| smith_waterman::align_best(&seq1, &seqs, params))?;
     Some((
         best.score,
         best.index,
@@ -111,7 +111,7 @@ fn align_topk_details(
         mismatch_score,
         gap_score,
     };
-    py.allow_threads(|| {
+    py.detach(|| {
         smith_waterman::align_topk(&seq1, &seqs, params, top_k)
             .into_iter()
             .map(|item| {

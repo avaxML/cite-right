@@ -143,7 +143,7 @@ pub fn align_topk(
         })
         .collect();
 
-    results.sort_by(|left, right| cmp_candidate(left, right));
+    results.sort_by(cmp_candidate);
     results.truncate(top_k.min(results.len()));
     results
 }
