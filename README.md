@@ -1,5 +1,7 @@
 # Cite-Right v3
 
+[![CI](https://github.com/avaxML/cite-right/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/avaxML/cite-right/actions/workflows/ci.yml)
+
 Cite-Right aligns a generated answer to source documents using Smith–Waterman **local sequence alignment** and returns **character-accurate citations** suitable for highlighting and extraction.
 
 The public API is Python-first for correctness and determinism, with an optional Rust extension (`cite_right._core`) for speed:
@@ -7,6 +9,11 @@ The public API is Python-first for correctness and determinism, with an optional
 - `cite_right.align_citations`: RAG-style citation alignment for **multi-paragraph answers**, returning citations per answer sentence/clause
 
 ## Install
+
+Requirements:
+
+- Python 3.11+ (tested on 3.11–3.13)
+- Rust (only needed when building from source / when no wheel exists for your platform)
 
 Core (lightweight):
 
@@ -40,6 +47,14 @@ for span in spans:
         doc_text = sources[citation.source_index].text
         assert doc_text[citation.char_start : citation.char_end] == citation.evidence
         print(citation.source_id, citation.char_start, citation.char_end, citation.evidence)
+```
+
+## Configuration
+
+Common tuning knobs live in `CitationConfig` (see `src/cite_right/core/citation_config.py`), and you can force the alignment backend:
+
+```python
+spans = align_citations(answer, sources, backend="auto")  # or: "python", "rust"
 ```
 
 ## How it works
@@ -168,6 +183,14 @@ uv run ruff format --check .
 uv run pyright
 ```
 
+## Repository layout
+
+- `src/cite_right/`: Python reference implementation
+- `rust_core/`: Rust extension (`cite_right._core`)
+- `tests/`: test suite
+- `.github/workflows/`: CI and wheel builds
+- `CITATION_ALIGNMENT_PLAN.md`: design notes / roadmap
+
 ## Limitations (current)
 
 - Evidence is returned as a single **contiguous** span; multi-span citations (non-contiguous quotes) are not implemented yet.
@@ -178,3 +201,7 @@ uv run pyright
 
 - All alignment results include absolute character offsets into the original source text.
 - Python is the reference implementation; Rust accelerates alignment while matching Python outputs.
+
+## License
+
+Apache-2.0 (see `LICENSE`).

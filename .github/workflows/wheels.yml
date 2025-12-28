@@ -18,11 +18,18 @@ jobs:
       - uses: PyO3/maturin-action@v1
         with:
           command: build
-          args: --release --out dist -i python3.11 -i python3.12
+          args: --release --out dist -i python3.11 -i python3.12 -i python3.13
           manylinux: auto
       - name: Smoke test wheel (py312)
         run: |
           python -c "import glob, subprocess, sys; wheels = sorted(glob.glob('dist/*cp312*.whl')); assert wheels, 'no cp312 wheel found'; subprocess.check_call([sys.executable, '-m', 'pip', 'install', wheels[0]]);"
+          python -c "from cite_right import align_citations; out = align_citations('Green apples are sour.', ['Red apples are tasty. Green apples are sour.']); assert out"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Smoke test wheel (py313)
+        run: |
+          python -c "import glob, subprocess, sys; wheels = sorted(glob.glob('dist/*cp313*.whl')); assert wheels, 'no cp313 wheel found'; subprocess.check_call([sys.executable, '-m', 'pip', 'install', wheels[0]]);"
           python -c "from cite_right import align_citations; out = align_citations('Green apples are sour.', ['Red apples are tasty. Green apples are sour.']); assert out"
       - uses: actions/upload-artifact@v4
         with:
