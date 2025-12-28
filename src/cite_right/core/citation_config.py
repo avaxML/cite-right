@@ -14,6 +14,20 @@ class CitationWeights:
 
 @dataclass(frozen=True)
 class CitationConfig:
+    """Configuration for `cite_right.align_citations`.
+
+    Attributes:
+        multi_span_evidence: If True, attempt to return non-contiguous evidence via
+            `Citation.evidence_spans` when alignment indicates multiple disjoint match
+            regions. The legacy `Citation.char_start/char_end/evidence` fields remain
+            a single contiguous (enclosing) span for backward compatibility.
+        multi_span_merge_gap_chars: Merge neighboring evidence spans when the gap
+            between them is <= this many characters in the source document.
+        multi_span_max_spans: Maximum number of evidence spans to return per
+            citation after merging. If exceeded, the citation falls back to a single
+            contiguous evidence span.
+    """
+
     top_k: int = 3
     min_final_score: float = 0.0
     min_alignment_score: int = 0
@@ -39,3 +53,7 @@ class CitationConfig:
     gap_score: int = -1
 
     prefer_source_order: bool = True
+
+    multi_span_evidence: bool = False
+    multi_span_merge_gap_chars: int = 16
+    multi_span_max_spans: int = 5

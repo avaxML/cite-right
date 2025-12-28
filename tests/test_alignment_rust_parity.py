@@ -98,6 +98,33 @@ def test_rust_align_best_empty_returns_none() -> None:
     assert _core.align_best_details([1], [], 2, -1, -1) is None
 
 
+def test_rust_align_pair_blocks_details_matches_python_blocks() -> None:
+    try:
+        from cite_right import _core
+    except ImportError:
+        pytest.skip("Rust extension not built")
+    if not hasattr(_core, "align_pair_blocks_details"):
+        pytest.skip(
+            "Rust extension is missing align_pair_blocks_details (rebuild required)"
+        )
+
+    aligner = SmithWatermanAligner(return_match_blocks=True)
+    seq1 = [1, 2, 3, 4]
+    seq2 = [1, 2, 9, 9, 3, 4]
+
+    py = aligner.align(seq1, seq2)
+    rust = _core.align_pair_blocks_details(seq1, seq2, 2, -1, -1)
+    assert rust == (
+        py.score,
+        py.token_start,
+        py.token_end,
+        py.query_start,
+        py.query_end,
+        py.matches,
+        py.match_blocks,
+    )
+
+
 def test_rust_align_topk_matches_python_selection() -> None:
     try:
         from cite_right import _core
