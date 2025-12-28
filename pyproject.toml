@@ -1,0 +1,50 @@
+[project]
+name = "cite-right"
+version = "0.3.0"
+description = "Text alignment library for citation extraction using Smith-Waterman."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pip>=25.3",
+]
+
+[project.optional-dependencies]
+spacy = ["spacy>=3.7"]
+embeddings = ["sentence-transformers>=2.2"]
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.6", "pyright>=1.1", "maturin>=1.4"]
+
+[build-system]
+requires = ["maturin>=1.4,<2.0"]
+build-backend = "maturin"
+
+[tool.maturin]
+bindings = "pyo3"
+module-name = "cite_right._core"
+python-source = "src"
+manifest-path = "rust_core/Cargo.toml"
+include = ["src/cite_right/py.typed", "src/cite_right/_core.pyi"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+extend-exclude = [".uv_cache"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "ANN"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["ANN"]
+"src/cite_right/text/segmenter_spacy.py" = ["ANN401"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.pyright]
+pythonVersion = "3.11"
+typeCheckingMode = "basic"
+include = ["src", "tests"]
+venvPath = "."
+venv = ".venv"
