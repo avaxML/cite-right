@@ -26,6 +26,7 @@ class Alignment:
     query_start: int = 0
     query_end: int = 0
     matches: int = 0
+    match_blocks: list[tuple[int, int]] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -57,6 +58,21 @@ class AnswerSpan:
 
 
 @dataclass(frozen=True)
+class EvidenceSpan:
+    """A contiguous evidence slice in a source document.
+
+    Attributes:
+        char_start: Absolute 0-based start offset (inclusive) in the source document.
+        char_end: Absolute 0-based end offset (exclusive) in the source document.
+        evidence: Exact substring `source_text[char_start:char_end]`.
+    """
+
+    char_start: int
+    char_end: int
+    evidence: str
+
+
+@dataclass(frozen=True)
 class Citation:
     score: float
     source_id: str
@@ -65,6 +81,7 @@ class Citation:
     char_start: int
     char_end: int
     evidence: str
+    evidence_spans: list[EvidenceSpan] = field(default_factory=list)
     components: Mapping[str, float] = field(default_factory=dict)
 
 

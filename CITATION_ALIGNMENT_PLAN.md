@@ -125,6 +125,7 @@ All offsets are **0-based half-open**: `[start, end)`.
   - [x] `normalized_alignment_score` (length-normalized)
   - [ ] (optional) matched token indices for debugging and future multi-span extraction
 - [x] Decide whether citations can be **multi-span** (advanced) or contiguous-only (start contiguous-only).
+  - [x] Implement `Citation.evidence_spans` and `CitationConfig(multi_span_evidence=True)` (backward compatible with contiguous `Citation.evidence`).
 - [ ] Add guardrails to prevent boilerplate matches:
   - [x] minimum `answer_coverage`
   - [ ] minimum `unique_token_match` (optional)
@@ -197,5 +198,5 @@ All offsets are **0-based half-open**: `[start, end)`.
 
 - [ ] Citation granularity: per **sentence**, per **clause**, or both?
 - [ ] Input format: full documents, retrieved chunks (with offsets), or mixed?
-- [ ] Evidence format: contiguous-only (v1) vs multi-span (v2)?
+- [x] Evidence format: contiguous-only (v1) vs multi-span (v2)?
 - [ ] Ranking philosophy: prefer earlier `char_start` across documents (current policy) vs prefer `source_rank` from retriever?

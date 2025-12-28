@@ -57,6 +57,19 @@ Common tuning knobs live in `CitationConfig` (see `src/cite_right/core/citation_
 spans = align_citations(answer, sources, backend="auto")  # or: "python", "rust"
 ```
 
+To return non-contiguous quotes, enable multi-span evidence and use `Citation.evidence_spans`:
+
+```python
+from cite_right.core.citation_config import CitationConfig
+
+config = CitationConfig(multi_span_evidence=True)
+spans = align_citations(answer, sources, config=config)
+for span in spans:
+    for citation in span.citations:
+        for ev in citation.evidence_spans:
+            print(ev.char_start, ev.char_end, ev.evidence)
+```
+
 ## How it works
 
 At a high level, Cite-Right turns text into token IDs, runs Smith–Waterman alignment, then converts the best token span back into **absolute character offsets** in the original source document.
@@ -193,7 +206,7 @@ uv run pyright
 
 ## Limitations (current)
 
-- Evidence is returned as a single **contiguous** span; multi-span citations (non-contiguous quotes) are not implemented yet.
+- `Citation.evidence` is a single **contiguous** (enclosing) span; use `Citation.evidence_spans` for multi-span highlighting.
 - Without embeddings enabled, paraphrases may not match (lexical overlap + alignment is strongest on near-verbatim support).
 - Default segmentation is heuristic and may miss clause boundaries; enable spaCy for richer clause splitting.
 

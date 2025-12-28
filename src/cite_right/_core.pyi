@@ -16,6 +16,13 @@ def align_pair_details(
     mismatch_score: int = ...,
     gap_score: int = ...,
 ) -> tuple[int, int, int, int, int, int]: ...
+def align_pair_blocks_details(
+    seq1: Sequence[int],
+    seq2: Sequence[int],
+    match_score: int = ...,
+    mismatch_score: int = ...,
+    gap_score: int = ...,
+) -> tuple[int, int, int, int, int, int, list[tuple[int, int]]]: ...
 def align_best(
     seq1: Sequence[int],
     seqs: Sequence[Sequence[int]],

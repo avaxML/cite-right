@@ -49,6 +49,35 @@ fn align_pair_details(
     })
 }
 
+#[pyfunction(signature = (seq1, seq2, match_score=2, mismatch_score=-1, gap_score=-1))]
+fn align_pair_blocks_details(
+    py: Python<'_>,
+    seq1: Vec<u32>,
+    seq2: Vec<u32>,
+    match_score: i32,
+    mismatch_score: i32,
+    gap_score: i32,
+) -> (i32, usize, usize, usize, usize, usize, Vec<(usize, usize)>) {
+    let params = smith_waterman::ScoreParams {
+        match_score,
+        mismatch_score,
+        gap_score,
+    };
+    py.detach(|| {
+        let (alignment, match_blocks) =
+            smith_waterman::smith_waterman_match_blocks(&seq1, &seq2, params);
+        (
+            alignment.score,
+            alignment.token_start,
+            alignment.token_end,
+            alignment.query_start,
+            alignment.query_end,
+            alignment.matches,
+            match_blocks,
+        )
+    })
+}
+
 #[pyfunction(signature = (seq1, seqs, match_score=2, mismatch_score=-1, gap_score=-1))]
 fn align_best(
     py: Python<'_>,
@@ -133,6 +162,7 @@ fn align_topk_details(
 fn _core(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(align_pair, module)?)?;
     module.add_function(wrap_pyfunction!(align_pair_details, module)?)?;
+    module.add_function(wrap_pyfunction!(align_pair_blocks_details, module)?)?;
     module.add_function(wrap_pyfunction!(align_best, module)?)?;
     module.add_function(wrap_pyfunction!(align_best_details, module)?)?;
     module.add_function(wrap_pyfunction!(align_topk_details, module)?)?;

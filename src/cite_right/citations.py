@@ -9,7 +9,9 @@ from cite_right.core.aligner_rust import RustSmithWatermanAligner
 from cite_right.core.citation_config import CitationConfig
 from cite_right.core.interfaces import Aligner, AnswerSegmenter, Segmenter, Tokenizer
 from cite_right.core.results import (
+    Alignment,
     Citation,
+    EvidenceSpan,
     SourceChunk,
     SourceDocument,
     SpanCitations,
@@ -123,25 +125,14 @@ def align_citations(
                     continue
 
                 if use_alignment_evidence:
-                    char_span = _token_span_to_char_span(
-                        candidate.token_spans,
-                        alignment.token_start,
-                        alignment.token_end,
+                    evidence_spans = _alignment_to_evidence_spans(
+                        candidate, alignment, cfg
                     )
-                    if char_span is None:
+                    if evidence_spans is None:
                         continue
-                    seg_char_start, seg_char_end = char_span
-
-                    abs_start = (
-                        candidate.source.base_doc_offset
-                        + candidate.passage.doc_char_start
-                        + seg_char_start
-                    )
-                    abs_end = (
-                        candidate.source.base_doc_offset
-                        + candidate.passage.doc_char_start
-                        + seg_char_end
-                    )
+                    abs_start = min(span.char_start for span in evidence_spans)
+                    abs_end = max(span.char_end for span in evidence_spans)
+                    evidence = _slice_source_text(candidate.source, abs_start, abs_end)
                 else:
                     abs_start = (
                         candidate.source.base_doc_offset
@@ -151,8 +142,14 @@ def align_citations(
                         candidate.source.base_doc_offset
                         + candidate.passage.doc_char_end
                     )
-
-                evidence = _slice_source_text(candidate.source, abs_start, abs_end)
+                    evidence = _slice_source_text(candidate.source, abs_start, abs_end)
+                    evidence_spans = [
+                        EvidenceSpan(
+                            char_start=abs_start,
+                            char_end=abs_end,
+                            evidence=evidence,
+                        )
+                    ]
 
                 final_score = (
                     cfg.weights.alignment * normalized_alignment
@@ -173,6 +170,7 @@ def align_citations(
                         char_start=abs_start,
                         char_end=abs_end,
                         evidence=evidence,
+                        evidence_spans=evidence_spans,
                         components={
                             "embedding_only": 0.0 if use_alignment_evidence else 1.0,
                             "alignment_score": float(alignment.score),
@@ -182,6 +180,13 @@ def align_citations(
                             "evidence_coverage": float(evidence_coverage),
                             "lexical_score": float(lexical_score),
                             "embedding_score": float(embed_score),
+                            "num_evidence_spans": float(len(evidence_spans)),
+                            "evidence_chars_total": float(
+                                sum(
+                                    span.char_end - span.char_start
+                                    for span in evidence_spans
+                                )
+                            ),
                             "passage_char_start": float(
                                 candidate.passage.doc_char_start
                             ),
@@ -205,12 +210,14 @@ def _default_aligner(cfg: CitationConfig, *, backend: str) -> Aligner:
             match_score=cfg.match_score,
             mismatch_score=cfg.mismatch_score,
             gap_score=cfg.gap_score,
+            return_match_blocks=cfg.multi_span_evidence,
         )
     if backend == "rust":
         return RustSmithWatermanAligner(
             match_score=cfg.match_score,
             mismatch_score=cfg.mismatch_score,
             gap_score=cfg.gap_score,
+            return_match_blocks=cfg.multi_span_evidence,
         )
     if backend != "auto":
         raise ValueError(f"Unknown backend: {backend}")
@@ -219,12 +226,14 @@ def _default_aligner(cfg: CitationConfig, *, backend: str) -> Aligner:
             match_score=cfg.match_score,
             mismatch_score=cfg.mismatch_score,
             gap_score=cfg.gap_score,
+            return_match_blocks=cfg.multi_span_evidence,
         )
     except RuntimeError:
         return SmithWatermanAligner(
             match_score=cfg.match_score,
             mismatch_score=cfg.mismatch_score,
             gap_score=cfg.gap_score,
+            return_match_blocks=cfg.multi_span_evidence,
         )
 
 
@@ -399,6 +408,142 @@ def _slice_source_text(source: _NormalizedSource, abs_start: int, abs_end: int) 
     return source.text[local_start:local_end]
 
 
+def _alignment_to_evidence_spans(
+    candidate: _Candidate,
+    alignment: Alignment,
+    cfg: CitationConfig,
+) -> list[EvidenceSpan] | None:
+    """Convert an alignment into one or more evidence spans.
+
+    The returned spans are absolute offsets into the source document (0-based,
+    half-open) and each `EvidenceSpan.evidence` slices back exactly from the
+    source text.
+
+    Args:
+        candidate: Candidate passage/tokenization context.
+        alignment: Alignment output for the candidate.
+        cfg: Citation configuration.
+
+    Returns:
+        A non-empty list of `EvidenceSpan` on success; otherwise None.
+    """
+    spans: list[EvidenceSpan] = []
+
+    if cfg.multi_span_evidence and alignment.match_blocks:
+        for token_start, token_end in alignment.match_blocks:
+            char_span = _token_span_to_char_span(
+                candidate.token_spans,
+                token_start,
+                token_end,
+            )
+            if char_span is None:
+                continue
+            seg_char_start, seg_char_end = char_span
+
+            abs_start = (
+                candidate.source.base_doc_offset
+                + candidate.passage.doc_char_start
+                + seg_char_start
+            )
+            abs_end = (
+                candidate.source.base_doc_offset
+                + candidate.passage.doc_char_start
+                + seg_char_end
+            )
+            if abs_start >= abs_end:
+                continue
+
+            spans.append(
+                EvidenceSpan(
+                    char_start=abs_start,
+                    char_end=abs_end,
+                    evidence=_slice_source_text(candidate.source, abs_start, abs_end),
+                )
+            )
+
+        spans = _merge_evidence_spans(
+            candidate.source, spans, merge_gap_chars=cfg.multi_span_merge_gap_chars
+        )
+
+        if cfg.multi_span_max_spans > 0 and len(spans) > cfg.multi_span_max_spans:
+            spans = []
+
+    if not spans:
+        char_span = _token_span_to_char_span(
+            candidate.token_spans,
+            alignment.token_start,
+            alignment.token_end,
+        )
+        if char_span is None:
+            return None
+        seg_char_start, seg_char_end = char_span
+
+        abs_start = (
+            candidate.source.base_doc_offset
+            + candidate.passage.doc_char_start
+            + seg_char_start
+        )
+        abs_end = (
+            candidate.source.base_doc_offset
+            + candidate.passage.doc_char_start
+            + seg_char_end
+        )
+        if abs_start >= abs_end:
+            return None
+
+        spans = [
+            EvidenceSpan(
+                char_start=abs_start,
+                char_end=abs_end,
+                evidence=_slice_source_text(candidate.source, abs_start, abs_end),
+            )
+        ]
+
+    return spans
+
+
+def _merge_evidence_spans(
+    source: _NormalizedSource,
+    spans: list[EvidenceSpan],
+    *,
+    merge_gap_chars: int,
+) -> list[EvidenceSpan]:
+    """Merge evidence spans that are close together in the source text.
+
+    Args:
+        source: Source context used to re-slice evidence after merging.
+        spans: Evidence spans (absolute offsets).
+        merge_gap_chars: Merge spans when the character gap between them is
+            <= this value. Values <= 0 disable merging.
+
+    Returns:
+        Merged spans sorted by `(char_start, char_end)`.
+    """
+    if not spans:
+        return []
+
+    ordered = sorted(spans, key=lambda span: (span.char_start, span.char_end))
+    if merge_gap_chars <= 0:
+        return ordered
+
+    merged: list[EvidenceSpan] = [ordered[0]]
+    for span in ordered[1:]:
+        prev = merged[-1]
+        gap = span.char_start - prev.char_end
+        if gap <= merge_gap_chars:
+            abs_start = prev.char_start
+            abs_end = max(prev.char_end, span.char_end)
+            merged[-1] = EvidenceSpan(
+                char_start=abs_start,
+                char_end=abs_end,
+                evidence=_slice_source_text(source, abs_start, abs_end),
+            )
+            continue
+        merged.append(span)
+
+    return merged
+
+
 def _token_span_to_char_span(
     token_spans: list[tuple[int, int]], token_start: int, token_end: int
 ) -> tuple[int, int] | None:
@@ -414,12 +559,17 @@ def _rank_and_limit_citations(
 ) -> list[Citation]:
     citations.sort(key=lambda c: _citation_sort_key(c, cfg))
 
-    seen: set[tuple[str, int, int]] = set()
+    seen: set[tuple[str, tuple[tuple[int, int], ...]]] = set()
     per_source: dict[str, int] = {}
     output: list[Citation] = []
 
     for citation in citations:
-        key = (citation.source_id, citation.char_start, citation.char_end)
+        spans = (
+            tuple((span.char_start, span.char_end) for span in citation.evidence_spans)
+            if citation.evidence_spans
+            else ((citation.char_start, citation.char_end),)
+        )
+        key = (citation.source_id, spans)
         if key in seen:
             continue
         seen.add(key)
