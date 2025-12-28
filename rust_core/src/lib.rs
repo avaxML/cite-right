@@ -2,6 +2,10 @@ use pyo3::prelude::*;
 
 mod smith_waterman;
 
+type MatchBlocks = Vec<(usize, usize)>;
+type AlignmentWithBlocks =
+    (i32, usize, usize, usize, usize, usize, MatchBlocks);
+
 #[pyfunction(signature = (seq1, seq2, match_score=2, mismatch_score=-1, gap_score=-1))]
 fn align_pair(
     py: Python<'_>,
@@ -57,7 +61,7 @@ fn align_pair_blocks_details(
     match_score: i32,
     mismatch_score: i32,
     gap_score: i32,
-) -> (i32, usize, usize, usize, usize, usize, Vec<(usize, usize)>) {
+) -> AlignmentWithBlocks {
     let params = smith_waterman::ScoreParams {
         match_score,
         mismatch_score,
