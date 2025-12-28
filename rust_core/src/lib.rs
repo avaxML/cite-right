@@ -3,8 +3,8 @@ use pyo3::prelude::*;
 mod smith_waterman;
 
 type MatchBlocks = Vec<(usize, usize)>;
-type AlignmentWithBlocks =
-    (i32, usize, usize, usize, usize, usize, MatchBlocks);
+type AlignmentDetails = (i32, usize, usize, usize, usize, usize, usize);
+type AlignmentWithBlocks = (i32, usize, usize, usize, usize, usize, MatchBlocks);
 
 #[pyfunction(signature = (seq1, seq2, match_score=2, mismatch_score=-1, gap_score=-1))]
 fn align_pair(
@@ -108,7 +108,7 @@ fn align_best_details(
     match_score: i32,
     mismatch_score: i32,
     gap_score: i32,
-) -> Option<(i32, usize, usize, usize, usize, usize, usize)> {
+) -> Option<AlignmentDetails> {
     let params = smith_waterman::ScoreParams {
         match_score,
         mismatch_score,
@@ -135,7 +135,7 @@ fn align_topk_details(
     match_score: i32,
     mismatch_score: i32,
     gap_score: i32,
-) -> Vec<(i32, usize, usize, usize, usize, usize, usize)> {
+) -> Vec<AlignmentDetails> {
     if top_k == 0 || seqs.is_empty() {
         return Vec::new();
     }
