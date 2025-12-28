@@ -1,0 +1,58 @@
+name: CI
+on: [push, pull_request]
+
+jobs:
+  python:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.11", "3.12"]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: astral-sh/setup-uv@v1
+      - uses: dtolnay/rust-toolchain@stable
+      - run: uv sync --frozen --no-install-project
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run pyright
+      - run: uv run maturin develop
+      - run: uv run pytest -q
+
+  python-spacy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: astral-sh/setup-uv@v1
+      - run: uv sync --frozen --extra spacy --no-install-project
+      - run: uv run python -m spacy download en_core_web_sm
+      - run: PYTHONPATH=src uv run pytest -q -k spacy
+
+  python-embeddings:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: astral-sh/setup-uv@v1
+      - run: uv sync --frozen --extra embeddings --no-install-project
+      - run: CITE_RIGHT_RUN_EMBEDDINGS_TESTS=1 PYTHONPATH=src uv run pytest -q -k embeddings
+
+  rust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo fmt --check
+        working-directory: rust_core
+      - run: cargo clippy -- -D warnings
+        working-directory: rust_core
+      - run: cargo test --verbose
+        working-directory: rust_core

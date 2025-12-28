@@ -1,0 +1,44 @@
+name: Wheels
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: PyO3/maturin-action@v1
+        with:
+          command: build
+          args: --release --out dist -i python3.11 -i python3.12
+          manylinux: auto
+      - name: Smoke test wheel (py312)
+        run: |
+          python -c "import glob, subprocess, sys; wheels = sorted(glob.glob('dist/*cp312*.whl')); assert wheels, 'no cp312 wheel found'; subprocess.check_call([sys.executable, '-m', 'pip', 'install', wheels[0]]);"
+          python -c "from cite_right import align_citations; out = align_citations('Green apples are sour.', ['Red apples are tasty. Green apples are sour.']); assert out"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}
+          path: dist
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: wheels-*
+          merge-multiple: true
+          path: dist
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_TOKEN }}
