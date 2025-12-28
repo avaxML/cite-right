@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class CitationWeights:
     alignment: float = 1.0
     answer_coverage: float = 1.0
@@ -12,7 +12,7 @@ class CitationWeights:
     embedding: float = 0.5
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class CitationConfig:
     """Configuration for `cite_right.align_citations`.
 
