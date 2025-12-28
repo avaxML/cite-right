@@ -148,11 +148,15 @@ pub fn align_topk(
     results
 }
 
-pub fn align_best(seq1: &[u32], seqs: &[Vec<u32>], params: ScoreParams) -> Option<CandidateAlignment> {
+pub fn align_best(
+    seq1: &[u32],
+    seqs: &[Vec<u32>],
+    params: ScoreParams,
+) -> Option<CandidateAlignment> {
     align_topk(seq1, seqs, params, 1).into_iter().next()
 }
 
-fn choose_direction(best: i32, score_diag: i32, score_up: i32, score_left: i32) -> u8 {
+fn choose_direction(best: i32, score_diag: i32, score_up: i32, _score_left: i32) -> u8 {
     if best == score_diag {
         return 1;
     }
@@ -278,4 +282,3 @@ mod tests {
         assert_eq!(top[2].index, 3);
     }
 }
-
