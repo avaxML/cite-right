@@ -54,7 +54,7 @@ jobs:
           python-version: "3.11"
       - uses: astral-sh/setup-uv@v1
       - run: uv sync --frozen --extra tiktoken --no-install-project
-      - run: PYTHONPATH=src uv run pytest -q -k tiktoken
+      - run: PYTHONPATH=src uv run pytest -q tests/test_tokenizer_tiktoken.py
 
   python-huggingface:
     runs-on: ubuntu-latest
@@ -65,7 +65,7 @@ jobs:
           python-version: "3.11"
       - uses: astral-sh/setup-uv@v1
       - run: uv sync --frozen --extra huggingface --no-install-project
-      - run: PYTHONPATH=src uv run pytest -q -k huggingface
+      - run: PYTHONPATH=src uv run pytest -q tests/test_tokenizer_huggingface.py
 
   rust:
     runs-on: ubuntu-latest
