@@ -1,16 +1,17 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Sequence
 
 import numpy as np
 import numpy.typing as npt
+from pydantic import BaseModel, ConfigDict
 
 from cite_right.models.base import Embedder
 
 
-@dataclass(frozen=True, slots=True)
-class EmbeddingIndex:
+class EmbeddingIndex(BaseModel):
+    model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+
     vectors: npt.NDArray[np.float32]
     norms: npt.NDArray[np.float32]
 
