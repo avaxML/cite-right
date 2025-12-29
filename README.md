@@ -1,6 +1,7 @@
 # Cite-Right v3
 
 [![CI](https://github.com/avaxML/cite-right/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/avaxML/cite-right/actions/workflows/ci.yml)
+![Coverage](./coverage.svg)
 
 Cite-Right aligns a generated answer to source documents using Smith–Waterman **local sequence alignment** and returns **character-accurate citations** suitable for highlighting and extraction.
 
