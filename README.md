@@ -238,6 +238,66 @@ spans = align_citations(answer, sources, embedder=embedder, config=CitationConfi
 
 If your answer is heavily paraphrased (low lexical overlap), set `CitationConfig(allow_embedding_only=True)` to allow returning the whole passage window as evidence based on embedding similarity.
 
+## Hallucination Detection
+
+Cite-Right provides aggregate metrics to measure how well a generated answer is grounded in source documents. Use `compute_hallucination_metrics()` to analyze citation alignment results:
+
+```python
+from cite_right import align_citations, compute_hallucination_metrics, HallucinationConfig
+
+answer = "Acme reported revenue of 5.2 billion dollars. They also announced plans to colonize Mars."
+sources = ["In the annual report, Acme reported revenue of 5.2 billion dollars for fiscal year 2023."]
+
+# Get citation alignments
+results = align_citations(answer, sources)
+
+# Compute hallucination metrics
+metrics = compute_hallucination_metrics(results)
+
+print(f"Groundedness: {metrics.groundedness_score:.1%}")
+print(f"Hallucination rate: {metrics.hallucination_rate:.1%}")
+print(f"Supported: {metrics.num_supported}, Partial: {metrics.num_partial}, Unsupported: {metrics.num_unsupported}")
+
+# Identify problematic spans
+for span in metrics.unsupported_spans:
+    print(f"  Unsupported: {span.text!r}")
+```
+
+### Metrics Returned
+
+`HallucinationMetrics` provides:
+
+| Metric | Description |
+|--------|-------------|
+| `groundedness_score` | Weighted confidence score (0-1), higher = better grounded |
+| `hallucination_rate` | Proportion of ungrounded content (0-1), lower = better |
+| `supported_ratio` | Proportion of spans (by char count) that are fully supported |
+| `partial_ratio` | Proportion of spans with partial support |
+| `unsupported_ratio` | Proportion of spans with no source support |
+| `avg_confidence` / `min_confidence` | Confidence statistics across all spans |
+| `num_supported` / `num_partial` / `num_unsupported` | Span counts by status |
+| `num_weak_citations` | Spans with low-quality citations |
+| `unsupported_spans` | List of `AnswerSpan` objects with no source support |
+| `weakly_supported_spans` | List of spans with weak evidence |
+| `span_confidences` | Per-span `SpanConfidence` details with source attribution |
+
+### Configuration
+
+Customize thresholds with `HallucinationConfig`:
+
+```python
+from cite_right import HallucinationConfig, compute_hallucination_metrics
+
+config = HallucinationConfig(
+    weak_citation_threshold=0.4,      # Citations below this answer_coverage are "weak"
+    include_partial_in_grounded=True, # Count partial matches toward groundedness
+)
+
+metrics = compute_hallucination_metrics(results, config=config)
+```
+
+Setting `include_partial_in_grounded=False` gives a stricter groundedness score that only counts fully "supported" spans.
+
 ## Rust acceleration
 
 If built, the Rust extension is importable as `cite_right._core` and is used by default by `align_citations` (falls back to pure Python if unavailable).
@@ -257,6 +317,10 @@ uv run maturin develop
 ### `align_citations`
 
 See `src/cite_right/citations.py` for the full signature and `src/cite_right/core/results.py` for the result types (`SpanCitations`, `Citation`, `AnswerSpan`, `SourceDocument`, `SourceChunk`).
+
+### `compute_hallucination_metrics`
+
+See `src/cite_right/hallucination.py` for the full signature and result types (`HallucinationMetrics`, `HallucinationConfig`, `SpanConfidence`).
 
 ## Developer setup
 
