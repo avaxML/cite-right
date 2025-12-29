@@ -99,8 +99,13 @@ def test_pysbd_segmenter_whitespace_handling() -> None:
     assert segments[0].text == "First sentence."
     assert segments[1].text == "Second sentence."
     # Verify offsets point to trimmed content
-    assert text[segments[0].doc_char_start : segments[0].doc_char_end] == "First sentence."
-    assert text[segments[1].doc_char_start : segments[1].doc_char_end] == "Second sentence."
+    assert (
+        text[segments[0].doc_char_start : segments[0].doc_char_end] == "First sentence."
+    )
+    assert (
+        text[segments[1].doc_char_start : segments[1].doc_char_end]
+        == "Second sentence."
+    )
 
 
 def test_pysbd_segmenter_empty_text() -> None:
@@ -191,7 +196,7 @@ def test_pysbd_segmenter_offset_integrity() -> None:
 
     for segment in segments:
         # Verify the text at the given offsets matches the segment text
-        extracted = text[segment.doc_char_start:segment.doc_char_end]
+        extracted = text[segment.doc_char_start : segment.doc_char_end]
         assert extracted == segment.text, (
             f"Offset mismatch: expected '{segment.text}' but got '{extracted}'"
         )
@@ -210,5 +215,5 @@ def test_pysbd_segmenter_consecutive_offsets() -> None:
     # Verify no overlapping offsets
     for i in range(len(segments) - 1):
         assert segments[i].doc_char_end <= segments[i + 1].doc_char_start, (
-            f"Segments {i} and {i+1} overlap"
+            f"Segments {i} and {i + 1} overlap"
         )
