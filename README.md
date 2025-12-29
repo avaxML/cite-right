@@ -8,6 +8,7 @@ Cite-Right aligns a generated answer to source documents using Smith–Waterman 
 The public API is Python-first for correctness and determinism, with an optional Rust extension (`cite_right._core`) for speed:
 
 - `cite_right.align_citations`: RAG-style citation alignment for **multi-paragraph answers**, returning citations per answer sentence/clause
+- `cite_right.compute_hallucination_metrics`: Aggregate metrics measuring how well an answer is **grounded in sources**, with hallucination rate and per-span confidence
 
 ## Install
 
