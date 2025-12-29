@@ -31,3 +31,13 @@ def test_sentence_transformer_embedder_import_guard_message_when_missing() -> No
 
     with pytest.raises(RuntimeError, match="sentence-transformers is not installed"):
         SentenceTransformerEmbedder()
+
+
+def test_pysbd_segmenter_import_guard_message_when_missing() -> None:
+    if importlib.util.find_spec("pysbd") is not None:
+        pytest.skip("pysbd is installed")
+
+    from cite_right.text.segmenter_pysbd import PySBDSegmenter
+
+    with pytest.raises(RuntimeError, match="pysbd is not installed"):
+        PySBDSegmenter()
