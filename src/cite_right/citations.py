@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
-from typing import Literal, Sequence
+import time
+from dataclasses import dataclass, field
+from typing import Callable, Literal, Sequence, TypeAlias
 
 from cite_right.core.aligner_py import SmithWatermanAligner
 from cite_right.core.aligner_rust import RustSmithWatermanAligner
@@ -10,6 +11,7 @@ from cite_right.core.citation_config import CitationConfig
 from cite_right.core.interfaces import Aligner, AnswerSegmenter, Segmenter, Tokenizer
 from cite_right.core.results import (
     Alignment,
+    AnswerSpan,
     Citation,
     EvidenceSpan,
     SourceChunk,
@@ -23,8 +25,43 @@ from cite_right.text.passage import Passage, generate_passages
 from cite_right.text.segmenter_simple import SimpleSegmenter
 from cite_right.text.tokenizer import SimpleTokenizer
 
+# Type aliases for complex types
+CandidateSelection: TypeAlias = list[tuple[int, float, float]]
+"""List of (candidate_index, embedding_score, lexical_score) tuples."""
 
-@dataclass(frozen=True)
+LexicalScores: TypeAlias = dict[int, float]
+"""Mapping from candidate index to lexical similarity score."""
+
+IdfWeights: TypeAlias = dict[int, float]
+"""Mapping from token ID to IDF weight."""
+
+
+@dataclass(frozen=True, slots=True)
+class AlignmentMetrics:
+    """Observability metrics for the alignment pipeline.
+
+    Attributes:
+        total_time_ms: Total time spent in align_citations in milliseconds.
+        num_answer_spans: Number of answer spans processed.
+        num_candidates: Total number of candidate passages.
+        num_alignments: Total number of alignments performed.
+        embedding_time_ms: Time spent computing embeddings in milliseconds.
+        alignment_time_ms: Time spent in alignment operations in milliseconds.
+    """
+
+    total_time_ms: float
+    num_answer_spans: int
+    num_candidates: int
+    num_alignments: int
+    embedding_time_ms: float = 0.0
+    alignment_time_ms: float = 0.0
+
+
+MetricsCallback: TypeAlias = Callable[[AlignmentMetrics], None]
+"""Callback function for receiving alignment metrics."""
+
+
+@dataclass(frozen=True, slots=True)
 class _NormalizedSource:
     source_id: str
     source_index: int
@@ -33,7 +70,7 @@ class _NormalizedSource:
     full_text: str | None
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class _Candidate:
     global_index: int
     source: _NormalizedSource
@@ -41,6 +78,24 @@ class _Candidate:
     token_ids: list[int]
     token_spans: list[tuple[int, int]]
     token_set: frozenset[int]
+
+
+@dataclass
+class _EmbeddingCache:
+    """Cache for batched answer span embeddings."""
+
+    embedder: Embedder
+    answer_spans: list[AnswerSpan]
+    vectors: list[list[float]] = field(default_factory=list)
+    _computed: bool = False
+
+    def get_vector(self, span_index: int) -> list[float]:
+        """Get the embedding vector for an answer span, computing batch if needed."""
+        if not self._computed:
+            texts = [span.text for span in self.answer_spans]
+            self.vectors = self.embedder.encode(texts)
+            self._computed = True
+        return self.vectors[span_index]
 
 
 def align_citations(
@@ -54,9 +109,41 @@ def align_citations(
     tokenizer: Tokenizer | None = None,
     aligner: Aligner | None = None,
     embedder: Embedder | None = None,
+    on_metrics: MetricsCallback | None = None,
 ) -> list[SpanCitations]:
+    """Align answer spans to source citations.
+
+    Args:
+        answer: The answer text to find citations for.
+        sources: Source documents or text strings to search for evidence.
+        config: Citation configuration options.
+        backend: Alignment backend to use ("auto", "python", or "rust").
+        answer_segmenter: Custom answer segmenter.
+        source_segmenter: Custom source segmenter.
+        tokenizer: Custom tokenizer.
+        aligner: Custom aligner.
+        embedder: Optional embedder for semantic similarity.
+        on_metrics: Optional callback to receive alignment metrics.
+
+    Returns:
+        List of SpanCitations, one per answer span.
+    """
+    start_time = time.perf_counter()
+    embedding_time = 0.0
+    alignment_time = 0.0
+    num_alignments = 0
+
     cfg = config or CitationConfig()
     if cfg.top_k <= 0:
+        if on_metrics is not None:
+            on_metrics(
+                AlignmentMetrics(
+                    total_time_ms=0.0,
+                    num_answer_spans=0,
+                    num_candidates=0,
+                    num_alignments=0,
+                )
+            )
         return []
 
     answer_segmenter = answer_segmenter or SimpleAnswerSegmenter()
@@ -69,17 +156,22 @@ def align_citations(
     source_passages = _build_source_passages(normalized_sources, source_segmenter, cfg)
     candidates = _build_candidates(source_passages, tokenizer)
     idf = _compute_idf(candidates)
-    embedding_index = (
-        EmbeddingIndex.build(
+
+    # Build embedding index and cache for batched answer span embeddings
+    embedding_index: EmbeddingIndex | None = None
+    embedding_cache: _EmbeddingCache | None = None
+    if embedder is not None:
+        embed_start = time.perf_counter()
+        embedding_index = EmbeddingIndex.build(
             embedder, [candidate.passage.text for candidate in candidates]
         )
-        if embedder is not None
-        else None
-    )
+        # Pre-batch answer span embeddings
+        embedding_cache = _EmbeddingCache(embedder=embedder, answer_spans=answer_spans)
+        embedding_time += (time.perf_counter() - embed_start) * 1000
 
     output: list[SpanCitations] = []
 
-    for answer_span in answer_spans:
+    for span_index, answer_span in enumerate(answer_spans):
         answer_tokenized = tokenizer.tokenize(answer_span.text)
         answer_tokens = answer_tokenized.token_ids
         citations: list[Citation] = []
@@ -87,18 +179,27 @@ def align_citations(
         if answer_tokens and candidates:
             answer_set = frozenset(answer_tokens)
             lexical_scores = _lexical_prefilter(answer_set, candidates, idf)
+
+            # Get embedding vector from cache if available
+            embed_start = time.perf_counter()
+            query_vector: list[float] | None = None
+            if embedding_cache is not None:
+                query_vector = embedding_cache.get_vector(span_index)
+            embedding_time += (time.perf_counter() - embed_start) * 1000
+
             selected = _select_candidates(
                 candidates,
                 lexical_scores=lexical_scores,
                 embedding_index=embedding_index,
-                embedder=embedder,
-                query_text=answer_span.text,
+                query_vector=query_vector,
                 cfg=cfg,
             )
 
+            align_start = time.perf_counter()
             for candidate_index, embed_score, lexical_score in selected:
                 candidate = candidates[candidate_index]
                 alignment = aligner.align(answer_tokens, candidate.token_ids)
+                num_alignments += 1
                 matches = (
                     alignment.matches
                     if alignment.matches > 0
@@ -194,11 +295,25 @@ def align_citations(
                         },
                     )
                 )
+            alignment_time += (time.perf_counter() - align_start) * 1000
 
         citations = _rank_and_limit_citations(citations, cfg)
         status = _span_status(citations, cfg)
         output.append(
             SpanCitations(answer_span=answer_span, citations=citations, status=status)
+        )
+
+    if on_metrics is not None:
+        total_time = (time.perf_counter() - start_time) * 1000
+        on_metrics(
+            AlignmentMetrics(
+                total_time_ms=total_time,
+                num_answer_spans=len(answer_spans),
+                num_candidates=len(candidates),
+                num_alignments=num_alignments,
+                embedding_time_ms=embedding_time,
+                alignment_time_ms=alignment_time,
+            )
         )
 
     return output
@@ -317,7 +432,7 @@ def _build_candidates(
     return candidates
 
 
-def _compute_idf(candidates: Sequence[_Candidate]) -> dict[int, float]:
+def _compute_idf(candidates: Sequence[_Candidate]) -> IdfWeights:
     df: dict[int, int] = {}
     for candidate in candidates:
         for token_id in candidate.token_set:
@@ -332,17 +447,17 @@ def _compute_idf(candidates: Sequence[_Candidate]) -> dict[int, float]:
 def _lexical_prefilter(
     answer_set: frozenset[int],
     candidates: Sequence[_Candidate],
-    idf: dict[int, float],
-) -> dict[int, float]:
+    idf: IdfWeights,
+) -> LexicalScores:
     if not answer_set:
         return {}
     denom = sum(idf.get(token_id, 1.0) for token_id in answer_set)
     if denom <= 0.0:
         return {}
 
-    scores: dict[int, float] = {}
+    scores: LexicalScores = {}
     for idx, candidate in enumerate(candidates):
-        overlap = answer_set.intersection(candidate.token_set)
+        overlap = answer_set & candidate.token_set
         if not overlap:
             continue
         numer = sum(idf.get(token_id, 1.0) for token_id in overlap)
@@ -353,12 +468,11 @@ def _lexical_prefilter(
 def _select_candidates(
     candidates: Sequence[_Candidate],
     *,
-    lexical_scores: dict[int, float],
+    lexical_scores: LexicalScores,
     embedding_index: EmbeddingIndex | None,
-    embedder: Embedder | None,
-    query_text: str,
+    query_vector: list[float] | None,
     cfg: CitationConfig,
-) -> list[tuple[int, float, float]]:
+) -> CandidateSelection:
     selected: dict[int, tuple[float, float]] = {}
 
     if cfg.max_candidates_lexical > 0 and lexical_scores:
@@ -375,10 +489,9 @@ def _select_candidates(
 
     if (
         cfg.max_candidates_embedding > 0
-        and embedder is not None
+        and query_vector is not None
         and embedding_index is not None
     ):
-        query_vector = embedder.encode([query_text])[0]
         for idx, score in embedding_index.top_k(
             query_vector, cfg.max_candidates_embedding
         ):

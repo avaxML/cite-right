@@ -1,8 +1,18 @@
 from __future__ import annotations
 
+from enum import IntEnum
 from typing import Sequence
 
 from cite_right.core.results import Alignment
+
+
+class Direction(IntEnum):
+    """Direction constants for Smith-Waterman traceback."""
+
+    STOP = 0
+    DIAGONAL = 1
+    UP = 2
+    LEFT = 3
 
 
 class SmithWatermanAligner:
@@ -49,7 +59,7 @@ class SmithWatermanAligner:
         cols = len(seq2_list) + 1
 
         scores = [[0] * cols for _ in range(rows)]
-        directions = [[0] * cols for _ in range(rows)]
+        directions = [[Direction.STOP] * cols for _ in range(rows)]
 
         max_score = 0
         max_positions: list[tuple[int, int]] = []
@@ -68,7 +78,7 @@ class SmithWatermanAligner:
                 best = max(0, score_diag, score_up, score_left)
                 if best <= 0:
                     scores[i][j] = 0
-                    directions[i][j] = 0
+                    directions[i][j] = Direction.STOP
                 else:
                     scores[i][j] = best
                     directions[i][j] = _choose_direction(
@@ -126,18 +136,18 @@ class SmithWatermanAligner:
 
 def _choose_direction(
     best: int, score_diag: int, score_up: int, score_left: int
-) -> int:
+) -> Direction:
     if best == score_diag:
-        return 1
+        return Direction.DIAGONAL
     if best == score_up:
-        return 2
-    return 3
+        return Direction.UP
+    return Direction.LEFT
 
 
 def _traceback_details(
     i: int,
     j: int,
-    directions: list[list[int]],
+    directions: list[list[Direction]],
     scores: list[list[int]],
     seq1: list[int],
     seq2: list[int],
@@ -146,19 +156,19 @@ def _traceback_details(
 ) -> tuple[int, int, int, list[tuple[int, int]]]:
     matches = 0
     match_positions: list[int] = []
-    while i > 0 and j > 0 and directions[i][j] != 0 and scores[i][j] > 0:
-        move = directions[i][j]
-        if move == 1:
-            i -= 1
-            j -= 1
-            if seq1[i] == seq2[j]:
-                matches += 1
-                if return_match_blocks:
-                    match_positions.append(j)
-        elif move == 2:
-            i -= 1
-        else:
-            j -= 1
+    while i > 0 and j > 0 and directions[i][j] != Direction.STOP and scores[i][j] > 0:
+        match directions[i][j]:
+            case Direction.DIAGONAL:
+                i -= 1
+                j -= 1
+                if seq1[i] == seq2[j]:
+                    matches += 1
+                    if return_match_blocks:
+                        match_positions.append(j)
+            case Direction.UP:
+                i -= 1
+            case Direction.LEFT:
+                j -= 1
 
     if not return_match_blocks or not match_positions:
         return i, j, matches, []

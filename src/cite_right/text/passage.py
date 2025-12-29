@@ -6,7 +6,7 @@ from cite_right.core.interfaces import Segmenter
 from cite_right.core.results import Segment
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Passage:
     text: str
     doc_char_start: int

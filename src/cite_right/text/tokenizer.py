@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import unicodedata
+from functools import lru_cache
 
 from cite_right.core.results import TokenizedText
 
@@ -17,6 +18,20 @@ class TokenizerConfig:
         self.normalize_percent = normalize_percent
         self.normalize_currency = normalize_currency
 
+    def __hash__(self) -> int:
+        return hash(
+            (self.normalize_numbers, self.normalize_percent, self.normalize_currency)
+        )
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, TokenizerConfig):
+            return NotImplemented
+        return (
+            self.normalize_numbers == other.normalize_numbers
+            and self.normalize_percent == other.normalize_percent
+            and self.normalize_currency == other.normalize_currency
+        )
+
 
 class SimpleTokenizer:
     def __init__(self, config: TokenizerConfig | None = None) -> None:
@@ -30,7 +45,7 @@ class SimpleTokenizer:
 
         for start, end in _iter_token_spans(text):
             raw = text[start:end]
-            normalized = _normalize_token(raw, self._config)
+            normalized = _normalize_token_cached(raw, self._config)
             if not normalized:
                 continue
             token_id = self._vocab.get(normalized)
@@ -84,7 +99,7 @@ def _iter_token_spans(text: str) -> list[tuple[int, int]]:
                     idx += 1
                     continue
                 if (
-                    char in {"'", "’"}
+                    char in {"'", "\u2019"}
                     and idx + 1 < len(text)
                     and text[idx - 1].isalnum()
                     and text[idx + 1].isalnum()
@@ -108,9 +123,15 @@ def _iter_token_spans(text: str) -> list[tuple[int, int]]:
     return spans
 
 
+@lru_cache(maxsize=10000)
+def _normalize_token_cached(token: str, config: TokenizerConfig) -> str:
+    """Normalize a token with caching for repeated tokens."""
+    return _normalize_token(token, config)
+
+
 def _normalize_token(token: str, config: TokenizerConfig) -> str:
     normalized = unicodedata.normalize("NFKC", token).casefold()
-    normalized = normalized.replace("’", "'")
+    normalized = normalized.replace("\u2019", "'")
 
     if config.normalize_numbers and normalized and normalized[0].isdigit():
         normalized = normalized.replace(",", "")

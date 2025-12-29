@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import suppress
 from typing import Sequence
 
 from cite_right.core.results import Alignment
@@ -30,7 +31,7 @@ class RustSmithWatermanAligner:
 
     def align(self, seq1: Sequence[int], seq2: Sequence[int]) -> Alignment:
         if self.return_match_blocks:
-            try:
+            with suppress(AttributeError):
                 (
                     score,
                     token_start,
@@ -55,10 +56,8 @@ class RustSmithWatermanAligner:
                     matches=matches,
                     match_blocks=list(match_blocks),
                 )
-            except AttributeError:
-                pass
 
-        try:
+        with suppress(AttributeError):
             score, token_start, token_end, query_start, query_end, matches = (
                 self._core.align_pair_details(
                     seq1,
@@ -76,8 +75,6 @@ class RustSmithWatermanAligner:
                 query_end=query_end,
                 matches=matches,
             )
-        except AttributeError:
-            pass
 
         score, token_start, token_end = self._core.align_pair(
             seq1,

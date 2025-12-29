@@ -4,21 +4,21 @@ from dataclasses import dataclass, field
 from typing import Any, Literal, Mapping
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class TokenizedText:
     text: str
     token_ids: list[int]
     token_spans: list[tuple[int, int]]
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Segment:
     text: str
     doc_char_start: int
     doc_char_end: int
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Alignment:
     score: int
     token_start: int
@@ -29,14 +29,14 @@ class Alignment:
     match_blocks: list[tuple[int, int]] = field(default_factory=list)
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class SourceDocument:
     id: str
     text: str
     metadata: Mapping[str, Any] = field(default_factory=dict)
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class SourceChunk:
     source_id: str
     text: str
@@ -47,7 +47,7 @@ class SourceChunk:
     source_index: int | None = None
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class AnswerSpan:
     text: str
     char_start: int
@@ -57,7 +57,7 @@ class AnswerSpan:
     sentence_index: int | None = None
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class EvidenceSpan:
     """A contiguous evidence slice in a source document.
 
@@ -72,7 +72,7 @@ class EvidenceSpan:
     evidence: str
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class Citation:
     score: float
     source_id: str
@@ -85,7 +85,7 @@ class Citation:
     components: Mapping[str, float] = field(default_factory=dict)
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, slots=True)
 class SpanCitations:
     answer_span: AnswerSpan
     citations: list[Citation]
