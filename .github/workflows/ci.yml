@@ -22,6 +22,26 @@ jobs:
       - run: uv run maturin develop
       - run: uv run pytest -q
 
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: astral-sh/setup-uv@v1
+      - uses: dtolnay/rust-toolchain@stable
+      - run: uv sync --frozen --no-install-project
+      - run: uv run maturin develop
+      - name: Run tests with coverage
+        run: uv run pytest --cov=cite_right --cov-report=xml --cov-report=term -q
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          fail_ci_if_error: false
+          verbose: true
+
   python-spacy:
     runs-on: ubuntu-latest
     steps:

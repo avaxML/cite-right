@@ -14,7 +14,7 @@ spacy = ["spacy>=3.7"]
 embeddings = ["sentence-transformers>=2.2"]
 
 [dependency-groups]
-dev = ["pytest>=8", "ruff>=0.6", "pyright>=1.1", "maturin>=1.4"]
+dev = ["pytest>=8", "pytest-cov>=4.0", "ruff>=0.6", "pyright>=1.1", "maturin>=1.4"]
 
 [build-system]
 requires = ["maturin>=1.4,<2.0"]
