@@ -9,6 +9,12 @@ from cite_right.core.results import (
     SpanCitations,
     TokenizedText,
 )
+from cite_right.hallucination import (
+    HallucinationConfig,
+    HallucinationMetrics,
+    SpanConfidence,
+    compute_hallucination_metrics,
+)
 from cite_right.models.sbert_embedder import SentenceTransformerEmbedder
 from cite_right.text.answer_segmenter_spacy import SpacyAnswerSegmenter
 from cite_right.text.segmenter_spacy import SpacySegmenter
@@ -21,6 +27,8 @@ __all__ = [
     "AnswerSpan",
     "Citation",
     "EvidenceSpan",
+    "HallucinationConfig",
+    "HallucinationMetrics",
     "HuggingFaceTokenizer",
     "Segment",
     "SentenceTransformerEmbedder",
@@ -30,7 +38,9 @@ __all__ = [
     "SourceChunk",
     "SourceDocument",
     "SpanCitations",
+    "SpanConfidence",
     "TiktokenTokenizer",
     "TokenizedText",
     "align_citations",
+    "compute_hallucination_metrics",
 ]
