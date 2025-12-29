@@ -167,7 +167,7 @@ class HuggingFaceTokenizer:
         token_spans: list[tuple[int, int]] = []
         filtered_ids: list[int] = []
 
-        for token_id, (start, end) in zip(token_ids, offset_mapping):
+        for token_id, (start, end) in zip(token_ids, offset_mapping, strict=True):
             # Skip tokens with no character span (special tokens)
             if start == end == 0 and self._add_special_tokens:
                 # Keep special tokens if explicitly requested
@@ -198,7 +198,7 @@ class HuggingFaceTokenizer:
         token_spans: list[tuple[int, int]] = []
         filtered_ids: list[int] = []
 
-        for token_id, (start, end) in zip(token_ids, offsets):
+        for token_id, (start, end) in zip(token_ids, offsets, strict=True):
             if start != end:  # Skip empty spans
                 token_spans.append((start, end))
                 filtered_ids.append(token_id)
