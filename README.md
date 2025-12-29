@@ -25,8 +25,10 @@ pip install cite-right
 Optional extras:
 
 ```bash
-pip install "cite-right[spacy]"
-pip install "cite-right[embeddings]"
+pip install "cite-right[spacy]"          # spaCy segmentation
+pip install "cite-right[embeddings]"     # Sentence embeddings for semantic retrieval
+pip install "cite-right[huggingface]"    # HuggingFace tokenizers (BERT, RoBERTa, etc.)
+pip install "cite-right[tiktoken]"       # OpenAI tiktoken (GPT-3.5, GPT-4)
 ```
 
 ## Quickstart
@@ -109,14 +111,84 @@ For `align_citations`, ranking is configurable via `CitationConfig`. By default 
 
 ## Tokenization
 
-Default tokenizer: `SimpleTokenizer` (`src/cite_right/text/tokenizer.py`)
+`align_citations` accepts an optional `tokenizer=` argument. If not specified, it defaults to `SimpleTokenizer()`.
 
-- Supports:
-  - alphanumeric tokens (with internal hyphens/apostrophes: `state-of-the-art`, `company’s`)
-  - numeric tokens with separators (`5.2`, `1,200`)
-  - `%` and currency symbols (`$`, `€`, `£`) with lightweight normalization (`%`→`percent`, `$`→`dollar`, etc.)
-- Each token is normalized with Unicode **NFKC** and **casefolding** for matching (and small numeric/currency normalization by default).
-- `TokenizedText.token_spans` always point into the **original (unnormalized) text**, so evidence slices preserve original casing/punctuation.
+### SimpleTokenizer (default)
+
+Location: `src/cite_right/text/tokenizer.py`
+
+Default lightweight tokenizer with:
+- Alphanumeric tokens (with internal hyphens/apostrophes: `state-of-the-art`, `company's`)
+- Numeric tokens with separators (`5.2`, `1,200`)
+- `%` and currency symbols (`$`, `€`, `£`) with optional normalization (`%`→`percent`, `$`→`dollar`, etc.)
+- Unicode **NFKC** normalization and casefolding for matching
+- Character spans always point to the **original (unnormalized) text**, preserving casing/punctuation in evidence
+
+Configuration via `TokenizerConfig`:
+```python
+from cite_right import SimpleTokenizer, align_citations
+from cite_right.text.tokenizer import TokenizerConfig
+
+config = TokenizerConfig(
+    normalize_numbers=True,    # Convert "1,200" → "1200"
+    normalize_percent=True,    # Convert "%" → "percent"
+    normalize_currency=True,   # Convert "$" → "dollar", "€" → "euro", etc.
+)
+tokenizer = SimpleTokenizer(config=config)
+
+spans = align_citations(answer, sources, tokenizer=tokenizer)
+```
+
+### HuggingFaceTokenizer (transformer-based)
+
+Location: `src/cite_right/text/tokenizer_huggingface.py`
+
+Wraps HuggingFace tokenizers (BERT, RoBERTa, GPT-2, etc.):
+
+```python
+from cite_right import HuggingFaceTokenizer, align_citations
+
+# Using a pre-downloaded model
+tokenizer = HuggingFaceTokenizer.from_pretrained("bert-base-uncased")
+
+# Or with a custom tokenizer instance
+from transformers import AutoTokenizer
+hf_tok = AutoTokenizer.from_pretrained("roberta-base")
+tokenizer = HuggingFaceTokenizer(hf_tok)
+
+spans = align_citations(answer, sources, tokenizer=tokenizer)
+```
+
+Options:
+- `add_special_tokens=False` (default) to exclude `[CLS]`, `[SEP]`, etc.
+- Supports WordPiece (BERT), BPE, and SentencePiece encodings
+- Requires `pip install "cite-right[huggingface]"`
+
+### TiktokenTokenizer (OpenAI BPE)
+
+Location: `src/cite_right/text/tokenizer_tiktoken.py`
+
+Uses OpenAI's tiktoken for GPT models:
+
+```python
+from cite_right import TiktokenTokenizer, align_citations
+
+# Default encoding (cl100k_base, used by GPT-4 and GPT-3.5-turbo)
+tokenizer = TiktokenTokenizer()
+
+# Or specify an encoding
+tokenizer = TiktokenTokenizer("p50k_base")  # for Codex models
+tokenizer = TiktokenTokenizer("r50k_base")  # for GPT-3 models
+
+spans = align_citations(answer, sources, tokenizer=tokenizer)
+```
+
+Available encodings:
+- `cl100k_base` (default): GPT-4, GPT-3.5-turbo, text-embedding-ada-002
+- `p50k_base`: Codex models
+- `r50k_base`: GPT-3 models
+
+Requires `pip install "cite-right[tiktoken]"`
 
 ## Segmentation
 
