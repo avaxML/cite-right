@@ -118,20 +118,64 @@ def align_citations(
 ) -> list[SpanCitations]:
     """Align answer spans to source citations.
 
+    This is the main entry point for citation extraction. It segments the answer
+    into spans (sentences by default), finds matching evidence in source documents
+    using Smith-Waterman alignment, and returns character-accurate citations.
+
     Args:
         answer: The answer text to find citations for.
         sources: Source documents or text strings to search for evidence.
-        config: Citation configuration options.
-        backend: Alignment backend to use ("auto", "python", or "rust").
-        answer_segmenter: Custom answer segmenter.
-        source_segmenter: Custom source segmenter.
-        tokenizer: Custom tokenizer.
-        aligner: Custom aligner.
-        embedder: Optional embedder for semantic similarity.
-        on_metrics: Optional callback to receive alignment metrics.
+            Accepts plain strings, SourceDocument, or SourceChunk objects.
+        config: Citation configuration options. See CitationConfig for details.
+        backend: Alignment backend to use:
+
+            - ``"auto"``: Use Rust if available, else Python (default).
+            - ``"python"``: Force pure-Python implementation.
+            - ``"rust"``: Force Rust implementation (raises if unavailable).
+
+        answer_segmenter: Custom answer segmenter (default: SimpleAnswerSegmenter).
+        source_segmenter: Custom source segmenter (default: SimpleSegmenter).
+        tokenizer: Custom tokenizer (default: SimpleTokenizer).
+        aligner: Custom aligner (default: SmithWatermanAligner).
+        embedder: Optional embedder for semantic similarity retrieval.
+            When provided, uses embedding similarity to find candidates
+            in addition to lexical overlap.
+        on_metrics: Optional callback to receive alignment metrics for
+            observability and performance monitoring.
 
     Returns:
-        List of SpanCitations, one per answer span.
+        List of SpanCitations, one per answer span. Each SpanCitations contains
+        the answer segment, its citations (ranked by score), and a status
+        indicating citation quality ("supported", "partial", or "unsupported").
+
+    Examples:
+        Basic usage with string sources:
+
+        >>> from cite_right import align_citations
+        >>> answer = "Revenue grew 15% in Q4."
+        >>> sources = ["Annual report: Revenue grew 15% in Q4 2024."]
+        >>> results = align_citations(answer, sources)
+        >>> print(results[0].status)
+        'supported'
+        >>> print(results[0].citations[0].evidence)
+        'Revenue grew 15% in Q4'
+
+        Using SourceDocument for named sources:
+
+        >>> from cite_right import SourceDocument, align_citations, CitationConfig
+        >>> answer = "Heat pumps reduce emissions."
+        >>> sources = [
+        ...     SourceDocument(id="energy", text="Heat pumps reduce emissions by 50%."),
+        ... ]
+        >>> results = align_citations(answer, sources, config=CitationConfig(top_k=1))
+        >>> citation = results[0].citations[0]
+        >>> print(f"Found in {citation.source_id}: {citation.evidence!r}")
+        Found in energy: 'Heat pumps reduce emissions'
+
+        Verifying character offsets:
+
+        >>> source_text = sources[0].text
+        >>> assert source_text[citation.char_start:citation.char_end] == citation.evidence
     """
     start_time = time.perf_counter()
     embedding_time = 0.0
