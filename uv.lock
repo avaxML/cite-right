@@ -162,6 +162,9 @@ huggingface = [
     { name = "tokenizers" },
     { name = "transformers" },
 ]
+pysbd = [
+    { name = "pysbd" },
+]
 spacy = [
     { name = "spacy" },
 ]
@@ -182,13 +185,14 @@ dev = [
 requires-dist = [
     { name = "numpy", specifier = ">=1.24" },
     { name = "pydantic", specifier = ">=2.0" },
+    { name = "pysbd", marker = "extra == 'pysbd'", specifier = ">=0.3.4" },
     { name = "sentence-transformers", marker = "extra == 'embeddings'", specifier = ">=2.2" },
     { name = "spacy", marker = "extra == 'spacy'", specifier = ">=3.7" },
     { name = "tiktoken", marker = "extra == 'tiktoken'", specifier = ">=0.5" },
     { name = "tokenizers", marker = "extra == 'huggingface'", specifier = ">=0.15" },
     { name = "transformers", marker = "extra == 'huggingface'", specifier = ">=4.30" },
 ]
-provides-extras = ["spacy", "embeddings", "tiktoken", "huggingface"]
+provides-extras = ["spacy", "embeddings", "tiktoken", "huggingface", "pysbd"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -1088,6 +1092,14 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/a6/1b/0aa08ee42948b61745ac5b5b5ccaec4669e8884b53d31c8ec20b2fcd6b6f/pyright-1.1.407.tar.gz", hash = "sha256:099674dba5c10489832d4a4b2d302636152a9a42d317986c38474c76fe562262", size = 4122872, upload-time = "2025-10-24T23:17:15.145Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/dc/93/b69052907d032b00c40cb656d21438ec00b3a471733de137a3f65a49a0a0/pyright-1.1.407-py3-none-any.whl", hash = "sha256:6dd419f54fcc13f03b52285796d65e639786373f433e243f8b94cf93a7444d21", size = 5997008, upload-time = "2025-10-24T23:17:13.159Z" },
+]
+
+[[package]]
+name = "pysbd"
+version = "0.3.4"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/48/0a/c99fb7d7e176f8b176ef19704a32e6a9c6aafdf19ef75a187f701fc15801/pysbd-0.3.4-py3-none-any.whl", hash = "sha256:cd838939b7b0b185fcf86b0baf6636667dfb6e474743beeff878e9f42e022953", size = 71082, upload-time = "2021-02-11T16:36:33.351Z" },
 ]
 
 [[package]]
