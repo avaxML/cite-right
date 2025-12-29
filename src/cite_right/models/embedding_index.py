@@ -46,7 +46,9 @@ class EmbeddingIndex:
 
         return self._top_k_python(query_vector, k)
 
-    def _top_k_numpy(self, query_vector: list[float], k: int) -> list[tuple[int, float]]:
+    def _top_k_numpy(
+        self, query_vector: list[float], k: int
+    ) -> list[tuple[int, float]]:
         query = _np.array(query_vector, dtype=_np.float32)
         query_norm = _np.linalg.norm(query)
         if query_norm == 0.0:
@@ -57,7 +59,9 @@ class EmbeddingIndex:
         # Avoid division by zero for zero-norm vectors
         valid_mask = self._np_norms > 0
         scores = _np.zeros_like(dots)
-        scores[valid_mask] = dots[valid_mask] / (self._np_norms[valid_mask] * query_norm)
+        scores[valid_mask] = dots[valid_mask] / (
+            self._np_norms[valid_mask] * query_norm
+        )
 
         # Get indices sorted by score descending, then by index ascending for ties
         # Use negative scores for descending sort, indices for ascending tie-break
@@ -70,7 +74,9 @@ class EmbeddingIndex:
                 results.append((idx, float(score)))
         return results
 
-    def _top_k_python(self, query_vector: list[float], k: int) -> list[tuple[int, float]]:
+    def _top_k_python(
+        self, query_vector: list[float], k: int
+    ) -> list[tuple[int, float]]:
         query_norm = _l2_norm(query_vector)
         if query_norm == 0.0:
             return []
