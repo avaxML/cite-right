@@ -45,6 +45,28 @@ jobs:
       - run: uv sync --frozen --extra embeddings --no-install-project
       - run: CITE_RIGHT_RUN_EMBEDDINGS_TESTS=1 PYTHONPATH=src uv run pytest -q -k embeddings
 
+  python-tiktoken:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: astral-sh/setup-uv@v1
+      - run: uv sync --frozen --extra tiktoken --no-install-project
+      - run: PYTHONPATH=src uv run pytest -q -k tiktoken
+
+  python-huggingface:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: astral-sh/setup-uv@v1
+      - run: uv sync --frozen --extra huggingface --no-install-project
+      - run: PYTHONPATH=src uv run pytest -q -k huggingface
+
   rust:
     runs-on: ubuntu-latest
     steps:
