@@ -5,6 +5,7 @@ from cite_right.claims import (
     SimpleClaimDecomposer,
     SpacyClaimDecomposer,
 )
+from cite_right.core.citation_config import CitationConfig, CitationWeights
 from cite_right.core.results import (
     AnswerSpan,
     Citation,
@@ -31,14 +32,19 @@ from cite_right.models.sbert_embedder import SentenceTransformerEmbedder
 from cite_right.text.answer_segmenter_spacy import SpacyAnswerSegmenter
 from cite_right.text.segmenter_pysbd import PySBDSegmenter
 from cite_right.text.segmenter_spacy import SpacySegmenter
-from cite_right.text.tokenizer import SimpleTokenizer
+from cite_right.text.tokenizer import SimpleTokenizer, TokenizerConfig
 from cite_right.text.tokenizer_huggingface import HuggingFaceTokenizer
 from cite_right.text.tokenizer_tiktoken import TiktokenTokenizer
 
+__version__ = "0.3.0"
+
 __all__ = [
+    "__version__",
     "AlignmentMetrics",
     "AnswerSpan",
     "Citation",
+    "CitationConfig",
+    "CitationWeights",
     "Claim",
     "ClaimDecomposer",
     "ClaimVerification",
@@ -62,6 +68,7 @@ __all__ = [
     "SpanConfidence",
     "TiktokenTokenizer",
     "TokenizedText",
+    "TokenizerConfig",
     "align_citations",
     "compute_hallucination_metrics",
     "verify_facts",
