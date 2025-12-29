@@ -51,3 +51,5 @@ typeCheckingMode = "basic"
 include = ["src", "tests"]
 venvPath = "."
 venv = ".venv"
+# Optional dependencies may not be installed during type checking
+reportMissingImports = "warning"
