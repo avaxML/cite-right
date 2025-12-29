@@ -150,6 +150,7 @@ name = "cite-right"
 version = "0.3.0"
 source = { editable = "." }
 dependencies = [
+    { name = "numpy" },
     { name = "pip" },
 ]
 
@@ -171,6 +172,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "numpy", specifier = ">=1.24" },
     { name = "pip", specifier = ">=25.3" },
     { name = "sentence-transformers", marker = "extra == 'embeddings'", specifier = ">=2.2" },
     { name = "spacy", marker = "extra == 'spacy'", specifier = ">=3.7" },
