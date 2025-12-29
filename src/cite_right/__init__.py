@@ -11,6 +11,7 @@ from cite_right.core.results import (
 )
 from cite_right.models.sbert_embedder import SentenceTransformerEmbedder
 from cite_right.text.answer_segmenter_spacy import SpacyAnswerSegmenter
+from cite_right.text.segmenter_pysbd import PySBDSegmenter
 from cite_right.text.segmenter_spacy import SpacySegmenter
 from cite_right.text.tokenizer import SimpleTokenizer
 from cite_right.text.tokenizer_huggingface import HuggingFaceTokenizer
@@ -22,6 +23,7 @@ __all__ = [
     "Citation",
     "EvidenceSpan",
     "HuggingFaceTokenizer",
+    "PySBDSegmenter",
     "Segment",
     "SentenceTransformerEmbedder",
     "SimpleTokenizer",
