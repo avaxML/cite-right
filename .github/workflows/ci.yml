@@ -60,6 +60,7 @@ jobs:
           python-version: "3.11"
       - uses: astral-sh/setup-uv@v1
       - run: uv sync --frozen --extra spacy --no-install-project
+      - run: uv pip install pip
       - run: uv run python -m spacy download en_core_web_sm
       - run: PYTHONPATH=src uv run pytest -q -k spacy
 
