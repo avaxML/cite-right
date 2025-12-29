@@ -85,22 +85,54 @@ class TiktokenTokenizer:
         if not token_ids:
             return TokenizedText(text=text, token_ids=[], token_spans=[])
 
-        # Compute character spans by decoding each token and tracking position
-        token_spans: list[tuple[int, int]] = []
+        # Compute character spans using byte-to-character mapping
+        # BPE tokens operate on bytes and can split multi-byte UTF-8 characters,
+        # so we need to map byte positions to character positions
         text_bytes = text.encode("utf-8")
+
+        # Build mapping from byte offset to character offset
+        byte_to_char: list[int] = []
+        char_idx = 0
+        byte_idx = 0
+
+        while byte_idx < len(text_bytes):
+            byte_to_char.append(char_idx)
+            # Determine UTF-8 character byte length
+            byte_val = text_bytes[byte_idx]
+            if byte_val < 0x80:  # 1-byte character (ASCII)
+                char_len_bytes = 1
+            elif byte_val < 0xE0:  # 2-byte character
+                char_len_bytes = 2
+            elif byte_val < 0xF0:  # 3-byte character
+                char_len_bytes = 3
+            else:  # 4-byte character
+                char_len_bytes = 4
+
+            # Map continuation bytes to the same character index
+            for _ in range(1, char_len_bytes):
+                byte_idx += 1
+                if byte_idx < len(text_bytes):
+                    byte_to_char.append(char_idx)
+
+            byte_idx += 1
+            char_idx += 1
+
+        byte_to_char.append(char_idx)  # Map for position after last byte
+
+        # Convert token byte positions to character positions
+        token_spans: list[tuple[int, int]] = []
         byte_offset = 0
 
         for token_id in token_ids:
-            # Get the bytes for this token
             token_bytes = self._encoding.decode_single_token_bytes(token_id)
-            token_byte_len = len(token_bytes)
+            byte_start = byte_offset
+            byte_end = byte_offset + len(token_bytes)
 
-            # Convert byte offset to character offset
-            char_start = len(text_bytes[:byte_offset].decode("utf-8"))
-            char_end = len(text_bytes[: byte_offset + token_byte_len].decode("utf-8"))
+            char_start = byte_to_char[byte_start]
+            char_end = byte_to_char[byte_end]
 
             token_spans.append((char_start, char_end))
-            byte_offset += token_byte_len
+            byte_offset = byte_end
 
         return TokenizedText(
             text=text,

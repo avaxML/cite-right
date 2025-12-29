@@ -67,10 +67,12 @@ class TestTiktokenTokenizer:
         assert result.text == text
         assert len(result.token_ids) > 0
         # Verify spans are valid character indices
+        # Note: BPE tokens can split multi-byte UTF-8 characters, resulting in
+        # zero-length spans for tokens containing incomplete UTF-8 sequences
         for start, end in result.token_spans:
-            assert 0 <= start < len(text)
-            assert 0 < end <= len(text)
-            assert start < end
+            assert 0 <= start <= len(text)
+            assert 0 <= end <= len(text)
+            assert start <= end
 
     def test_different_encodings(self, encoding):
         """Test using different tiktoken encodings."""
