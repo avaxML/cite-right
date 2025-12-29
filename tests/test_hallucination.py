@@ -1,14 +1,14 @@
 """Tests for hallucination detection metrics."""
 
 import pytest
+from pydantic import ValidationError
 
 from cite_right import (
+    HallucinationConfig,
     SourceDocument,
+    SpanConfidence,
     align_citations,
     compute_hallucination_metrics,
-    HallucinationConfig,
-    HallucinationMetrics,
-    SpanConfidence,
 )
 from cite_right.core.citation_config import CitationConfig, CitationWeights
 from cite_right.core.results import AnswerSpan, Citation, SpanCitations
@@ -433,7 +433,9 @@ class TestHallucinationMetricsIntegration:
 
     def test_integration_with_align_citations_unsupported(self) -> None:
         answer = "Aliens definitely built the ancient pyramids in Egypt."
-        source = "The pyramids were built by skilled Egyptian workers over many decades."
+        source = (
+            "The pyramids were built by skilled Egyptian workers over many decades."
+        )
 
         config = CitationConfig(
             top_k=1,
@@ -542,7 +544,7 @@ class TestHallucinationConfigModel:
     def test_config_is_frozen(self) -> None:
         config = HallucinationConfig()
 
-        with pytest.raises(Exception):  # Pydantic ValidationError
+        with pytest.raises(ValidationError):
             config.weak_citation_threshold = 0.6  # type: ignore
 
 
@@ -552,5 +554,5 @@ class TestHallucinationMetricsModel:
     def test_metrics_is_frozen(self) -> None:
         metrics = compute_hallucination_metrics([])
 
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError):
             metrics.groundedness_score = 0.5  # type: ignore
