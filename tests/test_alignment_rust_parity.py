@@ -1,14 +1,15 @@
-import pytest
+"""Tests for Rust/Python parity in Smith-Waterman alignment."""
+
+from types import ModuleType
 
 from cite_right.core.aligner_py import SmithWatermanAligner
 
+from .conftest import requires_rust, requires_rust_blocks
 
-def test_rust_parity() -> None:
-    try:
-        from cite_right import _core
-    except ImportError:
-        pytest.skip("Rust extension not built")
 
+@requires_rust
+def test_rust_parity(rust_core: ModuleType) -> None:
+    """Verify Python and Rust implementations produce identical results."""
     aligner = SmithWatermanAligner()
     cases = [
         ([1, 2], [1, 2, 1, 2]),
@@ -18,7 +19,7 @@ def test_rust_parity() -> None:
 
     for seq1, seq2 in cases:
         py = aligner.align(seq1, seq2)
-        rust = _core.align_pair_details(seq1, seq2, 2, -1, -1)
+        rust = rust_core.align_pair_details(seq1, seq2, 2, -1, -1)
         assert rust == (
             py.score,
             py.token_start,
@@ -26,21 +27,18 @@ def test_rust_parity() -> None:
             py.query_start,
             py.query_end,
             py.matches,
-        )
+        ), f"Mismatch for sequences {seq1}, {seq2}"
 
 
-def test_rust_align_best_matches_python_selection() -> None:
-    try:
-        from cite_right import _core
-    except ImportError:
-        pytest.skip("Rust extension not built")
-
+@requires_rust
+def test_rust_align_best_matches_python_selection(rust_core: ModuleType) -> None:
+    """Verify Rust align_best matches Python selection logic."""
     aligner = SmithWatermanAligner()
     claim = [1, 2]
     candidates = [[3, 4], [1, 2, 1, 2], [1, 2], [0, 1, 2, 3]]
 
-    rust = _core.align_best_details(claim, candidates, 2, -1, -1)
-    assert rust is not None
+    rust = rust_core.align_best_details(claim, candidates, 2, -1, -1)
+    assert rust is not None, "Rust align_best_details returned None unexpectedly"
     (
         rust_score,
         rust_index,
@@ -85,35 +83,27 @@ def test_rust_align_best_matches_python_selection() -> None:
         rust_query_start,
         rust_query_end,
         rust_matches,
-    ) == best
+    ) == best, "Rust best selection differs from Python"
 
 
-def test_rust_align_best_empty_returns_none() -> None:
-    try:
-        from cite_right import _core
-    except ImportError:
-        pytest.skip("Rust extension not built")
-
-    assert _core.align_best([1], [], 2, -1, -1) is None
-    assert _core.align_best_details([1], [], 2, -1, -1) is None
+@requires_rust
+def test_rust_align_best_empty_returns_none(rust_core: ModuleType) -> None:
+    """Verify Rust returns None for empty candidate list."""
+    assert rust_core.align_best([1], [], 2, -1, -1) is None
+    assert rust_core.align_best_details([1], [], 2, -1, -1) is None
 
 
-def test_rust_align_pair_blocks_details_matches_python_blocks() -> None:
-    try:
-        from cite_right import _core
-    except ImportError:
-        pytest.skip("Rust extension not built")
-    if not hasattr(_core, "align_pair_blocks_details"):
-        pytest.skip(
-            "Rust extension is missing align_pair_blocks_details (rebuild required)"
-        )
-
+@requires_rust_blocks
+def test_rust_align_pair_blocks_details_matches_python_blocks(
+    rust_core_with_blocks: ModuleType,
+) -> None:
+    """Verify Rust align_pair_blocks_details matches Python blocks output."""
     aligner = SmithWatermanAligner(return_match_blocks=True)
     seq1 = [1, 2, 3, 4]
     seq2 = [1, 2, 9, 9, 3, 4]
 
     py = aligner.align(seq1, seq2)
-    rust = _core.align_pair_blocks_details(seq1, seq2, 2, -1, -1)
+    rust = rust_core_with_blocks.align_pair_blocks_details(seq1, seq2, 2, -1, -1)
     assert rust == (
         py.score,
         py.token_start,
@@ -122,21 +112,18 @@ def test_rust_align_pair_blocks_details_matches_python_blocks() -> None:
         py.query_end,
         py.matches,
         py.match_blocks,
-    )
+    ), "Rust match_blocks differs from Python"
 
 
-def test_rust_align_topk_matches_python_selection() -> None:
-    try:
-        from cite_right import _core
-    except ImportError:
-        pytest.skip("Rust extension not built")
-
+@requires_rust
+def test_rust_align_topk_matches_python_selection(rust_core: ModuleType) -> None:
+    """Verify Rust top-k selection matches Python sorting logic."""
     aligner = SmithWatermanAligner()
     claim = [1, 2]
     candidates = [[3, 4], [1, 2, 1, 2], [1, 2], [0, 1, 2, 3]]
 
     top_k = 3
-    rust = _core.align_topk_details(claim, candidates, top_k, 2, -1, -1)
+    rust = rust_core.align_topk_details(claim, candidates, top_k, 2, -1, -1)
 
     py_items: list[tuple[int, int, int, int, int, int, int]] = []
     for index, seq2 in enumerate(candidates):
@@ -164,4 +151,4 @@ def test_rust_align_topk_matches_python_selection() -> None:
             item[5],
         )
     )
-    assert rust == py_items[:top_k]
+    assert rust == py_items[:top_k], "Rust top-k differs from Python selection"

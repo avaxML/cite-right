@@ -1,16 +1,14 @@
-import pytest
+"""Tests for SpaCy-based segmentation in citation alignment."""
 
 from cite_right import SpacyAnswerSegmenter, SpacySegmenter, align_citations
 from cite_right.core.citation_config import CitationConfig, CitationWeights
 
+from .conftest import requires_spacy_model
 
+
+@requires_spacy_model
 def test_align_citations_spacy_clause_segmentation_cites_each_clause() -> None:
-    spacy = pytest.importorskip("spacy")
-    try:
-        spacy.load("en_core_web_sm")
-    except OSError:
-        pytest.skip("spaCy model not installed")
-
+    """Verify SpaCy clause segmentation produces separate citations per clause."""
     answer = "Apple revenue is up and stocks are down."
     sources = [
         "Intro filler. Apple revenue is up. Outro filler.",
@@ -34,21 +32,20 @@ def test_align_citations_spacy_clause_segmentation_cites_each_clause() -> None:
     assert [item.answer_span.text for item in results] == [
         "Apple revenue is up",
         "stocks are down.",
-    ]
+    ], "Answer spans don't match expected clauses"
     assert [item.citations[0].evidence for item in results] == [
         "Apple revenue is up",
         "stocks are down",
-    ]
-    assert [item.citations[0].source_index for item in results] == [0, 1]
+    ], "Citation evidence doesn't match expected"
+    assert [item.citations[0].source_index for item in results] == [
+        0,
+        1,
+    ], "Source indices don't match expected"
 
 
+@requires_spacy_model
 def test_align_citations_spacy_does_not_split_lists() -> None:
-    spacy = pytest.importorskip("spacy")
-    try:
-        spacy.load("en_core_web_sm")
-    except OSError:
-        pytest.skip("spaCy model not installed")
-
+    """Verify SpaCy doesn't incorrectly split comma-separated lists."""
     answer = "Apples, oranges, and pears are tasty."
     sources = [answer]
 
@@ -65,6 +62,8 @@ def test_align_citations_spacy_does_not_split_lists() -> None:
             weights=CitationWeights(lexical=0.0, embedding=0.0),
         ),
     )
-    assert len(results) == 1
+    assert len(results) == 1, "Expected single result for list sentence"
     assert results[0].answer_span.text == answer
-    assert results[0].citations[0].evidence == answer[:-1]
+    assert results[0].citations[0].evidence == answer[:-1], (
+        "Evidence should exclude trailing punctuation"
+    )

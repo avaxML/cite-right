@@ -1,7 +1,11 @@
+"""Tests for the main align_citations API."""
+
 import pytest
 
 from cite_right import SourceChunk, SourceDocument, align_citations
 from cite_right.core.citation_config import CitationConfig, CitationWeights
+
+from .conftest import requires_rust
 
 
 @pytest.mark.parametrize("source_count", [5, 10, 20, 40, 50])
@@ -223,12 +227,9 @@ def test_align_citations_windowing_enables_cross_sentence_evidence() -> None:
     assert "18 percent higher efficiency" in citation.evidence
 
 
+@requires_rust
 def test_align_citations_python_and_rust_backends_match() -> None:
-    try:
-        from cite_right import _core  # noqa: F401
-    except ImportError:
-        pytest.skip("Rust extension not built")
-
+    """Verify Python and Rust backends produce identical citation results."""
     phrase = "climate policy reduces emissions quickly"
     answer = f"{phrase}."
     sources = [
