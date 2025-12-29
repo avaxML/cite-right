@@ -1,4 +1,4 @@
-# Cite-Right v3
+# Cite-Right
 
 [![CI](https://github.com/avaxML/cite-right/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/avaxML/cite-right/actions/workflows/ci.yml)
 ![Coverage](./coverage.svg)
