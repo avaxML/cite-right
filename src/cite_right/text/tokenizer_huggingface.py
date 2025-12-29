@@ -152,7 +152,8 @@ class HuggingFaceTokenizer:
     def _tokenize_transformers(self, text: str) -> TokenizedText:
         """Tokenize using transformers library tokenizer."""
         # Use the tokenizer with offset mapping
-        encoding = self._tokenizer(
+        # Type is verified at runtime in _check_tokenizer_type
+        encoding = self._tokenizer(  # type: ignore[operator]
             text,
             return_offsets_mapping=True,
             add_special_tokens=self._add_special_tokens,
@@ -160,8 +161,8 @@ class HuggingFaceTokenizer:
             return_token_type_ids=False,
         )
 
-        token_ids: list[int] = encoding["input_ids"]
-        offset_mapping: list[tuple[int, int]] = encoding["offset_mapping"]
+        token_ids: list[int] = encoding["input_ids"]  # type: ignore[index]
+        offset_mapping: list[tuple[int, int]] = encoding["offset_mapping"]  # type: ignore[index]
 
         # Filter out special tokens (they have (0, 0) offsets)
         token_spans: list[tuple[int, int]] = []
@@ -213,5 +214,5 @@ class HuggingFaceTokenizer:
         """Get the set of special token IDs."""
         special_ids: set[int] = set()
         if hasattr(self._tokenizer, "all_special_ids"):
-            special_ids = set(self._tokenizer.all_special_ids)
+            special_ids = set(self._tokenizer.all_special_ids)  # type: ignore[union-attr]
         return special_ids
