@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from pydantic import BaseModel, ConfigDict
 
 from cite_right.core.interfaces import Segmenter
 from cite_right.core.results import Segment
 
 
-@dataclass(frozen=True, slots=True)
-class Passage:
+class Passage(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
     text: str
     doc_char_start: int
     doc_char_end: int

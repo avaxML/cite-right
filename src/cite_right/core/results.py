@@ -1,54 +1,61 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 from typing import Any, Literal, Mapping
 
+from pydantic import BaseModel, ConfigDict, Field
 
-@dataclass(frozen=True, slots=True)
-class TokenizedText:
+
+class TokenizedText(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
     text: str
     token_ids: list[int]
     token_spans: list[tuple[int, int]]
 
 
-@dataclass(frozen=True, slots=True)
-class Segment:
+class Segment(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
     text: str
     doc_char_start: int
     doc_char_end: int
 
 
-@dataclass(frozen=True, slots=True)
-class Alignment:
+class Alignment(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
     score: int
     token_start: int
     token_end: int
     query_start: int = 0
     query_end: int = 0
     matches: int = 0
-    match_blocks: list[tuple[int, int]] = field(default_factory=list)
+    match_blocks: list[tuple[int, int]] = Field(default_factory=list)
 
 
-@dataclass(frozen=True, slots=True)
-class SourceDocument:
+class SourceDocument(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
     id: str
     text: str
-    metadata: Mapping[str, Any] = field(default_factory=dict)
+    metadata: Mapping[str, Any] = Field(default_factory=dict)
 
 
-@dataclass(frozen=True, slots=True)
-class SourceChunk:
+class SourceChunk(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
     source_id: str
     text: str
     doc_char_start: int
     doc_char_end: int
-    metadata: Mapping[str, Any] = field(default_factory=dict)
+    metadata: Mapping[str, Any] = Field(default_factory=dict)
     document_text: str | None = None
     source_index: int | None = None
 
 
-@dataclass(frozen=True, slots=True)
-class AnswerSpan:
+class AnswerSpan(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
     text: str
     char_start: int
     char_end: int
@@ -57,8 +64,7 @@ class AnswerSpan:
     sentence_index: int | None = None
 
 
-@dataclass(frozen=True, slots=True)
-class EvidenceSpan:
+class EvidenceSpan(BaseModel):
     """A contiguous evidence slice in a source document.
 
     Attributes:
@@ -67,13 +73,16 @@ class EvidenceSpan:
         evidence: Exact substring `source_text[char_start:char_end]`.
     """
 
+    model_config = ConfigDict(frozen=True)
+
     char_start: int
     char_end: int
     evidence: str
 
 
-@dataclass(frozen=True, slots=True)
-class Citation:
+class Citation(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
     score: float
     source_id: str
     source_index: int
@@ -81,12 +90,13 @@ class Citation:
     char_start: int
     char_end: int
     evidence: str
-    evidence_spans: list[EvidenceSpan] = field(default_factory=list)
-    components: Mapping[str, float] = field(default_factory=dict)
+    evidence_spans: list[EvidenceSpan] = Field(default_factory=list)
+    components: Mapping[str, float] = Field(default_factory=dict)
 
 
-@dataclass(frozen=True, slots=True)
-class SpanCitations:
+class SpanCitations(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
     answer_span: AnswerSpan
     citations: list[Citation]
     status: Literal["supported", "partial", "unsupported"]

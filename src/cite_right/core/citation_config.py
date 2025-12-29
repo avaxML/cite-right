@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from pydantic import BaseModel, ConfigDict, Field
 
 
-@dataclass(frozen=True, slots=True)
-class CitationWeights:
+class CitationWeights(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
     alignment: float = 1.0
     answer_coverage: float = 1.0
     evidence_coverage: float = 0.0
@@ -12,8 +13,7 @@ class CitationWeights:
     embedding: float = 0.5
 
 
-@dataclass(frozen=True, slots=True)
-class CitationConfig:
+class CitationConfig(BaseModel):
     """Configuration for `cite_right.align_citations`.
 
     Attributes:
@@ -27,6 +27,8 @@ class CitationConfig:
             citation after merging. If exceeded, the citation falls back to a single
             contiguous evidence span.
     """
+
+    model_config = ConfigDict(frozen=True)
 
     top_k: int = 3
     min_final_score: float = 0.0
@@ -46,7 +48,7 @@ class CitationConfig:
 
     max_citations_per_source: int = 2
 
-    weights: CitationWeights = field(default_factory=CitationWeights)
+    weights: CitationWeights = Field(default_factory=CitationWeights)
 
     match_score: int = 2
     mismatch_score: int = -1

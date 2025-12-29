@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import math
 import time
-from dataclasses import dataclass, field
 from typing import Callable, Literal, Sequence, TypeAlias
+
+from pydantic import BaseModel, ConfigDict, Field
 
 from cite_right.core.aligner_py import SmithWatermanAligner
 from cite_right.core.aligner_rust import RustSmithWatermanAligner
@@ -36,8 +37,7 @@ IdfWeights: TypeAlias = dict[int, float]
 """Mapping from token ID to IDF weight."""
 
 
-@dataclass(frozen=True, slots=True)
-class AlignmentMetrics:
+class AlignmentMetrics(BaseModel):
     """Observability metrics for the alignment pipeline.
 
     Attributes:
@@ -48,6 +48,8 @@ class AlignmentMetrics:
         embedding_time_ms: Time spent computing embeddings in milliseconds.
         alignment_time_ms: Time spent in alignment operations in milliseconds.
     """
+
+    model_config = ConfigDict(frozen=True)
 
     total_time_ms: float
     num_answer_spans: int
@@ -61,8 +63,9 @@ MetricsCallback: TypeAlias = Callable[[AlignmentMetrics], None]
 """Callback function for receiving alignment metrics."""
 
 
-@dataclass(frozen=True, slots=True)
-class _NormalizedSource:
+class _NormalizedSource(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
     source_id: str
     source_index: int
     text: str
@@ -70,8 +73,9 @@ class _NormalizedSource:
     full_text: str | None
 
 
-@dataclass(frozen=True, slots=True)
-class _Candidate:
+class _Candidate(BaseModel):
+    model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
+
     global_index: int
     source: _NormalizedSource
     passage: Passage
@@ -80,13 +84,14 @@ class _Candidate:
     token_set: frozenset[int]
 
 
-@dataclass
-class _EmbeddingCache:
+class _EmbeddingCache(BaseModel):
     """Cache for batched answer span embeddings."""
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     embedder: Embedder
     answer_spans: list[AnswerSpan]
-    vectors: list[list[float]] = field(default_factory=list)
+    vectors: list[list[float]] = Field(default_factory=list)
     _computed: bool = False
 
     def get_vector(self, span_index: int) -> list[float]:
