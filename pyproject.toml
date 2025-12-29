@@ -46,6 +46,16 @@ ignore = ["E501"]
 [tool.ruff.format]
 quote-style = "double"
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+# Markers are registered in conftest.py via pytest_configure
+
 [tool.pyright]
 pythonVersion = "3.11"
 typeCheckingMode = "basic"
