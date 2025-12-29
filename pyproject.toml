@@ -12,6 +12,8 @@ dependencies = [
 [project.optional-dependencies]
 spacy = ["spacy>=3.7"]
 embeddings = ["sentence-transformers>=2.2"]
+tiktoken = ["tiktoken>=0.5"]
+huggingface = ["transformers>=4.30", "tokenizers>=0.15"]
 
 [dependency-groups]
 dev = ["pytest>=8", "ruff>=0.6", "pyright>=1.1", "maturin>=1.4"]
