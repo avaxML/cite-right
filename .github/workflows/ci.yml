@@ -60,7 +60,10 @@ jobs:
           python-version: "3.11"
       - uses: astral-sh/setup-uv@v1
       - run: uv sync --frozen --extra spacy --no-install-project
-      - run: uv pip install https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
+      - name: Install pip and download spacy model
+        run: |
+          curl -sS https://bootstrap.pypa.io/get-pip.py | uv run python
+          uv run python -m spacy download en_core_web_sm
       - run: PYTHONPATH=src uv run pytest -q -k spacy
 
   python-embeddings:
