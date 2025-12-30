@@ -3,7 +3,51 @@
 [![CI](https://github.com/avaxML/cite-right/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/avaxML/cite-right/actions/workflows/ci.yml)
 ![Coverage](./coverage.svg)
 
-Cite-Right aligns a generated answer to source documents using Smith–Waterman **local sequence alignment** and returns **character-accurate citations** suitable for highlighting and extraction.
+**Link any piece of an AI response back to the exact source text that supports it.**
+
+Cite-Right is an open-source alternative to Perplexity's "check sources" feature. Select any sentence in a generated answer and get back the precise character offsets into your source documents—perfect for building inline citations, source highlighting, and fact-verification UIs.
+
+## What it does
+
+Given an AI-generated answer and a set of source documents, Cite-Right:
+
+1. **Segments the answer** into individual sentences or claims
+2. **Finds supporting evidence** in your sources using Smith-Waterman local sequence alignment
+3. **Returns character-accurate citations** (`char_start`, `char_end`) pointing to the exact evidence text
+4. **Labels each span** as `"supported"`, `"partial"`, or `"unsupported"` (hallucinated)
+
+```python
+from cite_right import align_citations, SourceDocument
+
+answer = "The company reported $5.2B in revenue. They plan to expand to Mars."
+sources = [SourceDocument(id="report", text="Annual revenue reached $5.2B in Q4 2024.")]
+
+results = align_citations(answer, sources)
+
+for span in results:
+    print(f"{span.answer_span.text!r} → {span.status}")
+    if span.citations:
+        c = span.citations[0]
+        print(f"  Evidence: {c.evidence!r}")
+        print(f"  Location: chars {c.char_start}-{c.char_end} in '{c.source_id}'")
+
+# Output:
+# 'The company reported $5.2B in revenue.' → supported
+#   Evidence: 'revenue reached $5.2B in Q4 2024'
+#   Location: chars 7-39 in 'report'
+# 'They plan to expand to Mars.' → unsupported
+```
+
+## Key features
+
+- **Character-accurate offsets**: `source_text[char_start:char_end] == evidence` is always true
+- **Per-sentence granularity**: Each sentence in your answer gets its own citations
+- **Hallucination detection**: Identify which claims lack source support
+- **Multi-span evidence**: Capture non-contiguous supporting text
+- **Fast**: Optional Rust acceleration for production workloads
+- **Lightweight core**: No heavy dependencies—embeddings and spaCy are optional
+
+## API overview
 
 The public API is Python-first for correctness and determinism, with an optional Rust extension (`cite_right._core`) for speed:
 
