@@ -249,101 +249,17 @@ def align_citations(
                 candidate = candidates[candidate_index]
                 alignment = aligner.align(answer_tokens, candidate.token_ids)
                 num_alignments += 1
-                matches = (
-                    alignment.matches
-                    if alignment.matches > 0
-                    else max(0, alignment.score // max(1, cfg.match_score))
-                )
-                answer_len = len(answer_tokens)
-                evidence_len = max(1, alignment.token_end - alignment.token_start)
-                answer_coverage = matches / max(1, answer_len)
-                evidence_coverage = matches / evidence_len
-                normalized_alignment = alignment.score / max(
-                    1, cfg.match_score * answer_len
-                )
 
-                use_alignment_evidence = (
-                    alignment.score >= cfg.min_alignment_score
-                    and alignment.token_start < alignment.token_end
-                    and answer_coverage >= cfg.min_answer_coverage
+                citation = _process_candidate(
+                    candidate=candidate,
+                    alignment=alignment,
+                    answer_tokens=answer_tokens,
+                    embed_score=embed_score,
+                    lexical_score=lexical_score,
+                    cfg=cfg,
                 )
-                use_embedding_only = (
-                    cfg.allow_embedding_only
-                    and embed_score >= cfg.min_embedding_similarity
-                )
-                if not use_alignment_evidence and not use_embedding_only:
-                    continue
-
-                if use_alignment_evidence:
-                    evidence_spans = _alignment_to_evidence_spans(
-                        candidate, alignment, cfg
-                    )
-                    if evidence_spans is None:
-                        continue
-                    abs_start = min(span.char_start for span in evidence_spans)
-                    abs_end = max(span.char_end for span in evidence_spans)
-                    evidence = _slice_source_text(candidate.source, abs_start, abs_end)
-                else:
-                    abs_start = (
-                        candidate.source.base_doc_offset
-                        + candidate.passage.doc_char_start
-                    )
-                    abs_end = (
-                        candidate.source.base_doc_offset
-                        + candidate.passage.doc_char_end
-                    )
-                    evidence = _slice_source_text(candidate.source, abs_start, abs_end)
-                    evidence_spans = [
-                        EvidenceSpan(
-                            char_start=abs_start,
-                            char_end=abs_end,
-                            evidence=evidence,
-                        )
-                    ]
-
-                final_score = (
-                    cfg.weights.alignment * normalized_alignment
-                    + cfg.weights.answer_coverage * answer_coverage
-                    + cfg.weights.evidence_coverage * evidence_coverage
-                    + cfg.weights.lexical * lexical_score
-                    + cfg.weights.embedding * max(0.0, embed_score)
-                )
-                if final_score < cfg.min_final_score:
-                    continue
-
-                citations.append(
-                    Citation(
-                        score=final_score,
-                        source_id=candidate.source.source_id,
-                        source_index=candidate.source.source_index,
-                        candidate_index=candidate.global_index,
-                        char_start=abs_start,
-                        char_end=abs_end,
-                        evidence=evidence,
-                        evidence_spans=evidence_spans,
-                        components={
-                            "embedding_only": 0.0 if use_alignment_evidence else 1.0,
-                            "alignment_score": float(alignment.score),
-                            "normalized_alignment": float(normalized_alignment),
-                            "matches": float(matches),
-                            "answer_coverage": float(answer_coverage),
-                            "evidence_coverage": float(evidence_coverage),
-                            "lexical_score": float(lexical_score),
-                            "embedding_score": float(embed_score),
-                            "num_evidence_spans": float(len(evidence_spans)),
-                            "evidence_chars_total": float(
-                                sum(
-                                    span.char_end - span.char_start
-                                    for span in evidence_spans
-                                )
-                            ),
-                            "passage_char_start": float(
-                                candidate.passage.doc_char_start
-                            ),
-                            "passage_char_end": float(candidate.passage.doc_char_end),
-                        },
-                    )
-                )
+                if citation is not None:
+                    citations.append(citation)
             alignment_time += (time.perf_counter() - align_start) * 1000
 
         citations = _rank_and_limit_citations(citations, cfg)
@@ -366,6 +282,111 @@ def align_citations(
         )
 
     return output
+
+
+def _process_candidate(
+    *,
+    candidate: _Candidate,
+    alignment: Alignment,
+    answer_tokens: list[int],
+    embed_score: float,
+    lexical_score: float,
+    cfg: CitationConfig,
+) -> Citation | None:
+    """Process a single candidate and return a Citation if it meets thresholds."""
+    matches = (
+        alignment.matches
+        if alignment.matches > 0
+        else max(0, alignment.score // max(1, cfg.match_score))
+    )
+    answer_len = len(answer_tokens)
+    evidence_len = max(1, alignment.token_end - alignment.token_start)
+    answer_coverage = matches / max(1, answer_len)
+    evidence_coverage = matches / evidence_len
+    normalized_alignment = alignment.score / max(1, cfg.match_score * answer_len)
+
+    use_alignment_evidence = (
+        alignment.score >= cfg.min_alignment_score
+        and alignment.token_start < alignment.token_end
+        and answer_coverage >= cfg.min_answer_coverage
+    )
+    use_embedding_only = (
+        cfg.allow_embedding_only and embed_score >= cfg.min_embedding_similarity
+    )
+    if not use_alignment_evidence and not use_embedding_only:
+        return None
+
+    evidence_result = _extract_evidence(
+        candidate, alignment, cfg, use_alignment_evidence
+    )
+    if evidence_result is None:
+        return None
+
+    abs_start, abs_end, evidence, evidence_spans = evidence_result
+
+    final_score = (
+        cfg.weights.alignment * normalized_alignment
+        + cfg.weights.answer_coverage * answer_coverage
+        + cfg.weights.evidence_coverage * evidence_coverage
+        + cfg.weights.lexical * lexical_score
+        + cfg.weights.embedding * max(0.0, embed_score)
+    )
+    if final_score < cfg.min_final_score:
+        return None
+
+    return Citation(
+        score=final_score,
+        source_id=candidate.source.source_id,
+        source_index=candidate.source.source_index,
+        candidate_index=candidate.global_index,
+        char_start=abs_start,
+        char_end=abs_end,
+        evidence=evidence,
+        evidence_spans=evidence_spans,
+        components={
+            "embedding_only": 0.0 if use_alignment_evidence else 1.0,
+            "alignment_score": float(alignment.score),
+            "normalized_alignment": float(normalized_alignment),
+            "matches": float(matches),
+            "answer_coverage": float(answer_coverage),
+            "evidence_coverage": float(evidence_coverage),
+            "lexical_score": float(lexical_score),
+            "embedding_score": float(embed_score),
+            "num_evidence_spans": float(len(evidence_spans)),
+            "evidence_chars_total": float(
+                sum(span.char_end - span.char_start for span in evidence_spans)
+            ),
+            "passage_char_start": float(candidate.passage.doc_char_start),
+            "passage_char_end": float(candidate.passage.doc_char_end),
+        },
+    )
+
+
+def _extract_evidence(
+    candidate: _Candidate,
+    alignment: Alignment,
+    cfg: CitationConfig,
+    use_alignment_evidence: bool,
+) -> tuple[int, int, str, list[EvidenceSpan]] | None:
+    """Extract evidence spans from a candidate based on alignment or embedding match."""
+    if use_alignment_evidence:
+        evidence_spans = _alignment_to_evidence_spans(candidate, alignment, cfg)
+        if evidence_spans is None:
+            return None
+        abs_start = min(span.char_start for span in evidence_spans)
+        abs_end = max(span.char_end for span in evidence_spans)
+        evidence = _slice_source_text(candidate.source, abs_start, abs_end)
+    else:
+        abs_start = (
+            candidate.source.base_doc_offset + candidate.passage.doc_char_start
+        )
+        abs_end = candidate.source.base_doc_offset + candidate.passage.doc_char_end
+        evidence = _slice_source_text(candidate.source, abs_start, abs_end)
+        evidence_spans = [
+            EvidenceSpan(char_start=abs_start, char_end=abs_end, evidence=evidence)
+        ]
+
+    return abs_start, abs_end, evidence, evidence_spans
 
 
 def _default_aligner(cfg: CitationConfig, *, backend: str) -> Aligner:

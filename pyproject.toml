@@ -17,7 +17,7 @@ huggingface = ["transformers>=4.30", "tokenizers>=0.15"]
 pysbd = ["pysbd>=0.3.4"]
 
 [dependency-groups]
-dev = ["pytest>=8", "pytest-cov>=4.0", "ruff>=0.6", "pyright>=1.1", "maturin>=1.4"]
+dev = ["pytest>=8", "pytest-cov>=4.0", "ruff>=0.6", "pyright>=1.1", "maturin>=1.4", "radon>=6.0"]
 
 [build-system]
 requires = ["maturin>=1.4,<2.0"]
@@ -64,3 +64,9 @@ venvPath = "."
 venv = ".venv"
 # Optional dependencies may not be installed during type checking
 reportMissingImports = "warning"
+
+[tool.radon]
+# Maximum cyclomatic complexity allowed (C grade = 11-20, D grade = 21-30)
+# We enforce C grade or better (complexity <= 20) to prevent overly complex code
+cc_max = "C"
+exclude = "tests/*,build/*,.venv/*"
