@@ -21,15 +21,15 @@ jobs:
       - run: uv run pyright
       - name: Check code complexity
         run: |
-          # Fail if any function has complexity > 20 (D grade or worse)
-          # --min D shows only functions with complexity >= 21
-          result=$(uv run radon cc src/cite_right --min D -s 2>&1)
+          # Fail if any function has complexity > 10 (C grade or worse)
+          # --min C shows only functions with complexity >= 11
+          result=$(uv run radon cc src/cite_right --min C -s 2>&1)
           if [ -n "$result" ]; then
-            echo "Found functions with complexity > 20 (D grade or worse):"
+            echo "Found functions with complexity > 10 (C grade or worse):"
             echo "$result"
             exit 1
           fi
-          echo "All functions have acceptable complexity (C grade or better)"
+          echo "All functions have acceptable complexity (B grade or better)"
       - run: uv run maturin develop
       - run: uv run pytest -q
 

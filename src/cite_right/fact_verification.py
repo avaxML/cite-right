@@ -112,125 +112,112 @@ def verify_facts(
     embedder: Embedder | None = None,
     backend: Literal["auto", "python", "rust"] = "auto",
 ) -> FactVerificationMetrics:
-    """Verify facts in an answer against source documents.
-
-    This function decomposes the answer into atomic claims and verifies
-    each claim independently, providing fine-grained hallucination detection.
-
-    Args:
-        answer: The answer text to verify.
-        sources: Source documents to verify against.
-        config: Verification configuration.
-        claim_decomposer: Strategy for decomposing spans into claims.
-            Defaults to SimpleClaimDecomposer. Use SpacyClaimDecomposer
-            for conjunction-based decomposition.
-        answer_segmenter: Segmenter for splitting answer into spans.
-        source_segmenter: Segmenter for splitting source documents.
-        tokenizer: Tokenizer for alignment.
-        embedder: Optional embedder for semantic matching.
-        backend: Alignment backend ("auto", "python", or "rust").
-
-    Returns:
-        FactVerificationMetrics with aggregate and per-claim verification data.
-
-    Example:
-        >>> from cite_right import verify_facts
-        >>> from cite_right.claims import SpacyClaimDecomposer
-        >>>
-        >>> answer = "Revenue grew 20% and profits doubled."
-        >>> sources = ["Annual report shows revenue grew 20%."]
-        >>>
-        >>> # With spaCy decomposition
-        >>> decomposer = SpacyClaimDecomposer()
-        >>> metrics = verify_facts(answer, sources, claim_decomposer=decomposer)
-        >>>
-        >>> print(f"Verified: {metrics.num_verified}/{metrics.num_claims}")
-        >>> for claim in metrics.unverified_claims:
-        ...     print(f"  Unverified: {claim.text!r}")
-    """
+    """Verify facts in an answer against source documents."""
     cfg = config or FactVerificationConfig()
     decomposer = claim_decomposer or SimpleClaimDecomposer()
     segmenter = answer_segmenter or SimpleAnswerSegmenter()
 
-    # Get citation config, using top_k=3 for claim verification
     citation_config = cfg.citation_config or CitationConfig(
         top_k=3,
         min_answer_coverage=0.2,
         supported_answer_coverage=cfg.verified_coverage_threshold,
     )
 
-    # Segment the answer into spans
-    answer_spans = segmenter.segment(answer)
-
-    # Decompose each span into atomic claims
-    all_claims: list[Claim] = []
-    for span in answer_spans:
-        claims = decomposer.decompose(span)
-        all_claims.extend(claims)
+    all_claims = _decompose_answer(answer, segmenter, decomposer)
 
     if not all_claims:
-        return FactVerificationMetrics(
-            num_claims=0,
-            num_verified=0,
-            num_partial=0,
-            num_unverified=0,
-            verification_rate=1.0,
-            avg_confidence=1.0,
-            min_confidence=1.0,
-            claim_verifications=[],
-            verified_claims=[],
-            unverified_claims=[],
-            partial_claims=[],
-        )
+        return _empty_verification_metrics()
 
-    # Verify each claim
-    claim_verifications: list[ClaimVerification] = []
-    verified_claims: list[Claim] = []
-    unverified_claims: list[Claim] = []
-    partial_claims: list[Claim] = []
+    return _verify_all_claims(
+        all_claims, sources, cfg, citation_config,
+        source_segmenter, tokenizer, embedder, backend,
+    )
+
+
+def _decompose_answer(
+    answer: str, segmenter: AnswerSegmenter, decomposer: ClaimDecomposer
+) -> list[Claim]:
+    """Segment answer and decompose into atomic claims."""
+    answer_spans = segmenter.segment(answer)
+    all_claims: list[Claim] = []
+    for span in answer_spans:
+        all_claims.extend(decomposer.decompose(span))
+    return all_claims
+
+
+def _empty_verification_metrics() -> FactVerificationMetrics:
+    """Return metrics for empty input."""
+    return FactVerificationMetrics(
+        num_claims=0,
+        num_verified=0,
+        num_partial=0,
+        num_unverified=0,
+        verification_rate=1.0,
+        avg_confidence=1.0,
+        min_confidence=1.0,
+        claim_verifications=[],
+        verified_claims=[],
+        unverified_claims=[],
+        partial_claims=[],
+    )
+
+
+def _verify_all_claims(
+    claims: list[Claim],
+    sources: Sequence[str | SourceDocument | SourceChunk],
+    cfg: FactVerificationConfig,
+    citation_config: CitationConfig,
+    source_segmenter: Segmenter | None,
+    tokenizer: Tokenizer | None,
+    embedder: Embedder | None,
+    backend: Literal["auto", "python", "rust"],
+) -> FactVerificationMetrics:
+    """Verify all claims and aggregate results."""
+    verifications: list[ClaimVerification] = []
+    verified: list[Claim] = []
+    unverified: list[Claim] = []
+    partial: list[Claim] = []
     confidence_values: list[float] = []
 
-    for claim in all_claims:
-        verification = _verify_claim(
-            claim=claim,
-            sources=sources,
-            config=cfg,
-            citation_config=citation_config,
-            source_segmenter=source_segmenter,
-            tokenizer=tokenizer,
-            embedder=embedder,
-            backend=backend,
+    for claim in claims:
+        v = _verify_claim(
+            claim=claim, sources=sources, config=cfg,
+            citation_config=citation_config, source_segmenter=source_segmenter,
+            tokenizer=tokenizer, embedder=embedder, backend=backend,
         )
-        claim_verifications.append(verification)
-        confidence_values.append(verification.confidence)
-
-        if verification.status == "verified":
-            verified_claims.append(claim)
-        elif verification.status == "partial":
-            partial_claims.append(claim)
-        else:
-            unverified_claims.append(claim)
-
-    num_claims = len(all_claims)
-    num_verified = len(verified_claims)
-    num_partial = len(partial_claims)
-    num_unverified = len(unverified_claims)
+        verifications.append(v)
+        confidence_values.append(v.confidence)
+        _categorize_claim(claim, v.status, verified, partial, unverified)
 
     return FactVerificationMetrics(
-        num_claims=num_claims,
-        num_verified=num_verified,
-        num_partial=num_partial,
-        num_unverified=num_unverified,
-        verification_rate=num_verified / num_claims if num_claims > 0 else 1.0,
-        avg_confidence=sum(confidence_values) / len(confidence_values)
-        if confidence_values
-        else 1.0,
+        num_claims=len(claims),
+        num_verified=len(verified),
+        num_partial=len(partial),
+        num_unverified=len(unverified),
+        verification_rate=len(verified) / len(claims) if claims else 1.0,
+        avg_confidence=sum(confidence_values) / len(confidence_values) if confidence_values else 1.0,
         min_confidence=min(confidence_values) if confidence_values else 1.0,
-        claim_verifications=claim_verifications,
-        verified_claims=verified_claims,
-        unverified_claims=unverified_claims,
-        partial_claims=partial_claims,
+        claim_verifications=verifications,
+        verified_claims=verified,
+        unverified_claims=unverified,
+        partial_claims=partial,
     )
+
+
+def _categorize_claim(
+    claim: Claim,
+    status: str,
+    verified: list[Claim],
+    partial: list[Claim],
+    unverified: list[Claim],
+) -> None:
+    """Add claim to the appropriate list based on status."""
+    if status == "verified":
+        verified.append(claim)
+    elif status == "partial":
+        partial.append(claim)
+    else:
+        unverified.append(claim)
 
 
 def _verify_claim(

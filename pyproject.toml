@@ -66,7 +66,7 @@ venv = ".venv"
 reportMissingImports = "warning"
 
 [tool.radon]
-# Maximum cyclomatic complexity allowed (C grade = 11-20, D grade = 21-30)
-# We enforce C grade or better (complexity <= 20) to prevent overly complex code
-cc_max = "C"
+# Maximum cyclomatic complexity allowed (B grade = 6-10, C grade = 11-20)
+# We enforce B grade or better (complexity <= 10) to prevent overly complex code
+cc_max = "B"
 exclude = "tests/*,build/*,.venv/*"
