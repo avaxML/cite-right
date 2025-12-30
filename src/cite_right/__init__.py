@@ -5,6 +5,14 @@ from cite_right.claims import (
     SimpleClaimDecomposer,
     SpacyClaimDecomposer,
 )
+from cite_right.convenience import (
+    annotate_answer,
+    check_groundedness,
+    format_with_citations,
+    get_citation_summary,
+    is_grounded,
+    is_hallucinated,
+)
 from cite_right.core.citation_config import CitationConfig, CitationWeights
 from cite_right.core.results import (
     AnswerSpan,
@@ -28,6 +36,13 @@ from cite_right.hallucination import (
     SpanConfidence,
     compute_hallucination_metrics,
 )
+from cite_right.integrations import (
+    from_dicts,
+    from_langchain_chunks,
+    from_langchain_documents,
+    from_llamaindex_chunks,
+    from_llamaindex_nodes,
+)
 from cite_right.models.sbert_embedder import SentenceTransformerEmbedder
 from cite_right.text.answer_segmenter_spacy import SpacyAnswerSegmenter
 from cite_right.text.segmenter_pysbd import PySBDSegmenter
@@ -36,40 +51,60 @@ from cite_right.text.tokenizer import SimpleTokenizer, TokenizerConfig
 from cite_right.text.tokenizer_huggingface import HuggingFaceTokenizer
 from cite_right.text.tokenizer_tiktoken import TiktokenTokenizer
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 
 __all__ = [
     "__version__",
+    # Core API
+    "align_citations",
+    "compute_hallucination_metrics",
+    "verify_facts",
+    # Convenience functions
+    "annotate_answer",
+    "check_groundedness",
+    "format_with_citations",
+    "get_citation_summary",
+    "is_grounded",
+    "is_hallucinated",
+    # Framework integrations
+    "from_dicts",
+    "from_langchain_chunks",
+    "from_langchain_documents",
+    "from_llamaindex_chunks",
+    "from_llamaindex_nodes",
+    # Configuration
+    "CitationConfig",
+    "CitationWeights",
+    "FactVerificationConfig",
+    "HallucinationConfig",
+    "TokenizerConfig",
+    # Result types
     "AlignmentMetrics",
     "AnswerSpan",
     "Citation",
-    "CitationConfig",
-    "CitationWeights",
     "Claim",
-    "ClaimDecomposer",
     "ClaimVerification",
     "EvidenceSpan",
-    "FactVerificationConfig",
     "FactVerificationMetrics",
-    "HallucinationConfig",
     "HallucinationMetrics",
-    "HuggingFaceTokenizer",
-    "PySBDSegmenter",
     "Segment",
-    "SentenceTransformerEmbedder",
-    "SimpleClaimDecomposer",
-    "SimpleTokenizer",
-    "SpacyAnswerSegmenter",
-    "SpacyClaimDecomposer",
-    "SpacySegmenter",
     "SourceChunk",
     "SourceDocument",
     "SpanCitations",
     "SpanConfidence",
-    "TiktokenTokenizer",
     "TokenizedText",
-    "TokenizerConfig",
-    "align_citations",
-    "compute_hallucination_metrics",
-    "verify_facts",
+    # Tokenizers
+    "HuggingFaceTokenizer",
+    "SimpleTokenizer",
+    "TiktokenTokenizer",
+    # Segmenters
+    "PySBDSegmenter",
+    "SpacyAnswerSegmenter",
+    "SpacySegmenter",
+    # Claim decomposition
+    "ClaimDecomposer",
+    "SimpleClaimDecomposer",
+    "SpacyClaimDecomposer",
+    # Embedders
+    "SentenceTransformerEmbedder",
 ]

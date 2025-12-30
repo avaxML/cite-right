@@ -299,6 +299,138 @@ metrics = compute_hallucination_metrics(results, config=config)
 
 Setting `include_partial_in_grounded=False` gives a stricter groundedness score that only counts fully "supported" spans.
 
+## Convenience Functions
+
+For common RAG post-processing workflows, cite-right provides high-level convenience functions:
+
+### Quick Groundedness Checks
+
+```python
+from cite_right import is_grounded, is_hallucinated
+
+answer = "Revenue grew 15% in Q4."
+sources = ["Annual report: Revenue grew 15% in Q4 2024."]
+
+# Simple boolean check for quality gates
+if is_grounded(answer, sources, threshold=0.6):
+    print("Answer is well-grounded!")
+
+# Or check for hallucinations
+if is_hallucinated(answer, sources, threshold=0.3):
+    print("Warning: Answer may contain hallucinations!")
+```
+
+### One-Step Groundedness Metrics
+
+```python
+from cite_right import check_groundedness
+
+metrics = check_groundedness(answer, sources)
+print(f"Groundedness: {metrics.groundedness_score:.1%}")
+print(f"Unsupported: {[s.text for s in metrics.unsupported_spans]}")
+```
+
+### Inline Citation Annotation
+
+Add citation markers directly to your answer text:
+
+```python
+from cite_right import SourceDocument, annotate_answer
+
+answer = "Revenue grew 15%. Profits doubled."
+sources = [SourceDocument(id="report", text="Revenue grew 15% in Q4.")]
+
+annotated = annotate_answer(answer, sources)
+# Output: "Revenue grew 15%.[1] Profits doubled.[?]"
+
+# Different formats available
+annotated = annotate_answer(answer, sources, format="superscript")  # ^1
+annotated = annotate_answer(answer, sources, format="footnote")     # [^1]
+```
+
+## Configuration Presets
+
+For common use cases, use pre-configured settings:
+
+```python
+from cite_right import CitationConfig, align_citations
+
+# High-precision mode for fact-checking
+config = CitationConfig.strict()
+
+# Lenient mode for paraphrased content
+config = CitationConfig.permissive()
+
+# Speed-optimized for high-volume processing
+config = CitationConfig.fast()
+
+# Default balanced configuration
+config = CitationConfig.balanced()
+
+results = align_citations(answer, sources, config=config)
+```
+
+| Preset | Use Case |
+|--------|----------|
+| `strict()` | Fact-checking, high-stakes applications |
+| `permissive()` | Summarization, paraphrased content |
+| `fast()` | High-volume processing, latency-sensitive |
+| `balanced()` | General purpose (same as default) |
+
+## Framework Integrations
+
+Cite-right provides helpers for popular RAG frameworks:
+
+### LangChain
+
+```python
+from cite_right import align_citations
+from cite_right.integrations import from_langchain_documents
+
+# After retrieval
+lc_docs = retriever.invoke(query)
+
+# Convert to cite-right format
+sources = from_langchain_documents(lc_docs)
+
+# Use with align_citations
+results = align_citations(answer, sources)
+```
+
+For pre-chunked documents with offsets:
+
+```python
+from cite_right.integrations import from_langchain_chunks
+
+# If your chunks have start_index/end_index metadata
+sources = from_langchain_chunks(lc_chunks)
+```
+
+### LlamaIndex
+
+```python
+from cite_right.integrations import from_llamaindex_nodes
+
+# After retrieval
+nodes = retriever.retrieve(query)
+
+# Convert to cite-right format
+sources = from_llamaindex_nodes(nodes)
+```
+
+### Plain Dictionaries
+
+```python
+from cite_right.integrations import from_dicts
+
+# From API responses or custom pipelines
+docs = [
+    {"id": "doc1", "text": "Document content...", "score": 0.9},
+    {"id": "doc2", "text": "Another document...", "score": 0.8},
+]
+sources = from_dicts(docs)
+```
+
 ## Rust acceleration
 
 If built, the Rust extension is importable as `cite_right._core` and is used by default by `align_citations` (falls back to pure Python if unavailable).
