@@ -83,14 +83,14 @@ Output:
 Answer: 'Acme reported revenue of 5.2 billion dollars in 2020.'
 Status: supported
   → Source: finance_report
-  → Evidence: 'Acme reported revenue of 5.2 billion dollars in 2020.'
-  → Location: chars 4-55
+  → Evidence: 'Acme reported revenue of 5.2 billion dollars in 2020'
+  → Location: chars 4-56
 
 Answer: 'Heat pumps cut household emissions.'
 Status: supported
   → Source: energy_study
-  → Evidence: 'Heat pumps cut household emissions.'
-  → Location: chars 4-39
+  → Evidence: 'Heat pumps cut household emissions'
+  → Location: chars 4-38
 ```
 
 ## Building a "Check Sources" UI
