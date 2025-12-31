@@ -71,13 +71,13 @@ for result in results:
 
 The `citations` field is a list of `Citation` objects, ranked from best to worst match. The number of citations depends on the `top_k` configuration parameter.
 
-The `status` field is a string indicating overall support level. It takes one of three values based on the quality of the best citation.
+The `status` field is a string indicating overall support level. It takes one of three values based on the best citation's answer coverage (and optionally embedding similarity).
 
-A status of "supported" indicates the answer span has a high-quality match in the sources. The threshold for this status is configurable.
+A status of "supported" means the best citation has `answer_coverage >= supported_answer_coverage`. If `allow_embedding_only=True`, a span can also be marked supported when `embedding_score >= supported_embedding_similarity`.
 
-A status of "partial" indicates some support was found but the match quality is below the full support threshold. This often occurs with paraphrased content.
+A status of "partial" means at least one citation was produced but the supported thresholds were not met. This often occurs with paraphrased or partially supported content.
 
-A status of "unsupported" indicates no adequate match was found. This may indicate hallucination or content derived from knowledge outside the provided sources.
+A status of "unsupported" indicates no citations met the minimum thresholds. This may indicate hallucination or content derived from knowledge outside the provided sources.
 
 ### Citation
 
@@ -173,22 +173,18 @@ When an embedder is provided, candidate selection considers both lexical overlap
 
 ## Score Interpretation
 
-Understanding what scores mean helps with threshold tuning and quality assessment.
+The `score` field is a weighted sum of several components (normalized alignment, answer coverage, evidence coverage, lexical overlap, and optional embedding similarity). Because the weights are not normalized, the absolute scale of `score` depends on your configuration. Changing `CitationWeights` or alignment scoring parameters will shift the range of scores you observe.
 
-Scores above 0.7 typically indicate strong verbatim or near-verbatim matches. The answer closely mirrors the source text.
-
-Scores between 0.4 and 0.7 often indicate paraphrased content or partial matches. The meaning is similar but the wording differs.
-
-Scores below 0.4 suggest weak support. The match may be coincidental overlap rather than genuine citation.
-
-These ranges are approximate and depend on configuration settings. Applications should tune thresholds based on empirical testing with representative data.
+For tuning, rely on the component values in `citation.components` (for example `answer_coverage` and `normalized_alignment`) and calibrate `min_final_score` against your own data. Comparing scores across runs is only meaningful if the configuration is unchanged.
 
 ## Deterministic Ordering
 
-Citations are ordered deterministically to ensure reproducible results. When scores are equal, the following tie-breakers apply in order.
+Citations are ordered deterministically to ensure reproducible results. When scores are equal, the following tie-breakers apply in order (with `prefer_source_order=True`, the default).
 
 Lower source index takes precedence, preserving the order in which sources were provided. This is useful when retrieval systems return sources in relevance order.
 
 Earlier character positions take precedence within the same source. This favors evidence appearing earlier in the document.
 
 Longer evidence spans take precedence when positions are equal. This provides more context for the user.
+
+If `prefer_source_order=False`, the ordering favors earlier character positions first and uses source order as a later tie-breaker.

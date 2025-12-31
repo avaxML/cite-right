@@ -66,18 +66,40 @@ For high-volume applications, smaller models reduce memory and latency with mode
 
 Several configuration parameters affect how embeddings influence candidate selection.
 
-### embedding_weight
+### Candidate limits
 
-This parameter controls how much embedding similarity affects candidate ranking relative to lexical overlap.
+Candidate selection combines lexical overlap and (optionally) embedding similarity. You can control how many of each enter the full alignment stage.
 
 ```python
 from cite_right import CitationConfig, align_citations
 
-config = CitationConfig(embedding_weight=0.5)
+config = CitationConfig(
+    max_candidates_lexical=200,
+    max_candidates_embedding=100,
+    max_candidates_total=250
+)
 results = align_citations(answer, sources, embedder=embedder, config=config)
 ```
 
-Higher values prioritize semantic similarity. Lower values favor lexical matching. The default balances both signals.
+### weights.embedding and weights.lexical
+
+These weights affect the final citation score (after alignment), not candidate selection.
+
+```python
+from cite_right import CitationConfig, align_citations
+from cite_right.core.citation_config import CitationWeights
+
+config = CitationConfig(
+    weights=CitationWeights(
+        alignment=1.0,
+        answer_coverage=1.0,
+        evidence_coverage=0.0,
+        lexical=0.3,
+        embedding=0.7
+    )
+)
+results = align_citations(answer, sources, embedder=embedder, config=config)
+```
 
 ### allow_embedding_only
 
@@ -96,24 +118,21 @@ Use this setting when recall is more important than precision and you accept coa
 You can implement custom embedders by following the `Embedder` protocol.
 
 ```python
-from cite_right.core.interfaces import Embedder
-import numpy as np
+from typing import Sequence
+
+from cite_right.models.base import Embedder
 
 class OpenAIEmbedder:
     def __init__(self, client, model="text-embedding-ada-002"):
         self.client = client
         self.model = model
 
-    def embed(self, texts: list[str]) -> np.ndarray:
-        """
-        Returns embeddings as a numpy array of shape (n_texts, embedding_dim).
-        """
+    def encode(self, texts: Sequence[str]) -> list[list[float]]:
         response = self.client.embeddings.create(
             input=texts,
             model=self.model
         )
-        embeddings = [item.embedding for item in response.data]
-        return np.array(embeddings)
+        return [item.embedding for item in response.data]
 ```
 
 Custom embedders allow integration with any embedding service or locally-hosted model.
@@ -174,7 +193,7 @@ for result in results:
     for citation in result.citations:
         components = citation.components
         print(f"Lexical score: {components.get('lexical_score', 0):.3f}")
-        print(f"Embedding similarity: {components.get('embedding_similarity', 0):.3f}")
+        print(f"Embedding score: {components.get('embedding_score', 0):.3f}")
         print(f"Alignment score: {components.get('alignment_score', 0):.3f}")
 ```
 

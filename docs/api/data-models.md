@@ -14,7 +14,7 @@ Represents a complete source document.
 class SourceDocument(BaseModel):
     id: str
     text: str
-    metadata: dict[str, Any] = {}
+    metadata: Mapping[str, Any] = {}
 ```
 
 **Fields:**
@@ -23,7 +23,7 @@ class SourceDocument(BaseModel):
 
 **text** (`str`): The complete document text. Citation character offsets refer to positions within this text.
 
-**metadata** (`dict[str, Any]`): Optional additional information. Preserved through alignment and accessible in results.
+**metadata** (`Mapping[str, Any]`): Optional additional information. Preserved through alignment and accessible in results.
 
 **Example:**
 
@@ -49,7 +49,9 @@ class SourceChunk(BaseModel):
     text: str
     doc_char_start: int
     doc_char_end: int
-    metadata: dict[str, Any] = {}
+    metadata: Mapping[str, Any] = {}
+    document_text: str | None = None
+    source_index: int | None = None
 ```
 
 **Fields:**
@@ -62,7 +64,11 @@ class SourceChunk(BaseModel):
 
 **doc_char_end** (`int`): Ending character position in the original document.
 
-**metadata** (`dict[str, Any]`): Optional additional information.
+**metadata** (`Mapping[str, Any]`): Optional additional information.
+
+**document_text** (`str | None`): Full original document text. If provided, citation offsets are computed against the original document text.
+
+**source_index** (`int | None`): Index of this source in the sources list. If None, the position in the sources list is used.
 
 **Example:**
 
@@ -100,7 +106,7 @@ class SpanCitations(BaseModel):
 
 **citations** (`list[Citation]`): Ranked list of citations, best match first.
 
-**status** (`Literal["supported", "partial", "unsupported"]`): Overall support level based on best citation quality.
+**status** (`Literal["supported", "partial", "unsupported"]`): Overall support level based on answer coverage and optional embedding thresholds.
 
 ### AnswerSpan
 
@@ -114,6 +120,8 @@ class AnswerSpan(BaseModel):
     char_start: int
     char_end: int
     kind: Literal["sentence", "clause", "paragraph"] = "sentence"
+    paragraph_index: int | None = None
+    sentence_index: int | None = None
 ```
 
 **Fields:**
@@ -126,6 +134,10 @@ class AnswerSpan(BaseModel):
 
 **kind** (`Literal["sentence", "clause", "paragraph"]`): The type of segment, determined by the answer segmenter.
 
+**paragraph_index** (`int | None`): Paragraph index containing this span.
+
+**sentence_index** (`int | None`): Sentence index within the answer.
+
 ### Citation
 
 Contains details about a source match.
@@ -137,11 +149,12 @@ class Citation(BaseModel):
     score: float
     source_id: str
     source_index: int
+    candidate_index: int
     char_start: int
     char_end: int
     evidence: str
     evidence_spans: list[EvidenceSpan] = []
-    components: dict[str, float] = {}
+    components: Mapping[str, float] = {}
 ```
 
 **Fields:**
@@ -152,6 +165,8 @@ class Citation(BaseModel):
 
 **source_index** (`int`): Index of the source in the original sources list.
 
+**candidate_index** (`int`): Internal index of the passage candidate.
+
 **char_start** (`int`): Starting character position of evidence in the source.
 
 **char_end** (`int`): Ending character position of evidence in the source.
@@ -160,7 +175,7 @@ class Citation(BaseModel):
 
 **evidence_spans** (`list[EvidenceSpan]`): When multi-span evidence is enabled, contains individual evidence regions.
 
-**components** (`dict[str, float]`): Breakdown of score into components like alignment_score, answer_coverage, evidence_coverage.
+**components** (`Mapping[str, float]`): Breakdown of score components. Typical keys include alignment_score, normalized_alignment, matches, answer_coverage, evidence_coverage, lexical_score, embedding_score, embedding_only, num_evidence_spans, evidence_chars_total, passage_char_start, and passage_char_end.
 
 **Verification:**
 
@@ -190,115 +205,33 @@ Internal result from the Smith-Waterman alignment operation.
 
 ```python
 class Alignment(BaseModel):
-    score: float
-    query_start: int
-    query_end: int
-    target_start: int
-    target_end: int
-    matches: int
+    score: int
+    token_start: int
+    token_end: int
+    query_start: int = 0
+    query_end: int = 0
+    matches: int = 0
+    match_blocks: list[tuple[int, int]] = []
 ```
 
 **Fields:**
 
-**score** (`float`): Raw alignment score.
+**score** (`int`): Raw alignment score.
+
+**token_start** (`int`): Start token position in the candidate passage.
+
+**token_end** (`int`): End token position in the candidate passage.
 
 **query_start** (`int`): Start token position in the query (answer span).
 
 **query_end** (`int`): End token position in the query.
 
-**target_start** (`int`): Start token position in the target (source passage).
-
-**target_end** (`int`): End token position in the target.
-
 **matches** (`int`): Number of matching tokens in the alignment.
+
+**match_blocks** (`list[tuple[int, int]]`): Non-contiguous match blocks used for multi-span evidence.
 
 ## Metric Types
 
 ### HallucinationMetrics
 
 Aggregate metrics from hallucination analysis.
-
-**Location:** `src/cite_right/hallucination.py`
-
-```python
-class HallucinationMetrics(BaseModel):
-    groundedness_score: float
-    hallucination_rate: float
-    supported_ratio: float
-    partial_ratio: float
-    unsupported_ratio: float
-    avg_confidence: float
-    min_confidence: float
-    num_supported: int
-    num_partial: int
-    num_unsupported: int
-    num_weak_citations: int
-    unsupported_spans: list[AnswerSpan]
-    weakly_supported_spans: list[AnswerSpan]
-    span_confidences: list[SpanConfidence]
-```
-
-All ratio and score fields range from 0 to 1. Count fields are non-negative integers.
-
-### SpanConfidence
-
-Per-span confidence information.
-
-**Location:** `src/cite_right/hallucination.py`
-
-```python
-class SpanConfidence(BaseModel):
-    span: AnswerSpan
-    confidence: float
-    status: Literal["supported", "partial", "unsupported"]
-    top_source_id: str | None
-```
-
-### FactVerificationResult
-
-Results from fact-level verification.
-
-**Location:** `src/cite_right/fact_verification.py`
-
-```python
-class FactVerificationResult(BaseModel):
-    claims: list[ClaimVerification]
-    total_claims: int
-    num_verified: int
-    num_partial: int
-    num_unverified: int
-    verification_rate: float
-```
-
-### ClaimVerification
-
-Verification status for a single claim.
-
-**Location:** `src/cite_right/fact_verification.py`
-
-```python
-class ClaimVerification(BaseModel):
-    text: str
-    status: Literal["verified", "partial", "unverified"]
-    citations: list[Citation]
-```
-
-## Serialization
-
-All models support Pydantic serialization methods.
-
-```python
-# To dictionary
-data = result.model_dump()
-
-# To JSON string
-json_str = result.model_dump_json()
-
-# From dictionary
-result = SpanCitations.model_validate(data)
-
-# From JSON string
-result = SpanCitations.model_validate_json(json_str)
-```
-
-This enables easy integration with APIs, databases, and logging systems.

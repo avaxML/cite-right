@@ -133,7 +133,7 @@ from cite_right import CitationConfig, verify_facts
 
 config = CitationConfig(
     top_k=3,
-    min_score_threshold=0.3
+    min_answer_coverage=0.3
 )
 
 result = verify_facts(answer, sources, config=config)

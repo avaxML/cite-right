@@ -20,16 +20,20 @@ The Rust extension dramatically reduces alignment cost, making candidate selecti
 
 ### Reducing Candidates
 
-The `max_candidates` parameter limits how many passages undergo full alignment.
+The `max_candidates_lexical`, `max_candidates_embedding`, and `max_candidates_total` parameters limit how many passages undergo full alignment.
 
 ```python
 from cite_right import CitationConfig, align_citations
 
-config = CitationConfig(max_candidates=20)  # Default is 50
+config = CitationConfig(
+    max_candidates_lexical=100,   # Default is 200
+    max_candidates_embedding=50,  # Default is 200 (when using embeddings)
+    max_candidates_total=120      # Default is 400
+)
 results = align_citations(answer, sources, config=config)
 ```
 
-Reducing candidates improves speed but may miss some matches. Monitor citation quality when adjusting this parameter.
+Reducing candidates improves speed but may miss some matches. Monitor citation quality when adjusting these parameters.
 
 ### Smaller Windows
 
@@ -37,7 +41,7 @@ Reducing passage window size decreases both the number of passages and the lengt
 
 ```python
 config = CitationConfig(
-    window_size_sentences=2,  # Default is 3
+    window_size_sentences=2,  # Default is 1
     window_stride_sentences=2  # Default is 1
 )
 ```
@@ -52,7 +56,7 @@ The fast configuration preset combines several speed-oriented settings.
 config = CitationConfig.fast()
 ```
 
-This preset reduces candidates, shrinks windows, and adjusts thresholds for throughput rather than precision.
+This preset reduces candidate limits and returns fewer citations for throughput rather than precision. Window sizes and thresholds remain at their defaults.
 
 ## Batching Strategies
 
