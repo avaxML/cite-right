@@ -114,7 +114,12 @@ class SmithWatermanAligner:
 
         for i_end, j_end in max_positions:
             i_start, j_start, matches, match_blocks = _traceback_details(
-                i_end, j_end, directions, scores, seq1, seq2,
+                i_end,
+                j_end,
+                directions,
+                scores,
+                seq1,
+                seq2,
                 return_match_blocks=self.return_match_blocks,
             )
             span_len = j_end - j_start

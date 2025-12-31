@@ -176,8 +176,11 @@ class _MetricsAccumulator:
 
         self.span_confidences.append(
             SpanConfidence(
-                span=span, status=sc.status, confidence=confidence,
-                is_grounded=is_grounded, best_citation_score=best_score,
+                span=span,
+                status=sc.status,
+                confidence=confidence,
+                is_grounded=is_grounded,
+                best_citation_score=best_score,
                 source_ids=source_ids,
             )
         )
@@ -227,7 +230,11 @@ class _MetricsAccumulator:
             groundedness_score, supported_ratio = 1.0, 1.0
             partial_ratio, unsupported_ratio = 0.0, 0.0
 
-        avg_confidence = sum(self.confidence_values) / len(self.confidence_values) if self.confidence_values else 1.0
+        avg_confidence = (
+            sum(self.confidence_values) / len(self.confidence_values)
+            if self.confidence_values
+            else 1.0
+        )
         min_confidence = min(self.confidence_values) if self.confidence_values else 1.0
 
         return HallucinationMetrics(

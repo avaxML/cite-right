@@ -361,11 +361,15 @@ def _process_candidate(
     metrics = _compute_alignment_metrics(alignment, answer_tokens, cfg)
 
     use_alignment_evidence = _should_use_alignment(alignment, metrics, cfg)
-    use_embedding_only = cfg.allow_embedding_only and embed_score >= cfg.min_embedding_similarity
+    use_embedding_only = (
+        cfg.allow_embedding_only and embed_score >= cfg.min_embedding_similarity
+    )
     if not use_alignment_evidence and not use_embedding_only:
         return None
 
-    evidence_result = _extract_evidence(candidate, alignment, cfg, use_alignment_evidence)
+    evidence_result = _extract_evidence(
+        candidate, alignment, cfg, use_alignment_evidence
+    )
     if evidence_result is None:
         return None
 
@@ -375,9 +379,17 @@ def _process_candidate(
         return None
 
     return _build_citation(
-        candidate, abs_start, abs_end, evidence, evidence_spans,
-        final_score, metrics, lexical_score, embed_score,
-        alignment.score, use_alignment_evidence,
+        candidate,
+        abs_start,
+        abs_end,
+        evidence,
+        evidence_spans,
+        final_score,
+        metrics,
+        lexical_score,
+        embed_score,
+        alignment.score,
+        use_alignment_evidence,
     )
 
 
@@ -412,7 +424,10 @@ def _should_use_alignment(
 
 
 def _compute_final_score(
-    metrics: dict[str, float], lexical_score: float, embed_score: float, cfg: CitationConfig
+    metrics: dict[str, float],
+    lexical_score: float,
+    embed_score: float,
+    cfg: CitationConfig,
 ) -> float:
     """Compute weighted final citation score."""
     return (
@@ -481,9 +496,7 @@ def _extract_evidence(
         abs_end = max(span.char_end for span in evidence_spans)
         evidence = _slice_source_text(candidate.source, abs_start, abs_end)
     else:
-        abs_start = (
-            candidate.source.base_doc_offset + candidate.passage.doc_char_start
-        )
+        abs_start = candidate.source.base_doc_offset + candidate.passage.doc_char_start
         abs_end = candidate.source.base_doc_offset + candidate.passage.doc_char_end
         evidence = _slice_source_text(candidate.source, abs_start, abs_end)
         evidence_spans = [
@@ -679,7 +692,11 @@ def _add_embedding_candidates(
     cfg: CitationConfig,
 ) -> None:
     """Add top embedding candidates to the selected set."""
-    if cfg.max_candidates_embedding <= 0 or query_vector is None or embedding_index is None:
+    if (
+        cfg.max_candidates_embedding <= 0
+        or query_vector is None
+        or embedding_index is None
+    ):
         return
     for idx, score in embedding_index.top_k(query_vector, cfg.max_candidates_embedding):
         prev = selected.get(idx)
@@ -768,8 +785,16 @@ def _create_evidence_span(
         return None
 
     seg_char_start, seg_char_end = char_span
-    abs_start = candidate.source.base_doc_offset + candidate.passage.doc_char_start + seg_char_start
-    abs_end = candidate.source.base_doc_offset + candidate.passage.doc_char_start + seg_char_end
+    abs_start = (
+        candidate.source.base_doc_offset
+        + candidate.passage.doc_char_start
+        + seg_char_start
+    )
+    abs_end = (
+        candidate.source.base_doc_offset
+        + candidate.passage.doc_char_start
+        + seg_char_end
+    )
 
     if abs_start >= abs_end:
         return None

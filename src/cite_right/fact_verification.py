@@ -129,8 +129,14 @@ def verify_facts(
         return _empty_verification_metrics()
 
     return _verify_all_claims(
-        all_claims, sources, cfg, citation_config,
-        source_segmenter, tokenizer, embedder, backend,
+        all_claims,
+        sources,
+        cfg,
+        citation_config,
+        source_segmenter,
+        tokenizer,
+        embedder,
+        backend,
     )
 
 
@@ -181,9 +187,14 @@ def _verify_all_claims(
 
     for claim in claims:
         v = _verify_claim(
-            claim=claim, sources=sources, config=cfg,
-            citation_config=citation_config, source_segmenter=source_segmenter,
-            tokenizer=tokenizer, embedder=embedder, backend=backend,
+            claim=claim,
+            sources=sources,
+            config=cfg,
+            citation_config=citation_config,
+            source_segmenter=source_segmenter,
+            tokenizer=tokenizer,
+            embedder=embedder,
+            backend=backend,
         )
         verifications.append(v)
         confidence_values.append(v.confidence)
@@ -195,7 +206,9 @@ def _verify_all_claims(
         num_partial=len(partial),
         num_unverified=len(unverified),
         verification_rate=len(verified) / len(claims) if claims else 1.0,
-        avg_confidence=sum(confidence_values) / len(confidence_values) if confidence_values else 1.0,
+        avg_confidence=sum(confidence_values) / len(confidence_values)
+        if confidence_values
+        else 1.0,
         min_confidence=min(confidence_values) if confidence_values else 1.0,
         claim_verifications=verifications,
         verified_claims=verified,
