@@ -20,6 +20,7 @@ jobs:
       - run: uv run ruff format --check .
       - run: uv run pyright
       - name: Check code complexity
+        shell: bash
         run: |
           # Fail if any function has complexity > 10 (C grade or worse)
           # --min C shows only functions with complexity >= 11
