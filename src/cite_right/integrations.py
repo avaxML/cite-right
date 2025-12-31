@@ -4,14 +4,14 @@ This module provides utility functions to convert between cite-right's
 source document types and those used by popular RAG frameworks like
 LangChain and LlamaIndex.
 
-When the optional dependencies are installed (cite-right[langchain] or
-cite-right[llamaindex]), this module uses the actual library types for
-better type checking and IDE support.
+To use these integrations, install the optional dependencies:
+    pip install cite-right[langchain]    # For LangChain support
+    pip install cite-right[llamaindex]   # For LlamaIndex support
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Protocol, Sequence, Union, runtime_checkable
+from typing import TYPE_CHECKING, Any, Sequence, Union
 
 from cite_right.core.results import SourceChunk, SourceDocument
 
@@ -21,80 +21,51 @@ LLAMAINDEX_AVAILABLE = False
 
 # Try to import LangChain types
 try:
-    from langchain_core.documents import Document as LangChainDocumentClass
+    from langchain_core.documents import Document as LangChainDocument
 
     LANGCHAIN_AVAILABLE = True
 except ImportError:
-    LangChainDocumentClass = None  # type: ignore[misc, assignment]
+    LangChainDocument = None  # type: ignore[misc, assignment]
 
 # Try to import LlamaIndex types
 try:
-    from llama_index.core.schema import NodeWithScore as LlamaIndexNodeWithScoreClass
-    from llama_index.core.schema import TextNode as LlamaIndexTextNodeClass
+    from llama_index.core.schema import NodeWithScore as LlamaIndexNodeWithScore
+    from llama_index.core.schema import TextNode as LlamaIndexTextNode
 
     LLAMAINDEX_AVAILABLE = True
 except ImportError:
-    LlamaIndexTextNodeClass = None  # type: ignore[misc, assignment]
-    LlamaIndexNodeWithScoreClass = None  # type: ignore[misc, assignment]
+    LlamaIndexTextNode = None  # type: ignore[misc, assignment]
+    LlamaIndexNodeWithScore = None  # type: ignore[misc, assignment]
 
-
-@runtime_checkable
-class LangChainDocumentProtocol(Protocol):
-    """Protocol for LangChain Document objects.
-
-    This protocol is used when langchain-core is not installed to allow
-    duck-typed objects that match the Document interface.
-    """
-
-    page_content: str
-    metadata: dict[str, Any]
-
-
-@runtime_checkable
-class LlamaIndexNodeProtocol(Protocol):
-    """Protocol for LlamaIndex NodeWithScore or TextNode objects.
-
-    This protocol is used when llama-index-core is not installed to allow
-    duck-typed objects that match the TextNode interface.
-    """
-
-    def get_content(self) -> str: ...
-
-    @property
-    def metadata(self) -> dict[str, Any]: ...
-
-
-# Type aliases that use real types when available
+# Type alias for LlamaIndex nodes (either TextNode or NodeWithScore)
 if TYPE_CHECKING:
-    # For static type checking, prefer the real types if they could be available
-    if LANGCHAIN_AVAILABLE:
-        LangChainDocument = LangChainDocumentClass
-    else:
-        LangChainDocument = LangChainDocumentProtocol  # type: ignore[misc]
-
     if LLAMAINDEX_AVAILABLE:
-        LlamaIndexNode = Union[LlamaIndexTextNodeClass, LlamaIndexNodeWithScoreClass]
-        LlamaIndexTextNode = LlamaIndexTextNodeClass
-        LlamaIndexNodeWithScore = LlamaIndexNodeWithScoreClass
+        LlamaIndexNode = Union[LlamaIndexTextNode, LlamaIndexNodeWithScore]
     else:
-        LlamaIndexNode = LlamaIndexNodeProtocol  # type: ignore[misc]
-        LlamaIndexTextNode = LlamaIndexNodeProtocol  # type: ignore[misc]
-        LlamaIndexNodeWithScore = LlamaIndexNodeProtocol  # type: ignore[misc]
+        LlamaIndexNode = Any  # type: ignore[misc]
 else:
-    # At runtime, use the real types if available, otherwise the protocols
-    if LANGCHAIN_AVAILABLE:
-        LangChainDocument = LangChainDocumentClass
-    else:
-        LangChainDocument = LangChainDocumentProtocol
-
     if LLAMAINDEX_AVAILABLE:
-        LlamaIndexNode = (LlamaIndexTextNodeClass, LlamaIndexNodeWithScoreClass)
-        LlamaIndexTextNode = LlamaIndexTextNodeClass
-        LlamaIndexNodeWithScore = LlamaIndexNodeWithScoreClass
+        LlamaIndexNode = (LlamaIndexTextNode, LlamaIndexNodeWithScore)
     else:
-        LlamaIndexNode = LlamaIndexNodeProtocol
-        LlamaIndexTextNode = LlamaIndexNodeProtocol
-        LlamaIndexNodeWithScore = LlamaIndexNodeProtocol
+        LlamaIndexNode = None
+
+
+def _require_langchain() -> None:
+    """Raise ImportError if langchain-core is not installed."""
+    if not LANGCHAIN_AVAILABLE:
+        raise ImportError(
+            "langchain-core is required for LangChain integration. "
+            "Install it with: pip install cite-right[langchain]"
+        )
+
+
+def _require_llamaindex() -> None:
+    """Raise ImportError if llama-index-core is not installed."""
+    if not LLAMAINDEX_AVAILABLE:
+        raise ImportError(
+            "llama-index-core is required for LlamaIndex integration. "
+            "Install it with: pip install cite-right[llamaindex]"
+        )
 
 
 def is_langchain_available() -> bool:
@@ -130,15 +101,12 @@ def is_llamaindex_available() -> bool:
 def is_langchain_document(obj: Any) -> bool:
     """Check if an object is a LangChain Document.
 
-    This function checks against the real LangChain Document class if
-    langchain-core is installed, and also accepts objects matching the
-    Document protocol (page_content and metadata attributes).
-
     Args:
         obj: Object to check.
 
     Returns:
-        True if the object is a LangChain Document or matches the protocol.
+        True if the object is a LangChain Document instance.
+        Returns False if langchain-core is not installed.
 
     Example:
         >>> from cite_right.integrations import is_langchain_document
@@ -146,25 +114,20 @@ def is_langchain_document(obj: Any) -> bool:
         >>> if is_langchain_document(doc):
         ...     print(f"Document content: {doc.page_content}")
     """
-    if LANGCHAIN_AVAILABLE and LangChainDocumentClass is not None:
-        if isinstance(obj, LangChainDocumentClass):
-            return True
-    # Fall back to protocol check for duck-typed objects
-    return isinstance(obj, LangChainDocumentProtocol)
+    if not LANGCHAIN_AVAILABLE or LangChainDocument is None:
+        return False
+    return isinstance(obj, LangChainDocument)
 
 
 def is_llamaindex_node(obj: Any) -> bool:
     """Check if an object is a LlamaIndex TextNode or NodeWithScore.
 
-    This function checks against the real LlamaIndex classes if
-    llama-index-core is installed, and also accepts objects matching the
-    node protocol (get_content method and metadata property).
-
     Args:
         obj: Object to check.
 
     Returns:
-        True if the object is a LlamaIndex node or matches the protocol.
+        True if the object is a LlamaIndex TextNode or NodeWithScore instance.
+        Returns False if llama-index-core is not installed.
 
     Example:
         >>> from cite_right.integrations import is_llamaindex_node
@@ -172,24 +135,21 @@ def is_llamaindex_node(obj: Any) -> bool:
         >>> if is_llamaindex_node(node):
         ...     print(f"Node content: {node.get_content()}")
     """
-    if LLAMAINDEX_AVAILABLE:
-        if LlamaIndexTextNodeClass is not None and LlamaIndexNodeWithScoreClass is not None:
-            if isinstance(obj, (LlamaIndexTextNodeClass, LlamaIndexNodeWithScoreClass)):
-                return True
-    # Fall back to protocol check for duck-typed objects
-    return isinstance(obj, LlamaIndexNodeProtocol)
+    if not LLAMAINDEX_AVAILABLE:
+        return False
+    if LlamaIndexTextNode is None or LlamaIndexNodeWithScore is None:
+        return False
+    return isinstance(obj, (LlamaIndexTextNode, LlamaIndexNodeWithScore))
 
 
 def from_langchain_documents(
-    documents: Sequence[LangChainDocumentProtocol],
+    documents: Sequence[Any],
     *,
     id_key: str = "source",
 ) -> list[SourceDocument]:
     """Convert LangChain Document objects to cite-right SourceDocuments.
 
-    This function accepts both real LangChain Document objects (when
-    langchain-core is installed) and any object matching the Document
-    protocol (page_content and metadata attributes).
+    Requires langchain-core to be installed.
 
     Args:
         documents: Sequence of LangChain Document objects with
@@ -200,6 +160,9 @@ def from_langchain_documents(
     Returns:
         List of SourceDocument objects.
 
+    Raises:
+        ImportError: If langchain-core is not installed.
+
     Example:
         >>> from langchain_core.documents import Document
         >>> from cite_right import align_citations
@@ -209,6 +172,8 @@ def from_langchain_documents(
         >>> sources = from_langchain_documents(lc_docs)
         >>> results = align_citations(answer, sources)
     """
+    _require_langchain()
+
     result: list[SourceDocument] = []
     for idx, doc in enumerate(documents):
         doc_id = doc.metadata.get(id_key, str(idx))
@@ -223,7 +188,7 @@ def from_langchain_documents(
 
 
 def from_langchain_chunks(
-    documents: Sequence[LangChainDocumentProtocol],
+    documents: Sequence[Any],
     *,
     id_key: str = "source",
     start_key: str = "start_index",
@@ -235,9 +200,7 @@ def from_langchain_chunks(
     Use this when your LangChain documents are pre-chunked from larger
     documents and you want citation offsets relative to the original.
 
-    This function accepts both real LangChain Document objects (when
-    langchain-core is installed) and any object matching the Document
-    protocol.
+    Requires langchain-core to be installed.
 
     Args:
         documents: Sequence of LangChain Document chunks.
@@ -250,6 +213,9 @@ def from_langchain_chunks(
     Returns:
         List of SourceChunk objects.
 
+    Raises:
+        ImportError: If langchain-core is not installed.
+
     Example:
         >>> from cite_right.integrations import from_langchain_chunks
         >>>
@@ -257,6 +223,8 @@ def from_langchain_chunks(
         >>> sources = from_langchain_chunks(lc_chunks)
         >>> results = align_citations(answer, sources)
     """
+    _require_langchain()
+
     result: list[SourceChunk] = []
     for idx, doc in enumerate(documents):
         doc_id = doc.metadata.get(id_key, str(idx))
@@ -279,15 +247,13 @@ def from_langchain_chunks(
 
 
 def from_llamaindex_nodes(
-    nodes: Sequence[LlamaIndexNodeProtocol],
+    nodes: Sequence[Any],
     *,
     id_key: str = "file_name",
 ) -> list[SourceDocument]:
     """Convert LlamaIndex nodes to cite-right SourceDocuments.
 
-    This function accepts both real LlamaIndex TextNode/NodeWithScore objects
-    (when llama-index-core is installed) and any object matching the node
-    protocol (get_content method and metadata property).
+    Requires llama-index-core to be installed.
 
     Args:
         nodes: Sequence of LlamaIndex TextNode or NodeWithScore objects.
@@ -296,6 +262,9 @@ def from_llamaindex_nodes(
     Returns:
         List of SourceDocument objects.
 
+    Raises:
+        ImportError: If llama-index-core is not installed.
+
     Example:
         >>> from cite_right.integrations import from_llamaindex_nodes
         >>>
@@ -303,16 +272,14 @@ def from_llamaindex_nodes(
         >>> sources = from_llamaindex_nodes(nodes)
         >>> results = align_citations(answer, sources)
     """
+    _require_llamaindex()
+
     result: list[SourceDocument] = []
     for idx, node in enumerate(nodes):
         # Handle NodeWithScore wrapper - unwrap to get the actual TextNode
         actual_node = getattr(node, "node", node)
-        content = (
-            actual_node.get_content()
-            if hasattr(actual_node, "get_content")
-            else str(actual_node)
-        )
-        metadata = getattr(actual_node, "metadata", {})
+        content = actual_node.get_content()
+        metadata = actual_node.metadata
         doc_id = metadata.get(id_key, str(idx))
 
         result.append(
@@ -326,7 +293,7 @@ def from_llamaindex_nodes(
 
 
 def from_llamaindex_chunks(
-    nodes: Sequence[LlamaIndexNodeProtocol],
+    nodes: Sequence[Any],
     *,
     id_key: str = "file_name",
     start_key: str = "start_char_idx",
@@ -337,9 +304,7 @@ def from_llamaindex_chunks(
     Use this when your LlamaIndex nodes contain character offset metadata
     from the original documents.
 
-    This function accepts both real LlamaIndex TextNode/NodeWithScore objects
-    (when llama-index-core is installed) and any object matching the node
-    protocol.
+    Requires llama-index-core to be installed.
 
     Args:
         nodes: Sequence of LlamaIndex nodes with offset metadata.
@@ -350,6 +315,9 @@ def from_llamaindex_chunks(
     Returns:
         List of SourceChunk objects.
 
+    Raises:
+        ImportError: If llama-index-core is not installed.
+
     Example:
         >>> from cite_right.integrations import from_llamaindex_chunks
         >>>
@@ -357,15 +325,13 @@ def from_llamaindex_chunks(
         >>> sources = from_llamaindex_chunks(nodes)
         >>> results = align_citations(answer, sources)
     """
+    _require_llamaindex()
+
     result: list[SourceChunk] = []
     for idx, node in enumerate(nodes):
         actual_node = getattr(node, "node", node)
-        content = (
-            actual_node.get_content()
-            if hasattr(actual_node, "get_content")
-            else str(actual_node)
-        )
-        metadata = getattr(actual_node, "metadata", {})
+        content = actual_node.get_content()
+        metadata = actual_node.metadata
 
         doc_id = metadata.get(id_key, str(idx))
         start = metadata.get(start_key, 0)
