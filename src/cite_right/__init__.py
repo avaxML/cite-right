@@ -37,11 +37,21 @@ from cite_right.hallucination import (
     compute_hallucination_metrics,
 )
 from cite_right.integrations import (
+    LANGCHAIN_AVAILABLE,
+    LLAMAINDEX_AVAILABLE,
+    LangChainDocument,
+    LlamaIndexNode,
+    LlamaIndexNodeWithScore,
+    LlamaIndexTextNode,
     from_dicts,
     from_langchain_chunks,
     from_langchain_documents,
     from_llamaindex_chunks,
     from_llamaindex_nodes,
+    is_langchain_available,
+    is_langchain_document,
+    is_llamaindex_available,
+    is_llamaindex_node,
 )
 from cite_right.models.sbert_embedder import SentenceTransformerEmbedder
 from cite_right.text.answer_segmenter_spacy import SpacyAnswerSegmenter
@@ -67,11 +77,21 @@ __all__ = [
     "is_grounded",
     "is_hallucinated",
     # Framework integrations
+    "LANGCHAIN_AVAILABLE",
+    "LLAMAINDEX_AVAILABLE",
+    "LangChainDocument",
+    "LlamaIndexNode",
+    "LlamaIndexNodeWithScore",
+    "LlamaIndexTextNode",
     "from_dicts",
     "from_langchain_chunks",
     "from_langchain_documents",
     "from_llamaindex_chunks",
     "from_llamaindex_nodes",
+    "is_langchain_available",
+    "is_langchain_document",
+    "is_llamaindex_available",
+    "is_llamaindex_node",
     # Configuration
     "CitationConfig",
     "CitationWeights",
