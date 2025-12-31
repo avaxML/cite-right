@@ -39,13 +39,17 @@ class TestAvailabilityChecks:
 class TestTypeChecksWithoutLibraries:
     """Tests for type checking functions when libraries are not installed."""
 
-    @pytest.mark.skipif(LANGCHAIN_AVAILABLE, reason="Test for when langchain is NOT installed")
+    @pytest.mark.skipif(
+        LANGCHAIN_AVAILABLE, reason="Test for when langchain is NOT installed"
+    )
     def test_is_langchain_document_returns_false_when_not_installed(self):
         """is_langchain_document() should return False when library not installed."""
         assert is_langchain_document("anything") is False
         assert is_langchain_document({"page_content": "text"}) is False
 
-    @pytest.mark.skipif(LLAMAINDEX_AVAILABLE, reason="Test for when llamaindex is NOT installed")
+    @pytest.mark.skipif(
+        LLAMAINDEX_AVAILABLE, reason="Test for when llamaindex is NOT installed"
+    )
     def test_is_llamaindex_node_returns_false_when_not_installed(self):
         """is_llamaindex_node() should return False when library not installed."""
         assert is_llamaindex_node("anything") is False
@@ -55,13 +59,17 @@ class TestTypeChecksWithoutLibraries:
 class TestLangChainFunctionsRequireLibrary:
     """Tests that LangChain functions require the library to be installed."""
 
-    @pytest.mark.skipif(LANGCHAIN_AVAILABLE, reason="Test for when langchain is NOT installed")
+    @pytest.mark.skipif(
+        LANGCHAIN_AVAILABLE, reason="Test for when langchain is NOT installed"
+    )
     def test_from_langchain_documents_raises_without_library(self):
         """from_langchain_documents() should raise ImportError without langchain."""
         with pytest.raises(ImportError, match="langchain-core is required"):
             from_langchain_documents([])
 
-    @pytest.mark.skipif(LANGCHAIN_AVAILABLE, reason="Test for when langchain is NOT installed")
+    @pytest.mark.skipif(
+        LANGCHAIN_AVAILABLE, reason="Test for when langchain is NOT installed"
+    )
     def test_from_langchain_chunks_raises_without_library(self):
         """from_langchain_chunks() should raise ImportError without langchain."""
         with pytest.raises(ImportError, match="langchain-core is required"):
@@ -71,13 +79,17 @@ class TestLangChainFunctionsRequireLibrary:
 class TestLlamaIndexFunctionsRequireLibrary:
     """Tests that LlamaIndex functions require the library to be installed."""
 
-    @pytest.mark.skipif(LLAMAINDEX_AVAILABLE, reason="Test for when llamaindex is NOT installed")
+    @pytest.mark.skipif(
+        LLAMAINDEX_AVAILABLE, reason="Test for when llamaindex is NOT installed"
+    )
     def test_from_llamaindex_nodes_raises_without_library(self):
         """from_llamaindex_nodes() should raise ImportError without llamaindex."""
         with pytest.raises(ImportError, match="llama-index-core is required"):
             from_llamaindex_nodes([])
 
-    @pytest.mark.skipif(LLAMAINDEX_AVAILABLE, reason="Test for when llamaindex is NOT installed")
+    @pytest.mark.skipif(
+        LLAMAINDEX_AVAILABLE, reason="Test for when llamaindex is NOT installed"
+    )
     def test_from_llamaindex_chunks_raises_without_library(self):
         """from_llamaindex_chunks() should raise ImportError without llamaindex."""
         with pytest.raises(ImportError, match="llama-index-core is required"):
@@ -125,7 +137,9 @@ class TestLangChainIntegration:
         """Should preserve metadata from original documents."""
         from langchain_core.documents import Document
 
-        docs = [Document(page_content="Content", metadata={"source": "doc.pdf", "page": 5})]
+        docs = [
+            Document(page_content="Content", metadata={"source": "doc.pdf", "page": 5})
+        ]
         sources = from_langchain_documents(docs)
         assert sources[0].metadata.get("page") == 5
 
@@ -166,7 +180,8 @@ class TestLangChainIntegration:
 
         docs = [
             Document(
-                page_content="chunk text", metadata={"source": "doc", "begin": 50, "finish": 60}
+                page_content="chunk text",
+                metadata={"source": "doc", "begin": 50, "finish": 60},
             )
         ]
         chunks = from_langchain_chunks(docs, start_key="begin", end_key="finish")
@@ -177,7 +192,11 @@ class TestLangChainIntegration:
         """LangChain Documents should work with align_citations."""
         from langchain_core.documents import Document
 
-        docs = [Document(page_content="Revenue grew 15% in Q4.", metadata={"source": "report"})]
+        docs = [
+            Document(
+                page_content="Revenue grew 15% in Q4.", metadata={"source": "report"}
+            )
+        ]
         sources = from_langchain_documents(docs)
 
         answer = "Revenue grew 15%."
@@ -256,7 +275,11 @@ class TestLlamaIndexIntegration:
         nodes = [
             TextNode(
                 text="chunk text",
-                metadata={"file_name": "doc.pdf", "start_char_idx": 100, "end_char_idx": 110},
+                metadata={
+                    "file_name": "doc.pdf",
+                    "start_char_idx": 100,
+                    "end_char_idx": 110,
+                },
             )
         ]
 
@@ -271,7 +294,11 @@ class TestLlamaIndexIntegration:
         """LlamaIndex nodes should work with align_citations."""
         from llama_index.core.schema import TextNode
 
-        nodes = [TextNode(text="Revenue grew 15% in Q4.", metadata={"file_name": "report.pdf"})]
+        nodes = [
+            TextNode(
+                text="Revenue grew 15% in Q4.", metadata={"file_name": "report.pdf"}
+            )
+        ]
         sources = from_llamaindex_nodes(nodes)
 
         answer = "Revenue grew 15%."
