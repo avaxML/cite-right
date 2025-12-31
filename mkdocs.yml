@@ -1,0 +1,106 @@
+site_name: Cite-Right
+site_description: Link every piece of your AI-generated response back to its source text
+site_url: https://avaxML.github.io/cite-right
+repo_url: https://github.com/avaxML/cite-right
+repo_name: avaxML/cite-right
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: green
+      accent: green
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: green
+      accent: green
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  font:
+    text: Roboto
+    code: Roboto Mono
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+  icon:
+    repo: fontawesome/brands/github
+  logo: assets/logo.svg
+  favicon: assets/favicon.ico
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_source: true
+            show_root_heading: true
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - admonition
+  - pymdownx.details
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Quickstart: getting-started/quickstart.md
+    - Building a Check Sources UI: getting-started/check-sources-ui.md
+  - Core Concepts:
+    - How It Works: concepts/how-it-works.md
+    - Citation Alignment: concepts/citation-alignment.md
+    - Hallucination Detection: concepts/hallucination-detection.md
+    - Fact Verification: concepts/fact-verification.md
+  - Configuration:
+    - Citation Configuration: configuration/citation-config.md
+    - Presets: configuration/presets.md
+    - Tokenizers: configuration/tokenizers.md
+    - Segmenters: configuration/segmenters.md
+  - Integrations:
+    - LangChain: integrations/langchain.md
+    - LlamaIndex: integrations/llamaindex.md
+    - Custom Sources: integrations/custom-sources.md
+  - Advanced Topics:
+    - Multi-Span Evidence: advanced/multi-span-evidence.md
+    - Embedding Retrieval: advanced/embedding-retrieval.md
+    - Rust Acceleration: advanced/rust-acceleration.md
+    - Performance Tuning: advanced/performance-tuning.md
+  - API Reference:
+    - Core Functions: api/core-functions.md
+    - Data Models: api/data-models.md
+    - Configuration Classes: api/configuration.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/avaxML/cite-right
+  version:
+    provider: mike
+
+extra_css:
+  - stylesheets/extra.css
+
+copyright: Copyright &copy; 2024 Cite-Right Contributors
