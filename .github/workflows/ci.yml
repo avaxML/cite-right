@@ -19,6 +19,18 @@ jobs:
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run pyright
+      - name: Check code complexity
+        shell: bash
+        run: |
+          # Fail if any function has complexity > 10 (C grade or worse)
+          # --min C shows only functions with complexity >= 11
+          result=$(uv run radon cc src/cite_right --min C -s 2>&1)
+          if [ -n "$result" ]; then
+            echo "Found functions with complexity > 10 (C grade or worse):"
+            echo "$result"
+            exit 1
+          fi
+          echo "All functions have acceptable complexity (B grade or better)"
       - run: uv run maturin develop
       - run: uv run pytest -q
 

@@ -41,66 +41,76 @@ class SmithWatermanAligner:
         self.return_match_blocks = return_match_blocks
 
     def align(self, seq1: Sequence[int], seq2: Sequence[int]) -> Alignment:
-        """Align two token sequences and return the best local alignment.
-
-        Args:
-            seq1: Query token IDs.
-            seq2: Candidate token IDs.
-
-        Returns:
-            An `Alignment` describing the best local alignment.
-        """
+        """Align two token sequences and return the best local alignment."""
         if not seq1 or not seq2:
             return Alignment(score=0, token_start=0, token_end=0)
 
         seq1_list = list(seq1)
         seq2_list = list(seq2)
-        rows = len(seq1_list) + 1
-        cols = len(seq2_list) + 1
+
+        scores, directions, max_score, max_positions = self._fill_matrix(
+            seq1_list, seq2_list
+        )
+
+        if max_score == 0:
+            return Alignment(score=0, token_start=0, token_end=0)
+
+        return self._select_best_alignment(
+            max_score, max_positions, directions, scores, seq1_list, seq2_list
+        )
+
+    def _fill_matrix(
+        self, seq1: list[int], seq2: list[int]
+    ) -> tuple[list[list[int]], list[list[Direction]], int, list[tuple[int, int]]]:
+        """Fill the scoring matrix and track maximum positions."""
+        rows = len(seq1) + 1
+        cols = len(seq2) + 1
 
         scores = [[0] * cols for _ in range(rows)]
         directions = [[Direction.STOP] * cols for _ in range(rows)]
-
         max_score = 0
         max_positions: list[tuple[int, int]] = []
 
         for i in range(1, rows):
             for j in range(1, cols):
-                match = (
-                    self.match_score
-                    if seq1_list[i - 1] == seq2_list[j - 1]
-                    else self.mismatch_score
-                )
-                score_diag = scores[i - 1][j - 1] + match
-                score_up = scores[i - 1][j] + self.gap_score
-                score_left = scores[i][j - 1] + self.gap_score
+                cell_score, direction = self._compute_cell(i, j, seq1, seq2, scores)
+                scores[i][j] = cell_score
+                directions[i][j] = direction
 
-                best = max(0, score_diag, score_up, score_left)
-                if best <= 0:
-                    scores[i][j] = 0
-                    directions[i][j] = Direction.STOP
-                else:
-                    scores[i][j] = best
-                    directions[i][j] = _choose_direction(
-                        best, score_diag, score_up, score_left
-                    )
-
-                if scores[i][j] > max_score:
-                    max_score = scores[i][j]
+                if cell_score > max_score:
+                    max_score = cell_score
                     max_positions = [(i, j)]
-                elif scores[i][j] == max_score and scores[i][j] > 0:
+                elif cell_score == max_score and cell_score > 0:
                     max_positions.append((i, j))
 
-        if max_score == 0:
-            return Alignment(score=0, token_start=0, token_end=0)
+        return scores, directions, max_score, max_positions
 
-        best_start = 0
-        best_end = 0
-        best_query_start = 0
-        best_query_end = 0
-        best_matches = 0
-        best_match_blocks: list[tuple[int, int]] = []
+    def _compute_cell(
+        self, i: int, j: int, seq1: list[int], seq2: list[int], scores: list[list[int]]
+    ) -> tuple[int, Direction]:
+        """Compute score and direction for a single matrix cell."""
+        match = self.match_score if seq1[i - 1] == seq2[j - 1] else self.mismatch_score
+        score_diag = scores[i - 1][j - 1] + match
+        score_up = scores[i - 1][j] + self.gap_score
+        score_left = scores[i][j - 1] + self.gap_score
+
+        best = max(0, score_diag, score_up, score_left)
+        if best <= 0:
+            return 0, Direction.STOP
+        return best, _choose_direction(best, score_diag, score_up, score_left)
+
+    def _select_best_alignment(
+        self,
+        max_score: int,
+        max_positions: list[tuple[int, int]],
+        directions: list[list[Direction]],
+        scores: list[list[int]],
+        seq1: list[int],
+        seq2: list[int],
+    ) -> Alignment:
+        """Select the best alignment from all maximum positions."""
         best_key: tuple[int, int, int, int, int] | None = None
+        best_result: tuple[int, int, int, int, int, list[tuple[int, int]]] | None = None
 
         for i_end, j_end in max_positions:
             i_start, j_start, matches, match_blocks = _traceback_details(
@@ -108,29 +118,25 @@ class SmithWatermanAligner:
                 j_end,
                 directions,
                 scores,
-                seq1_list,
-                seq2_list,
+                seq1,
+                seq2,
                 return_match_blocks=self.return_match_blocks,
             )
             span_len = j_end - j_start
             key = (j_start, -span_len, i_start, j_end, i_end)
             if best_key is None or key < best_key:
                 best_key = key
-                best_start = j_start
-                best_end = j_end
-                best_query_start = i_start
-                best_query_end = i_end
-                best_matches = matches
-                best_match_blocks = match_blocks
+                best_result = (j_start, j_end, i_start, i_end, matches, match_blocks)
 
+        assert best_result is not None
         return Alignment(
             score=max_score,
-            token_start=best_start,
-            token_end=best_end,
-            query_start=best_query_start,
-            query_end=best_query_end,
-            matches=best_matches,
-            match_blocks=best_match_blocks,
+            token_start=best_result[0],
+            token_end=best_result[1],
+            query_start=best_result[2],
+            query_end=best_result[3],
+            matches=best_result[4],
+            match_blocks=best_result[5],
         )
 
 
@@ -154,35 +160,58 @@ def _traceback_details(
     *,
     return_match_blocks: bool,
 ) -> tuple[int, int, int, list[tuple[int, int]]]:
+    """Trace back through the alignment matrix to find match details."""
     matches = 0
     match_positions: list[int] = []
-    while i > 0 and j > 0 and directions[i][j] != Direction.STOP and scores[i][j] > 0:
-        match directions[i][j]:
-            case Direction.DIAGONAL:
-                i -= 1
-                j -= 1
-                if seq1[i] == seq2[j]:
-                    matches += 1
-                    if return_match_blocks:
-                        match_positions.append(j)
-            case Direction.UP:
-                i -= 1
-            case Direction.LEFT:
-                j -= 1
 
-    if not return_match_blocks or not match_positions:
-        return i, j, matches, []
+    while i > 0 and j > 0 and directions[i][j] != Direction.STOP and scores[i][j] > 0:
+        i, j, is_match = _step_traceback(i, j, directions, seq1, seq2)
+        if is_match:
+            matches += 1
+            if return_match_blocks:
+                match_positions.append(j)
+
+    blocks = _consolidate_match_blocks(match_positions) if return_match_blocks else []
+    return i, j, matches, blocks
+
+
+def _step_traceback(
+    i: int,
+    j: int,
+    directions: list[list[Direction]],
+    seq1: list[int],
+    seq2: list[int],
+) -> tuple[int, int, bool]:
+    """Take one step in the traceback, returning new position and whether it was a match."""
+    match directions[i][j]:
+        case Direction.DIAGONAL:
+            i -= 1
+            j -= 1
+            return i, j, seq1[i] == seq2[j]
+        case Direction.UP:
+            return i - 1, j, False
+        case Direction.LEFT:
+            return i, j - 1, False
+    return i, j, False  # pragma: no cover
+
+
+def _consolidate_match_blocks(match_positions: list[int]) -> list[tuple[int, int]]:
+    """Convert match positions into contiguous blocks."""
+    if not match_positions:
+        return []
 
     match_positions.reverse()
     blocks: list[tuple[int, int]] = []
     start = match_positions[0]
     prev = start
+
     for pos in match_positions[1:]:
         if pos == prev + 1:
             prev = pos
-            continue
-        blocks.append((start, prev + 1))
-        start = pos
-        prev = pos
+        else:
+            blocks.append((start, prev + 1))
+            start = pos
+            prev = pos
+
     blocks.append((start, prev + 1))
-    return i, j, matches, blocks
+    return blocks

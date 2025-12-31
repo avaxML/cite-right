@@ -159,55 +159,70 @@ class SpacyClaimDecomposer:
         )
 
     def _find_claim_boundaries(self, doc: Any) -> list[tuple[int, int]]:  # noqa: ANN401
-        """Find character boundaries for claim splits based on conjunctions.
-
-        Returns list of (split_start, split_end) tuples marking where to split.
-        The split region includes the coordinating conjunction (cc) if present.
-        """
+        """Find character boundaries for claim splits based on conjunctions."""
         boundaries: list[tuple[int, int]] = []
 
         for token in doc:
-            # Find tokens that are conjoined to another element
-            if token.dep_ == "conj":
-                # Look for coordinating conjunction (cc) before this token
-                cc_token = None
-                for child in token.head.children:
-                    if child.dep_ == "cc" and child.i < token.i:
-                        cc_token = child
-                        break
+            if token.dep_ != "conj":
+                continue
 
-                if cc_token is not None:
-                    # Split before the conjunction
-                    split_start = cc_token.idx
-                    # Find the end of whitespace after conjunction
-                    split_end = cc_token.idx + len(cc_token.text)
-                    while split_end < len(doc.text) and doc.text[split_end].isspace():
-                        split_end += 1
-                    boundaries.append((split_start, split_end))
-                else:
-                    # No explicit conjunction, split at the conjoined token
-                    # Look for comma or other separator before token
-                    split_start = token.idx
-                    for prev_token in doc:
-                        if prev_token.i < token.i and prev_token.text in {",", ";"}:
-                            if (
-                                prev_token.idx > boundaries[-1][1]
-                                if boundaries
-                                else True
-                            ):
-                                split_start = prev_token.idx
-                                break
+            boundary = self._get_boundary_for_conj(token, doc, boundaries)
+            if boundary is not None:
+                boundaries.append(boundary)
 
-                    split_end = token.idx
-                    while split_end < len(doc.text) and doc.text[split_end].isspace():
-                        split_end += 1
+        return sorted(set(boundaries))
 
-                    if split_start < split_end:
-                        boundaries.append((split_start, split_end))
+    def _get_boundary_for_conj(
+        self,
+        token: Any,  # noqa: ANN401
+        doc: Any,  # noqa: ANN401
+        existing: list[tuple[int, int]],
+    ) -> tuple[int, int] | None:
+        """Get split boundary for a conjoined token."""
+        cc_token = self._find_cc_token(token)
 
-        # Sort and deduplicate
-        boundaries = sorted(set(boundaries))
-        return boundaries
+        if cc_token is not None:
+            return self._boundary_from_cc(cc_token, doc)
+        return self._boundary_from_separator(token, doc, existing)
+
+    def _find_cc_token(self, token: Any) -> Any | None:  # noqa: ANN401
+        """Find coordinating conjunction (cc) before this token."""
+        for child in token.head.children:
+            if child.dep_ == "cc" and child.i < token.i:
+                return child
+        return None
+
+    def _boundary_from_cc(
+        self,
+        cc_token: Any,  # noqa: ANN401
+        doc: Any,  # noqa: ANN401
+    ) -> tuple[int, int]:
+        """Create boundary from coordinating conjunction."""
+        split_start = cc_token.idx
+        split_end = cc_token.idx + len(cc_token.text)
+        while split_end < len(doc.text) and doc.text[split_end].isspace():
+            split_end += 1
+        return (split_start, split_end)
+
+    def _boundary_from_separator(
+        self,
+        token: Any,  # noqa: ANN401
+        doc: Any,  # noqa: ANN401
+        existing: list[tuple[int, int]],
+    ) -> tuple[int, int] | None:
+        """Create boundary from comma/semicolon separator."""
+        split_start = token.idx
+        for prev_token in doc:
+            if prev_token.i < token.i and prev_token.text in {",", ";"}:
+                if not existing or prev_token.idx > existing[-1][1]:
+                    split_start = prev_token.idx
+                    break
+
+        split_end = token.idx
+        while split_end < len(doc.text) and doc.text[split_end].isspace():
+            split_end += 1
+
+        return (split_start, split_end) if split_start < split_end else None
 
     def _extract_claims(
         self,

@@ -107,113 +107,74 @@ def compute_hallucination_metrics(
     *,
     config: HallucinationConfig | None = None,
 ) -> HallucinationMetrics:
-    """Compute hallucination metrics from citation alignment results.
-
-    This function analyzes the output of `align_citations()` to produce
-    aggregate metrics measuring how well the generated answer is grounded
-    in source documents.
-
-    Args:
-        span_citations: List of SpanCitations from `align_citations()`.
-        config: Optional configuration for metric computation.
-
-    Returns:
-        HallucinationMetrics with aggregate and per-span confidence data.
-
-    Example:
-        >>> from cite_right import align_citations
-        >>> from cite_right.hallucination import compute_hallucination_metrics
-        >>>
-        >>> results = align_citations(answer, sources)
-        >>> metrics = compute_hallucination_metrics(results)
-        >>> print(f"Groundedness: {metrics.groundedness_score:.1%}")
-        >>> print(f"Hallucination rate: {metrics.hallucination_rate:.1%}")
-        >>> for span in metrics.unsupported_spans:
-        ...     print(f"  Unsupported: {span.text!r}")
-    """
+    """Compute hallucination metrics from citation alignment results."""
     cfg = config or HallucinationConfig()
 
     if not span_citations:
-        return HallucinationMetrics(
-            groundedness_score=1.0,
-            hallucination_rate=0.0,
-            supported_ratio=1.0,
-            partial_ratio=0.0,
-            unsupported_ratio=0.0,
-            avg_confidence=1.0,
-            min_confidence=1.0,
-            num_spans=0,
-            num_supported=0,
-            num_partial=0,
-            num_unsupported=0,
-            num_weak_citations=0,
-            span_confidences=[],
-            unsupported_spans=[],
-            weakly_supported_spans=[],
-        )
+        return _empty_hallucination_metrics()
 
-    span_confidences: list[SpanConfidence] = []
-    unsupported_spans: list[AnswerSpan] = []
-    weakly_supported_spans: list[AnswerSpan] = []
-
-    total_chars = 0
-    supported_chars = 0
-    partial_chars = 0
-    unsupported_chars = 0
-
-    num_supported = 0
-    num_partial = 0
-    num_unsupported = 0
-    num_weak = 0
-
-    confidence_values: list[float] = []
-    weighted_confidence_sum = 0.0
+    accumulator = _MetricsAccumulator()
 
     for sc in span_citations:
+        accumulator.process_span(sc, cfg)
+
+    return accumulator.build_metrics(len(span_citations))
+
+
+def _empty_hallucination_metrics() -> HallucinationMetrics:
+    """Return metrics for empty input."""
+    return HallucinationMetrics(
+        groundedness_score=1.0,
+        hallucination_rate=0.0,
+        supported_ratio=1.0,
+        partial_ratio=0.0,
+        unsupported_ratio=0.0,
+        avg_confidence=1.0,
+        min_confidence=1.0,
+        num_spans=0,
+        num_supported=0,
+        num_partial=0,
+        num_unsupported=0,
+        num_weak_citations=0,
+        span_confidences=[],
+        unsupported_spans=[],
+        weakly_supported_spans=[],
+    )
+
+
+class _MetricsAccumulator:
+    """Accumulator for computing hallucination metrics across spans."""
+
+    def __init__(self) -> None:
+        self.span_confidences: list[SpanConfidence] = []
+        self.unsupported_spans: list[AnswerSpan] = []
+        self.weakly_supported_spans: list[AnswerSpan] = []
+        self.confidence_values: list[float] = []
+        self.weighted_confidence_sum = 0.0
+        self.total_chars = 0
+        self.supported_chars = 0
+        self.partial_chars = 0
+        self.unsupported_chars = 0
+        self.num_supported = 0
+        self.num_partial = 0
+        self.num_unsupported = 0
+        self.num_weak = 0
+
+    def process_span(self, sc: SpanCitations, cfg: HallucinationConfig) -> None:
+        """Process a single span citation."""
         span = sc.answer_span
         span_len = len(span.text)
-        total_chars += span_len
+        self.total_chars += span_len
 
-        # Determine confidence from best citation
-        if sc.citations:
-            best = sc.citations[0]
-            answer_coverage = float(best.components.get("answer_coverage", 0.0))
-            confidence = answer_coverage
-            best_score = best.score
-            source_ids = list({c.source_id for c in sc.citations})
+        confidence, best_score, source_ids = self._extract_confidence(sc, cfg)
+        self.confidence_values.append(confidence)
 
-            # Check for weak citation
-            if answer_coverage < cfg.weak_citation_threshold:
-                num_weak += 1
-                weakly_supported_spans.append(span)
-        else:
-            confidence = 0.0
-            best_score = None
-            source_ids = []
+        is_grounded = self._update_status_counts(sc, span_len, cfg)
 
-        confidence_values.append(confidence)
-
-        # Determine grounded status based on config
-        if sc.status == "supported":
-            is_grounded = True
-            num_supported += 1
-            supported_chars += span_len
-        elif sc.status == "partial":
-            is_grounded = cfg.include_partial_in_grounded
-            num_partial += 1
-            partial_chars += span_len
-        else:  # unsupported
-            is_grounded = False
-            num_unsupported += 1
-            unsupported_chars += span_len
-            unsupported_spans.append(span)
-
-        # Weight confidence by character length for grounded score
         if is_grounded:
-            weighted_confidence_sum += confidence * span_len
-        # Unsupported spans contribute 0 to weighted sum
+            self.weighted_confidence_sum += confidence * span_len
 
-        span_confidences.append(
+        self.span_confidences.append(
             SpanConfidence(
                 span=span,
                 status=sc.status,
@@ -224,41 +185,72 @@ def compute_hallucination_metrics(
             )
         )
 
-    # Compute aggregate metrics
-    if total_chars > 0:
-        groundedness_score = weighted_confidence_sum / total_chars
-        supported_ratio = supported_chars / total_chars
-        partial_ratio = partial_chars / total_chars
-        unsupported_ratio = unsupported_chars / total_chars
-    else:
-        groundedness_score = 1.0
-        supported_ratio = 1.0
-        partial_ratio = 0.0
-        unsupported_ratio = 0.0
+    def _extract_confidence(
+        self, sc: SpanCitations, cfg: HallucinationConfig
+    ) -> tuple[float, float | None, list[str]]:
+        """Extract confidence info from citations."""
+        if not sc.citations:
+            return 0.0, None, []
 
-    hallucination_rate = 1.0 - groundedness_score
+        best = sc.citations[0]
+        answer_coverage = float(best.components.get("answer_coverage", 0.0))
+        source_ids = list({c.source_id for c in sc.citations})
 
-    if confidence_values:
-        avg_confidence = sum(confidence_values) / len(confidence_values)
-        min_confidence = min(confidence_values)
-    else:
-        avg_confidence = 1.0
-        min_confidence = 1.0
+        if answer_coverage < cfg.weak_citation_threshold:
+            self.num_weak += 1
+            self.weakly_supported_spans.append(sc.answer_span)
 
-    return HallucinationMetrics(
-        groundedness_score=groundedness_score,
-        hallucination_rate=hallucination_rate,
-        supported_ratio=supported_ratio,
-        partial_ratio=partial_ratio,
-        unsupported_ratio=unsupported_ratio,
-        avg_confidence=avg_confidence,
-        min_confidence=min_confidence,
-        num_spans=len(span_citations),
-        num_supported=num_supported,
-        num_partial=num_partial,
-        num_unsupported=num_unsupported,
-        num_weak_citations=num_weak,
-        span_confidences=span_confidences,
-        unsupported_spans=unsupported_spans,
-        weakly_supported_spans=weakly_supported_spans,
-    )
+        return answer_coverage, best.score, source_ids
+
+    def _update_status_counts(
+        self, sc: SpanCitations, span_len: int, cfg: HallucinationConfig
+    ) -> bool:
+        """Update status counts and return whether span is grounded."""
+        if sc.status == "supported":
+            self.num_supported += 1
+            self.supported_chars += span_len
+            return True
+        if sc.status == "partial":
+            self.num_partial += 1
+            self.partial_chars += span_len
+            return cfg.include_partial_in_grounded
+        self.num_unsupported += 1
+        self.unsupported_chars += span_len
+        self.unsupported_spans.append(sc.answer_span)
+        return False
+
+    def build_metrics(self, num_spans: int) -> HallucinationMetrics:
+        """Build final metrics from accumulated data."""
+        if self.total_chars > 0:
+            groundedness_score = self.weighted_confidence_sum / self.total_chars
+            supported_ratio = self.supported_chars / self.total_chars
+            partial_ratio = self.partial_chars / self.total_chars
+            unsupported_ratio = self.unsupported_chars / self.total_chars
+        else:
+            groundedness_score, supported_ratio = 1.0, 1.0
+            partial_ratio, unsupported_ratio = 0.0, 0.0
+
+        avg_confidence = (
+            sum(self.confidence_values) / len(self.confidence_values)
+            if self.confidence_values
+            else 1.0
+        )
+        min_confidence = min(self.confidence_values) if self.confidence_values else 1.0
+
+        return HallucinationMetrics(
+            groundedness_score=groundedness_score,
+            hallucination_rate=1.0 - groundedness_score,
+            supported_ratio=supported_ratio,
+            partial_ratio=partial_ratio,
+            unsupported_ratio=unsupported_ratio,
+            avg_confidence=avg_confidence,
+            min_confidence=min_confidence,
+            num_spans=num_spans,
+            num_supported=self.num_supported,
+            num_partial=self.num_partial,
+            num_unsupported=self.num_unsupported,
+            num_weak_citations=self.num_weak,
+            span_confidences=self.span_confidences,
+            unsupported_spans=self.unsupported_spans,
+            weakly_supported_spans=self.weakly_supported_spans,
+        )

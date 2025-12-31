@@ -66,61 +66,62 @@ def _iter_token_spans(text: str) -> list[tuple[int, int]]:
     while idx < len(text):
         char = text[idx]
         if char.isdigit():
-            start = idx
-            idx += 1
-            while idx < len(text):
-                char = text[idx]
-                if char.isdigit():
-                    idx += 1
-                    continue
-                if (
-                    char in {".", ","}
-                    and idx + 1 < len(text)
-                    and text[idx - 1].isdigit()
-                    and text[idx + 1].isdigit()
-                ):
-                    idx += 1
-                    continue
-                break
-            spans.append((start, idx))
-            continue
-
-        if char in {"%", "$", "€", "£"}:
+            end = _consume_number(text, idx)
+            spans.append((idx, end))
+            idx = end
+        elif char in {"%", "$", "€", "£"}:
             spans.append((idx, idx + 1))
             idx += 1
-            continue
-
-        if char.isalnum():
-            start = idx
+        elif char.isalnum():
+            end = _consume_word(text, idx)
+            spans.append((idx, end))
+            idx = end
+        else:
             idx += 1
-            while idx < len(text):
-                char = text[idx]
-                if char.isalnum():
-                    idx += 1
-                    continue
-                if (
-                    char in {"'", "\u2019"}
-                    and idx + 1 < len(text)
-                    and text[idx - 1].isalnum()
-                    and text[idx + 1].isalnum()
-                ):
-                    idx += 1
-                    continue
-                if (
-                    char == "-"
-                    and idx + 1 < len(text)
-                    and text[idx - 1].isalnum()
-                    and text[idx + 1].isalnum()
-                ):
-                    idx += 1
-                    continue
-                break
-            spans.append((start, idx))
-            continue
-
-        idx += 1
 
     return spans
+
+
+def _consume_number(text: str, start: int) -> int:
+    """Consume a number token, including decimal separators."""
+    idx = start + 1
+    while idx < len(text):
+        char = text[idx]
+        if char.isdigit():
+            idx += 1
+        elif (
+            char in {".", ","}
+            and idx + 1 < len(text)
+            and text[idx - 1].isdigit()
+            and text[idx + 1].isdigit()
+        ):
+            idx += 1
+        else:
+            break
+    return idx
+
+
+def _consume_word(text: str, start: int) -> int:
+    """Consume an alphanumeric word token, including internal apostrophes/hyphens."""
+    idx = start + 1
+    while idx < len(text):
+        char = text[idx]
+        if char.isalnum():
+            idx += 1
+        elif _is_internal_punctuation(text, idx, char):
+            idx += 1
+        else:
+            break
+    return idx
+
+
+def _is_internal_punctuation(text: str, idx: int, char: str) -> bool:
+    """Check if punctuation character is internal to a word (apostrophe or hyphen)."""
+    if idx + 1 >= len(text):
+        return False
+    if not text[idx - 1].isalnum() or not text[idx + 1].isalnum():
+        return False
+    return char in {"'", "\u2019", "-"}
 
 
 @lru_cache(maxsize=10000)

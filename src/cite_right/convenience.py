@@ -318,45 +318,40 @@ def get_citation_summary(
     span_citations: Sequence[SpanCitations],
     sources: Sequence[str | SourceDocument | SourceChunk] | None = None,
 ) -> str:
-    """Generate a human-readable summary of citation results.
-
-    Args:
-        span_citations: Citation results from align_citations().
-        sources: Optional source documents for richer summary.
-
-    Returns:
-        A formatted string summarizing the citation analysis.
-
-    Example:
-        >>> from cite_right import align_citations, get_citation_summary
-        >>> results = align_citations(answer, sources)
-        >>> print(get_citation_summary(results, sources))
-        Citation Summary:
-        - 2 of 3 spans supported
-        - 1 span unsupported
-        - Sources cited: report, analysis
-    """
+    """Generate a human-readable summary of citation results."""
     if not span_citations:
         return "Citation Summary: No spans to analyze"
 
-    num_supported = sum(1 for sc in span_citations if sc.status == "supported")
-    num_partial = sum(1 for sc in span_citations if sc.status == "partial")
-    num_unsupported = sum(1 for sc in span_citations if sc.status == "unsupported")
-    total = len(span_citations)
+    counts = _count_statuses(span_citations)
+    source_ids = _collect_source_ids(span_citations)
+    return _format_summary(counts, len(span_citations), source_ids)
 
-    # Collect unique source IDs
+
+def _count_statuses(span_citations: Sequence[SpanCitations]) -> dict[str, int]:
+    """Count spans by status."""
+    counts = {"supported": 0, "partial": 0, "unsupported": 0}
+    for sc in span_citations:
+        counts[sc.status] = counts.get(sc.status, 0) + 1
+    return counts
+
+
+def _collect_source_ids(span_citations: Sequence[SpanCitations]) -> set[str]:
+    """Collect unique source IDs from all citations."""
     source_ids: set[str] = set()
     for sc in span_citations:
         for c in sc.citations:
             source_ids.add(c.source_id)
+    return source_ids
 
+
+def _format_summary(counts: dict[str, int], total: int, source_ids: set[str]) -> str:
+    """Format the summary string."""
     lines = ["Citation Summary:"]
-    lines.append(f"- {num_supported} of {total} spans fully supported")
-    if num_partial > 0:
-        lines.append(f"- {num_partial} spans partially supported")
-    if num_unsupported > 0:
-        lines.append(f"- {num_unsupported} spans unsupported")
+    lines.append(f"- {counts['supported']} of {total} spans fully supported")
+    if counts["partial"] > 0:
+        lines.append(f"- {counts['partial']} spans partially supported")
+    if counts["unsupported"] > 0:
+        lines.append(f"- {counts['unsupported']} spans unsupported")
     if source_ids:
         lines.append(f"- Sources cited: {', '.join(sorted(source_ids))}")
-
     return "\n".join(lines)
