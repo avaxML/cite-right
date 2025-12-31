@@ -1,0 +1,119 @@
+/* Custom styles for Cite-Right documentation */
+
+:root {
+    --md-primary-fg-color: #2e7d32;
+    --md-primary-fg-color--light: #4caf50;
+    --md-primary-fg-color--dark: #1b5e20;
+    --md-accent-fg-color: #00c853;
+}
+
+/* Ensure white background for content */
+.md-content {
+    background-color: white;
+}
+
+[data-md-color-scheme="slate"] .md-content {
+    background-color: var(--md-default-bg-color);
+}
+
+/* Code block styling */
+.highlight {
+    background-color: #f5f5f5;
+    border-radius: 4px;
+}
+
+[data-md-color-scheme="slate"] .highlight {
+    background-color: #1e1e1e;
+}
+
+/* Admonition styling */
+.md-typeset .admonition.note {
+    border-color: #2e7d32;
+}
+
+.md-typeset .admonition.note > .admonition-title {
+    background-color: rgba(46, 125, 50, 0.1);
+}
+
+.md-typeset .admonition.note > .admonition-title::before {
+    background-color: #2e7d32;
+}
+
+/* Table styling */
+.md-typeset table:not([class]) {
+    border: 1px solid #e0e0e0;
+}
+
+.md-typeset table:not([class]) th {
+    background-color: #e8f5e9;
+    font-weight: 600;
+}
+
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) th {
+    background-color: rgba(46, 125, 50, 0.2);
+}
+
+/* Navigation styling */
+.md-nav__link--active {
+    color: var(--md-primary-fg-color) !important;
+    font-weight: 600;
+}
+
+/* Header styling */
+.md-header {
+    background-color: var(--md-primary-fg-color);
+}
+
+/* Footer styling */
+.md-footer {
+    background-color: #1b5e20;
+}
+
+/* Inline code */
+.md-typeset code {
+    background-color: #e8f5e9;
+    color: #1b5e20;
+    padding: 0.1em 0.3em;
+    border-radius: 3px;
+}
+
+[data-md-color-scheme="slate"] .md-typeset code {
+    background-color: rgba(46, 125, 50, 0.15);
+    color: #81c784;
+}
+
+/* Links */
+.md-typeset a {
+    color: var(--md-primary-fg-color);
+}
+
+.md-typeset a:hover {
+    color: var(--md-accent-fg-color);
+}
+
+/* Search highlight */
+.md-search__form {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Content max width */
+.md-content__inner {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* Blockquotes */
+.md-typeset blockquote {
+    border-left-color: var(--md-primary-fg-color);
+    background-color: #f5f5f5;
+    padding: 1em;
+}
+
+[data-md-color-scheme="slate"] .md-typeset blockquote {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Home page hero styling */
+.md-typeset h1 {
+    color: var(--md-primary-fg-color);
+}
