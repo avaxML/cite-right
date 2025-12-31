@@ -34,7 +34,7 @@ The `source_id` field identifies which document contains the supporting evidence
 
 The `evidence` field contains the actual text extracted from the source document. You can verify that this matches the document slice by checking that `source.text[citation.char_start:citation.char_end] == citation.evidence`, a property that always holds true.
 
-The `score` field indicates the alignment quality, with higher values representing stronger matches. The `components` dictionary breaks down this score into its constituent parts, including answer coverage, evidence coverage, and optional embedding similarity.
+The `score` field indicates the alignment quality, with higher values representing stronger matches. The `components` dictionary breaks down this score into its constituent parts, including normalized alignment, answer coverage, evidence coverage, lexical overlap, and optional embedding similarity.
 
 ## Installation
 

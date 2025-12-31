@@ -10,75 +10,96 @@ Controls citation alignment behavior.
 
 ```python
 class CitationConfig(BaseModel):
-    # Result parameters
-    top_k: int = 1
-    min_score_threshold: float = 0.2
-    supported_threshold: float = 0.5
+    # Result filtering and status
+    top_k: int = 3
+    min_final_score: float = 0.0
+    min_alignment_score: int = 0
+    min_answer_coverage: float = 0.2
+    supported_answer_coverage: float = 0.6
+    allow_embedding_only: bool = False
+    min_embedding_similarity: float = 0.3
+    supported_embedding_similarity: float = 0.6
 
     # Passage windowing
-    window_size_sentences: int = 3
+    window_size_sentences: int = 1
     window_stride_sentences: int = 1
 
     # Candidate selection
-    max_candidates: int = 50
-    lexical_weight: float = 0.5
-    embedding_weight: float = 0.5
+    max_candidates_lexical: int = 200
+    max_candidates_embedding: int = 200
+    max_candidates_total: int = 400
+
+    # Ranking
+    max_citations_per_source: int = 2
+    prefer_source_order: bool = True
 
     # Alignment scoring
     match_score: int = 2
-    mismatch_penalty: int = -1
-    gap_penalty: int = -1
+    mismatch_score: int = -1
+    gap_score: int = -1
 
     # Multi-span evidence
     multi_span_evidence: bool = False
-    multi_span_merge_gap_chars: int = 50
-
-    # Embedding behavior
-    allow_embedding_only: bool = False
+    multi_span_merge_gap_chars: int = 16
+    multi_span_max_spans: int = 5
 
     # Scoring weights
     weights: CitationWeights = CitationWeights()
 ```
 
-### Result Parameters
+### Result Filtering and Status
 
-**top_k** (`int`): Maximum citations to return per answer span. Default is 1, returning only the best match.
+**top_k** (`int`): Maximum citations to return per answer span. Default is 3.
 
-**min_score_threshold** (`float`): Minimum score for a citation to be included. Citations below this are discarded.
+**min_final_score** (`float`): Minimum final citation score required for inclusion. This score is a weighted sum of alignment, coverage, lexical, and embedding components.
 
-**supported_threshold** (`float`): Minimum score for "supported" status. Spans with best citation above this are marked supported.
+**min_alignment_score** (`int`): Minimum raw Smith-Waterman alignment score required to use alignment evidence.
+
+**min_answer_coverage** (`float`): Minimum fraction of answer tokens that must match to use alignment evidence.
+
+**supported_answer_coverage** (`float`): Answer coverage threshold for `supported` status.
+
+**allow_embedding_only** (`bool`): Allow citations based solely on embedding similarity when alignment evidence fails.
+
+**min_embedding_similarity** (`float`): Minimum embedding similarity for embedding-only citations.
+
+**supported_embedding_similarity** (`float`): Embedding similarity threshold for `supported` status when `allow_embedding_only=True`.
 
 ### Passage Windowing
 
-**window_size_sentences** (`int`): Number of sentences in each passage window.
+**window_size_sentences** (`int`): Number of sentences per source passage window.
 
-**window_stride_sentences** (`int`): Step between consecutive windows. Stride of 1 means maximum overlap.
+**window_stride_sentences** (`int`): Step between consecutive passage windows.
 
 ### Candidate Selection
 
-**max_candidates** (`int`): Maximum passages to consider for full alignment per answer span.
+**max_candidates_lexical** (`int`): Maximum lexical candidates to consider per answer span.
 
-**lexical_weight** (`float`): Weight of lexical overlap in candidate scoring.
+**max_candidates_embedding** (`int`): Maximum embedding candidates to consider per answer span (requires an embedder).
 
-**embedding_weight** (`float`): Weight of embedding similarity in candidate scoring.
+**max_candidates_total** (`int`): Maximum candidates after combining lexical and embedding candidates.
+
+### Ranking
+
+**max_citations_per_source** (`int`): Cap on citations returned from a single source per answer span.
+
+**prefer_source_order** (`bool`): When scores tie, prefer earlier sources (True) or earlier character positions (False).
 
 ### Alignment Scoring
 
 **match_score** (`int`): Score added when tokens match.
 
-**mismatch_penalty** (`int`): Penalty when tokens do not match.
+**mismatch_score** (`int`): Penalty when tokens do not match.
 
-**gap_penalty** (`int`): Penalty for gaps in alignment.
+**gap_score** (`int`): Penalty for gaps in alignment.
 
 ### Multi-Span Evidence
 
 **multi_span_evidence** (`bool`): Enable extraction of non-contiguous evidence spans.
 
-**multi_span_merge_gap_chars** (`int`): Maximum gap between spans before they are kept separate.
+**multi_span_merge_gap_chars** (`int`): Maximum gap between spans before they are merged.
 
-### Embedding Behavior
-
-**allow_embedding_only** (`bool`): Allow citations based solely on embedding similarity when alignment fails.
+**multi_span_max_spans** (`int`): Maximum number of spans returned per citation after merging.
 
 ### Class Methods
 
@@ -108,21 +129,24 @@ Controls how score components combine.
 
 ```python
 class CitationWeights(BaseModel):
-    alignment_score: float = 0.4
-    answer_coverage: float = 0.3
-    evidence_coverage: float = 0.2
-    embedding_similarity: float = 0.1
+    alignment: float = 1.0
+    answer_coverage: float = 1.0
+    evidence_coverage: float = 0.0
+    lexical: float = 0.5
+    embedding: float = 0.5
 ```
 
-**alignment_score** (`float`): Weight of raw Smith-Waterman score.
+**alignment** (`float`): Weight of normalized Smith-Waterman alignment score.
 
-**answer_coverage** (`float`): Weight of matched answer tokens fraction.
+**answer_coverage** (`float`): Weight of matched answer token fraction.
 
-**evidence_coverage** (`float`): Weight of matched evidence tokens fraction.
+**evidence_coverage** (`float`): Weight of matched evidence token fraction.
 
-**embedding_similarity** (`float`): Weight of embedding cosine similarity.
+**lexical** (`float`): Weight of IDF-weighted lexical overlap score.
 
-Weights are normalized during scoring, so relative values matter.
+**embedding** (`float`): Weight of embedding similarity when embeddings are enabled.
+
+Weights are summed directly (not normalized), so absolute values matter.
 
 ## HallucinationConfig
 
@@ -142,15 +166,20 @@ class HallucinationConfig(BaseModel):
 
 ## TokenizerConfig
 
-Controls tokenizer behavior.
+Controls tokenizer normalization behavior.
 
 **Location:** `src/cite_right/text/tokenizer.py`
 
 ```python
-class TokenizerConfig(BaseModel):
-    normalize_numbers: bool = True
-    normalize_percent: bool = True
-    normalize_currency: bool = True
+class TokenizerConfig:
+    def __init__(
+        self,
+        *,
+        normalize_numbers: bool = True,
+        normalize_percent: bool = True,
+        normalize_currency: bool = True,
+    ) -> None:
+        ...
 ```
 
 **normalize_numbers** (`bool`): Convert numeric separators like "1,200" to "1200".
@@ -169,15 +198,16 @@ from cite_right.core.citation_config import CitationWeights
 
 config = CitationConfig(
     top_k=5,
-    min_score_threshold=0.3,
-    supported_threshold=0.6,
-    window_size_sentences=5,
-    max_candidates=100,
+    min_final_score=0.3,
+    supported_answer_coverage=0.7,
+    window_size_sentences=2,
+    max_candidates_lexical=150,
     weights=CitationWeights(
-        alignment_score=0.5,
-        answer_coverage=0.3,
-        evidence_coverage=0.2,
-        embedding_similarity=0.0
+        alignment=1.0,
+        answer_coverage=1.0,
+        evidence_coverage=0.0,
+        lexical=0.3,
+        embedding=0.0
     )
 )
 
@@ -193,10 +223,10 @@ base = CitationConfig.strict()
 # Create modified version
 config = CitationConfig(
     top_k=3,
-    min_score_threshold=base.min_score_threshold,
-    supported_threshold=base.supported_threshold,
+    min_answer_coverage=base.min_answer_coverage,
+    supported_answer_coverage=base.supported_answer_coverage,
     window_size_sentences=base.window_size_sentences,
-    max_candidates=base.max_candidates
+    max_candidates_lexical=base.max_candidates_lexical
 )
 ```
 
@@ -230,13 +260,4 @@ tokenizer = SimpleTokenizer(config=config)
 
 ## Validation
 
-Configuration values are validated by Pydantic. Invalid values raise `ValidationError`.
-
-```python
-try:
-    config = CitationConfig(top_k=-1)
-except ValidationError as e:
-    print(e)  # top_k must be positive
-```
-
-Range constraints are enforced for thresholds (0-1), counts (non-negative), and other parameters.
+`CitationConfig` is a Pydantic model but does not declare explicit range constraints. Supplying extreme or inconsistent values can lead to degraded results or runtime errors. `align_citations` returns an empty list when `top_k <= 0`.

@@ -15,7 +15,7 @@ config = CitationConfig.balanced()
 results = align_citations(answer, sources, config=config)
 ```
 
-The balanced configuration uses moderate thresholds that avoid being too strict or too lenient. It works well for typical RAG applications where sources and answers have reasonable overlap.
+Balanced uses the default thresholds and candidate limits. It works well for typical RAG applications where sources and answers have reasonable overlap.
 
 ### Strict
 
@@ -25,9 +25,7 @@ The strict preset is designed for high-stakes applications like fact-checking, l
 config = CitationConfig.strict()
 ```
 
-This preset increases the supported threshold significantly, requiring near-verbatim matches for full support. It also raises the minimum score threshold, filtering out marginal citations entirely. The result is conservative citation behavior that minimizes false positives at the cost of more content being marked as unsupported.
-
-Applications using the strict preset should expect many partial or unsupported spans even when the answer genuinely derives from the sources. This is by design: when consequences of incorrect citation are severe, it is better to under-claim support than over-claim it.
+This preset increases answer-coverage requirements and sets a minimum final score, filtering out marginal citations. The result is conservative citation behavior that minimizes false positives at the cost of more content being marked as unsupported.
 
 ### Permissive
 
@@ -37,21 +35,17 @@ The permissive preset accommodates heavily paraphrased content where answers exp
 config = CitationConfig.permissive()
 ```
 
-This preset lowers all thresholds, allowing weaker matches to qualify as citations. It is appropriate for summarization tasks, creative writing assistance, or applications where the goal is identifying source relevance rather than verifying exact claims.
-
-When using the permissive preset, more content will be marked as supported, but the evidence quality may be lower. Users should understand that "supported" in this context means a plausible connection exists rather than a verified match.
+This preset lowers answer-coverage thresholds, increases `top_k`, and enables embedding-only citations. It is appropriate for summarization tasks or applications where recall matters more than precision.
 
 ### Fast
 
-The fast preset prioritizes processing speed over alignment quality. It reduces the number of candidates considered and uses smaller passage windows.
+The fast preset prioritizes processing speed over alignment quality by reducing the number of candidates evaluated.
 
 ```python
 config = CitationConfig.fast()
 ```
 
-This preset is suitable for high-volume processing, real-time applications, or initial filtering where speed matters more than precision. It still produces useful citations but may miss some matches that would be found with more thorough search.
-
-For latency-sensitive applications, combining the fast preset with the Rust backend provides the best performance.
+This preset reduces candidate limits and returns only the single best citation per span. It still produces useful citations but may miss matches that would be found with more thorough search.
 
 ## Choosing a Preset
 
@@ -81,8 +75,8 @@ from cite_right import CitationConfig
 base = CitationConfig.strict()
 config = CitationConfig(
     top_k=base.top_k,
-    min_score_threshold=base.min_score_threshold,
-    supported_threshold=0.6,  # Slightly lower than strict default
+    min_answer_coverage=base.min_answer_coverage,
+    supported_answer_coverage=0.6,  # Slightly lower than strict default
     window_size_sentences=base.window_size_sentences
 )
 ```
@@ -95,12 +89,19 @@ The following table summarizes key parameter differences between presets.
 
 | Parameter | Balanced | Strict | Permissive | Fast |
 |-----------|----------|--------|------------|------|
-| min_score_threshold | 0.2 | 0.4 | 0.1 | 0.2 |
-| supported_threshold | 0.5 | 0.7 | 0.3 | 0.5 |
-| max_candidates | 50 | 100 | 50 | 20 |
-| window_size_sentences | 3 | 3 | 5 | 2 |
+| top_k | 3 | 2 | 5 | 1 |
+| min_answer_coverage | 0.2 | 0.4 | 0.15 | 0.2 |
+| supported_answer_coverage | 0.6 | 0.7 | 0.4 | 0.6 |
+| min_final_score | 0.0 | 0.3 | 0.0 | 0.0 |
+| allow_embedding_only | False | False | True | False |
+| min_embedding_similarity | 0.3 | 0.3 | 0.25 | 0.3 |
+| supported_embedding_similarity | 0.6 | 0.6 | 0.5 | 0.6 |
+| max_candidates_lexical | 200 | 200 | 200 | 50 |
+| max_candidates_embedding | 200 | 200 | 200 | 50 |
+| max_candidates_total | 400 | 400 | 400 | 100 |
+| max_citations_per_source | 2 | 1 | 3 | 1 |
 
-These values are illustrative and may differ in the actual implementation. Refer to the source code in `src/cite_right/core/citation_config.py` for exact values.
+Other parameters (window sizes, alignment scoring, weights) remain at their default values across presets.
 
 ## Runtime Preset Selection
 
