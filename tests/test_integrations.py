@@ -1,6 +1,10 @@
 """Tests for framework integration helpers."""
 
+import pytest
+
 from cite_right import (
+    LANGCHAIN_AVAILABLE,
+    LLAMAINDEX_AVAILABLE,
     SourceChunk,
     SourceDocument,
     align_citations,
@@ -9,6 +13,10 @@ from cite_right import (
     from_langchain_documents,
     from_llamaindex_chunks,
     from_llamaindex_nodes,
+    is_langchain_available,
+    is_langchain_document,
+    is_llamaindex_available,
+    is_llamaindex_node,
 )
 
 
@@ -233,3 +241,190 @@ class TestFromDicts:
         results = align_citations(answer, sources)
 
         assert len(results) > 0
+
+
+class TestAvailabilityChecks:
+    """Tests for library availability check functions."""
+
+    def test_is_langchain_available_returns_bool(self):
+        """is_langchain_available() should return a boolean."""
+        result = is_langchain_available()
+        assert isinstance(result, bool)
+        assert result == LANGCHAIN_AVAILABLE
+
+    def test_is_llamaindex_available_returns_bool(self):
+        """is_llamaindex_available() should return a boolean."""
+        result = is_llamaindex_available()
+        assert isinstance(result, bool)
+        assert result == LLAMAINDEX_AVAILABLE
+
+
+class TestTypeChecks:
+    """Tests for type checking functions."""
+
+    def test_is_langchain_document_with_mock(self):
+        """is_langchain_document() should detect mock documents via protocol."""
+        mock_doc = MockLangChainDocument("content", {"source": "test"})
+        assert is_langchain_document(mock_doc) is True
+
+    def test_is_langchain_document_with_non_document(self):
+        """is_langchain_document() should return False for non-documents."""
+        assert is_langchain_document("not a document") is False
+        assert is_langchain_document({"page_content": "text"}) is False
+        assert is_langchain_document(42) is False
+
+    def test_is_llamaindex_node_with_mock(self):
+        """is_llamaindex_node() should detect mock nodes via protocol."""
+        mock_node = MockLlamaIndexNode("content", {"file_name": "test"})
+        assert is_llamaindex_node(mock_node) is True
+
+    def test_is_llamaindex_node_with_node_with_score(self):
+        """is_llamaindex_node() should detect NodeWithScore wrappers."""
+        inner_node = MockLlamaIndexNode("content", {})
+        wrapped = MockNodeWithScore(inner_node, 0.9)
+        assert is_llamaindex_node(wrapped) is True
+
+    def test_is_llamaindex_node_with_non_node(self):
+        """is_llamaindex_node() should return False for non-nodes."""
+        assert is_llamaindex_node("not a node") is False
+        assert is_llamaindex_node({"content": "text"}) is False
+        assert is_llamaindex_node(42) is False
+
+
+@pytest.mark.skipif(not LANGCHAIN_AVAILABLE, reason="langchain-core not installed")
+class TestRealLangChainIntegration:
+    """Tests that use actual LangChain types when available."""
+
+    def test_from_langchain_documents_with_real_type(self):
+        """Should work with real LangChain Document objects."""
+        from langchain_core.documents import Document
+
+        docs = [
+            Document(page_content="First document.", metadata={"source": "doc1.pdf"}),
+            Document(page_content="Second document.", metadata={"source": "doc2.pdf"}),
+        ]
+
+        sources = from_langchain_documents(docs)
+
+        assert len(sources) == 2
+        assert all(isinstance(s, SourceDocument) for s in sources)
+        assert sources[0].text == "First document."
+        assert sources[0].id == "doc1.pdf"
+
+    def test_is_langchain_document_with_real_type(self):
+        """is_langchain_document() should detect real Document objects."""
+        from langchain_core.documents import Document
+
+        doc = Document(page_content="test", metadata={})
+        assert is_langchain_document(doc) is True
+
+    def test_from_langchain_chunks_with_real_type(self):
+        """Should convert real Document chunks to SourceChunks."""
+        from langchain_core.documents import Document
+
+        docs = [
+            Document(
+                page_content="chunk text here",
+                metadata={"source": "doc.pdf", "start_index": 100, "end_index": 115},
+            )
+        ]
+
+        chunks = from_langchain_chunks(docs)
+
+        assert len(chunks) == 1
+        assert isinstance(chunks[0], SourceChunk)
+        assert chunks[0].doc_char_start == 100
+        assert chunks[0].doc_char_end == 115
+
+    def test_real_langchain_with_align_citations(self):
+        """Real LangChain Documents should work with align_citations."""
+        from langchain_core.documents import Document
+
+        docs = [Document(page_content="Revenue grew 15% in Q4.", metadata={"source": "report"})]
+        sources = from_langchain_documents(docs)
+
+        answer = "Revenue grew 15%."
+        results = align_citations(answer, sources)
+
+        assert len(results) > 0
+        assert results[0].citations[0].source_id == "report"
+
+
+@pytest.mark.skipif(not LLAMAINDEX_AVAILABLE, reason="llama-index-core not installed")
+class TestRealLlamaIndexIntegration:
+    """Tests that use actual LlamaIndex types when available."""
+
+    def test_from_llamaindex_nodes_with_real_type(self):
+        """Should work with real LlamaIndex TextNode objects."""
+        from llama_index.core.schema import TextNode
+
+        nodes = [
+            TextNode(text="First node content.", metadata={"file_name": "doc1.pdf"}),
+            TextNode(text="Second node content.", metadata={"file_name": "doc2.pdf"}),
+        ]
+
+        sources = from_llamaindex_nodes(nodes)
+
+        assert len(sources) == 2
+        assert all(isinstance(s, SourceDocument) for s in sources)
+        assert sources[0].text == "First node content."
+        assert sources[0].id == "doc1.pdf"
+
+    def test_is_llamaindex_node_with_real_type(self):
+        """is_llamaindex_node() should detect real TextNode objects."""
+        from llama_index.core.schema import TextNode
+
+        node = TextNode(text="test", metadata={})
+        assert is_llamaindex_node(node) is True
+
+    def test_from_llamaindex_nodes_with_real_node_with_score(self):
+        """Should work with real NodeWithScore objects."""
+        from llama_index.core.schema import NodeWithScore, TextNode
+
+        inner_node = TextNode(text="Node content.", metadata={"file_name": "doc.pdf"})
+        nodes = [NodeWithScore(node=inner_node, score=0.95)]
+
+        sources = from_llamaindex_nodes(nodes)
+
+        assert len(sources) == 1
+        assert sources[0].text == "Node content."
+        assert sources[0].id == "doc.pdf"
+
+    def test_is_llamaindex_node_with_real_node_with_score(self):
+        """is_llamaindex_node() should detect real NodeWithScore objects."""
+        from llama_index.core.schema import NodeWithScore, TextNode
+
+        inner = TextNode(text="test", metadata={})
+        wrapped = NodeWithScore(node=inner, score=0.9)
+        assert is_llamaindex_node(wrapped) is True
+
+    def test_from_llamaindex_chunks_with_real_type(self):
+        """Should convert real TextNodes with offsets to SourceChunks."""
+        from llama_index.core.schema import TextNode
+
+        nodes = [
+            TextNode(
+                text="chunk text",
+                metadata={"file_name": "doc.pdf", "start_char_idx": 100, "end_char_idx": 110},
+            )
+        ]
+
+        chunks = from_llamaindex_chunks(nodes)
+
+        assert len(chunks) == 1
+        assert isinstance(chunks[0], SourceChunk)
+        assert chunks[0].doc_char_start == 100
+        assert chunks[0].doc_char_end == 110
+
+    def test_real_llamaindex_with_align_citations(self):
+        """Real LlamaIndex nodes should work with align_citations."""
+        from llama_index.core.schema import TextNode
+
+        nodes = [TextNode(text="Revenue grew 15% in Q4.", metadata={"file_name": "report.pdf"})]
+        sources = from_llamaindex_nodes(nodes)
+
+        answer = "Revenue grew 15%."
+        results = align_citations(answer, sources)
+
+        assert len(results) > 0
+        assert sources[0].id == "report.pdf"

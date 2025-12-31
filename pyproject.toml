@@ -15,6 +15,8 @@ embeddings = ["sentence-transformers>=2.2"]
 tiktoken = ["tiktoken>=0.5"]
 huggingface = ["transformers>=4.30", "tokenizers>=0.15"]
 pysbd = ["pysbd>=0.3.4"]
+langchain = ["langchain-core>=0.3.0"]
+llamaindex = ["llama-index-core>=0.11.0"]
 
 [dependency-groups]
 dev = ["pytest>=8", "pytest-cov>=4.0", "ruff>=0.6", "pyright>=1.1", "maturin>=1.4", "radon>=6.0"]
@@ -43,6 +45,7 @@ ignore = ["E501"]
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["ANN", "E402"]
 "src/cite_right/text/segmenter_spacy.py" = ["ANN401"]
+"src/cite_right/integrations.py" = ["ANN401"]
 
 [tool.ruff.format]
 quote-style = "double"
