@@ -174,9 +174,9 @@ class SpacyClaimDecomposer:
 
     def _get_boundary_for_conj(
         self,
-        token: Any,
-        doc: Any,
-        existing: list[tuple[int, int]],  # noqa: ANN401
+        token: Any,  # noqa: ANN401
+        doc: Any,  # noqa: ANN401
+        existing: list[tuple[int, int]],
     ) -> tuple[int, int] | None:
         """Get split boundary for a conjoined token."""
         cc_token = self._find_cc_token(token)
@@ -194,7 +194,7 @@ class SpacyClaimDecomposer:
 
     def _boundary_from_cc(
         self,
-        cc_token: Any,
+        cc_token: Any,  # noqa: ANN401
         doc: Any,  # noqa: ANN401
     ) -> tuple[int, int]:
         """Create boundary from coordinating conjunction."""
@@ -206,9 +206,9 @@ class SpacyClaimDecomposer:
 
     def _boundary_from_separator(
         self,
-        token: Any,
-        doc: Any,
-        existing: list[tuple[int, int]],  # noqa: ANN401
+        token: Any,  # noqa: ANN401
+        doc: Any,  # noqa: ANN401
+        existing: list[tuple[int, int]],
     ) -> tuple[int, int] | None:
         """Create boundary from comma/semicolon separator."""
         split_start = token.idx
