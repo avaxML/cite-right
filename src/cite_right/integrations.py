@@ -11,43 +11,40 @@ To use these integrations, install the optional dependencies:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Sequence, Union
+from typing import Any, Sequence
 
 from cite_right.core.results import SourceChunk, SourceDocument
 
 # Flags to track which libraries are available
-LANGCHAIN_AVAILABLE = False
-LLAMAINDEX_AVAILABLE = False
+LANGCHAIN_AVAILABLE: bool = False
+LLAMAINDEX_AVAILABLE: bool = False
+
+# Type aliases - these will be set based on library availability
+LangChainDocument: type | None = None
+LlamaIndexTextNode: type | None = None
+LlamaIndexNodeWithScore: type | None = None
+LlamaIndexNode: tuple[type, ...] | None = None
 
 # Try to import LangChain types
 try:
-    from langchain_core.documents import Document as LangChainDocument
+    from langchain_core.documents import Document as _LangChainDocument
 
+    LangChainDocument = _LangChainDocument
     LANGCHAIN_AVAILABLE = True
 except ImportError:
-    LangChainDocument = None  # type: ignore[misc, assignment]
+    pass
 
 # Try to import LlamaIndex types
 try:
-    from llama_index.core.schema import NodeWithScore as LlamaIndexNodeWithScore
-    from llama_index.core.schema import TextNode as LlamaIndexTextNode
+    from llama_index.core.schema import NodeWithScore as _LlamaIndexNodeWithScore
+    from llama_index.core.schema import TextNode as _LlamaIndexTextNode
 
+    LlamaIndexTextNode = _LlamaIndexTextNode
+    LlamaIndexNodeWithScore = _LlamaIndexNodeWithScore
+    LlamaIndexNode = (_LlamaIndexTextNode, _LlamaIndexNodeWithScore)
     LLAMAINDEX_AVAILABLE = True
 except ImportError:
-    LlamaIndexTextNode = None  # type: ignore[misc, assignment]
-    LlamaIndexNodeWithScore = None  # type: ignore[misc, assignment]
-
-# Type alias for LlamaIndex nodes (either TextNode or NodeWithScore)
-if TYPE_CHECKING:
-    if LLAMAINDEX_AVAILABLE:
-        LlamaIndexNode = Union[LlamaIndexTextNode, LlamaIndexNodeWithScore]
-    else:
-        LlamaIndexNode = Any  # type: ignore[misc]
-else:
-    if LLAMAINDEX_AVAILABLE:
-        LlamaIndexNode = (LlamaIndexTextNode, LlamaIndexNodeWithScore)
-    else:
-        LlamaIndexNode = None
+    pass
 
 
 def _require_langchain() -> None:
