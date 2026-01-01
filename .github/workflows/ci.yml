@@ -124,3 +124,23 @@ jobs:
         working-directory: rust_core
       - run: cargo test --verbose
         working-directory: rust_core
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: astral-sh/setup-uv@v1
+      - run: uv sync --frozen --no-install-project
+      - name: Run Bandit security scan
+        run: uv run bandit -r src/cite_right -c pyproject.toml -f json -o bandit-report.json || true
+      - name: Display Bandit results
+        run: uv run bandit -r src/cite_right -c pyproject.toml
+      - name: Run pip-audit for dependency vulnerabilities
+        run: uv run pip-audit --desc --skip-editable
+      - name: Run Semgrep security scan
+        run: |
+          uv pip install semgrep
+          uv run semgrep scan --config=.semgrep.yml --config=auto src/
