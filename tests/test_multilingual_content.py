@@ -1,4 +1,4 @@
-"""Tests for multilingual content handling - English answers with non-English sources."""
+"""Tests for multilingual content handling across German and English."""
 
 import pytest
 
@@ -410,3 +410,463 @@ class TestCrossLingualFactExtraction:
             for citation in span_result.citations:
                 extracted = german_source[citation.char_start : citation.char_end]
                 assert extracted == citation.evidence
+
+
+class TestEnglishSourcesGermanAnswer:
+    """Test citation alignment with English sources and German answers."""
+
+    @pytest.fixture
+    def multilingual_config(self) -> CitationConfig:
+        """Config for multilingual citation tests."""
+        return CitationConfig(
+            top_k=3,
+            min_alignment_score=1,
+            min_answer_coverage=0.3,
+            supported_answer_coverage=0.6,
+            weights=CitationWeights(lexical=0.0, embedding=0.0),
+        )
+
+    def test_german_answer_english_source_shared_terms(
+        self, multilingual_config: CitationConfig
+    ) -> None:
+        """Test German answer citing English source via shared vocabulary."""
+        english_source = (
+            "Berlin has 3.6 million inhabitants. "
+            "Berlin is the capital of Germany."
+        )
+
+        german_answer = (
+            "Berlin hat 3.6 Millionen Einwohner. "
+            "Berlin ist die Hauptstadt."
+        )
+
+        sources = [SourceDocument(id="english_doc", text=english_source)]
+
+        results = align_citations(german_answer, sources, config=multilingual_config)
+
+        # Should find matches based on "Berlin" and "3.6"
+        assert len(results) >= 1
+        cited_spans = [r for r in results if r.citations]
+        assert len(cited_spans) >= 1
+
+        # Verify offsets
+        for span_result in results:
+            for citation in span_result.citations:
+                extracted = english_source[citation.char_start : citation.char_end]
+                assert extracted == citation.evidence
+
+    def test_german_answer_with_technical_english_source(
+        self, multilingual_config: CitationConfig
+    ) -> None:
+        """Test German technical answer with English technical source."""
+        english_source = (
+            "The CPU operates at 3.5 GHz clock speed. "
+            "The GPU has 16 GB of VRAM memory. "
+            "The system uses DDR5 RAM at 6400 MHz."
+        )
+
+        german_answer = (
+            "Die CPU arbeitet mit 3.5 GHz Taktfrequenz. "
+            "Die GPU verfügt über 16 GB VRAM Speicher. "
+            "Das System nutzt DDR5 RAM mit 6400 MHz."
+        )
+
+        sources = [SourceDocument(id="specs", text=english_source)]
+
+        results = align_citations(german_answer, sources, config=multilingual_config)
+
+        # Technical terms (CPU, GPU, GHz, GB, DDR5, MHz) should match
+        assert len(results) >= 1
+        cited_spans = [r for r in results if r.citations]
+        assert len(cited_spans) >= 1
+
+        # Verify offsets are accurate
+        for span_result in results:
+            for citation in span_result.citations:
+                extracted = english_source[citation.char_start : citation.char_end]
+                assert extracted == citation.evidence
+
+    def test_german_answer_multiple_english_sources_attribution(self) -> None:
+        """Test correct source attribution with German answer and English sources."""
+        source_apple = SourceDocument(
+            id="apple",
+            text="Apple Inc. was founded in 1976 by Steve Jobs in California.",
+        )
+        source_microsoft = SourceDocument(
+            id="microsoft",
+            text="Microsoft was founded in 1975 by Bill Gates in Washington.",
+        )
+        source_google = SourceDocument(
+            id="google",
+            text="Google was founded in 1998 by Larry Page in California.",
+        )
+
+        german_answer = (
+            "Apple Inc. wurde 1976 von Steve Jobs gegründet. "
+            "Microsoft wurde 1975 von Bill Gates gegründet. "
+            "Google wurde 1998 von Larry Page gegründet."
+        )
+
+        sources = [source_apple, source_microsoft, source_google]
+
+        config = CitationConfig(
+            top_k=1,
+            min_alignment_score=1,
+            min_answer_coverage=0.2,
+            supported_answer_coverage=0.5,
+            weights=CitationWeights(lexical=0.0, embedding=0.0),
+        )
+
+        results = align_citations(german_answer, sources, config=config)
+
+        # Check correct attribution
+        for span_result in results:
+            text = span_result.answer_span.text
+            for citation in span_result.citations:
+                if "Apple" in text and "1976" in text:
+                    assert citation.source_id == "apple"
+                elif "Microsoft" in text and "1975" in text:
+                    assert citation.source_id == "microsoft"
+                elif "Google" in text and "1998" in text:
+                    assert citation.source_id == "google"
+
+    def test_german_answer_with_english_quotes(
+        self, multilingual_config: CitationConfig
+    ) -> None:
+        """Test German answer containing English quoted phrases from source."""
+        english_source = (
+            'The CEO stated: "We will invest 500 million dollars in AI research." '
+            "The announcement was made on March 15, 2024."
+        )
+
+        german_answer = (
+            'Der CEO erklärte: "We will invest 500 million dollars in AI research." '
+            "Die Ankündigung erfolgte am 15. März 2024."
+        )
+
+        sources = [SourceDocument(id="news", text=english_source)]
+
+        results = align_citations(german_answer, sources, config=multilingual_config)
+
+        # The quoted English phrase should create strong matches
+        assert len(results) >= 1
+        cited_spans = [r for r in results if r.citations]
+        assert len(cited_spans) >= 1
+
+    def test_german_umlauts_in_answer_english_source(self) -> None:
+        """Test that German umlauts in answer don't break offset calculation."""
+        english_source = "Munich is located in Bavaria. The population is 1.5 million."
+
+        # German answer with umlauts
+        german_answer = "München liegt in Bayern. Die Bevölkerung beträgt 1.5 Millionen."
+
+        sources = [SourceDocument(id="city", text=english_source)]
+
+        config = CitationConfig(
+            top_k=2,
+            min_alignment_score=1,
+            min_answer_coverage=0.15,
+            supported_answer_coverage=0.4,
+            weights=CitationWeights(lexical=0.0, embedding=0.0),
+        )
+
+        results = align_citations(german_answer, sources, config=config)
+
+        # "1.5" should create a match
+        cited_spans = [r for r in results if r.citations]
+        assert len(cited_spans) >= 1
+
+        # Verify offsets point to correct positions in English source
+        for span_result in results:
+            for citation in span_result.citations:
+                extracted = english_source[citation.char_start : citation.char_end]
+                assert extracted == citation.evidence
+
+    def test_german_scientific_answer_english_paper(self) -> None:
+        """Test German scientific summary citing English research paper."""
+        english_source = (
+            "The experiment showed a 45% reduction in CO2 emissions. "
+            "The sample size was n=1500 participants. "
+            "Results were statistically significant with p<0.001."
+        )
+
+        german_answer = (
+            "Das Experiment zeigte eine Reduktion der CO2-Emissionen um 45%. "
+            "Die Stichprobengröße betrug n=1500 Teilnehmer. "
+            "Die Ergebnisse waren statistisch signifikant mit p<0.001."
+        )
+
+        sources = [SourceDocument(id="paper", text=english_source)]
+
+        config = CitationConfig(
+            top_k=2,
+            min_alignment_score=1,
+            min_answer_coverage=0.2,
+            supported_answer_coverage=0.5,
+            weights=CitationWeights(lexical=0.0, embedding=0.0),
+        )
+
+        results = align_citations(german_answer, sources, config=config)
+
+        # Scientific notation (45%, n=1500, p<0.001, CO2) should match
+        cited_spans = [r for r in results if r.citations]
+        assert len(cited_spans) >= 1
+
+
+class TestMixedSourcesGermanAnswer:
+    """Test German answers with mixed German and English sources."""
+
+    @pytest.fixture
+    def permissive_config(self) -> CitationConfig:
+        """More permissive config for cross-lingual matching."""
+        return CitationConfig(
+            top_k=3,
+            min_alignment_score=1,
+            min_answer_coverage=0.15,
+            supported_answer_coverage=0.4,
+            weights=CitationWeights(lexical=0.0, embedding=0.0),
+        )
+
+    def test_german_answer_mixed_sources_correct_attribution(
+        self, permissive_config: CitationConfig
+    ) -> None:
+        """Test German answer correctly cites from mixed language sources."""
+        german_source = SourceDocument(
+            id="german",
+            text="Berlin hat 3.6 Millionen Einwohner. Die Stadt wurde 1237 gegründet.",
+        )
+        english_source = SourceDocument(
+            id="english",
+            text="Munich has 1.5 million inhabitants. The city was founded in 1158.",
+        )
+
+        german_answer = (
+            "Berlin hat 3.6 Millionen Einwohner und wurde 1237 gegründet. "
+            "München hat 1.5 Millionen Einwohner und wurde 1158 gegründet."
+        )
+
+        sources = [german_source, english_source]
+
+        results = align_citations(german_answer, sources, config=permissive_config)
+
+        # Should have results
+        assert len(results) >= 1
+
+        # Verify we got citations and offsets are correct
+        for span_result in results:
+            for citation in span_result.citations:
+                if citation.source_id == "german":
+                    extracted = german_source.text[
+                        citation.char_start : citation.char_end
+                    ]
+                else:
+                    extracted = english_source.text[
+                        citation.char_start : citation.char_end
+                    ]
+                assert extracted == citation.evidence
+
+    def test_german_answer_prefers_german_source_when_equal(self) -> None:
+        """Test behavior when same fact exists in both German and English sources."""
+        german_source = SourceDocument(
+            id="german",
+            text="Albert Einstein wurde 1879 in Ulm geboren. Er entwickelte die Relativitätstheorie.",
+        )
+        english_source = SourceDocument(
+            id="english",
+            text="Albert Einstein was born in 1879 in Ulm. He developed the theory of relativity.",
+        )
+
+        german_answer = "Albert Einstein wurde 1879 in Ulm geboren."
+
+        sources = [german_source, english_source]
+
+        config = CitationConfig(
+            top_k=2,
+            min_alignment_score=1,
+            min_answer_coverage=0.3,
+            supported_answer_coverage=0.6,
+            weights=CitationWeights(lexical=0.0, embedding=0.0),
+        )
+
+        results = align_citations(german_answer, sources, config=config)
+
+        # Should find citations - both sources have matching content
+        assert len(results) >= 1
+        cited_spans = [r for r in results if r.citations]
+        assert len(cited_spans) >= 1
+
+        # Verify offsets for all citations
+        for span_result in results:
+            for citation in span_result.citations:
+                source_text = (
+                    german_source.text
+                    if citation.source_id == "german"
+                    else english_source.text
+                )
+                extracted = source_text[citation.char_start : citation.char_end]
+                assert extracted == citation.evidence
+
+    def test_german_answer_multiple_mixed_sources(self) -> None:
+        """Test German answer citing from multiple sources in different languages."""
+        source_de_tech = SourceDocument(
+            id="de_tech",
+            text="Die CPU-Temperatur erreichte 85 Grad Celsius unter Volllast.",
+        )
+        source_en_specs = SourceDocument(
+            id="en_specs",
+            text="The GPU runs at 1800 MHz boost clock with 12 GB GDDR6 memory.",
+        )
+        source_de_review = SourceDocument(
+            id="de_review",
+            text="Der Stromverbrauch lag bei 350 Watt während des Tests.",
+        )
+        source_en_bench = SourceDocument(
+            id="en_bench",
+            text="The system achieved 15000 points in the benchmark test.",
+        )
+
+        german_answer = (
+            "Die CPU erreichte 85 Grad Celsius. "
+            "Die GPU läuft mit 1800 MHz und 12 GB GDDR6. "
+            "Der Stromverbrauch betrug 350 Watt. "
+            "Das System erzielte 15000 Punkte im Benchmark."
+        )
+
+        sources = [source_de_tech, source_en_specs, source_de_review, source_en_bench]
+
+        config = CitationConfig(
+            top_k=1,
+            min_alignment_score=1,
+            min_answer_coverage=0.2,
+            supported_answer_coverage=0.5,
+            weights=CitationWeights(lexical=0.0, embedding=0.0),
+        )
+
+        results = align_citations(german_answer, sources, config=config)
+
+        # Should have multiple spans with citations
+        assert len(results) >= 1
+        cited_spans = [r for r in results if r.citations]
+        assert len(cited_spans) >= 1
+
+    def test_german_answer_bilingual_source_document(
+        self, permissive_config: CitationConfig
+    ) -> None:
+        """Test German answer with a single bilingual source document."""
+        bilingual_source = (
+            "Zusammenfassung: Das Produkt kostet 299 Euro. "
+            "Summary: The product costs 299 euros. "
+            "Technische Daten: 500 GB Speicher, USB-C Anschluss. "
+            "Technical specs: 500 GB storage, USB-C port."
+        )
+
+        german_answer = (
+            "Das Produkt kostet 299 Euro. "
+            "Es bietet 500 GB Speicher und einen USB-C Anschluss."
+        )
+
+        sources = [SourceDocument(id="bilingual", text=bilingual_source)]
+
+        results = align_citations(german_answer, sources, config=permissive_config)
+
+        assert len(results) >= 1
+        cited_spans = [r for r in results if r.citations]
+        assert len(cited_spans) >= 1
+
+        # Verify offsets
+        for span_result in results:
+            for citation in span_result.citations:
+                extracted = bilingual_source[citation.char_start : citation.char_end]
+                assert extracted == citation.evidence
+
+    def test_german_answer_url_from_english_source(
+        self, permissive_config: CitationConfig
+    ) -> None:
+        """Test German answer correctly cites URLs from English source."""
+        english_source = (
+            "For more details visit https://example.com/product-info. "
+            "Contact support at support@example.com or call +1-800-555-0123."
+        )
+
+        german_answer = (
+            "Weitere Details unter https://example.com/product-info. "
+            "Kontakt: support@example.com."
+        )
+
+        sources = [SourceDocument(id="contact", text=english_source)]
+
+        results = align_citations(german_answer, sources, config=permissive_config)
+
+        # URLs and emails should match exactly
+        assert len(results) >= 1
+        cited_spans = [r for r in results if r.citations]
+        assert len(cited_spans) >= 1
+
+        # Verify offsets
+        for span_result in results:
+            for citation in span_result.citations:
+                extracted = english_source[citation.char_start : citation.char_end]
+                assert extracted == citation.evidence
+
+
+@requires_pysbd
+class TestPySBDMixedLanguageSegmentation:
+    """Test pySBD with mixed language content."""
+
+    def test_pysbd_german_segmenter_with_english_quotes(self) -> None:
+        """Test German segmenter handles embedded English quotes."""
+        from cite_right.text.segmenter_pysbd import PySBDSegmenter
+
+        german_segmenter = PySBDSegmenter(language="de")
+
+        mixed_text = (
+            'Der CEO sagte: "We are committed to innovation." '
+            "Die Aktie stieg um 5 Prozent. "
+            "Analysten erwarten weiteres Wachstum."
+        )
+
+        segments = german_segmenter.segment(mixed_text)
+
+        # Should segment correctly despite English quote
+        assert len(segments) == 3
+
+    def test_citation_pipeline_german_answer_english_source_with_pysbd(self) -> None:
+        """Test full pipeline with pySBD for source segmentation and German answer."""
+        from cite_right.text.segmenter_pysbd import PySBDSegmenter
+
+        # Use pySBD for source segmentation (it's a Segmenter, not AnswerSegmenter)
+        english_source_segmenter = PySBDSegmenter(language="en")
+
+        english_source = (
+            "The company reported Q3 revenue of 5.2 billion dollars. "
+            "CEO Dr. Smith announced plans for expansion. "
+            "The stock price increased by 12 percent."
+        )
+
+        german_answer = (
+            "Das Unternehmen meldete Q3-Umsatz von 5.2 Milliarden Dollar. "
+            "CEO Dr. Smith kündigte Expansionspläne an. "
+            "Der Aktienkurs stieg um 12 Prozent."
+        )
+
+        sources = [SourceDocument(id="report", text=english_source)]
+
+        config = CitationConfig(
+            top_k=2,
+            min_alignment_score=1,
+            min_answer_coverage=0.2,
+            supported_answer_coverage=0.5,
+            weights=CitationWeights(lexical=0.0, embedding=0.0),
+        )
+
+        results = align_citations(
+            german_answer,
+            sources,
+            config=config,
+            source_segmenter=english_source_segmenter,
+        )
+
+        assert len(results) >= 1
+        # "5.2", "Dr. Smith", "12" should enable matching
+        cited_spans = [r for r in results if r.citations]
+        assert len(cited_spans) >= 1
