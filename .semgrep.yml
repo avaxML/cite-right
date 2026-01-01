@@ -1,0 +1,34 @@
+rules:
+  # Use Semgrep's curated rulesets for Python security
+  # These are maintained by the Semgrep team and cover common vulnerabilities
+
+  # Python-specific security rules
+  - id: python-security
+    patterns:
+      - pattern: eval(...)
+    message: Use of eval() is dangerous and can lead to code injection
+    languages: [python]
+    severity: ERROR
+
+  - id: hardcoded-password
+    patterns:
+      - pattern: password = "..."
+      - pattern: PASSWORD = "..."
+    message: Possible hardcoded password detected
+    languages: [python]
+    severity: WARNING
+    paths:
+      exclude:
+        - "**/tests/**"
+
+  - id: sql-injection-risk
+    patterns:
+      - pattern: |
+          $CURSOR.execute($SQL % ...)
+      - pattern: |
+          $CURSOR.execute($SQL + ...)
+      - pattern: |
+          $CURSOR.execute(f"...")
+    message: Possible SQL injection vulnerability - use parameterized queries
+    languages: [python]
+    severity: ERROR
