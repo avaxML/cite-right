@@ -90,4 +90,5 @@ exclude_dirs = ["tests", ".venv", "build", "dist", ".uv_cache"]
 # Skip tests that are not relevant for this project
 skips = [
     "B101",  # assert_used - we use asserts in tests
+    "B615",  # huggingface_unsafe_download - library allows flexible model loading
 ]
