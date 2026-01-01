@@ -108,7 +108,9 @@ class TestGermanSourcesEnglishAnswer:
             "Der Hauptsitz ist in Cupertino, California."
         )
 
-        english_answer = "Apple Inc. was founded in 1976. Steve Jobs was the co-founder."
+        english_answer = (
+            "Apple Inc. was founded in 1976. Steve Jobs was the co-founder."
+        )
 
         sources = [SourceDocument(id="apple", text=mixed_source)]
 
@@ -135,8 +137,7 @@ class TestGermanSourcesEnglishAnswer:
 
         # Include same numbers and "Berlin" in English answer for lexical matching
         english_answer = (
-            "The Berlin Wall fell in 1989. "
-            "Berlin reunification happened in 1990."
+            "The Berlin Wall fell in 1989. Berlin reunification happened in 1990."
         )
 
         sources = [SourceDocument(id="history", text=german_source)]
@@ -156,7 +157,9 @@ class TestGermanSourcesEnglishAnswer:
         assert len(results) >= 1
         # Verify dates/numbers/proper nouns create citation links
         cited_spans = [r for r in results if r.citations]
-        assert len(cited_spans) >= 1, "Numbers and proper nouns should enable cross-lingual matching"
+        assert len(cited_spans) >= 1, (
+            "Numbers and proper nouns should enable cross-lingual matching"
+        )
 
     def test_multiple_german_sources_correct_attribution(self) -> None:
         """Test that citations correctly identify the right German source."""
@@ -322,7 +325,9 @@ class TestUnicodeNormalization:
 
     def test_german_quotation_marks(self) -> None:
         """Test handling of German quotation marks („ and ")."""
-        german_source = '„Wir werden investieren", sagte der CEO. Der Betrag ist 100 Millionen.'
+        german_source = (
+            '„Wir werden investieren", sagte der CEO. Der Betrag ist 100 Millionen.'
+        )
 
         english_answer = "The CEO said they will invest. The amount is 100 million."
 
@@ -384,8 +389,7 @@ class TestCrossLingualFactExtraction:
         )
 
         english_answer = (
-            "More information at https://example.com/info. "
-            "Contact: info@example.com."
+            "More information at https://example.com/info. Contact: info@example.com."
         )
 
         sources = [SourceDocument(id="contact", text=german_source)]
@@ -431,14 +435,10 @@ class TestEnglishSourcesGermanAnswer:
     ) -> None:
         """Test German answer citing English source via shared vocabulary."""
         english_source = (
-            "Berlin has 3.6 million inhabitants. "
-            "Berlin is the capital of Germany."
+            "Berlin has 3.6 million inhabitants. Berlin is the capital of Germany."
         )
 
-        german_answer = (
-            "Berlin hat 3.6 Millionen Einwohner. "
-            "Berlin ist die Hauptstadt."
-        )
+        german_answer = "Berlin hat 3.6 Millionen Einwohner. Berlin ist die Hauptstadt."
 
         sources = [SourceDocument(id="english_doc", text=english_source)]
 
@@ -558,7 +558,9 @@ class TestEnglishSourcesGermanAnswer:
         english_source = "Munich is located in Bavaria. The population is 1.5 million."
 
         # German answer with umlauts
-        german_answer = "München liegt in Bayern. Die Bevölkerung beträgt 1.5 Millionen."
+        german_answer = (
+            "München liegt in Bayern. Die Bevölkerung beträgt 1.5 Millionen."
+        )
 
         sources = [SourceDocument(id="city", text=english_source)]
 
@@ -1101,9 +1103,7 @@ class TestMultilingualSemanticEmbeddings:
         cited_spans = [r for r in results if r.citations]
         if cited_spans:
             # Check if German source is cited (it should be the best match)
-            source_ids = [
-                c.source_id for span in cited_spans for c in span.citations
-            ]
+            source_ids = [c.source_id for span in cited_spans for c in span.citations]
             # German source should be in the citations due to semantic similarity
             assert "german" in source_ids or len(source_ids) > 0
 
@@ -1213,7 +1213,5 @@ class TestMultilingualSemanticEmbeddings:
                     # Should match the Austria source
                     assert citation.source_id == "austria"
                     # Verify offsets work with umlauts
-                    extracted = german_source[
-                        citation.char_start : citation.char_end
-                    ]
+                    extracted = german_source[citation.char_start : citation.char_end]
                     assert extracted == citation.evidence
