@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cite-Right Perplexity Demo</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #0f172a;
+        --card: #111827;
+        --text: #e5e7eb;
+        --accent: #60a5fa;
+        --muted: #9ca3af;
+        font-family: "Inter", system-ui, -apple-system, sans-serif;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 32px 16px 64px;
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 32px;
+        letter-spacing: -0.02em;
+      }
+      .subtitle {
+        color: var(--muted);
+        margin-bottom: 24px;
+      }
+      .panel {
+        background: var(--card);
+        border: 1px solid #1f2937;
+        border-radius: 16px;
+        padding: 20px 24px;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+      }
+      .question {
+        font-weight: 600;
+        color: var(--accent);
+        margin-bottom: 12px;
+      }
+      .answer {
+        line-height: 1.6;
+        font-size: 16px;
+      }
+      sup {
+        font-size: 11px;
+        color: var(--muted);
+        padding-left: 4px;
+      }
+      .sources {
+        margin-top: 28px;
+        border-top: 1px solid #1f2937;
+        padding-top: 16px;
+      }
+      .source {
+        padding: 10px 0;
+        border-bottom: 1px solid #1f2937;
+      }
+      .source:last-child {
+        border-bottom: none;
+      }
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        font-size: 12px;
+        background: rgba(96, 165, 250, 0.08);
+        color: var(--accent);
+        border: 1px solid rgba(96, 165, 250, 0.4);
+      }
+      .badge {
+        background: #1f2937;
+        border: 1px solid #374151;
+        padding: 2px 8px;
+        border-radius: 8px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .citations {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .pill {
+        display: inline-block;
+        padding: 2px 6px;
+        background: rgba(96, 165, 250, 0.15);
+        border: 1px solid rgba(96, 165, 250, 0.5);
+        border-radius: 8px;
+        font-size: 11px;
+        color: #bfdbfe;
+      }
+      .error {
+        color: #f87171;
+        background: rgba(248, 113, 113, 0.08);
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1px solid rgba(248, 113, 113, 0.4);
+        margin-top: 12px;
+      }
+      @media (max-width: 640px) {
+        h1 {
+          font-size: 24px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Cite-Right Perplexity-style Demo</h1>
+      <div class="subtitle">
+        FastAPI backend + lightweight UI showing span-level citations aligned to
+        source paragraphs.
+      </div>
+      <div id="content" class="panel">
+        <div class="badge">Loading citation run...</div>
+      </div>
+    </div>
+    <script>
+      async function fetchCitations() {
+        const container = document.getElementById("content");
+        try {
+          const response = await fetch("/api/citations");
+          if (!response.ok) {
+            throw new Error(`Request failed: ${response.status}`);
+          }
+          const data = await response.json();
+          renderUI(data);
+        } catch (error) {
+          container.innerHTML = `<div class="error">Failed to load citations: ${error}</div>`;
+        }
+      }
+
+      function renderUI(data) {
+        const container = document.getElementById("content");
+        const answerHtml = data.spans
+          .map((span, idx) => {
+            const superscripts = span.citations
+              .map((citation, cIdx) => `<sup>${idx + 1}.${cIdx + 1}</sup>`)
+              .join("");
+            return `${span.text}${superscripts}`;
+          })
+          .join(" ");
+
+        const citationDetails = data.spans
+          .map((span, idx) => {
+            const list = span.citations
+              .map(
+                (citation, cIdx) =>
+                  `<div><span class="pill">${idx + 1}.${cIdx + 1}</span> ` +
+                  `<strong>${citation.source_id}</strong> — ${citation.evidence}</div>`,
+              )
+              .join("");
+            return (
+              `<div class="citations">` +
+              `<span class="status">${span.status}</span>` +
+              list +
+              `</div>`
+            );
+          })
+          .join("");
+
+        const sourcesList = data.sources
+          .map(
+            (source) =>
+              `<div class="source"><div class="pill">${source.id}</div>` +
+              `<div>${source.text}</div></div>`,
+          )
+          .join("");
+
+        container.innerHTML = `
+          <div class="question">Q: ${data.question}</div>
+          <div class="answer">A: ${answerHtml}</div>
+          ${citationDetails}
+          <div class="sources">
+            <div class="badge">Source documents (${data.sources.length})</div>
+            ${sourcesList}
+          </div>
+        `;
+      }
+
+      fetchCitations();
+    </script>
+  </body>
+</html>
