@@ -154,4 +154,4 @@ The `annotate_answer` function inserts citation markers directly into the text, 
 
 ## Next Steps
 
-This quickstart covered the fundamental operations. The [Building a Check Sources UI](check-sources-ui.md) guide shows how to structure citation data for frontend applications. The [Citation Alignment](../concepts/citation-alignment.md) page explains the algorithm and scoring in depth. The [Configuration](../configuration/citation-config.md) section describes how to tune the alignment behavior for your specific use case.
+This quickstart covered the fundamental operations. The [Citation Alignment](../concepts/citation-alignment.md) page explains the algorithm and scoring in depth. The [Configuration](../configuration/citation-config.md) section describes how to tune the alignment behavior for your specific use case.
