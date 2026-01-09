@@ -155,7 +155,7 @@ class TestGetCitationSummary:
         sources = [SourceDocument(id="report", text="Revenue grew 15% in Q4.")]
         results = align_citations(answer, sources)
 
-        summary = get_citation_summary(results, sources)
+        summary = get_citation_summary(results)
         assert "Citation Summary" in summary
         assert "spans" in summary.lower()
 
