@@ -1,3 +1,4 @@
+"""Results of the citation alignment pipeline."""
 from __future__ import annotations
 
 from typing import Any, Literal, Mapping

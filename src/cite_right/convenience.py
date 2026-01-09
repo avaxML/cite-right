@@ -266,7 +266,6 @@ def format_with_citations(
     if not span_citations:
         return answer
 
-    # Build a mapping of source_id -> citation number
     source_numbers: dict[str, int] = {}
     next_number = 1
     for sc in span_citations:
@@ -275,7 +274,6 @@ def format_with_citations(
                 source_numbers[citation.source_id] = next_number
                 next_number += 1
 
-    # Format markers based on style
     def _format_marker(source_ids: list[str]) -> str:
         if not source_ids:
             return "[?]" if include_unsupported else ""
@@ -289,8 +287,6 @@ def format_with_citations(
         else:  # markdown
             return "".join(f"[{n}]" for n in numbers)
 
-    # Sort spans by char_start (descending) to insert from end to start
-    # This preserves offsets when modifying the string
     sorted_spans = sorted(
         span_citations, key=lambda sc: sc.answer_span.char_end, reverse=True
     )
@@ -300,9 +296,7 @@ def format_with_citations(
         source_ids = list({c.source_id for c in sc.citations})
         marker = _format_marker(source_ids)
         if marker:
-            # Insert marker at the end of the span (before any trailing whitespace)
             end = sc.answer_span.char_end
-            # Find the position just before trailing whitespace/newlines
             insert_pos = end
             while (
                 insert_pos > sc.answer_span.char_start
@@ -316,7 +310,6 @@ def format_with_citations(
 
 def get_citation_summary(
     span_citations: Sequence[SpanCitations],
-    sources: Sequence[str | SourceDocument | SourceChunk] | None = None,
 ) -> str:
     """Generate a human-readable summary of citation results."""
     if not span_citations:

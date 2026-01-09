@@ -15,17 +15,14 @@ from typing import Any, Sequence
 
 from cite_right.core.results import SourceChunk, SourceDocument
 
-# Flags to track which libraries are available
 LANGCHAIN_AVAILABLE: bool = False
 LLAMAINDEX_AVAILABLE: bool = False
 
-# Type aliases - these will be set based on library availability
 LangChainDocument: type | None = None
 LlamaIndexTextNode: type | None = None
 LlamaIndexNodeWithScore: type | None = None
 LlamaIndexNode: tuple[type, ...] | None = None
 
-# Try to import LangChain types
 try:
     from langchain_core.documents import Document as _LangChainDocument
 
@@ -34,7 +31,6 @@ try:
 except ImportError:
     pass
 
-# Try to import LlamaIndex types
 try:
     from llama_index.core.schema import NodeWithScore as _LlamaIndexNodeWithScore
     from llama_index.core.schema import TextNode as _LlamaIndexTextNode
@@ -273,7 +269,6 @@ def from_llamaindex_nodes(
 
     result: list[SourceDocument] = []
     for idx, node in enumerate(nodes):
-        # Handle NodeWithScore wrapper - unwrap to get the actual TextNode
         actual_node = getattr(node, "node", node)
         content = actual_node.get_content()
         metadata = actual_node.metadata
@@ -374,7 +369,6 @@ def from_dicts(
     for idx, doc in enumerate(documents):
         text = doc.get(text_key, "")
         doc_id = doc.get(id_key, str(idx))
-        # Store all other keys as metadata
         metadata = {k: v for k, v in doc.items() if k not in (text_key, id_key)}
 
         result.append(

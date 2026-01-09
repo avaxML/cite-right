@@ -1,3 +1,4 @@
+"""Sentence segmenter using pySBD (Python Sentence Boundary Disambiguation)."""
 from __future__ import annotations
 
 from cite_right.core.results import Segment
@@ -6,21 +7,25 @@ from cite_right.core.results import Segment
 class PySBDSegmenter:
     """Sentence segmenter using pySBD (Python Sentence Boundary Disambiguation).
 
-    pySBD is a rule-based sentence boundary detection library that handles
-    abbreviations, URLs, emails, and other edge cases without requiring
-    a full NLP pipeline. It is significantly faster than spaCy while
-    maintaining high accuracy.
+    This class utilizes pySBD, a rule-based sentence boundary disambiguation library,
+    to split text into sentences. pySBD efficiently handles abbreviations, URLs, emails,
+    and other edge cases, and does not require a full NLP pipeline. It is significantly
+    faster than spaCy while maintaining high accuracy.
 
-    Install with: pip install cite-right[pysbd]
+    To use this segmenter, install the required dependency:
+        pip install cite-right[pysbd]
     """
 
     def __init__(self, language: str = "en", clean: bool = False) -> None:
-        """Initialize the PySBD segmenter.
+        """Initializes the PySBDSegmenter.
 
         Args:
-            language: Language code for segmentation rules (default: "en").
-            clean: If True, pySBD will clean the text before segmentation.
-                   Default is False to preserve original text offsets.
+            language (str, optional): The language code for segmentation rules (default: "en").
+            clean (bool, optional): 
+                If True, pySBD will clean the text before segmentation.
+                Default is False, which preserves original text offsets for accurate mapping.
+        Raises:
+            RuntimeError: If pysbd is not installed.
         """
         try:
             import pysbd  # pyright: ignore[reportMissingImports]
@@ -34,23 +39,23 @@ class PySBDSegmenter:
         self._clean = clean
 
     def segment(self, text: str) -> list[Segment]:
-        """Segment text into sentences.
+        """Segments the input text into sentences with accurate character offsets.
 
         Args:
-            text: The input text to segment.
+            text (str): The input text to be segmented into sentences.
 
         Returns:
-            A list of Segment objects with accurate character offsets.
+            list[Segment]: 
+                A list of Segment objects, each representing a detected sentence,
+                with text and its character offsets in the original text.
         """
         sentences = self._segmenter.segment(text)
         segments: list[Segment] = []
         cursor = 0
 
         for sentence in sentences:
-            # Find the sentence in the original text starting from cursor
             start = text.find(sentence, cursor)
             if start == -1:
-                # Handle edge case where pySBD may have modified whitespace
                 stripped = sentence.strip()
                 start = text.find(stripped, cursor)
                 if start == -1:
@@ -59,7 +64,6 @@ class PySBDSegmenter:
 
             end = start + len(sentence)
 
-            # Trim whitespace while preserving accurate offsets
             snippet = text[start:end]
             stripped = snippet.strip()
             if not stripped:

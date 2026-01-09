@@ -23,25 +23,16 @@ if TYPE_CHECKING:
 
 
 class TiktokenTokenizer:
-    """Tokenizer using OpenAI's tiktoken BPE encoding.
+    """Tokenizer using OpenAI's tiktoken BPE encoding to generate character-accurate token spans.
 
-    This tokenizer wraps tiktoken encodings to provide character-accurate
-    token spans suitable for citation alignment.
+    This tokenizer wraps `tiktoken` encodings to provide character-accurate
+    token spans suitable for citation alignment. It supports several encoding
+    schemes used by OpenAI GPT and Codex models.
 
-    Args:
-        encoding_name: Name of the tiktoken encoding to use.
-            Common options:
-            - "cl100k_base": Used by GPT-4, GPT-3.5-turbo, text-embedding-ada-002
-            - "p50k_base": Used by Codex models
-            - "r50k_base": Used by GPT-3 models (davinci, curie, etc.)
-            Defaults to "cl100k_base".
-        encoding: Pre-initialized tiktoken Encoding object. If provided,
-            encoding_name is ignored.
+    Attributes:
+        _encoding: The tiktoken Encoding instance used for tokenization.
 
-    Raises:
-        ImportError: If tiktoken is not installed.
-
-    Example:
+    Examples:
         >>> tokenizer = TiktokenTokenizer("cl100k_base")
         >>> result = tokenizer.tokenize("Hello world")
         >>> len(result.token_ids)
@@ -54,6 +45,22 @@ class TiktokenTokenizer:
         *,
         encoding: tiktoken.Encoding | None = None,
     ) -> None:
+        """Initializes the TiktokenTokenizer.
+
+        Args:
+            encoding_name (str, optional): Name of the tiktoken encoding to use.
+                Common options include:
+                    - "cl100k_base": Used by GPT-4, GPT-3.5-turbo, text-embedding-ada-002
+                    - "p50k_base": Used by Codex models
+                    - "r50k_base": Used by GPT-3 models (davinci, curie, etc.)
+                Defaults to "cl100k_base".
+            encoding (tiktoken.Encoding, optional): 
+                A pre-initialized tiktoken Encoding object. If provided,
+                `encoding_name` is ignored.
+
+        Raises:
+            ImportError: If tiktoken is not installed.
+        """
         try:
             import tiktoken as _tiktoken
         except ImportError as e:
@@ -68,36 +75,39 @@ class TiktokenTokenizer:
             self._encoding = _tiktoken.get_encoding(encoding_name)
 
     def tokenize(self, text: str) -> TokenizedText:
-        """Tokenize text using tiktoken encoding.
+        """Tokenizes input text with tiktoken BPE, mapping byte spans to character spans.
 
         Args:
-            text: The text to tokenize.
+            text (str): The text to tokenize.
 
         Returns:
-            TokenizedText with token IDs and character-accurate spans.
+            TokenizedText: TokenizedText instance containing:
+                - text (str): The original input text.
+                - token_ids (list of int): List of BPE token IDs.
+                - token_spans (list of tuple[int, int]): 
+                    List of (char_start, char_end) spans mapping each token to the original text.
+
+        Notes:
+            - Token spans are computed to be character-accurate, compensating for possible
+              splitting at arbitrary byte boundaries from UTF-8.
+            - If the input text is empty, an empty TokenizedText is returned.
         """
         if not text:
             return TokenizedText(text=text, token_ids=[], token_spans=[])
 
-        # Encode text to get token IDs
         token_ids = self._encoding.encode(text, allowed_special="all")
 
         if not token_ids:
             return TokenizedText(text=text, token_ids=[], token_spans=[])
 
-        # Compute character spans using byte-to-character mapping
-        # BPE tokens operate on bytes and can split multi-byte UTF-8 characters,
-        # so we need to map byte positions to character positions
         text_bytes = text.encode("utf-8")
 
-        # Build mapping from byte offset to character offset
         byte_to_char: list[int] = []
         char_idx = 0
         byte_idx = 0
 
         while byte_idx < len(text_bytes):
             byte_to_char.append(char_idx)
-            # Determine UTF-8 character byte length
             byte_val = text_bytes[byte_idx]
             if byte_val < 0x80:  # 1-byte character (ASCII)
                 char_len_bytes = 1
@@ -108,7 +118,6 @@ class TiktokenTokenizer:
             else:  # 4-byte character
                 char_len_bytes = 4
 
-            # Map continuation bytes to the same character index
             for _ in range(1, char_len_bytes):
                 byte_idx += 1
                 if byte_idx < len(text_bytes):
@@ -117,9 +126,8 @@ class TiktokenTokenizer:
             byte_idx += 1
             char_idx += 1
 
-        byte_to_char.append(char_idx)  # Map for position after last byte
+        byte_to_char.append(char_idx)
 
-        # Convert token byte positions to character positions
         token_spans: list[tuple[int, int]] = []
         byte_offset = 0
 
@@ -142,5 +150,9 @@ class TiktokenTokenizer:
 
     @property
     def encoding_name(self) -> str:
-        """Return the name of the tiktoken encoding."""
+        """Returns the name of the tiktoken encoding.
+
+        Returns:
+            str: The name of the encoding being used.
+        """
         return self._encoding.name

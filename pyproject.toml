@@ -1,6 +1,6 @@
 [project]
 name = "cite-right"
-version = "0.3.0"
+version = "0.1.0"
 description = "Text alignment library for citation extraction using Smith-Waterman."
 readme = "README.md"
 requires-python = ">=3.11"
