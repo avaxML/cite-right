@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cite-Right Perplexity Demo</title>
+    <style>
+      :root {
+        --bg: #f5f5f5;
+        --panel: #ffffff;
+        --panel-soft: #fafafa;
+        --text: #1f1f1f;
+        --muted: #5f6368;
+        --accent: #1e88e5;
+        --accent-soft: #e3f2fd;
+        --border: #e0e0e0;
+        font-family: "Manrope", "Space Grotesk", sans-serif;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+      }
+      .container {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 40px 20px 72px;
+      }
+      .layout {
+        display: flex;
+        gap: 28px;
+        align-items: flex-start;
+      }
+      .side-stack {
+        flex: 1;
+        min-width: 0;
+        position: sticky;
+        top: 16px;
+        align-self: flex-start;
+        display: grid;
+        gap: 16px;
+      }
+      .main-panel {
+        flex: 2;
+        min-width: 0;
+      }
+      .source-pane,
+      .sources-pane {
+        max-height: calc(50vh - 24px);
+        overflow: auto;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+      }
+      .source-pane.is-hidden {
+        display: none;
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 32px;
+        letter-spacing: -0.01em;
+      }
+      .subtitle {
+        color: var(--muted);
+        margin-bottom: 24px;
+      }
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 22px 24px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      }
+      .question {
+        font-weight: 600;
+        color: var(--accent);
+        margin-bottom: 14px;
+      }
+      .answer {
+        line-height: 1.7;
+        font-size: 16px;
+      }
+      .answer-span {
+        padding: 2px 0;
+      }
+      sup {
+        font-size: 11px;
+        color: var(--muted);
+        padding-left: 4px;
+      }
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        font-size: 12px;
+        background: var(--accent-soft);
+        color: var(--accent);
+        border: 1px solid rgba(30, 136, 229, 0.3);
+      }
+      .badge {
+        background: var(--panel-soft);
+        border: 1px solid var(--border);
+        padding: 2px 8px;
+        border-radius: 8px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .citations {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .pill {
+        display: inline-block;
+        padding: 2px 6px;
+        background: var(--accent-soft);
+        border: 1px solid rgba(30, 136, 229, 0.35);
+        border-radius: 8px;
+        font-size: 11px;
+        color: var(--accent);
+      }
+      .error {
+        color: #b3261e;
+        background: #fce8e6;
+        padding: 12px 14px;
+        border-radius: 12px;
+        border: 1px solid #f6aea9;
+        margin-top: 12px;
+      }
+      .selection-hint {
+        position: absolute;
+        z-index: 40;
+        display: none;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        border: 1px solid rgba(30, 136, 229, 0.35);
+        background: var(--panel);
+        color: var(--accent);
+        font-size: 12px;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+      }
+      .selection-hint.visible {
+        display: inline-flex;
+      }
+      .selection-hint:hover {
+        border-color: rgba(30, 136, 229, 0.75);
+      }
+      .source-detail {
+        margin-top: 12px;
+        display: grid;
+        gap: 14px;
+      }
+      .source-header {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .source-card {
+        background: var(--panel-soft);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 12px 14px;
+        display: grid;
+        gap: 8px;
+      }
+      .source-snippet {
+        font-size: 14px;
+        line-height: 1.5;
+      }
+      .highlight {
+        background: #fff1a8;
+        border-radius: 4px;
+        padding: 0 2px;
+        color: #3a3a2a;
+      }
+      .source-placeholder {
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .source-list {
+        margin-top: 16px;
+        display: grid;
+        gap: 12px;
+      }
+      .source-item {
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 12px;
+      }
+      .source-item:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+      }
+      .source-item-text {
+        margin-top: 8px;
+        font-size: 13px;
+        line-height: 1.5;
+        color: var(--muted);
+      }
+      @media (max-width: 640px) {
+        h1 {
+          font-size: 24px;
+        }
+      }
+      @media (max-width: 960px) {
+        .layout {
+          flex-direction: column;
+        }
+        .side-stack {
+          position: static;
+          width: 100%;
+        }
+        .source-pane,
+        .sources-pane {
+          max-height: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Cite-Right Perplexity-style Demo</h1>
+      <div class="subtitle">
+        FastAPI backend + lightweight UI showing span-level citations aligned to
+        source paragraphs.
+      </div>
+      <div class="layout">
+        <div id="content" class="panel main-panel">
+          <div class="badge">Loading citation run...</div>
+        </div>
+        <div class="side-stack">
+          <aside id="source-pane" class="panel source-pane is-hidden" aria-hidden="true">
+            <div class="badge">Source context</div>
+            <div id="source-detail" class="source-detail">
+              <div class="source-placeholder">
+                Select text in the answer, then click "Check sources."
+              </div>
+            </div>
+          </aside>
+          <aside id="sources-pane" class="panel sources-pane">
+            <div class="badge">Source documents</div>
+            <div id="sources-list" class="source-list">
+              <div class="source-placeholder">Loading sources...</div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+    <button id="selection-hint" class="selection-hint" type="button">
+      Check sources
+    </button>
+    <script>
+      let citationData = null;
+      const selectionState = {
+        spanIds: [],
+        selectedText: "",
+      };
+
+      async function fetchCitations() {
+        const container = document.getElementById("content");
+        try {
+          const response = await fetch("/api/citations");
+          if (!response.ok) {
+            throw new Error(`Request failed: ${response.status}`);
+          }
+          const data = await response.json();
+          renderUI(data);
+        } catch (error) {
+          container.innerHTML = `<div class="error">Failed to load citations: ${error}</div>`;
+        }
+      }
+
+      function renderUI(data) {
+        citationData = data;
+        const container = document.getElementById("content");
+        const answerHtml = data.spans
+          .map((span, idx) => {
+            const superscripts = span.citations
+              .map((citation, cIdx) => `<sup>${idx + 1}.${cIdx + 1}</sup>`)
+              .join("");
+            return `<span class="answer-span" data-span-id="${span.id}">${span.text}${superscripts}</span>`;
+          })
+          .join(" ");
+
+        container.innerHTML = `
+          <div class="question">Q: ${data.question}</div>
+          <div class="answer">A: ${answerHtml}</div>
+        `;
+
+        const sourcesList = document.getElementById("sources-list");
+        if (sourcesList) {
+          sourcesList.innerHTML = data.sources
+            .map(
+              (source) =>
+                `<div class="source-item">` +
+                `<div class="pill">${source.id}</div>` +
+                `<div class="source-item-text">${escapeHtml(source.text)}</div>` +
+                `</div>`,
+            )
+            .join("");
+        }
+      }
+
+      function escapeHtml(value) {
+        return value
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      function buildSnippet(text, start, end, contextSize, evidence) {
+        let sliceStart = Number.isFinite(start) ? start : -1;
+        let sliceEnd = Number.isFinite(end) ? end : -1;
+
+        if (sliceStart < 0 || sliceEnd <= sliceStart) {
+          if (evidence) {
+            const matchIndex = text.indexOf(evidence);
+            if (matchIndex >= 0) {
+              sliceStart = matchIndex;
+              sliceEnd = matchIndex + evidence.length;
+            }
+          }
+        }
+
+        if (sliceStart < 0 || sliceEnd <= sliceStart) {
+          const fallback = text.slice(0, contextSize * 2);
+          const suffix = text.length > fallback.length ? "..." : "";
+          return `${escapeHtml(fallback)}${suffix}`;
+        }
+
+        const startIndex = Math.max(0, sliceStart - contextSize);
+        const endIndex = Math.min(text.length, sliceEnd + contextSize);
+        const prefix = text.slice(startIndex, sliceStart);
+        const match = text.slice(sliceStart, sliceEnd);
+        const suffix = text.slice(sliceEnd, endIndex);
+        const prefixEllipsis = startIndex > 0 ? "..." : "";
+        const suffixEllipsis = endIndex < text.length ? "..." : "";
+
+        return (
+          `${prefixEllipsis}${escapeHtml(prefix)}` +
+          `<span class="highlight">${escapeHtml(match)}</span>` +
+          `${escapeHtml(suffix)}${suffixEllipsis}`
+        );
+      }
+
+      function getSelectedSpanIds(range) {
+        const answer = document.querySelector(".answer");
+        if (!answer || !range) {
+          return [];
+        }
+        return Array.from(answer.querySelectorAll(".answer-span"))
+          .filter((span) => range.intersectsNode(span))
+          .map((span) => Number(span.dataset.spanId));
+      }
+
+      function positionHint(range) {
+        const selectionHint = document.getElementById("selection-hint");
+        if (!selectionHint) {
+          return;
+        }
+        const rect = range.getBoundingClientRect();
+        selectionHint.classList.add("visible");
+        const hintRect = selectionHint.getBoundingClientRect();
+        const viewportWidth = document.documentElement.clientWidth;
+        const viewportHeight = document.documentElement.clientHeight;
+        let left = rect.left + window.scrollX;
+        let top = rect.bottom + window.scrollY + 8;
+
+        if (left + hintRect.width > viewportWidth - 12) {
+          left = viewportWidth - hintRect.width - 12;
+        }
+        if (top + hintRect.height > viewportHeight + window.scrollY - 12) {
+          top = rect.top + window.scrollY - hintRect.height - 8;
+        }
+        selectionHint.style.left = `${Math.max(left, 12)}px`;
+        selectionHint.style.top = `${Math.max(top, 12)}px`;
+      }
+
+      function hideHint() {
+        const selectionHint = document.getElementById("selection-hint");
+        if (selectionHint) {
+          selectionHint.classList.remove("visible");
+        }
+      }
+
+      function handleSelection() {
+        const answer = document.querySelector(".answer");
+        if (!answer) {
+          return;
+        }
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) {
+          hideHint();
+          return;
+        }
+        const range = selection.getRangeAt(0);
+        const selectionText = selection.toString().trim();
+
+        if (!selectionText || !answer.contains(range.commonAncestorContainer)) {
+          hideHint();
+          return;
+        }
+
+        const spanIds = getSelectedSpanIds(range);
+        if (spanIds.length === 0) {
+          hideHint();
+          return;
+        }
+
+        selectionState.spanIds = spanIds;
+        selectionState.selectedText = selectionText;
+        positionHint(range);
+      }
+
+      function openSourcePane() {
+        if (!citationData || selectionState.spanIds.length === 0) {
+          return;
+        }
+        const sourcePane = document.getElementById("source-pane");
+        const sourceDetail = document.getElementById("source-detail");
+        if (!sourcePane || !sourceDetail) {
+          return;
+        }
+
+        const sourceLookup = new Map(
+          citationData.sources.map((source) => [source.id, source]),
+        );
+        const citations = [];
+        selectionState.spanIds.forEach((spanId) => {
+          const span = citationData.spans.find((item) => item.id === spanId);
+          if (span) {
+            citations.push(...span.citations);
+          }
+        });
+
+        const deduped = [];
+        const seen = new Set();
+        citations.forEach((citation) => {
+          const key = `${citation.source_id}:${citation.char_start}-${citation.char_end}`;
+          if (seen.has(key)) {
+            return;
+          }
+          seen.add(key);
+          deduped.push(citation);
+        });
+
+        const selectedLabel = selectionState.selectedText
+          ? `"${escapeHtml(selectionState.selectedText)}"`
+          : "the selection";
+
+        const cards = deduped
+          .map((citation) => {
+            const source = sourceLookup.get(citation.source_id);
+            if (!source) {
+              return "";
+            }
+            const snippet = buildSnippet(
+              source.text,
+              citation.char_start,
+              citation.char_end,
+              60,
+              citation.evidence,
+            );
+            return `
+              <div class="source-card">
+                <div class="pill">${citation.source_id}</div>
+                <div class="source-snippet">${snippet}</div>
+              </div>
+            `;
+          })
+          .join("");
+
+        sourceDetail.innerHTML = `
+          <div class="source-header">Sources for ${selectedLabel}</div>
+          ${cards || '<div class="source-placeholder">No citations available for this selection.</div>'}
+        `;
+        sourcePane.classList.remove("is-hidden");
+        sourcePane.setAttribute("aria-hidden", "false");
+      }
+
+      function setupSelectionHandling() {
+        const selectionHint = document.getElementById("selection-hint");
+        if (!selectionHint) {
+          return;
+        }
+        selectionHint.addEventListener("mousedown", (event) => {
+          event.preventDefault();
+        });
+        selectionHint.addEventListener("click", () => {
+          hideHint();
+          openSourcePane();
+        });
+
+        document.addEventListener("selectionchange", handleSelection);
+        document.addEventListener("scroll", hideHint, true);
+        document.addEventListener("click", (event) => {
+          if (event.target.closest(".selection-hint")) {
+            return;
+          }
+          const selection = window.getSelection();
+          const hasSelection = selection && selection.toString().trim();
+          if (!hasSelection) {
+            hideHint();
+          }
+        });
+      }
+
+      fetchCitations().then(setupSelectionHandling);
+    </script>
+  </body>
+</html>

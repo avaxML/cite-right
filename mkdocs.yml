@@ -68,7 +68,6 @@ nav:
   - Getting Started:
     - Installation: getting-started/installation.md
     - Quickstart: getting-started/quickstart.md
-    - Building a Check Sources UI: getting-started/check-sources-ui.md
   - Core Concepts:
     - How It Works: concepts/how-it-works.md
     - Citation Alignment: concepts/citation-alignment.md
