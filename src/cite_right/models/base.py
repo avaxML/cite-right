@@ -1,4 +1,5 @@
 """Interfaces for the embedding models used in the citation alignment pipeline."""
+
 from __future__ import annotations
 
 from typing import Protocol, Sequence, runtime_checkable
@@ -15,6 +16,7 @@ class Embedder(Protocol):
         >>> embedder: Embedder
         >>> result = embedder.encode(["Hello, world!", "Goodbye, world!"])
     """
+
     def encode(self, texts: Sequence[str]) -> list[list[float]]:
         """Encode a list of text strings into a list of float vectors.
 

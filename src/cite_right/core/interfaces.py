@@ -1,4 +1,5 @@
 """Interfaces for the core components of the citation alignment pipeline."""
+
 from __future__ import annotations
 
 from typing import Protocol, Sequence, runtime_checkable
@@ -17,6 +18,7 @@ class Tokenizer(Protocol):
         >>> tokenizer: Tokenizer
         >>> result = tokenizer.tokenize("Example sentence.")
     """
+
     def tokenize(self, text: str) -> TokenizedText:
         """Tokenize the given text string.
 
@@ -40,6 +42,7 @@ class Segmenter(Protocol):
         >>> segmenter: Segmenter
         >>> segments = segmenter.segment("Sentence one. Sentence two.")
     """
+
     def segment(self, text: str) -> list[Segment]:
         """Segment the text string into a list of segments.
 
@@ -63,6 +66,7 @@ class AnswerSegmenter(Protocol):
         >>> answer_segmenter: AnswerSegmenter
         >>> answer_spans = answer_segmenter.segment("Some answer text.")
     """
+
     def segment(self, text: str) -> list[AnswerSpan]:
         """Segment the text string into a list of answer spans.
 
@@ -86,6 +90,7 @@ class Aligner(Protocol):
         >>> aligner: Aligner
         >>> result = aligner.align([1, 2, 3], [2, 3, 4])
     """
+
     def align(self, seq1: Sequence[int], seq2: Sequence[int]) -> Alignment:
         """Align two token sequences and return the alignment result.
 

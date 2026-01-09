@@ -1,4 +1,5 @@
 """Simple rule-based sentence segmenter."""
+
 from __future__ import annotations
 
 from cite_right.core.results import Segment

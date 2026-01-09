@@ -277,7 +277,7 @@ def _verify_claim(
         status = "partial"
     else:
         status = "unverified"
-    
+
     source_ids = list({c.source_id for c in all_citations})
 
     return ClaimVerification(

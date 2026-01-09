@@ -1,4 +1,5 @@
 """Segments text into sentences within paragraphs using simple heuristics."""
+
 from __future__ import annotations
 
 import re

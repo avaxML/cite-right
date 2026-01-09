@@ -1,4 +1,5 @@
 """Generates passages of text from segmented content."""
+
 from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict
@@ -17,6 +18,7 @@ class Passage(BaseModel):
         segment_start (int): Start segment index (inclusive).
         segment_end (int): End segment index (exclusive).
     """
+
     model_config = ConfigDict(frozen=True)
 
     text: str

@@ -1,4 +1,5 @@
 """Segments text into answers using spaCy, optionally splitting into clauses."""
+
 from __future__ import annotations
 
 import re

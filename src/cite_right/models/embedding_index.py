@@ -1,4 +1,5 @@
 """Index for fast similarity search over embedding vectors."""
+
 from __future__ import annotations
 
 from typing import Sequence

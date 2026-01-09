@@ -1,4 +1,5 @@
 """Python implementation of the Smith-Waterman local aligner."""
+
 from __future__ import annotations
 
 from enum import IntEnum

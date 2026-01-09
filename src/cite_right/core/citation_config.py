@@ -1,4 +1,5 @@
 """Configuration for the citation alignment pipeline."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -11,6 +12,7 @@ if TYPE_CHECKING:
 
 class CitationWeights(BaseModel):
     """Weights for the citation score components."""
+
     model_config = ConfigDict(frozen=True)
 
     alignment: float = 1.0

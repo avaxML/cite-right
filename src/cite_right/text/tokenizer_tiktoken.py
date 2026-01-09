@@ -54,7 +54,7 @@ class TiktokenTokenizer:
                     - "p50k_base": Used by Codex models
                     - "r50k_base": Used by GPT-3 models (davinci, curie, etc.)
                 Defaults to "cl100k_base".
-            encoding (tiktoken.Encoding, optional): 
+            encoding (tiktoken.Encoding, optional):
                 A pre-initialized tiktoken Encoding object. If provided,
                 `encoding_name` is ignored.
 
@@ -84,7 +84,7 @@ class TiktokenTokenizer:
             TokenizedText: TokenizedText instance containing:
                 - text (str): The original input text.
                 - token_ids (list of int): List of BPE token IDs.
-                - token_spans (list of tuple[int, int]): 
+                - token_spans (list of tuple[int, int]):
                     List of (char_start, char_end) spans mapping each token to the original text.
 
         Notes:

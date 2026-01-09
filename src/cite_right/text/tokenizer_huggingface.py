@@ -44,7 +44,7 @@ class HuggingFaceTokenizer:
 
     def __init__(
         self,
-        tokenizer: 'HFTokenizer | PreTrainedTokenizerBase',
+        tokenizer: "HFTokenizer | PreTrainedTokenizerBase",
         *,
         add_special_tokens: bool = False,
     ) -> None:
@@ -105,7 +105,7 @@ class HuggingFaceTokenizer:
         *,
         add_special_tokens: bool = False,
         use_fast: bool = True,
-    ) -> 'HuggingFaceTokenizer':
+    ) -> "HuggingFaceTokenizer":
         """Load a tokenizer from a pretrained model.
 
         This is a convenience method that loads a tokenizer from the

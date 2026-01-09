@@ -1,4 +1,5 @@
 """Simple rule-based tokenizer supporting normalization of numbers, percents, and currency."""
+
 from __future__ import annotations
 
 import unicodedata

@@ -1,4 +1,5 @@
 """Sentence segmenter using pySBD (Python Sentence Boundary Disambiguation)."""
+
 from __future__ import annotations
 
 from cite_right.core.results import Segment
@@ -21,7 +22,7 @@ class PySBDSegmenter:
 
         Args:
             language (str, optional): The language code for segmentation rules (default: "en").
-            clean (bool, optional): 
+            clean (bool, optional):
                 If True, pySBD will clean the text before segmentation.
                 Default is False, which preserves original text offsets for accurate mapping.
         Raises:
@@ -45,7 +46,7 @@ class PySBDSegmenter:
             text (str): The input text to be segmented into sentences.
 
         Returns:
-            list[Segment]: 
+            list[Segment]:
                 A list of Segment objects, each representing a detected sentence,
                 with text and its character offsets in the original text.
         """

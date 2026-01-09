@@ -1,4 +1,5 @@
 """Rust implementation of the Smith-Waterman local aligner."""
+
 from __future__ import annotations
 
 from contextlib import suppress

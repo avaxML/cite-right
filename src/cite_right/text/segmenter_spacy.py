@@ -1,4 +1,5 @@
 """Sentence segmenter using spaCy with additional clause splitting on coordinating conjunctions."""
+
 from __future__ import annotations
 
 from typing import Any
