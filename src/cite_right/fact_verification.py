@@ -244,8 +244,6 @@ def _verify_claim(
     backend: Literal["auto", "python", "rust"],
 ) -> ClaimVerification:
     """Verify a single claim against sources."""
-    # Use align_citations to find evidence for this claim
-    # We pass the claim text as a single-sentence "answer"
     results = align_citations(
         answer=claim.text,
         sources=sources,
@@ -256,7 +254,6 @@ def _verify_claim(
         embedder=embedder,
     )
 
-    # Extract citations from results
     all_citations: list[Citation] = []
     for span_result in results:
         all_citations.extend(span_result.citations)
@@ -271,11 +268,9 @@ def _verify_claim(
             source_ids=[],
         )
 
-    # Get best citation by score
     best_citation = max(all_citations, key=lambda c: c.score)
     answer_coverage = float(best_citation.components.get("answer_coverage", 0.0))
 
-    # Determine status based on coverage
     if answer_coverage >= config.verified_coverage_threshold:
         status: Literal["verified", "partial", "unverified"] = "verified"
     elif answer_coverage >= config.partial_coverage_threshold:
@@ -283,7 +278,6 @@ def _verify_claim(
     else:
         status = "unverified"
 
-    # Collect unique source IDs
     source_ids = list({c.source_id for c in all_citations})
 
     return ClaimVerification(

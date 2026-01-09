@@ -132,7 +132,6 @@ class SpacyClaimDecomposer:
         claim_boundaries = self._find_claim_boundaries(doc)
 
         if not claim_boundaries:
-            # No conjunctions found, return span as single claim
             return [
                 Claim(
                     text=span.text,
@@ -240,7 +239,6 @@ class SpacyClaimDecomposer:
             if cursor < split_start:
                 claim_text = text[cursor:split_start].strip()
                 if claim_text and self._is_valid_claim(claim_text):
-                    # Calculate absolute offsets
                     left_offset = len(text[cursor:split_start]) - len(
                         text[cursor:split_start].lstrip()
                     )
@@ -260,7 +258,6 @@ class SpacyClaimDecomposer:
                     claim_index += 1
             cursor = split_end
 
-        # Handle remaining text after last boundary
         if cursor < len(text):
             claim_text = text[cursor:].strip()
             if claim_text and self._is_valid_claim(claim_text):
@@ -281,6 +278,5 @@ class SpacyClaimDecomposer:
 
     def _is_valid_claim(self, text: str) -> bool:
         """Check if extracted text forms a valid claim."""
-        # Quick token count check using whitespace
         tokens = text.split()
         return len(tokens) >= self._min_claim_tokens

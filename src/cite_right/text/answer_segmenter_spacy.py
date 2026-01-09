@@ -1,3 +1,5 @@
+"""Segments text into answers using spaCy, optionally splitting into clauses."""
+
 from __future__ import annotations
 
 import re
@@ -7,12 +9,31 @@ from cite_right.text.segmenter_spacy import _split_sentence
 
 
 class SpacyAnswerSegmenter:
+    """Segments text into answers using spaCy, optionally splitting into clauses.
+
+    This class uses spaCy for sentence boundary detection and can further
+    divide sentences into clauses if desired.
+
+    Attributes:
+        _nlp: The loaded spaCy language model.
+        _split_clauses: Whether to split sentences into clauses.
+    """
+
     def __init__(
         self,
         model: str = "en_core_web_sm",
         *,
         split_clauses: bool = False,
     ) -> None:
+        """Initializes the SpacyAnswerSegmenter.
+
+        Args:
+            model (str, optional): The spaCy language model name to use. Defaults to "en_core_web_sm".
+            split_clauses (bool, optional): If True, additionally split sentences into clauses. Defaults to False.
+
+        Raises:
+            RuntimeError: If spaCy or the specified model is not installed.
+        """
         try:
             import spacy  # pyright: ignore[reportMissingImports]
         except ImportError as exc:  # pragma: no cover - import guard
@@ -31,6 +52,20 @@ class SpacyAnswerSegmenter:
         self._split_clauses = split_clauses
 
     def segment(self, text: str) -> list[AnswerSpan]:
+        """Segments the input text into answer spans (sentences or clauses).
+
+        Args:
+            text (str): The input text to segment.
+
+        Returns:
+            list[AnswerSpan]: A list of AnswerSpan objects representing sentences
+                or clauses, including their character offsets and labels.
+
+        Notes:
+            Paragraphs are identified by two or more consecutive line breaks.
+            If `split_clauses` is enabled, sentences are further split using
+            `_split_sentence`.
+        """
         spans: list[AnswerSpan] = []
         sentence_index = 0
 
@@ -80,6 +115,17 @@ _PARA_BREAK_RE = re.compile(r"\n[ \t]*\n+")
 
 
 def _iter_paragraph_spans(text: str) -> list[tuple[int, int]]:
+    """Yields start and end character offsets for each non-empty paragraph.
+
+    Paragraphs are defined as text blocks separated by two or more newlines.
+
+    Args:
+        text (str): The text to split into paragraphs.
+
+    Returns:
+        list[tuple[int, int]]: A list of (start, end) character offsets covering
+            non-empty, trimmed paragraphs.
+    """
     spans: list[tuple[int, int]] = []
     start = 0
 
@@ -98,6 +144,17 @@ def _iter_paragraph_spans(text: str) -> list[tuple[int, int]]:
 
 
 def _trim_span(text: str, start: int, end: int) -> tuple[int, int] | None:
+    """Returns trimmed (start, end) span or None if the range is empty/whitespace.
+
+    Args:
+        text (str): The parent text.
+        start (int): Start offset.
+        end (int): End offset.
+
+    Returns:
+        tuple[int, int] | None: Trimmed span as (start, end), or None if the
+            specified range is whitespace or invalid.
+    """
     if start >= end:
         return None
     snippet = text[start:end]

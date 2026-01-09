@@ -4,7 +4,7 @@ This module provides tokenizers that use HuggingFace's tokenizers library
 for subword tokenization. This is useful when you want to align citations
 using the same tokenization as transformer models like BERT, RoBERTa, etc.
 
-Example:
+Examples:
     >>> from cite_right.text.tokenizer_huggingface import HuggingFaceTokenizer
     >>> tokenizer = HuggingFaceTokenizer.from_pretrained("bert-base-uncased")
     >>> result = tokenizer.tokenize("Hello, world!")
@@ -30,16 +30,10 @@ class HuggingFaceTokenizer:
     token spans suitable for citation alignment. It supports both the fast
     `tokenizers` library and `transformers` tokenizers.
 
-    Args:
-        tokenizer: A HuggingFace tokenizer instance. Can be either:
-            - A `tokenizers.Tokenizer` from the `tokenizers` library
-            - A `PreTrainedTokenizer` from the `transformers` library
-        add_special_tokens: Whether to add special tokens (e.g., [CLS], [SEP]).
-            Defaults to False for alignment tasks.
-
-    Raises:
-        ImportError: If required libraries are not installed.
-        TypeError: If the tokenizer type is not supported.
+    Attributes:
+        _tokenizer: Underlying HuggingFace tokenizer instance.
+        _add_special_tokens: Whether or not to add special tokens.
+        _is_transformers: Whether the tokenizer is a transformers tokenizer.
 
     Example:
         >>> from transformers import AutoTokenizer
@@ -50,25 +44,39 @@ class HuggingFaceTokenizer:
 
     def __init__(
         self,
-        tokenizer: HFTokenizer | PreTrainedTokenizerBase,
+        tokenizer: "HFTokenizer | PreTrainedTokenizerBase",
         *,
         add_special_tokens: bool = False,
     ) -> None:
+        """Initializes a HuggingFaceTokenizer.
+
+        Args:
+            tokenizer: A HuggingFace tokenizer instance. Can be either:
+                - A `tokenizers.Tokenizer` from the `tokenizers` library
+                - A `PreTrainedTokenizer` from the `transformers` library
+            add_special_tokens: Whether to add special tokens (e.g., [CLS], [SEP]).
+                Defaults to False for alignment tasks.
+
+        Raises:
+            TypeError: If the tokenizer type is not supported.
+        """
         self._tokenizer = tokenizer
         self._add_special_tokens = add_special_tokens
         self._is_transformers = self._check_tokenizer_type(tokenizer)
 
     @staticmethod
     def _check_tokenizer_type(tokenizer: object) -> bool:
-        """Check if tokenizer is from transformers library.
+        """Check if tokenizer is from the transformers library or tokenizers library.
+
+        Args:
+            tokenizer: The tokenizer object to check.
 
         Returns:
-            True if transformers tokenizer, False if tokenizers library.
+            bool: True if a transformers tokenizer, False if a tokenizers library tokenizer.
 
         Raises:
             TypeError: If tokenizer type is not supported.
         """
-        # Check for transformers tokenizer
         try:
             from transformers import PreTrainedTokenizerBase
 
@@ -77,7 +85,6 @@ class HuggingFaceTokenizer:
         except ImportError:
             pass
 
-        # Check for tokenizers library
         try:
             from tokenizers import Tokenizer as HFTok
 
@@ -98,20 +105,20 @@ class HuggingFaceTokenizer:
         *,
         add_special_tokens: bool = False,
         use_fast: bool = True,
-    ) -> HuggingFaceTokenizer:
+    ) -> "HuggingFaceTokenizer":
         """Load a tokenizer from a pretrained model.
 
         This is a convenience method that loads a tokenizer from the
         HuggingFace Hub or a local path.
 
         Args:
-            model_name_or_path: Model identifier (e.g., "bert-base-uncased")
+            model_name_or_path (str): Model identifier (e.g., "bert-base-uncased")
                 or path to local tokenizer files.
-            add_special_tokens: Whether to add special tokens. Defaults to False.
-            use_fast: Whether to use the fast Rust-based tokenizer. Defaults to True.
+            add_special_tokens (bool): Whether to add special tokens. Defaults to False.
+            use_fast (bool): Whether to use the fast Rust-based tokenizer. Defaults to True.
 
         Returns:
-            A HuggingFaceTokenizer instance.
+            HuggingFaceTokenizer: A HuggingFaceTokenizer instance.
 
         Raises:
             ImportError: If transformers is not installed.
@@ -133,26 +140,40 @@ class HuggingFaceTokenizer:
         return cls(hf_tokenizer, add_special_tokens=add_special_tokens)
 
     def tokenize(self, text: str) -> TokenizedText:
-        """Tokenize text using HuggingFace tokenizer.
+        """Tokenize input text and return token IDs and (char_start, char_end) spans.
 
         Args:
-            text: The text to tokenize.
+            text (str): The text to tokenize.
 
         Returns:
-            TokenizedText with token IDs and character-accurate spans.
+            TokenizedText: Object containing token IDs and character-accurate spans.
+
+        Example:
+            >>> tokenizer = HuggingFaceTokenizer.from_pretrained("bert-base-uncased")
+            >>> result = tokenizer.tokenize("Hello, world!")
+            >>> result.token_ids
+            [101, 7592, 1010, 2088, 999, 102]
         """
         if not text:
             return TokenizedText(text=text, token_ids=[], token_spans=[])
 
         if self._is_transformers:
             return self._tokenize_transformers(text)
-        else:
-            return self._tokenize_tokenizers(text)
+        return self._tokenize_tokenizers(text)
 
     def _tokenize_transformers(self, text: str) -> TokenizedText:
-        """Tokenize using transformers library tokenizer."""
-        # Use the tokenizer with offset mapping
-        # Type is verified at runtime in _check_tokenizer_type
+        """Tokenize text using a transformers tokenizer.
+
+        Args:
+            text (str): The text to tokenize.
+
+        Returns:
+            TokenizedText: Object containing filtered token IDs and their character spans.
+
+        Notes:
+            This method internally uses the tokenizer with 'return_offsets_mapping=True' to
+            obtain character spans, and will filter special tokens with empty spans.
+        """
         encoding = self._tokenizer(  # type: ignore[operator]
             text,
             return_offsets_mapping=True,
@@ -184,23 +205,31 @@ class HuggingFaceTokenizer:
         )
 
     def _tokenize_tokenizers(self, text: str) -> TokenizedText:
-        """Tokenize using tokenizers library."""
+        """Tokenize text using a tokenizers library tokenizer.
+
+        Args:
+            text (str): The text to tokenize.
+
+        Returns:
+            TokenizedText: Object containing filtered token IDs and their character spans.
+
+        Notes:
+            Filters out any tokens with empty (start == end) spans.
+        """
         from tokenizers import Tokenizer as HFTok
 
         tokenizer: HFTok = self._tokenizer  # type: ignore[assignment]
 
-        # Encode the text
         encoding = tokenizer.encode(text, add_special_tokens=self._add_special_tokens)
 
         token_ids: list[int] = encoding.ids
         offsets: list[tuple[int, int]] = encoding.offsets
 
-        # Filter out any tokens with empty spans
         token_spans: list[tuple[int, int]] = []
         filtered_ids: list[int] = []
 
         for token_id, (start, end) in zip(token_ids, offsets, strict=True):
-            if start != end:  # Skip empty spans
+            if start != end:
                 token_spans.append((start, end))
                 filtered_ids.append(token_id)
 
@@ -211,7 +240,11 @@ class HuggingFaceTokenizer:
         )
 
     def _get_special_token_ids(self) -> set[int]:
-        """Get the set of special token IDs."""
+        """Get the set of special token IDs from the tokenizer.
+
+        Returns:
+            set[int]: Set of special token IDs. Returns empty set if not available.
+        """
         special_ids: set[int] = set()
         if hasattr(self._tokenizer, "all_special_ids"):
             special_ids = set(self._tokenizer.all_special_ids)  # type: ignore[union-attr]

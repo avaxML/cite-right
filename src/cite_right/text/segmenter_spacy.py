@@ -1,3 +1,5 @@
+"""Sentence segmenter using spaCy with additional clause splitting on coordinating conjunctions."""
+
 from __future__ import annotations
 
 from typing import Any
@@ -6,7 +8,21 @@ from cite_right.core.results import Segment
 
 
 class SpacySegmenter:
+    """Sentence segmenter using spaCy with additional clause splitting on coordinating conjunctions.
+
+    This segmenter uses a spaCy language model to split text into sentences, and then further divides
+    sentences at clause-level conjunctions (such as "and", "or", "but") for finer granularity.
+    """
+
     def __init__(self, model: str = "en_core_web_sm") -> None:
+        """Initializes the SpacySegmenter with a specified spaCy language model.
+
+        Args:
+            model (str, optional): The name of the spaCy language model to load. Defaults to "en_core_web_sm".
+
+        Raises:
+            RuntimeError: If spaCy or the specified spaCy model is not installed.
+        """
         try:
             import spacy  # pyright: ignore[reportMissingImports]
         except ImportError as exc:  # pragma: no cover - import guard
@@ -23,6 +39,14 @@ class SpacySegmenter:
             ) from exc
 
     def segment(self, text: str) -> list[Segment]:
+        """Segments the input text into sentences and further splits sentences at specific conjunctions.
+
+        Args:
+            text (str): The input text to be segmented.
+
+        Returns:
+            list[Segment]: A list of Segment objects representing the detected spans in the text.
+        """
         doc = self._nlp(text)
         segments: list[Segment] = []
 
@@ -33,6 +57,18 @@ class SpacySegmenter:
 
 
 def _split_sentence(text: str, sent: Any) -> list[Segment]:
+    """Further splits a spaCy sentence at clause-level coordinating conjunctions.
+
+    For a given `sent`, finds conjunction tokens ("and", "or", "but") functioning as clause connectors,
+    and splits the sentence into smaller spans at these tokens.
+
+    Args:
+        text (str): The original document text.
+        sent (Any): A spaCy Span object (sentence).
+
+    Returns:
+        list[Segment]: List of Segment objects corresponding to the finer-grained sentence segments.
+    """
     markers: list[tuple[int, int]] = []
     for token in sent:
         if token.dep_ != "cc":
@@ -60,6 +96,15 @@ def _split_sentence(text: str, sent: Any) -> list[Segment]:
 
 
 def _is_clause_conjunction(token: Any, sent: Any) -> bool:
+    """Determines if a conjunction token is connecting clauses within a sentence.
+
+    Args:
+        token (Any): The spaCy Token with dependency label "cc".
+        sent (Any): The parent spaCy Span (sentence).
+
+    Returns:
+        bool: True if the conjunction is likely to split clauses, False otherwise.
+    """
     head = token.head
     if head == sent.root:
         return head.pos_ in {"VERB", "AUX", "ADJ"}
@@ -71,12 +116,31 @@ def _is_clause_conjunction(token: Any, sent: Any) -> bool:
 
 
 def _skip_whitespace(text: str, idx: int) -> int:
+    """Advances an index past any contiguous whitespace.
+
+    Args:
+        text (str): The text being scanned.
+        idx (int): The starting index.
+
+    Returns:
+        int: The index of the first non-whitespace character after `idx`.
+    """
     while idx < len(text) and text[idx].isspace():
         idx += 1
     return idx
 
 
 def _add_segment(text: str, start: int, end: int, segments: list[Segment]) -> None:
+    """Appends a Segment for the substring [start:end] if it contains non-whitespace.
+
+    Strips leading and trailing whitespace inside the range before creating the segment.
+
+    Args:
+        text (str): The original document text.
+        start (int): Start index of the segment span.
+        end (int): End index (exclusive) of the segment span.
+        segments (list[Segment]): The list of segments to append to.
+    """
     if start >= end:
         return
     snippet = text[start:end]

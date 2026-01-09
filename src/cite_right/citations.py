@@ -26,7 +26,6 @@ from cite_right.text.passage import Passage, generate_passages
 from cite_right.text.segmenter_simple import SimpleSegmenter
 from cite_right.text.tokenizer import SimpleTokenizer
 
-# Type aliases for complex types
 CandidateSelection: TypeAlias = list[tuple[int, float, float]]
 """List of (candidate_index, embedding_score, lexical_score) tuples."""
 
@@ -302,7 +301,6 @@ def _process_answer_span(
         answer_set = frozenset(answer_tokens)
         lexical_scores = _lexical_prefilter(answer_set, candidates, idf)
 
-        # Get embedding vector from cache if available
         embed_start = time.perf_counter()
         query_vector: list[float] | None = None
         if embedding_cache is not None:
