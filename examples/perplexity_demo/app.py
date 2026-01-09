@@ -7,10 +7,14 @@ from typing import Any
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, JSONResponse
 
-from cite_right import CitationConfig, PySBDSegmenter, SpacyAnswerSegmenter, align_citations
+from cite_right import (
+    CitationConfig,
+    PySBDSegmenter,
+    SpacyAnswerSegmenter,
+    align_citations,
+)
 
 from .example_data import ANSWER, QUESTION, SOURCES
-
 
 app = FastAPI(title="Cite-Right Perplexity Demo")
 

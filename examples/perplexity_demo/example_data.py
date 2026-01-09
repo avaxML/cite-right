@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from cite_right import SourceDocument
 
-
 QUESTION = (
     "How does DeepSeek describe the mHC benchmark and what lifted its mHC scores"
     " for the DeepSeekMath models?"
