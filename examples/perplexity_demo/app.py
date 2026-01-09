@@ -7,7 +7,7 @@ from typing import Any
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, JSONResponse
 
-from cite_right import CitationConfig, align_citations
+from cite_right import CitationConfig, PySBDSegmenter, SpacyAnswerSegmenter, align_citations
 
 from .example_data import ANSWER, QUESTION, SOURCES
 
@@ -15,9 +15,26 @@ from .example_data import ANSWER, QUESTION, SOURCES
 app = FastAPI(title="Cite-Right Perplexity Demo")
 
 
+def _init_segmenters() -> tuple[SpacyAnswerSegmenter | None, PySBDSegmenter | None]:
+    try:
+        return SpacyAnswerSegmenter(split_clauses=True), PySBDSegmenter()
+    except RuntimeError as exc:
+        print(f"Segmenter fallback: {exc}")
+        return None, None
+
+
+ANSWER_SEGMENTER, SOURCE_SEGMENTER = _init_segmenters()
+
+
 def _build_citations_payload() -> dict[str, Any]:
     config = CitationConfig(top_k=2, allow_embedding_only=False)
-    results = align_citations(ANSWER, SOURCES, config=config)
+    results = align_citations(
+        ANSWER,
+        SOURCES,
+        config=config,
+        answer_segmenter=ANSWER_SEGMENTER,
+        source_segmenter=SOURCE_SEGMENTER,
+    )
 
     spans: list[dict[str, Any]] = []
     for span_index, span in enumerate(results):
