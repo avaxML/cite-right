@@ -102,3 +102,17 @@ class Aligner(Protocol):
             Alignment: Result of aligning the two sequences.
         """
         ...
+
+    def align_batch(
+        self, seq1: Sequence[int], seqs: Sequence[Sequence[int]]
+    ) -> list[Alignment]:
+        """Align one query sequence against multiple candidates in input order.
+
+        Args:
+            seq1 (Sequence[int]): The query or reference token sequence.
+            seqs (Sequence[Sequence[int]]): Candidate or document token sequences.
+
+        Returns:
+            list[Alignment]: Alignment results matching the order of ``seqs``.
+        """
+        ...
