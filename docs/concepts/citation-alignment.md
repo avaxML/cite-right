@@ -69,11 +69,13 @@ for result in results:
     print(f"Kind: {span.kind}")  # "sentence", "clause", or "paragraph"
 ```
 
-The `citations` field is a list of `Citation` objects, ranked from best to worst match. The number of citations depends on the `top_k` configuration parameter.
+The `citations` field is a list of `Citation` objects, ranked from best to worst match. Each citation represents exact localized evidence. The number of citations depends on the `top_k` configuration parameter.
 
-The `status` field is a string indicating overall support level. It takes one of three values based on the best citation's answer coverage (and optionally embedding similarity).
+The `retrieval_support` field is a list of retrieval-only support candidates. These are passages selected during lexical and/or embedding candidate search that did not produce an exact localized citation.
 
-A status of "supported" means the best citation has `answer_coverage >= supported_answer_coverage`. If `allow_embedding_only=True`, a span can also be marked supported when `embedding_score >= supported_embedding_similarity`.
+The `status` field is a string indicating overall support level. It takes one of three values based on the best citation's answer coverage.
+
+A status of "supported" means the best citation has `answer_coverage >= supported_answer_coverage`.
 
 A status of "partial" means at least one citation was produced but the supported thresholds were not met. This often occurs with paraphrased or partially supported content.
 
@@ -98,7 +100,7 @@ The `source_id` field identifies the source document by its ID string. The `sour
 
 The `score` field is a floating-point value indicating match quality. Higher values indicate better matches. The score combines multiple components according to the configured weights.
 
-The `evidence` field contains the matched text extracted from the source document. The `char_start` and `char_end` fields specify the exact byte positions in the source.
+The `evidence` field contains the matched text extracted from the source document. The `char_start` and `char_end` fields specify the exact character offsets in the source.
 
 The `components` dictionary breaks down the score into its constituent parts.
 

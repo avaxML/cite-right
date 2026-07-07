@@ -128,7 +128,7 @@ config = HallucinationConfig(
 metrics = compute_hallucination_metrics(results, config=config)
 ```
 
-The `weak_citation_threshold` parameter sets the minimum answer coverage score for a citation to be considered adequate. Citations below this threshold are counted as weak.
+The `weak_citation_threshold` parameter sets the minimum support confidence for a citation to be considered adequate. This uses answer coverage for alignment-based citations and embedding similarity for embedding-only citations. Citations below this threshold are counted as weak.
 
 The `include_partial_in_grounded` parameter controls whether partial matches contribute to the groundedness score. Setting this to False produces a stricter groundedness metric that only counts fully supported spans.
 

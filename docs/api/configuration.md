@@ -16,9 +16,7 @@ class CitationConfig(BaseModel):
     min_alignment_score: int = 0
     min_answer_coverage: float = 0.2
     supported_answer_coverage: float = 0.6
-    allow_embedding_only: bool = False
     min_embedding_similarity: float = 0.3
-    supported_embedding_similarity: float = 0.6
 
     # Passage windowing
     window_size_sentences: int = 1
@@ -31,6 +29,7 @@ class CitationConfig(BaseModel):
 
     # Ranking
     max_citations_per_source: int = 2
+    max_retrieval_support: int = 3
     prefer_source_order: bool = True
 
     # Alignment scoring
@@ -59,11 +58,7 @@ class CitationConfig(BaseModel):
 
 **supported_answer_coverage** (`float`): Answer coverage threshold for `supported` status.
 
-**allow_embedding_only** (`bool`): Allow citations based solely on embedding similarity when alignment evidence fails.
-
-**min_embedding_similarity** (`float`): Minimum embedding similarity for embedding-only citations.
-
-**supported_embedding_similarity** (`float`): Embedding similarity threshold for `supported` status when `allow_embedding_only=True`.
+**min_embedding_similarity** (`float`): Minimum embedding similarity required for a passage to be surfaced as retrieval support when an embedder is enabled.
 
 ### Passage Windowing
 
@@ -82,6 +77,8 @@ class CitationConfig(BaseModel):
 ### Ranking
 
 **max_citations_per_source** (`int`): Cap on citations returned from a single source per answer span.
+
+**max_retrieval_support** (`int`): Cap on retrieval-only support passages returned per answer span when exact citations are unavailable.
 
 **prefer_source_order** (`bool`): When scores tie, prefer earlier sources (True) or earlier character positions (False).
 
@@ -160,7 +157,7 @@ class HallucinationConfig(BaseModel):
     include_partial_in_grounded: bool = True
 ```
 
-**weak_citation_threshold** (`float`): Minimum answer coverage for a citation to be considered adequate. Below this is "weak".
+**weak_citation_threshold** (`float`): Minimum exact-citation answer coverage for a citation to be considered adequate. Below this is "weak".
 
 **include_partial_in_grounded** (`bool`): Whether partial matches contribute to groundedness score. False for stricter metrics.
 

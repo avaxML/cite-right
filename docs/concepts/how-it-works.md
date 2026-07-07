@@ -70,13 +70,13 @@ The alignment returns a score indicating match quality along with the token posi
 
 The token positions are converted back to character offsets in the original source document. This step is critical for accuracy: the passage window introduces its own offset within the document, and the token alignment introduces an offset within the passage.
 
-The final character offsets account for both layers, pointing to the exact location in the original document text. Extracting `source.text[char_start:char_end]` yields the evidence string.
+The final character offsets account for both layers, pointing to the exact location in the original document text. These offsets are absolute within the logical source document, so evidence extraction must use the same rebasing logic as `_slice_source_text()`: slice `source.full_text[char_start:char_end]` when full document text is available, otherwise subtract `base_doc_offset` before slicing `source.text`.
 
 ### Step 7: Ranking and Status Assignment
 
-Citations are ranked by their alignment score, with ties broken by source order, character position, and evidence length. This deterministic ranking ensures reproducible results.
+Citations are ranked deterministically by final citation score. When scores tie, the exact tie-break order depends on `prefer_source_order`: by default ties prefer earlier sources, then earlier character positions, then longer evidence spans; when disabled, earlier character positions are preferred before source order. After sorting, duplicate citations from the same source with the same evidence span tuple are removed, and the ranked list is then trimmed by `max_citations_per_source` and `top_k`.
 
-Each answer span receives a status based on its best citation score. Spans with high-quality matches are "supported", those with moderate matches are "partial", and those without adequate matches are "unsupported".
+Each answer span receives a status from the top-ranked citation's `answer_coverage`, not its overall score. If that best citation's answer coverage meets `supported_answer_coverage`, the span is `"supported"`; if citations exist but stay below that threshold, the span is `"partial"`; and if no citations survive filtering, the span is `"unsupported"`.
 
 ## Scoring Components
 

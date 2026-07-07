@@ -63,6 +63,55 @@ for result in results:
         print(f"  Evidence: {cite.evidence}")
 ```
 
+## PreparedCitationCorpus
+
+Use `PreparedCitationCorpus` when many answers will be aligned against the same sources.
+
+**Location:** `src/cite_right/citations.py`
+
+```python
+class PreparedCitationCorpus:
+    @classmethod
+    def from_sources(
+        cls,
+        sources: Sequence[SourceDocument | SourceChunk],
+        *,
+        config: CitationConfig | None = None,
+        tokenizer: Tokenizer | None = None,
+        source_segmenter: Segmenter | None = None,
+        embedder: Embedder | None = None,
+    ) -> PreparedCitationCorpus
+
+    def align(
+        self,
+        answer: str,
+        *,
+        answer_segmenter: AnswerSegmenter | None = None,
+        backend: Literal["auto", "python", "rust"] = "auto",
+    ) -> list[SpanCitations]
+```
+
+### Example
+
+```python
+from cite_right import CitationConfig, PreparedCitationCorpus, SourceDocument
+
+sources = [
+    SourceDocument(id="report", text="Annual revenue increased by 20% during fiscal year 2024."),
+]
+corpus = PreparedCitationCorpus.from_sources(
+    sources,
+    config=CitationConfig(top_k=3),
+)
+
+for answer in [
+    "The company grew revenue by 20% in 2024.",
+    "Revenue increased during fiscal year 2024.",
+]:
+    results = corpus.align(answer)
+    print(results[0].status)
+```
+
 ## compute_hallucination_metrics
 
 Computes aggregate metrics measuring how well an answer is grounded in source documents.
