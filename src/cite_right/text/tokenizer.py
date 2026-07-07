@@ -112,6 +112,7 @@ class SimpleTokenizer:
         return TokenizedText(text=text, token_ids=token_ids, token_spans=token_spans)
 
 
+@lru_cache(maxsize=10000)
 def _iter_token_spans(text: str) -> list[tuple[int, int]]:
     """Yield the (start, end) spans of each token in the input string.
 

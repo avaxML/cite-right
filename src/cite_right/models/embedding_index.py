@@ -67,11 +67,12 @@ class EmbeddingIndex(BaseModel):
         scores = np.zeros_like(dots)
         scores[valid_mask] = dots[valid_mask] / (self.norms[valid_mask] * query_norm)
 
-        sort_keys = list(enumerate(scores))
-        sort_keys.sort(key=lambda item: (-item[1], item[0]))
+        n = len(scores)
+        idx = np.arange(n)
+        sorted_indices = np.lexsort((idx, -scores))
 
         results: list[tuple[int, float]] = []
-        for idx, score in sort_keys[:k]:
-            if self.norms[idx] > 0:
-                results.append((idx, float(score)))
+        for idx_val in sorted_indices[:k]:
+            if self.norms[idx_val] > 0:
+                results.append((int(idx_val), float(scores[idx_val])))
         return results

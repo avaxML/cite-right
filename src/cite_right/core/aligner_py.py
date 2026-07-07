@@ -93,39 +93,171 @@ class SmithWatermanAligner:
         token_starts = [[0] * cols for _ in range(rows)]
         max_score = 0
         best_end: tuple[int, int] | None = None
-        best_key: tuple[int, int, int, int, int, int] | None = None
+
+        # Keep track of the best endpoint's characteristics for comparison
+        max_matches = 0
+        max_token_start = 0
+        max_query_start = 0
+        max_best_i = 0
+        max_best_j = 0
+
+        match_score = self.match_score
+        mismatch_score = self.mismatch_score
+        gap_score = self.gap_score
 
         for i in range(1, rows):
-            for j in range(1, cols):
-                cell_score, direction, matches, query_start, token_start = (
-                    self._compute_cell(
-                        i,
-                        j,
-                        seq1,
-                        seq2,
-                        scores,
-                        match_counts,
-                        query_starts,
-                        token_starts,
-                    )
-                )
-                scores[i][j] = cell_score
-                directions[i][j] = direction
-                match_counts[i][j] = matches
-                query_starts[i][j] = query_start
-                token_starts[i][j] = token_start
+            row_scores = scores[i]
+            prev_row_scores = scores[i - 1]
+            row_directions = directions[i]
 
-                if cell_score > max_score:
-                    max_score = cell_score
+            row_match_counts = match_counts[i]
+            prev_row_match_counts = match_counts[i - 1]
+
+            row_query_starts = query_starts[i]
+            prev_row_query_starts = query_starts[i - 1]
+
+            row_token_starts = token_starts[i]
+            prev_row_token_starts = token_starts[i - 1]
+
+            val_seq1_prev = seq1[i - 1]
+
+            for j in range(1, cols):
+                is_match = val_seq1_prev == seq2[j - 1]
+                diag_delta = match_score if is_match else mismatch_score
+
+                best_score = 0
+                best_dir = Direction.STOP
+                best_matches = 0
+                best_query_start = 0
+                best_token_start = 0
+                best_priority = 0
+
+                # 1. DIAGONAL
+                score_diag = prev_row_scores[j - 1] + diag_delta
+                if score_diag > 0:
+                    if prev_row_scores[j - 1] > 0:
+                        diag_matches = prev_row_match_counts[j - 1] + int(is_match)
+                        diag_query_start = prev_row_query_starts[j - 1]
+                        diag_token_start = prev_row_token_starts[j - 1]
+                    else:
+                        diag_matches = int(is_match)
+                        diag_query_start = i - 1
+                        diag_token_start = j - 1
+
+                    best_score = score_diag
+                    best_dir = Direction.DIAGONAL
+                    best_matches = diag_matches
+                    best_query_start = diag_query_start
+                    best_token_start = diag_token_start
+                    best_priority = 0
+
+                # 2. UP
+                score_up = prev_row_scores[j] + gap_score
+                if score_up > 0:
+                    if prev_row_scores[j] > 0:
+                        up_matches = prev_row_match_counts[j]
+                        up_query_start = prev_row_query_starts[j]
+                        up_token_start = prev_row_token_starts[j]
+                    else:
+                        up_matches = 0
+                        up_query_start = i - 1
+                        up_token_start = j
+
+                    is_better = False
+                    if score_up > best_score:
+                        is_better = True
+                    elif score_up == best_score and score_up > 0:
+                        if up_matches != best_matches:
+                            is_better = up_matches > best_matches
+                        elif up_token_start != best_token_start:
+                            is_better = up_token_start < best_token_start
+                        elif up_query_start != best_query_start:
+                            is_better = up_query_start < best_query_start
+                        else:
+                            is_better = 1 < best_priority
+
+                    if is_better:
+                        best_score = score_up
+                        best_dir = Direction.UP
+                        best_matches = up_matches
+                        best_query_start = up_query_start
+                        best_token_start = up_token_start
+                        best_priority = 1
+
+                # 3. LEFT
+                score_left = row_scores[j - 1] + gap_score
+                if score_left > 0:
+                    if row_scores[j - 1] > 0:
+                        left_matches = row_match_counts[j - 1]
+                        left_query_start = row_query_starts[j - 1]
+                        left_token_start = row_token_starts[j - 1]
+                    else:
+                        left_matches = 0
+                        left_query_start = i
+                        left_token_start = j - 1
+
+                    is_better = False
+                    if score_left > best_score:
+                        is_better = True
+                    elif score_left == best_score and score_left > 0:
+                        if left_matches != best_matches:
+                            is_better = left_matches > best_matches
+                        elif left_token_start != best_token_start:
+                            is_better = left_token_start < best_token_start
+                        elif left_query_start != best_query_start:
+                            is_better = left_query_start < best_query_start
+                        else:
+                            is_better = 2 < best_priority
+
+                    if is_better:
+                        best_score = score_left
+                        best_dir = Direction.LEFT
+                        best_matches = left_matches
+                        best_query_start = left_query_start
+                        best_token_start = left_token_start
+                        best_priority = 2
+
+                # Save computed values
+                row_scores[j] = best_score
+                row_directions[j] = best_dir
+                row_match_counts[j] = best_matches
+                row_query_starts[j] = best_query_start
+                row_token_starts[j] = best_token_start
+
+                # Update best-scoring endpoint
+                if best_score > max_score:
+                    max_score = best_score
                     best_end = (i, j)
-                    best_key = _alignment_key(query_start, token_start, i, j, matches)
-                elif cell_score == max_score and cell_score > 0:
-                    candidate_key = _alignment_key(
-                        query_start, token_start, i, j, matches
-                    )
-                    if best_key is None or candidate_key < best_key:
+                    max_matches = best_matches
+                    max_token_start = best_token_start
+                    max_query_start = best_query_start
+                    max_best_i = i
+                    max_best_j = j
+                elif best_score == max_score and best_score > 0:
+                    is_better_end = False
+                    if best_matches != max_matches:
+                        is_better_end = best_matches > max_matches
+                    elif best_token_start != max_token_start:
+                        is_better_end = best_token_start < max_token_start
+                    else:
+                        cand_span = j - best_token_start
+                        best_span = max_best_j - max_token_start
+                        if cand_span != best_span:
+                            is_better_end = cand_span > best_span
+                        elif best_query_start != max_query_start:
+                            is_better_end = best_query_start < max_query_start
+                        elif j != max_best_j:
+                            is_better_end = j < max_best_j
+                        else:
+                            is_better_end = i < max_best_i
+
+                    if is_better_end:
                         best_end = (i, j)
-                        best_key = candidate_key
+                        max_matches = best_matches
+                        max_token_start = best_token_start
+                        max_query_start = best_query_start
+                        max_best_i = i
+                        max_best_j = j
 
         return scores, directions, max_score, best_end
 
@@ -140,243 +272,176 @@ class SmithWatermanAligner:
         directions = [[Direction.STOP] * cols for _ in range(rows)]
         max_score = 0
         best_end: tuple[int, int] | None = None
-        best_key: tuple[int, int, int, int, int, int] | None = None
+
+        # Keep track of the best endpoint's characteristics for comparison
+        max_matches = 0
+        max_token_start = 0
+        max_query_start = 0
+        max_best_i = 0
+        max_best_j = 0
+
         prev_match_counts = [0] * cols
         prev_query_starts = [0] * cols
         prev_token_starts = [0] * cols
 
+        match_score = self.match_score
+        mismatch_score = self.mismatch_score
+        gap_score = self.gap_score
+
         for i in range(1, rows):
+            row_scores = scores[i]
+            prev_row_scores = scores[i - 1]
+            row_directions = directions[i]
+
             current_match_counts = [0] * cols
             current_query_starts = [0] * cols
             current_token_starts = [0] * cols
-            for j in range(1, cols):
-                score, direction, matches, query_start, token_start = (
-                    self._compute_cell_reduced_state(
-                        i,
-                        j,
-                        seq1,
-                        seq2,
-                        scores,
-                        prev_match_counts,
-                        current_match_counts,
-                        prev_query_starts,
-                        current_query_starts,
-                        prev_token_starts,
-                        current_token_starts,
-                    )
-                )
-                scores[i][j] = score
-                directions[i][j] = direction
-                current_match_counts[j] = matches
-                current_query_starts[j] = query_start
-                current_token_starts[j] = token_start
 
-                if score > max_score:
-                    max_score = score
+            val_seq1_prev = seq1[i - 1]
+
+            for j in range(1, cols):
+                is_match = val_seq1_prev == seq2[j - 1]
+                diag_delta = match_score if is_match else mismatch_score
+
+                best_score = 0
+                best_dir = Direction.STOP
+                best_matches = 0
+                best_query_start = 0
+                best_token_start = 0
+                best_priority = 0
+
+                # 1. DIAGONAL
+                score_diag = prev_row_scores[j - 1] + diag_delta
+                if score_diag > 0:
+                    if prev_row_scores[j - 1] > 0:
+                        diag_matches = prev_match_counts[j - 1] + int(is_match)
+                        diag_query_start = prev_query_starts[j - 1]
+                        diag_token_start = prev_token_starts[j - 1]
+                    else:
+                        diag_matches = int(is_match)
+                        diag_query_start = i - 1
+                        diag_token_start = j - 1
+
+                    best_score = score_diag
+                    best_dir = Direction.DIAGONAL
+                    best_matches = diag_matches
+                    best_query_start = diag_query_start
+                    best_token_start = diag_token_start
+                    best_priority = 0
+
+                # 2. UP
+                score_up = prev_row_scores[j] + gap_score
+                if score_up > 0:
+                    if prev_row_scores[j] > 0:
+                        up_matches = prev_match_counts[j]
+                        up_query_start = prev_query_starts[j]
+                        up_token_start = prev_token_starts[j]
+                    else:
+                        up_matches = 0
+                        up_query_start = i - 1
+                        up_token_start = j
+
+                    is_better = False
+                    if score_up > best_score:
+                        is_better = True
+                    elif score_up == best_score and score_up > 0:
+                        if up_matches != best_matches:
+                            is_better = up_matches > best_matches
+                        elif up_token_start != best_token_start:
+                            is_better = up_token_start < best_token_start
+                        elif up_query_start != best_query_start:
+                            is_better = up_query_start < best_query_start
+                        else:
+                            is_better = 1 < best_priority
+
+                    if is_better:
+                        best_score = score_up
+                        best_dir = Direction.UP
+                        best_matches = up_matches
+                        best_query_start = up_query_start
+                        best_token_start = up_token_start
+                        best_priority = 1
+
+                # 3. LEFT
+                score_left = row_scores[j - 1] + gap_score
+                if score_left > 0:
+                    if row_scores[j - 1] > 0:
+                        left_matches = current_match_counts[j - 1]
+                        left_query_start = current_query_starts[j - 1]
+                        left_token_start = current_token_starts[j - 1]
+                    else:
+                        left_matches = 0
+                        left_query_start = i
+                        left_token_start = j - 1
+
+                    is_better = False
+                    if score_left > best_score:
+                        is_better = True
+                    elif score_left == best_score and score_left > 0:
+                        if left_matches != best_matches:
+                            is_better = left_matches > best_matches
+                        elif left_token_start != best_token_start:
+                            is_better = left_token_start < best_token_start
+                        elif left_query_start != best_query_start:
+                            is_better = left_query_start < best_query_start
+                        else:
+                            is_better = 2 < best_priority
+
+                    if is_better:
+                        best_score = score_left
+                        best_dir = Direction.LEFT
+                        best_matches = left_matches
+                        best_query_start = left_query_start
+                        best_token_start = left_token_start
+                        best_priority = 2
+
+                # Save computed values
+                row_scores[j] = best_score
+                row_directions[j] = best_dir
+                current_match_counts[j] = best_matches
+                current_query_starts[j] = best_query_start
+                current_token_starts[j] = best_token_start
+
+                # Update best-scoring endpoint
+                if best_score > max_score:
+                    max_score = best_score
                     best_end = (i, j)
-                    best_key = _alignment_key(query_start, token_start, i, j, matches)
-                elif score == max_score and score > 0:
-                    candidate_key = _alignment_key(
-                        query_start, token_start, i, j, matches
-                    )
-                    if best_key is None or candidate_key < best_key:
+                    max_matches = best_matches
+                    max_token_start = best_token_start
+                    max_query_start = best_query_start
+                    max_best_i = i
+                    max_best_j = j
+                elif best_score == max_score and best_score > 0:
+                    is_better_end = False
+                    if best_matches != max_matches:
+                        is_better_end = best_matches > max_matches
+                    elif best_token_start != max_token_start:
+                        is_better_end = best_token_start < max_token_start
+                    else:
+                        cand_span = j - best_token_start
+                        best_span = max_best_j - max_token_start
+                        if cand_span != best_span:
+                            is_better_end = cand_span > best_span
+                        elif best_query_start != max_query_start:
+                            is_better_end = best_query_start < max_query_start
+                        elif j != max_best_j:
+                            is_better_end = j < max_best_j
+                        else:
+                            is_better_end = i < max_best_i
+
+                    if is_better_end:
                         best_end = (i, j)
-                        best_key = candidate_key
+                        max_matches = best_matches
+                        max_token_start = best_token_start
+                        max_query_start = best_query_start
+                        max_best_i = i
+                        max_best_j = j
 
             prev_match_counts = current_match_counts
             prev_query_starts = current_query_starts
             prev_token_starts = current_token_starts
 
         return scores, directions, max_score, best_end
-
-    def _compute_cell(
-        self,
-        i: int,
-        j: int,
-        seq1: list[int],
-        seq2: list[int],
-        scores: list[list[int]],
-        match_counts: list[list[int]],
-        query_starts: list[list[int]],
-        token_starts: list[list[int]],
-    ) -> tuple[int, Direction, int, int, int]:
-        """Compute score and direction for a single matrix cell."""
-        is_match = seq1[i - 1] == seq2[j - 1]
-        diag_delta = self.match_score if is_match else self.mismatch_score
-        best: tuple[int, Direction, int, int, int, int] | None = None
-
-        score_diag = scores[i - 1][j - 1] + diag_delta
-        if score_diag > 0:
-            if scores[i - 1][j - 1] > 0:
-                diag_matches = match_counts[i - 1][j - 1] + int(is_match)
-                diag_query_start = query_starts[i - 1][j - 1]
-                diag_token_start = token_starts[i - 1][j - 1]
-            else:
-                diag_matches = int(is_match)
-                diag_query_start = i - 1
-                diag_token_start = j - 1
-            best = _pick_better_cell_candidate(
-                best,
-                (
-                    score_diag,
-                    Direction.DIAGONAL,
-                    diag_matches,
-                    diag_query_start,
-                    diag_token_start,
-                    0,
-                ),
-            )
-
-        score_up = scores[i - 1][j] + self.gap_score
-        if score_up > 0:
-            if scores[i - 1][j] > 0:
-                up_matches = match_counts[i - 1][j]
-                up_query_start = query_starts[i - 1][j]
-                up_token_start = token_starts[i - 1][j]
-            else:
-                up_matches = 0
-                up_query_start = i - 1
-                up_token_start = j
-            best = _pick_better_cell_candidate(
-                best,
-                (
-                    score_up,
-                    Direction.UP,
-                    up_matches,
-                    up_query_start,
-                    up_token_start,
-                    1,
-                ),
-            )
-
-        score_left = scores[i][j - 1] + self.gap_score
-        if score_left > 0:
-            if scores[i][j - 1] > 0:
-                left_matches = match_counts[i][j - 1]
-                left_query_start = query_starts[i][j - 1]
-                left_token_start = token_starts[i][j - 1]
-            else:
-                left_matches = 0
-                left_query_start = i
-                left_token_start = j - 1
-            best = _pick_better_cell_candidate(
-                best,
-                (
-                    score_left,
-                    Direction.LEFT,
-                    left_matches,
-                    left_query_start,
-                    left_token_start,
-                    2,
-                ),
-            )
-
-        if best is None:
-            return 0, Direction.STOP, 0, 0, 0
-        return best[0], best[1], best[2], best[3], best[4]
-
-    def _compute_cell_reduced_state(
-        self,
-        i: int,
-        j: int,
-        seq1: list[int],
-        seq2: list[int],
-        scores: list[list[int]],
-        prev_match_counts: list[int],
-        current_match_counts: list[int],
-        prev_query_starts: list[int],
-        current_query_starts: list[int],
-        prev_token_starts: list[int],
-        current_token_starts: list[int],
-    ) -> tuple[int, Direction, int, int, int]:
-        """Compute score and direction for the reduced-state default path."""
-        is_match = seq1[i - 1] == seq2[j - 1]
-        diag_delta = self.match_score if is_match else self.mismatch_score
-        best: tuple[int, Direction, int, int, int, int] | None = None
-
-        score_diag = scores[i - 1][j - 1] + diag_delta
-        if score_diag > 0:
-            if scores[i - 1][j - 1] > 0:
-                diag_matches = prev_match_counts[j - 1] + int(is_match)
-                diag_query_start = prev_query_starts[j - 1]
-                diag_token_start = prev_token_starts[j - 1]
-            else:
-                diag_matches = int(is_match)
-                diag_query_start = i - 1
-                diag_token_start = j - 1
-            best = _pick_better_cell_candidate(
-                best,
-                (
-                    score_diag,
-                    Direction.DIAGONAL,
-                    diag_matches,
-                    diag_query_start,
-                    diag_token_start,
-                    0,
-                ),
-            )
-
-        score_up = scores[i - 1][j] + self.gap_score
-        if score_up > 0:
-            if scores[i - 1][j] > 0:
-                up_matches = prev_match_counts[j]
-                up_query_start = prev_query_starts[j]
-                up_token_start = prev_token_starts[j]
-            else:
-                up_matches = 0
-                up_query_start = i - 1
-                up_token_start = j
-            best = _pick_better_cell_candidate(
-                best,
-                (
-                    score_up,
-                    Direction.UP,
-                    up_matches,
-                    up_query_start,
-                    up_token_start,
-                    1,
-                ),
-            )
-
-        score_left = scores[i][j - 1] + self.gap_score
-        if score_left > 0:
-            if scores[i][j - 1] > 0:
-                left_matches = current_match_counts[j - 1]
-                left_query_start = current_query_starts[j - 1]
-                left_token_start = current_token_starts[j - 1]
-            else:
-                left_matches = 0
-                left_query_start = i
-                left_token_start = j - 1
-            best = _pick_better_cell_candidate(
-                best,
-                (
-                    score_left,
-                    Direction.LEFT,
-                    left_matches,
-                    left_query_start,
-                    left_token_start,
-                    2,
-                ),
-            )
-
-        if best is None:
-            return 0, Direction.STOP, 0, 0, 0
-        return best[0], best[1], best[2], best[3], best[4]
-
-
-def _pick_better_cell_candidate(
-    current: tuple[int, Direction, int, int, int, int] | None,
-    candidate: tuple[int, Direction, int, int, int, int],
-) -> tuple[int, Direction, int, int, int, int]:
-    """Pick the better per-cell candidate without container churn."""
-    if current is None:
-        return candidate
-    if candidate[0] != current[0]:
-        return candidate if candidate[0] > current[0] else current
-    candidate_key = (-candidate[2], candidate[4], candidate[3], candidate[5])
-    current_key = (-current[2], current[4], current[3], current[5])
-    return candidate if candidate_key < current_key else current
 
 
 def _build_alignment(
