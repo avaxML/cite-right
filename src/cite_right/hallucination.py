@@ -10,15 +10,15 @@ from typing import Literal, Sequence
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from cite_right.core.results import AnswerSpan, SpanCitations
+from cite_right.core.results import AnswerSpan, Citation, SpanCitations
 
 
 class HallucinationConfig(BaseModel):
     """Configuration for hallucination metric computation.
 
     Attributes:
-        weak_citation_threshold: Citations with answer_coverage below this
-            value are considered "weak" evidence. Default 0.4.
+        weak_citation_threshold: Citations with low answer coverage are considered
+            "weak" evidence. Default 0.4.
         include_partial_in_grounded: If True, "partial" status spans count
             toward the grounded score (weighted by their best citation quality).
             If False, only "supported" spans count as grounded. Default True.
@@ -36,10 +36,11 @@ class SpanConfidence(BaseModel):
     Attributes:
         span: The answer span being assessed.
         status: The citation status ("supported", "partial", "unsupported").
-        confidence: Confidence score for this span (0-1). Based on best
-            citation's answer_coverage, or 0 if unsupported.
+        confidence: Confidence score for this span (0-1). Based on exact citation
+            answer coverage, or 0 if unsupported.
         is_grounded: Whether this span is considered grounded in sources.
-        best_citation_score: Score of the best citation, or None if unsupported.
+        best_citation_score: Score of the citation providing the strongest exact
+            support signal, or None if unsupported.
         source_ids: List of source IDs that support this span.
     """
 
@@ -76,8 +77,8 @@ class HallucinationMetrics(BaseModel):
         num_supported: Number of spans with "supported" status.
         num_partial: Number of spans with "partial" status.
         num_unsupported: Number of spans with "unsupported" status.
-        num_weak_citations: Number of spans with weak citations (low coverage
-            but not unsupported).
+        num_weak_citations: Number of spans with weak citations (low exact
+            support confidence but not unsupported).
         span_confidences: Per-span confidence details.
         unsupported_spans: List of answer spans that are unsupported.
         weakly_supported_spans: List of answer spans with weak evidence.
@@ -192,15 +193,23 @@ class _MetricsAccumulator:
         if not sc.citations:
             return 0.0, None, []
 
-        best = sc.citations[0]
-        answer_coverage = float(best.components.get("answer_coverage", 0.0))
+        best = max(
+            sc.citations,
+            key=lambda citation: (self._citation_confidence(citation), citation.score),
+        )
+        confidence = self._citation_confidence(best)
         source_ids = list({c.source_id for c in sc.citations})
 
-        if answer_coverage < cfg.weak_citation_threshold:
+        if confidence < cfg.weak_citation_threshold:
             self.num_weak += 1
             self.weakly_supported_spans.append(sc.answer_span)
 
-        return answer_coverage, best.score, source_ids
+        return confidence, best.score, source_ids
+
+    @staticmethod
+    def _citation_confidence(citation: Citation) -> float:
+        """Return the grounding signal used for hallucination confidence."""
+        return float(citation.components.get("answer_coverage", 0.0))
 
     def _update_status_counts(
         self, sc: SpanCitations, span_len: int, cfg: HallucinationConfig
