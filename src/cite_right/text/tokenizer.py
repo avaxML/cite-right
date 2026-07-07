@@ -129,14 +129,14 @@ def _iter_token_spans(text: str) -> list[tuple[int, int]]:
 
     while idx < len(text):
         char = text[idx]
-        if char.isdigit():
+        if _is_digit_char(char):
             end = _consume_number(text, idx)
             spans.append((idx, end))
             idx = end
-        elif char in {"%", "$", "€", "£"}:
+        elif _normalized_symbol(char) in {"%", "$", "€", "£"}:
             spans.append((idx, idx + 1))
             idx += 1
-        elif char.isalnum():
+        elif _is_word_char(char):
             end = _consume_word(text, idx)
             spans.append((idx, end))
             idx = end
@@ -159,13 +159,13 @@ def _consume_number(text: str, start: int) -> int:
     idx = start + 1
     while idx < len(text):
         char = text[idx]
-        if char.isdigit():
+        if _is_digit_char(char):
             idx += 1
         elif (
-            char in {".", ","}
+            _normalized_symbol(char) in {".", ","}
             and idx + 1 < len(text)
-            and text[idx - 1].isdigit()
-            and text[idx + 1].isdigit()
+            and _is_digit_char(text[idx - 1])
+            and _is_digit_char(text[idx + 1])
         ):
             idx += 1
         else:
@@ -186,7 +186,7 @@ def _consume_word(text: str, start: int) -> int:
     idx = start + 1
     while idx < len(text):
         char = text[idx]
-        if char.isalnum():
+        if _is_word_char(char) or unicodedata.combining(char):
             idx += 1
         elif _is_internal_punctuation(text, idx, char):
             idx += 1
@@ -211,9 +211,43 @@ def _is_internal_punctuation(text: str, idx: int, char: str) -> bool:
     """
     if idx + 1 >= len(text):
         return False
-    if not text[idx - 1].isalnum() or not text[idx + 1].isalnum():
+    if not _is_word_char(text[idx - 1]) or not _is_word_char(text[idx + 1]):
         return False
-    return char in {"'", "\u2019", "-"}
+    normalized = _normalize_punctuation(char)
+    return normalized in {"'", "-"}
+
+
+def _is_digit_char(char: str) -> bool:
+    """Return True when a raw character normalizes to a digit."""
+    return _normalized_symbol(char).isdigit()
+
+
+def _is_word_char(char: str) -> bool:
+    """Return True when a raw character should participate in a word token."""
+    return _normalized_symbol(char).isalnum()
+
+
+def _normalized_symbol(char: str) -> str:
+    """Normalize a single character for token-boundary classification."""
+    normalized = unicodedata.normalize("NFKC", char).casefold()
+    return _normalize_punctuation(normalized)
+
+
+def _normalize_punctuation(text: str) -> str:
+    """Map quote and dash variants that should not affect matching."""
+    translation = str.maketrans(
+        {
+            "\u2018": "'",
+            "\u2019": "'",
+            "\u02bc": "'",
+            "\u2010": "-",
+            "\u2011": "-",
+            "\u2012": "-",
+            "\u2013": "-",
+            "\u2212": "-",
+        }
+    )
+    return text.translate(translation)
 
 
 @lru_cache(maxsize=10000)
@@ -244,7 +278,7 @@ def _normalize_token(token: str, config: TokenizerConfig) -> str:
         str: The normalized token string.
     """
     normalized = unicodedata.normalize("NFKC", token).casefold()
-    normalized = normalized.replace("\u2019", "'")
+    normalized = _normalize_punctuation(normalized)
 
     if config.normalize_numbers and normalized and normalized[0].isdigit():
         normalized = normalized.replace(",", "")

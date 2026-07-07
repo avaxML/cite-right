@@ -84,3 +84,90 @@ def test_alignment_single_element_match() -> None:
     assert result.score == 2, f"Expected score 2, got {result.score}"
     assert result.token_start == 2
     assert result.token_end == 3
+
+
+def test_alignment_prefers_more_matches_across_equal_score_endpoints() -> None:
+    """Verify equal-score endpoints prefer the traceback with more exact matches."""
+    aligner = SmithWatermanAligner(return_match_blocks=True)
+
+    result = aligner.align([0, 1, 0], [0, 1, 1, 1, 0])
+
+    assert result.score == 4
+    assert result.token_start == 0
+    assert result.token_end == 5
+    assert result.query_start == 0
+    assert result.query_end == 3
+    assert result.matches == 3
+    assert result.match_blocks == [(0, 1), (2, 3), (4, 5)]
+
+
+def test_alignment_prefers_more_matches_within_single_optimal_endpoint() -> None:
+    """Verify traceback explores equal-score predecessors at the same end cell."""
+    aligner = SmithWatermanAligner(return_match_blocks=True)
+
+    result = aligner.align([0, 1, 0], [0, 2, 1, 1, 0])
+
+    assert result.score == 4
+    assert result.token_start == 0
+    assert result.token_end == 5
+    assert result.query_start == 0
+    assert result.query_end == 3
+    assert result.matches == 3
+    assert result.match_blocks == [(0, 1), (2, 3), (4, 5)]
+
+
+def test_fill_matrix_tracks_single_best_endpoint() -> None:
+    """Verify fill_matrix returns one winning endpoint instead of collecting all max cells."""
+    aligner = SmithWatermanAligner()
+
+    _, _, max_score, best_end = aligner._fill_matrix([1, 2], [1, 2, 9, 1, 2, 0])
+
+    assert max_score == 4
+    assert best_end == (2, 2)
+
+
+def test_align_batch_preserves_single_alignment_results_in_order() -> None:
+    """Verify batch alignment matches per-candidate results without reordering."""
+    aligner = SmithWatermanAligner(return_match_blocks=True)
+    query = [1, 2, 3]
+    candidates = [[0, 1, 2, 3, 4], [1, 2, 9, 3], [8, 9, 10]]
+
+    expected = [aligner.align(query, candidate) for candidate in candidates]
+
+    assert aligner.align_batch(query, candidates) == expected
+
+
+def test_reduced_state_fill_tracks_best_endpoint_for_default_path() -> None:
+    """Verify the default path exposes a reduced-state fill result."""
+    aligner = SmithWatermanAligner()
+
+    scores, directions, max_score, best_end = aligner._fill_matrix_reduced_state(
+        [1, 2], [1, 2, 9, 1, 2, 0]
+    )
+
+    assert max_score == 4
+    assert best_end == (2, 2)
+    assert len(scores) == 3
+    assert len(scores[0]) == 7
+    assert len(directions) == 3
+    assert len(directions[0]) == 7
+
+
+def test_default_path_matches_detailed_path_without_match_blocks() -> None:
+    """Verify reduced-state and detailed paths pick the same single-span alignment."""
+    simple = SmithWatermanAligner()
+    detailed = SmithWatermanAligner(return_match_blocks=True)
+
+    seq1 = [0, 1, 0]
+    seq2 = [0, 1, 1, 1, 0]
+
+    simple_result = simple.align(seq1, seq2)
+    detailed_result = detailed.align(seq1, seq2)
+
+    assert simple_result.score == detailed_result.score
+    assert simple_result.token_start == detailed_result.token_start
+    assert simple_result.token_end == detailed_result.token_end
+    assert simple_result.query_start == detailed_result.query_start
+    assert simple_result.query_end == detailed_result.query_end
+    assert simple_result.matches == detailed_result.matches
+    assert simple_result.match_blocks == []
