@@ -5,10 +5,13 @@ import os
 import subprocess
 import sys
 import textwrap
+from collections import UserDict
 from datetime import date
-from typing import Any
+from types import MappingProxyType
+from typing import Any, cast
 
 import pytest
+from pydantic import BaseModel
 
 from evaluation.canonical import authoritative_case_id, canonical_json_bytes, sha256_hex
 from evaluation.schema import EvaluationCase
@@ -45,6 +48,20 @@ def test_canonical_json_bytes_emits_literal_utf8_without_ascii_escaping() -> Non
     )
 
 
+def test_canonical_json_bytes_normalizes_non_plain_mappings_recursively() -> None:
+    nested = UserDict({"delta": 4, "charlie": 3})
+    payload = MappingProxyType({"b": 2, "a": nested})
+
+    assert canonical_json_bytes(payload) == b'{"a":{"charlie":3,"delta":4},"b":2}'
+
+
+def test_canonical_json_bytes_rejects_nested_non_finite_floats_after_normalization() -> None:
+    payload = MappingProxyType({"outer": UserDict({"value": math.inf})})
+
+    with pytest.raises(ValueError, match="Out of range float values are not JSON compliant"):
+        canonical_json_bytes(payload)
+
+
 def test_authoritative_case_id_changes_when_authoritative_content_changes() -> None:
     original = _make_case_data()
     changed = _make_case_data()
@@ -76,6 +93,16 @@ def test_authoritative_case_id_supports_evaluation_case_instances() -> None:
     equivalent["review"] = None
 
     assert authoritative_case_id(case) == authoritative_case_id(equivalent)
+
+
+def test_authoritative_case_id_rejects_unrelated_base_models() -> None:
+    model = _UnrelatedModel(name="not-a-case")
+
+    with pytest.raises(
+        TypeError,
+        match="authoritative_case_id accepts EvaluationCase or Mapping\\[str, object\\] inputs",
+    ):
+        authoritative_case_id(cast(Any, model))
 
 
 def test_sha256_hex_returns_full_deterministic_digest() -> None:
@@ -122,6 +149,10 @@ def _hash_in_subprocess(*, payload_literal: str, hash_seed: str) -> str:
         env=env,
     )
     return completed.stdout.strip()
+
+
+class _UnrelatedModel(BaseModel):
+    name: str
 
 
 def _make_case_data() -> dict[str, Any]:
