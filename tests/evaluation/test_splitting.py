@@ -77,6 +77,94 @@ def test_build_lineage_components_scopes_transformation_ids_and_keeps_transitive
     assert len(components) == 2
 
 
+def test_build_lineage_components_unions_same_document_family_cases():
+    from evaluation.splitting import build_lineage_components
+
+    alpha = _build_case(
+        family_id="family-shared",
+        transformation_id="negation",
+        source_texts=("Alpha-only source packet.",),
+        answer="Alpha answer.",
+    )
+    beta = _build_case(
+        family_id="family-shared",
+        transformation_id="multi_source",
+        source_texts=("Beta-only source packet.", "Beta distractor packet."),
+        answer="Beta answer.",
+    )
+    gamma = _build_case(
+        family_id="family-isolated",
+        transformation_id="negation",
+        source_texts=("Gamma source packet.",),
+        answer="Gamma answer.",
+    )
+
+    components = build_lineage_components((gamma, beta, alpha))
+    component_sets = {frozenset(component.case_ids) for component in components}
+
+    assert frozenset({alpha.case_id, beta.case_id}) in component_sets
+    assert frozenset({gamma.case_id}) in component_sets
+
+
+def test_build_lineage_components_unions_exact_shared_source_text_across_families():
+    from evaluation.splitting import build_lineage_components
+
+    shared_source = "Shared source packet for snapshot hashing."
+    alpha = _build_case(
+        family_id="family-alpha",
+        transformation_id="negation",
+        source_texts=(shared_source,),
+        answer="Alpha answer.",
+    )
+    beta = _build_case(
+        family_id="family-beta",
+        transformation_id="multi_source",
+        source_texts=(shared_source, "Beta-only distractor packet."),
+        answer="Beta answer.",
+    )
+    gamma = _build_case(
+        family_id="family-gamma",
+        transformation_id="multi_source",
+        source_texts=("Gamma source packet.",),
+        answer="Gamma answer.",
+    )
+
+    components = build_lineage_components((gamma, beta, alpha))
+    component_sets = {frozenset(component.case_ids) for component in components}
+
+    assert frozenset({alpha.case_id, beta.case_id}) in component_sets
+    assert frozenset({gamma.case_id}) in component_sets
+
+
+def test_build_lineage_components_unions_normalized_source_fingerprints_across_families():
+    from evaluation.splitting import build_lineage_components
+
+    alpha = _build_case(
+        family_id="family-alpha",
+        transformation_id="negation",
+        source_texts=("Cafe\u0301\tROCKET   STATUS",),
+        answer="Alpha answer.",
+    )
+    beta = _build_case(
+        family_id="family-beta",
+        transformation_id="entity",
+        source_texts=("  café rocket status  ",),
+        answer="Beta answer.",
+    )
+    gamma = _build_case(
+        family_id="family-gamma",
+        transformation_id="relation",
+        source_texts=("Distinct packet with no normalized overlap.",),
+        answer="Gamma answer.",
+    )
+
+    components = build_lineage_components((gamma, beta, alpha))
+    component_sets = {frozenset(component.case_ids) for component in components}
+
+    assert frozenset({alpha.case_id, beta.case_id}) in component_sets
+    assert frozenset({gamma.case_id}) in component_sets
+
+
 def test_assign_splits_rejects_invalid_inputs_and_apply_preserves_authoritative_ids():
     from evaluation.splitting import (
         CaseLineage,
@@ -117,6 +205,34 @@ def test_assign_splits_rejects_invalid_inputs_and_apply_preserves_authoritative_
         assign_splits(
             (case,),
             explicit_lineage=(CaseLineage(case_id="case-missing", template_lineage_ids=("x",)),),
+        )
+
+    with pytest.raises(
+        ValueError,
+        match=r"^duplicate template lineage id in explicit lineage metadata$",
+    ):
+        assign_splits(
+            (case,),
+            explicit_lineage=(
+                CaseLineage(
+                    case_id=case.case_id,
+                    template_lineage_ids=("template-a", "template-a"),
+                ),
+            ),
+        )
+
+    with pytest.raises(
+        ValueError,
+        match=r"^duplicate transformation lineage id in explicit lineage metadata$",
+    ):
+        assign_splits(
+            (case,),
+            explicit_lineage=(
+                CaseLineage(
+                    case_id=case.case_id,
+                    transformation_lineage_ids=("xf-a", "xf-a"),
+                ),
+            ),
         )
 
     report = assign_splits((case,), seed=20260717)
