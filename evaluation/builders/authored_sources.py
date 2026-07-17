@@ -128,6 +128,7 @@ class Fact(PydanticBaseModel):
             ) from exc
 
         evidence_slot_ids: set[str] = set()
+        previous_order_key: tuple[int, int, str] | None = None
         for evidence in self.evidence:
             if evidence.slot_id not in slot_ids:
                 raise ValueError("evidence slot ids must reference defined slots")
@@ -135,7 +136,11 @@ class Fact(PydanticBaseModel):
                 raise ValueError("evidence slot ids must be unique within a fact")
             if self.slots[evidence.slot_id] != evidence.text:
                 raise ValueError("evidence text must equal the referenced slot text")
+            order_key = (evidence.span.start, evidence.span.end, evidence.slot_id)
+            if previous_order_key is not None and order_key <= previous_order_key:
+                raise ValueError("fact evidence must be ordered by source span")
             evidence_slot_ids.add(evidence.slot_id)
+            previous_order_key = order_key
 
         return self
 

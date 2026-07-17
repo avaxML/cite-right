@@ -370,6 +370,38 @@ def test_fact_validation_rejects_claim_template_with_missing_slot_reference() ->
         )
 
 
+def test_fact_validation_rejects_evidence_out_of_source_order() -> None:
+    authored_sources = _authored_sources_module()
+    source_text = "Mercury completes one orbit every 88 days."
+
+    with pytest.raises(
+        ValueError,
+        match="fact evidence must be ordered by source span",
+    ):
+        authored_sources.Fact(
+            fact_id="fact-orbit",
+            claim_template="{planet} completes one orbit every {days} days.",
+            slots={
+                "planet": "Mercury",
+                "days": "88",
+            },
+            answer_slots=("planet", "days"),
+            evidence=(
+                {
+                    "slot_id": "days",
+                    "text": "88",
+                    "span": _span(source_text, "88"),
+                },
+                {
+                    "slot_id": "planet",
+                    "text": "Mercury",
+                    "span": _span(source_text, "Mercury"),
+                },
+            ),
+            adversarial_variants={"negation": {"claim_template": "not used"}},
+        )
+
+
 def test_fact_template_validation_rejects_out_of_bounds_evidence_span() -> None:
     authored_sources = _authored_sources_module()
 
