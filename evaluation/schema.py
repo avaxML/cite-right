@@ -12,10 +12,11 @@ Split = Literal["train", "dev", "holdout"]
 ProvenanceKind = Literal["authored", "public_domain", "permissive_license"]
 ReviewState = Literal["pending", "approved", "rejected"]
 ExpectedStatus = Literal["supported", "partial", "unsupported"]
+STRICT_MODEL_CONFIG = ConfigDict(frozen=True, extra="forbid", strict=True)
 
 
 class CharSpan(BaseModel):
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    model_config = STRICT_MODEL_CONFIG
 
     start: int
     end: int
@@ -30,7 +31,7 @@ class CharSpan(BaseModel):
 
 
 class CitationTarget(BaseModel):
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    model_config = STRICT_MODEL_CONFIG
 
     source_id: str
     spans: tuple[CharSpan, ...]
@@ -43,7 +44,7 @@ class CitationTarget(BaseModel):
 
 
 class CitationRequirement(BaseModel):
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    model_config = STRICT_MODEL_CONFIG
 
     requirement_id: str
     alternatives: tuple[CitationTarget, ...]
@@ -58,7 +59,7 @@ class CitationRequirement(BaseModel):
 
 
 class ClaimAnnotation(BaseModel):
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    model_config = STRICT_MODEL_CONFIG
 
     claim_id: str
     answer_span: CharSpan
@@ -80,7 +81,7 @@ class ClaimAnnotation(BaseModel):
 
 
 class EvaluationUnit(BaseModel):
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    model_config = STRICT_MODEL_CONFIG
 
     unit_id: str
     answer_span: CharSpan
@@ -105,7 +106,7 @@ class EvaluationUnit(BaseModel):
 
 
 class Source(BaseModel):
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    model_config = STRICT_MODEL_CONFIG
 
     source_id: str
     text: str
@@ -129,7 +130,7 @@ class Source(BaseModel):
 
 
 class Provenance(BaseModel):
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    model_config = STRICT_MODEL_CONFIG
 
     kind: ProvenanceKind
     title: str | None = None
@@ -141,7 +142,7 @@ class Provenance(BaseModel):
 
 
 class GenerationRecipe(BaseModel):
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    model_config = STRICT_MODEL_CONFIG
 
     recipe_id: str
     generator_name: str
@@ -151,16 +152,30 @@ class GenerationRecipe(BaseModel):
 
 
 class ReviewRecord(BaseModel):
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    model_config = STRICT_MODEL_CONFIG
 
     state: ReviewState
     reviewer: str | None = None
     reviewed_at: date | None = None
     notes: str | None = None
 
+    @model_validator(mode="after")
+    def _validate_completed_review_metadata(self) -> ReviewRecord:
+        if self.state == "pending":
+            return self
+        if self.reviewer is None or self.reviewed_at is None:
+            raise ValueError(
+                "completed review records require reviewer and reviewed_at"
+            )
+        if not self.reviewer.strip():
+            raise ValueError(
+                "completed review records require a non-empty reviewer"
+            )
+        return self
+
 
 class EvaluationCase(BaseModel):
-    model_config = ConfigDict(frozen=True, extra="forbid")
+    model_config = STRICT_MODEL_CONFIG
 
     case_id: str
     dataset_version: str

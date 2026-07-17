@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from copy import deepcopy
 from datetime import date
 from typing import Any
@@ -7,7 +8,13 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from evaluation.schema import ClaimAnnotation, EvaluationCase, EvaluationUnit
+from evaluation.schema import (
+    CharSpan,
+    ClaimAnnotation,
+    EvaluationCase,
+    EvaluationUnit,
+    ReviewRecord,
+)
 
 
 def test_evaluation_package_is_not_public_library_api() -> None:
@@ -28,6 +35,46 @@ def test_entailed_claim_requires_citation_requirement() -> None:
         EvaluationCase.model_validate(case_data)
 
 
+def test_schema_rejects_python_input_coercion_but_accepts_json_round_trip() -> None:
+    with pytest.raises(ValidationError, match="Input should be a valid integer"):
+        CharSpan.model_validate({"start": "0", "end": 1})
+
+    with pytest.raises(ValidationError, match="Input should be a valid tuple"):
+        ClaimAnnotation.model_validate(
+            {
+                "claim_id": "claim-coercion",
+                "answer_span": {"start": 0, "end": 5},
+                "text": "Paris",
+                "label": "contradicted",
+                "acceptable_retrieval_source_ids": ["source-a"],
+            }
+        )
+
+    claim = ClaimAnnotation.model_validate(
+        {
+            "claim_id": "claim-valid",
+            "answer_span": {"start": 0, "end": 5},
+            "text": "Paris",
+            "label": "contradicted",
+            "acceptable_retrieval_source_ids": ("source-a",),
+        }
+    )
+    claim_from_json = ClaimAnnotation.model_validate_json(
+        json.dumps(
+            {
+                "claim_id": "claim-json",
+                "answer_span": {"start": 0, "end": 5},
+                "text": "Paris",
+                "label": "contradicted",
+                "acceptable_retrieval_source_ids": ["source-a"],
+            }
+        )
+    )
+
+    assert claim.acceptable_retrieval_source_ids == ("source-a",)
+    assert claim_from_json.acceptable_retrieval_source_ids == ("source-a",)
+
+
 def test_negative_claim_forbids_citation_requirements() -> None:
     case_data = _make_valid_case_data()
     case_data["evaluation_units"][0]["claims"][0]["label"] = "contradicted"
@@ -36,6 +83,34 @@ def test_negative_claim_forbids_citation_requirements() -> None:
         ValidationError, match="negative claims must not define citation requirements"
     ):
         EvaluationCase.model_validate(case_data)
+
+
+@pytest.mark.parametrize("state", ["approved", "rejected"])
+def test_review_record_requires_audit_fields_for_completed_decisions(
+    state: str,
+) -> None:
+    with pytest.raises(
+        ValidationError,
+        match="completed review records require reviewer and reviewed_at",
+    ):
+        ReviewRecord.model_validate({"state": state})
+
+    with pytest.raises(
+        ValidationError,
+        match="completed review records require a non-empty reviewer",
+    ):
+        ReviewRecord.model_validate(
+            {
+                "state": state,
+                "reviewer": "   ",
+                "reviewed_at": date(2026, 7, 17),
+            }
+        )
+
+    pending = ReviewRecord.model_validate({"state": "pending"})
+
+    assert pending.reviewer is None
+    assert pending.reviewed_at is None
 
 
 def test_target_spans_are_ordered_non_overlapping_and_in_bounds() -> None:
@@ -125,7 +200,7 @@ def test_evaluation_unit_status_is_derived_from_claim_labels() -> None:
             "unit_id": "unit-supported",
             "answer_span": {"start": 0, "end": 5},
             "text": "Paris",
-            "claims": (entailed_claim.model_dump(mode="json"),),
+            "claims": (entailed_claim.model_dump(mode="python"),),
         }
     )
     partial = EvaluationUnit.model_validate(
@@ -134,8 +209,8 @@ def test_evaluation_unit_status_is_derived_from_claim_labels() -> None:
             "answer_span": {"start": 0, "end": 12},
             "text": "Paris Berlin",
             "claims": (
-                entailed_claim.model_dump(mode="json"),
-                contradicted_claim.model_dump(mode="json"),
+                entailed_claim.model_dump(mode="python"),
+                contradicted_claim.model_dump(mode="python"),
             ),
         }
     )
@@ -145,8 +220,8 @@ def test_evaluation_unit_status_is_derived_from_claim_labels() -> None:
             "answer_span": {"start": 6, "end": 20},
             "text": "Berlin Madrid",
             "claims": (
-                contradicted_claim.model_dump(mode="json"),
-                not_in_sources_claim.model_dump(mode="json"),
+                contradicted_claim.model_dump(mode="python"),
+                not_in_sources_claim.model_dump(mode="python"),
             ),
         }
     )
