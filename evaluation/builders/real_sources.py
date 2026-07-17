@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import json
+import re
 from datetime import date
 from pathlib import Path
 from typing import Literal
-from urllib.parse import urlparse
+from urllib.parse import urlsplit
 
 from pydantic import (
     BaseModel,
@@ -54,6 +55,7 @@ REAL_CHALLENGE_KIND = Literal["contradicted", "partial", "distractor"]
 DATA_ROOT = Path(__file__).resolve().parent.parent / "data" / "v1"
 REAL_SOURCES_PATH = DATA_ROOT / "sources" / "real.json"
 PROVENANCE_PATH = DATA_ROOT / "provenance.json"
+_DNS_LABEL_PATTERN = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$")
 
 
 class RealSourceProvenance(BaseModel):
@@ -554,8 +556,37 @@ def _validate_sorted_ids(
 
 
 def _validate_official_https_url(value: str, *, message: str) -> str:
-    parsed = urlparse(value)
-    if parsed.scheme != "https" or not parsed.netloc.endswith(".gov"):
+    try:
+        parsed = urlsplit(value)
+    except ValueError as exc:
+        raise ValueError(message) from exc
+
+    if parsed.scheme != "https" or parsed.fragment:
+        raise ValueError(message)
+    if parsed.username is not None or parsed.password is not None:
+        raise ValueError(message)
+    try:
+        if parsed.port is not None:
+            raise ValueError(message)
+    except ValueError as exc:
+        raise ValueError(message) from exc
+
+    hostname = parsed.hostname
+    if hostname is None:
+        raise ValueError(message)
+    if hostname.startswith(".") or hostname.endswith("."):
+        raise ValueError(message)
+    try:
+        hostname.encode("ascii")
+    except UnicodeEncodeError as exc:
+        raise ValueError(message) from exc
+
+    labels = hostname.split(".")
+    if len(labels) < 2 or labels[-1] != "gov":
+        raise ValueError(message)
+    if any(not label for label in labels):
+        raise ValueError(message)
+    if any(_DNS_LABEL_PATTERN.fullmatch(label) is None for label in labels):
         raise ValueError(message)
     return value
 

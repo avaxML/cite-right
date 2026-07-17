@@ -1469,6 +1469,57 @@ def test_real_source_models_reject_missing_metadata_local_text_hash_mismatch_and
         )
 
 
+@pytest.mark.parametrize(
+    ("field_name", "value"),
+    (
+        ("origin_url", "https://attacker@www.nasa.gov/example"),
+        ("origin_url", "https://user:pass@www.nasa.gov/example"),
+        ("origin_url", "https://.gov/example"),
+        ("origin_url", "https://gov/example"),
+        ("origin_url", "https://www.nasa.gov:443/example"),
+        ("origin_url", "https://www.nasa.gov.evil.example/example"),
+        ("origin_url", "https://-bad.gov/example"),
+        ("origin_url", "https://bad-.gov/example"),
+        ("policy_url", "https://attacker@www.nasa.gov/example"),
+        ("policy_url", "https://user:pass@www.nasa.gov/example"),
+        ("policy_url", "https://.gov/example"),
+        ("policy_url", "https://gov/example"),
+        ("policy_url", "https://www.nasa.gov:443/example"),
+        ("policy_url", "https://www.nasa.gov.evil.example/example"),
+        ("policy_url", "https://-bad.gov/example"),
+        ("policy_url", "https://bad-.gov/example"),
+        ("statutory_url", "https://attacker@uscode.house.gov/view.xhtml?edition=2023"),
+        ("statutory_url", "https://user:pass@uscode.house.gov/view.xhtml?edition=2023"),
+        ("statutory_url", "https://.gov/view.xhtml?edition=2023"),
+        ("statutory_url", "https://gov/view.xhtml?edition=2023"),
+        ("statutory_url", "https://uscode.house.gov:443/view.xhtml?edition=2023"),
+        ("statutory_url", "https://uscode.house.gov.evil.example/view.xhtml?edition=2023"),
+        ("statutory_url", "https://-bad.gov/view.xhtml?edition=2023"),
+        ("statutory_url", "https://bad-.gov/view.xhtml?edition=2023"),
+    ),
+)
+def test_real_source_provenance_rejects_misleading_canonical_urls(
+    field_name: str,
+    value: str,
+) -> None:
+    real_sources = _real_sources_module()
+    base = _real_source_provenance_fixture()
+
+    message_by_field = {
+        "origin_url": "origin_url must use https:// and point to an official source",
+        "policy_url": "policy_url must use https:// and point to an official source",
+        "statutory_url": "statutory_url must use https:// and point to an official source",
+    }
+
+    with pytest.raises(ValueError, match=message_by_field[field_name]):
+        real_sources.RealSourceProvenance.model_validate(
+            {
+                **base,
+                field_name: value,
+            }
+        )
+
+
 def test_real_source_loaders_fail_closed_for_duplicate_records_and_join_gaps(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
@@ -1711,6 +1762,24 @@ def _read_real_source_payloads() -> tuple[list[dict[str, object]], list[dict[str
     assert isinstance(family_payload, list)
     assert isinstance(provenance_payload, list)
     return family_payload, provenance_payload
+
+
+def _real_source_provenance_fixture() -> dict[str, object]:
+    source_text = "A black hole is a region in space where gravity is strong."
+    return {
+        "family_id": "science-test-family",
+        "domain": "science",
+        "source_text": source_text,
+        "origin_url": "https://www.nasa.gov/example",
+        "page_title": "Example Page",
+        "publisher": "NASA",
+        "license_basis": "17 U.S.C. 105 public domain",
+        "policy_url": "https://www.nasa.gov/nasa-brand-center/images-and-media/",
+        "statutory_url": "https://uscode.house.gov/view.xhtml?edition=2023&num=0&req=granuleid%3AUSC-2023-title17-section105",
+        "retrieval_date": "2026-07-17",
+        "snapshot_hash": sha256_hex(source_text.encode("utf-8")),
+        "third_party_credit": False,
+    }
 
 
 def _disable_network(monkeypatch: pytest.MonkeyPatch) -> None:
