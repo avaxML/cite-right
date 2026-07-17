@@ -389,21 +389,34 @@ def test_every_catalog_family_produces_positive_and_adversarial_siblings() -> No
 
         assert "entailed" in labels
         assert "contradicted" in labels or "not_in_sources" in labels
-        assert {case.transformation_family_id for case in cases} == set(ALL_TRANSFORMATION_NAMES)
+        assert tuple(case.transformation_family_id for case in cases) == ALL_TRANSFORMATION_NAMES
 
 
 def test_catalog_generation_is_order_independent_after_stable_sorting() -> None:
     authored_sources = _authored_sources_module()
     cases_module = _cases_module()
     forward = cases_module.generate_all_authored_cases(seed=31)
+    repeat = cases_module.generate_all_authored_cases(seed=31)
     reverse = cases_module.generate_all_authored_cases(
         templates=tuple(reversed(authored_sources.AUTHORED_FACT_TEMPLATES)),
         seed=31,
     )
 
+    assert len(forward) == 720
+    assert len({case.case_id for case in forward}) == 720
+    assert Counter(case.document_family_id for case in forward) == {
+        template.family_id: len(ALL_TRANSFORMATION_NAMES)
+        for template in authored_sources.AUTHORED_FACT_TEMPLATES
+    }
+    assert Counter(case.transformation_family_id for case in forward) == {
+        transformation_name: len(authored_sources.AUTHORED_FACT_TEMPLATES)
+        for transformation_name in ALL_TRANSFORMATION_NAMES
+    }
+    assert [case.case_id for case in forward] == [case.case_id for case in repeat]
     assert [case.case_id for case in forward] == [case.case_id for case in reverse]
+    assert _canonical_case_digest(forward) == _canonical_case_digest(repeat)
     assert _canonical_case_digest(forward) == _canonical_case_digest(reverse)
-    assert _canonical_case_digest(forward) == "22db781dd7e899d1da6fd55076c6382b5540a155d483f7155b7f9686a8308b84"
+    assert _canonical_case_digest(forward) == "568df690f1248d0ad56fcebda8f8d45222a7e7a44e7747bf3311c707d64cc74e"
 
 
 def test_case_ids_are_authoritative_and_labels_do_not_depend_on_runtime_outputs() -> None:
