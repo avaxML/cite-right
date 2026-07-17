@@ -172,6 +172,9 @@ def test_assign_splits_rejects_invalid_inputs_and_apply_preserves_authoritative_
         assign_splits,
     )
 
+    with pytest.raises(ValueError, match=r"^cases must not be empty$"):
+        assign_splits(())
+
     case = _build_case(
         family_id="family-invalid",
         transformation_id="multi_source",
@@ -283,6 +286,60 @@ def test_assign_splits_current_corpus_is_deterministic_component_safe_and_balanc
     assert all("authored" in kinds for kinds in provenance_by_split.values())
     assert all("public_domain" in kinds for kinds in provenance_by_split.values())
 
+    component_count_by_domain = _component_count_by_domain(corpus)
+    for domain, component_count in component_count_by_domain.items():
+        if component_count >= 3:
+            assert {
+                case.split for case in applied if case.difficulty_tags and case.difficulty_tags[0] == domain
+            } == {"train", "dev", "holdout"}
+    assert {
+        case.split
+        for case in applied
+        if case.difficulty_tags and case.difficulty_tags[0] == "environment"
+    } == {"train", "dev", "holdout"}
+
+
+def test_assign_splits_spreads_feasible_scarce_domains_across_all_splits():
+    from evaluation.splitting import apply_split_assignments, assign_splits
+
+    scarce_cases = tuple(
+        _build_case(
+            family_id=f"family-scarce-{index}",
+            transformation_id="negation",
+            source_texts=(f"Scarce source packet {index}.",),
+            answer=f"Scarce answer {index}.",
+            difficulty_tags=("scarce", f"scarce-{index}"),
+        )
+        for index in range(3)
+    )
+    common_cases = tuple(
+        _build_case(
+            family_id=f"family-common-{index}",
+            transformation_id="entity",
+            source_texts=(f"Common source packet {index}.",),
+            answer=f"Common answer {index}.",
+            difficulty_tags=("common", f"common-{index}"),
+        )
+        for index in range(15)
+    )
+    corpus = common_cases + scarce_cases
+
+    report = assign_splits(corpus, seed=20260717)
+    applied = apply_split_assignments(corpus, report.assignment_by_case_id)
+
+    scarce_splits = {
+        case.split
+        for case in applied
+        if case.difficulty_tags and case.difficulty_tags[0] == "scarce"
+    }
+
+    assert scarce_splits == {"train", "dev", "holdout"}
+    counts = Counter(report.assignment_by_case_id.values())
+    total_cases = len(corpus)
+    targets: dict[Split, float] = {"train": 0.6, "dev": 0.2, "holdout": 0.2}
+    for split_name, target_ratio in targets.items():
+        assert abs((counts[split_name] / total_cases) - target_ratio) <= 0.05
+
 
 def _build_case(
     *,
@@ -347,3 +404,18 @@ def _build_case(
         review=None,
     )
     return base_case.model_copy(update={"case_id": authoritative_case_id(base_case)})
+
+
+def _component_count_by_domain(corpus: tuple[EvaluationCase, ...]) -> dict[str, int]:
+    from evaluation.splitting import build_lineage_components
+
+    case_by_id = {case.case_id: case for case in corpus}
+    component_counts: Counter[str] = Counter()
+    for component in build_lineage_components(corpus):
+        domains = {
+            case_by_id[case_id].difficulty_tags[0]
+            for case_id in component.case_ids
+            if case_by_id[case_id].difficulty_tags
+        }
+        component_counts.update(domains)
+    return dict(component_counts)

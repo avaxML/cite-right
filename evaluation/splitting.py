@@ -186,6 +186,8 @@ def assign_splits(
     explicit_lineage: Iterable[CaseLineage] | None = None,
 ) -> SplitAssignmentReport:
     ordered_cases = _validate_cases(cases)
+    if not ordered_cases:
+        raise ValueError("cases must not be empty")
     validated_seed = _validate_seed(seed)
     validated_ratios = _validate_ratios(ratios)
     components = build_lineage_components(
@@ -209,19 +211,38 @@ def assign_splits(
     split_metrics: dict[Split, dict[str, Counter[str]]] = {
         split_name: _empty_metrics_like(global_metrics) for split_name in _SPLIT_NAMES
     }
+    assigned_component_ids: set[str] = set()
     assignments_by_case_id: dict[str, Split] = {}
     assignments: list[SplitAssignment] = []
 
-    ordered_components = sorted(
-        components,
-        key=lambda component: (
-            -component.case_count,
-            _seeded_order_key(validated_seed, component.component_id),
-            component.component_id,
-        ),
+    ordered_components = tuple(
+        sorted(
+            components,
+            key=lambda component: (
+                -component.case_count,
+                _seeded_order_key(validated_seed, component.component_id),
+                component.component_id,
+            ),
+        )
+    )
+    _seed_domain_coverage(
+        ordered_components=ordered_components,
+        profiles=profiles,
+        split_case_counts=split_case_counts,
+        split_metrics=split_metrics,
+        global_metrics=global_metrics,
+        target_case_counts=target_case_counts,
+        ratios=validated_ratios,
+        total_case_count=total_case_count,
+        assigned_component_ids=assigned_component_ids,
+        assignments_by_case_id=assignments_by_case_id,
+        assignments=assignments,
+        seed=validated_seed,
     )
 
     for component in ordered_components:
+        if component.component_id in assigned_component_ids:
+            continue
         profile = profiles[component.component_id]
         chosen_split = min(
             _SPLIT_NAMES,
@@ -236,17 +257,15 @@ def assign_splits(
                 total_case_count=total_case_count,
             ),
         )
-        split_case_counts[chosen_split] += profile.case_count
-        _merge_metrics(split_metrics[chosen_split], profile.metrics)
-        for case_id in component.case_ids:
-            assignments_by_case_id[case_id] = chosen_split
-            assignments.append(
-                SplitAssignment(
-                    case_id=case_id,
-                    split=chosen_split,
-                    component_id=component.component_id,
-                )
-            )
+        _record_component_assignment(
+            profile=profile,
+            split_name=chosen_split,
+            split_case_counts=split_case_counts,
+            split_metrics=split_metrics,
+            assigned_component_ids=assigned_component_ids,
+            assignments_by_case_id=assignments_by_case_id,
+            assignments=assignments,
+        )
 
     assignments.sort(key=lambda assignment: assignment.case_id)
     assignment_hash = sha256_hex(
@@ -406,6 +425,182 @@ def _merge_metrics(
 ) -> None:
     for group_name, counts in source.items():
         target[group_name].update(counts)
+
+
+def _seed_domain_coverage(
+    *,
+    ordered_components: tuple[LineageComponent, ...],
+    profiles: Mapping[str, _ComponentProfile],
+    split_case_counts: dict[Split, int],
+    split_metrics: dict[Split, dict[str, Counter[str]]],
+    global_metrics: Mapping[str, Counter[str]],
+    target_case_counts: Mapping[Split, float],
+    ratios: tuple[float, float, float],
+    total_case_count: int,
+    assigned_component_ids: set[str],
+    assignments_by_case_id: dict[str, Split],
+    assignments: list[SplitAssignment],
+    seed: int,
+) -> None:
+    eligible_domain_counts = _eligible_domain_component_counts(
+        ordered_components=ordered_components,
+        profiles=profiles,
+    )
+    if not eligible_domain_counts:
+        return
+
+    eligible_domains = tuple(
+        sorted(
+            eligible_domain_counts,
+            key=lambda domain: (eligible_domain_counts[domain], domain),
+        )
+    )
+    for domain in eligible_domains:
+        missing_splits: list[Split] = [
+            split_name
+            for split_name in _SPLIT_NAMES
+            if split_metrics[split_name]["domain"][domain] == 0
+        ]
+        if not missing_splits:
+            continue
+        candidate_profiles = [
+            profiles[component.component_id]
+            for component in ordered_components
+            if component.component_id not in assigned_component_ids
+            and domain in profiles[component.component_id].metrics["domain"]
+        ]
+        if len(candidate_profiles) < len(missing_splits):
+            continue
+        ordered_missing_split_entries = cast(
+            list[tuple[float, int, Split]],
+            sorted(
+                (
+                    (
+                        split_case_counts[split_name]
+                        / max(target_case_counts[split_name], 1.0),
+                        _SPLIT_NAMES.index(split_name),
+                        split_name,
+                    )
+                    for split_name in missing_splits
+                ),
+            ),
+        )
+        for _, _, raw_split_name in ordered_missing_split_entries:
+            validated_split_name: Split = cast(Split, raw_split_name)
+            available_profiles = [
+                profile
+                for profile in candidate_profiles
+                if profile.component.component_id not in assigned_component_ids
+            ]
+            if not available_profiles:
+                break
+            chosen_profile = min(
+                available_profiles,
+                key=lambda profile: _domain_seed_sort_key(
+                    split_name=validated_split_name,
+                    profile=profile,
+                    split_case_counts=split_case_counts,
+                    split_metrics=split_metrics,
+                    global_metrics=global_metrics,
+                    target_case_counts=target_case_counts,
+                    ratios=ratios,
+                    total_case_count=total_case_count,
+                    eligible_domain_counts=eligible_domain_counts,
+                    seed=seed,
+                ),
+            )
+            _record_component_assignment(
+                profile=chosen_profile,
+                split_name=validated_split_name,
+                split_case_counts=split_case_counts,
+                split_metrics=split_metrics,
+                assigned_component_ids=assigned_component_ids,
+                assignments_by_case_id=assignments_by_case_id,
+                assignments=assignments,
+            )
+
+
+def _eligible_domain_component_counts(
+    *,
+    ordered_components: tuple[LineageComponent, ...],
+    profiles: Mapping[str, _ComponentProfile],
+) -> dict[str, int]:
+    counts: Counter[str] = Counter()
+    for component in ordered_components:
+        counts.update(_profile_domains(profiles[component.component_id]))
+    return {
+        domain: count
+        for domain, count in counts.items()
+        if count >= len(_SPLIT_NAMES)
+    }
+
+
+def _profile_domains(profile: _ComponentProfile) -> tuple[str, ...]:
+    return tuple(sorted(profile.metrics["domain"]))
+
+
+def _domain_seed_sort_key(
+    *,
+    split_name: Split,
+    profile: _ComponentProfile,
+    split_case_counts: Mapping[Split, int],
+    split_metrics: Mapping[Split, Mapping[str, Counter[str]]],
+    global_metrics: Mapping[str, Counter[str]],
+    target_case_counts: Mapping[Split, float],
+    ratios: tuple[float, float, float],
+    total_case_count: int,
+    eligible_domain_counts: Mapping[str, int],
+    seed: int,
+) -> tuple[int, int, float, float, float, float, str]:
+    uncovered_domain_count = sum(
+        1
+        for domain in _profile_domains(profile)
+        if domain in eligible_domain_counts and split_metrics[split_name]["domain"][domain] == 0
+    )
+    assignment_key = _assignment_sort_key(
+        split_name=split_name,
+        profile=profile,
+        split_case_counts=split_case_counts,
+        split_metrics=split_metrics,
+        global_metrics=global_metrics,
+        target_case_counts=target_case_counts,
+        ratios=ratios,
+        total_case_count=total_case_count,
+    )
+    return (
+        -uncovered_domain_count,
+        profile.case_count,
+        assignment_key[0],
+        assignment_key[1],
+        assignment_key[2],
+        assignment_key[3],
+        _seeded_order_key(seed, profile.component.component_id),
+    )
+
+
+def _record_component_assignment(
+    *,
+    profile: _ComponentProfile,
+    split_name: Split,
+    split_case_counts: dict[Split, int],
+    split_metrics: dict[Split, dict[str, Counter[str]]],
+    assigned_component_ids: set[str],
+    assignments_by_case_id: dict[str, Split],
+    assignments: list[SplitAssignment],
+) -> None:
+    component = profile.component
+    assigned_component_ids.add(component.component_id)
+    split_case_counts[split_name] += profile.case_count
+    _merge_metrics(split_metrics[split_name], profile.metrics)
+    for case_id in component.case_ids:
+        assignments_by_case_id[case_id] = split_name
+        assignments.append(
+            SplitAssignment(
+                case_id=case_id,
+                split=split_name,
+                component_id=component.component_id,
+            )
+        )
 
 
 def _assignment_sort_key(
