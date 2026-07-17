@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import json
+import socket
 from collections import Counter
 from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import date
 from importlib import import_module
+from pathlib import Path
 
 import pytest
 
@@ -1211,6 +1214,257 @@ def _authored_sources_module():
 
 def _cases_module():
     return import_module("evaluation.builders.cases")
+
+
+REAL_CASE_CHALLENGE_TYPES = ("contradicted", "partial", "distractor")
+REAL_CASE_DOMAINS = (
+    "environment",
+    "finance",
+    "health",
+    "history",
+    "policy",
+    "science",
+    "technology",
+)
+
+
+def test_real_source_catalog_has_complete_local_provenance_and_balanced_domains() -> None:
+    real_sources = _real_sources_module()
+    families = real_sources.load_real_source_families()
+    provenance = real_sources.load_real_source_provenance()
+
+    assert len(families) == 15
+    assert len(provenance) == 15
+    assert tuple(family.family_id for family in families) == tuple(
+        sorted(family.family_id for family in families)
+    )
+    assert tuple(item.family_id for item in provenance) == tuple(
+        family.family_id for family in families
+    )
+
+    domain_counts = Counter(family.domain for family in families)
+    assert tuple(sorted(domain_counts)) == REAL_CASE_DOMAINS
+    assert all(domain_counts[domain] >= 1 for domain in REAL_CASE_DOMAINS)
+
+    challenge_counts = Counter(family.challenge.kind for family in families)
+    assert challenge_counts == {
+        "contradicted": 5,
+        "partial": 5,
+        "distractor": 5,
+    }
+
+    for family, item in zip(families, provenance, strict=True):
+        assert family.source_text
+        assert family.supported_answer == family.source_text
+        assert len(family.source_text.split()) <= 20
+        assert family.snapshot_hash == item.snapshot_hash
+        assert family.source_text == item.source_text
+
+        assert item.origin_url.startswith("https://")
+        assert item.policy_url.startswith("https://")
+        assert item.statutory_url.startswith("https://")
+        assert item.publisher
+        assert item.page_title
+        assert item.license_basis
+        assert item.retrieval_date == date(2026, 7, 17)
+        assert item.third_party_credit is False
+        assert item.snapshot_hash == sha256_hex(item.source_text.encode("utf-8"))
+
+
+def test_real_source_models_reject_missing_metadata_local_text_hash_mismatch_and_third_party_credit() -> None:
+    real_sources = _real_sources_module()
+    source_text = "A black hole is a region in space where gravity is strong."
+
+    base = {
+        "family_id": "science-test-family",
+        "domain": "science",
+        "source_text": source_text,
+        "origin_url": "https://www.nasa.gov/example",
+        "page_title": "Example Page",
+        "publisher": "NASA",
+        "license_basis": "17 U.S.C. 105 public domain",
+        "policy_url": "https://www.nasa.gov/nasa-brand-center/images-and-media/",
+        "statutory_url": "https://uscode.house.gov/view.xhtml?edition=2023&num=0&req=granuleid%3AUSC-2023-title17-section105",
+        "retrieval_date": "2026-07-17",
+        "snapshot_hash": sha256_hex(source_text.encode("utf-8")),
+        "third_party_credit": False,
+    }
+
+    with pytest.raises(ValueError, match="license_basis must be non-empty"):
+        real_sources.RealSourceProvenance.model_validate(
+            {
+                **base,
+                "license_basis": " ",
+            }
+        )
+
+    with pytest.raises(ValueError, match="real source text must be non-empty"):
+        real_sources.RealSourceFamily.model_validate(
+            {
+                "family_id": "science-test-family",
+                "domain": "science",
+                "source_text": " ",
+                "supported_answer": "Example",
+                "snapshot_hash": base["snapshot_hash"],
+                "provenance": base,
+                "challenge": {
+                    "kind": "contradicted",
+                    "answer": "Example but false.",
+                    "distractor_family_id": None,
+                    "unsupported_suffix": None,
+                },
+            }
+        )
+
+    with pytest.raises(ValueError, match="snapshot_hash must equal sha256 of source_text"):
+        real_sources.RealSourceProvenance.model_validate(
+            {
+                **base,
+                "snapshot_hash": "0" * 64,
+            }
+        )
+
+    with pytest.raises(ValueError, match="third_party_credit must be false"):
+        real_sources.RealSourceProvenance.model_validate(
+            {
+                **base,
+                "third_party_credit": True,
+            }
+        )
+
+    with pytest.raises(ValueError, match="origin_url must use https:// and point to an official source"):
+        real_sources.RealSourceProvenance.model_validate(
+            {
+                **base,
+                "origin_url": "http://example.com/not-official",
+            }
+        )
+
+
+def test_real_case_generation_is_offline_deterministic_and_balanced(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    real_sources = _real_sources_module()
+    cases_module = _cases_module()
+
+    _disable_network(monkeypatch)
+    first = real_sources.generate_real_cases()
+    second = real_sources.generate_real_cases()
+    combined = cases_module.generate_all_authored_cases(seed=31) + first
+
+    assert len(first) == 30
+    assert len({case.case_id for case in first}) == 30
+    assert tuple(case.case_id for case in first) == tuple(case.case_id for case in second)
+    assert _canonical_case_digest(first) == _canonical_case_digest(second)
+    assert _canonical_case_digest(first) == real_sources.REAL_CASES_CANONICAL_DIGEST
+    assert _canonical_case_digest(first) == "87c7b7f0105086f88ef956645a0bfd64dedeec7a62762334118434c584701082"
+
+    assert len(combined) == 750
+    assert len({case.case_id for case in combined}) == 750
+    assert _canonical_case_digest(combined) == real_sources.ALL_CASES_CANONICAL_DIGEST
+    assert _canonical_case_digest(combined) == "adc04042c7277aad819407257e3887f9caac9cb8c48156fca8f29b2b0fef862c"
+
+    challenge_counts = Counter(case.transformation_family_id for case in first if case.transformation_family_id != "real-positive")
+    assert challenge_counts == {
+        "real-contradicted": 5,
+        "real-partial": 5,
+        "real-distractor": 5,
+    }
+
+
+def test_real_cases_slice_exact_local_snapshots_and_match_expected_semantics() -> None:
+    real_sources = _real_sources_module()
+    families = {
+        family.family_id: family
+        for family in real_sources.load_real_source_families()
+    }
+    cases = real_sources.generate_real_cases()
+
+    assert len(cases) == 30
+
+    for case in cases:
+        family = families[case.document_family_id]
+        assert case.provenance.kind == "public_domain"
+        assert case.generation is None
+        assert case.review is None
+        assert case.split == "train"
+
+        primary_source = case.sources[0]
+        assert primary_source.source_id == "source-primary"
+        assert primary_source.text == family.source_text
+
+        if case.transformation_family_id == "real-positive":
+            assert case.answer == family.supported_answer
+            assert len(case.evaluation_units) == 1
+            assert case.evaluation_units[0].expected_status == "supported"
+            claim = case.evaluation_units[0].claims[0]
+            assert claim.label == "entailed"
+            target = claim.citation_requirements[0].alternatives[0]
+            assert target.source_id == "source-primary"
+            assert target.spans == (CharSpan(start=0, end=len(primary_source.text)),)
+            continue
+
+        challenge = family.challenge
+        if challenge.kind == "contradicted":
+            assert case.transformation_family_id == "real-contradicted"
+            assert case.answer == challenge.answer
+            assert case.evaluation_units[0].expected_status == "unsupported"
+            claim = case.evaluation_units[0].claims[0]
+            assert claim.label == "contradicted"
+            assert claim.citation_requirements == ()
+        elif challenge.kind == "partial":
+            assert case.transformation_family_id == "real-partial"
+            assert case.answer == challenge.answer
+            assert case.evaluation_units[0].expected_status == "partial"
+            first_claim, second_claim = case.evaluation_units[0].claims
+            assert first_claim.label == "entailed"
+            assert second_claim.label == "not_in_sources"
+            target = first_claim.citation_requirements[0].alternatives[0]
+            assert target.source_id == "source-primary"
+            assert target.spans == (CharSpan(start=0, end=len(primary_source.text)),)
+        else:
+            assert challenge.kind == "distractor"
+            assert case.transformation_family_id == "real-distractor"
+            assert case.answer == family.supported_answer
+            assert case.evaluation_units[0].expected_status == "supported"
+            assert len(case.sources) == 2
+            assert case.sources[1].source_id == "source-distractor"
+            claim = case.evaluation_units[0].claims[0]
+            assert claim.label == "entailed"
+            assert claim.acceptable_retrieval_source_ids == ("source-primary",)
+            target = claim.citation_requirements[0].alternatives[0]
+            assert target.source_id == "source-primary"
+            assert target.spans == (CharSpan(start=0, end=len(primary_source.text)),)
+
+
+def test_real_source_json_artifacts_exist_and_round_trip() -> None:
+    real_sources = _real_sources_module()
+
+    families_path = Path("evaluation/data/v1/sources/real.json")
+    provenance_path = Path("evaluation/data/v1/provenance.json")
+
+    family_payload = json.loads(families_path.read_text(encoding="utf-8"))
+    provenance_payload = json.loads(provenance_path.read_text(encoding="utf-8"))
+
+    assert isinstance(family_payload, list)
+    assert isinstance(provenance_payload, list)
+    assert len(family_payload) == 15
+    assert len(provenance_payload) == 15
+    assert tuple(item["family_id"] for item in family_payload) == tuple(
+        family.family_id for family in real_sources.load_real_source_families()
+    )
+
+
+def _real_sources_module():
+    return import_module("evaluation.builders.real_sources")
+
+
+def _disable_network(monkeypatch: pytest.MonkeyPatch) -> None:
+    def _blocked_socket(*args, **kwargs):  # type: ignore[no-untyped-def]
+        raise AssertionError("network access is forbidden for real source loading")
+
+    monkeypatch.setattr(socket, "create_connection", _blocked_socket)
+    monkeypatch.setattr(socket.socket, "connect", _blocked_socket, raising=False)
 
 
 def _transformations_module():
