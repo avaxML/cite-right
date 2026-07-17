@@ -297,27 +297,23 @@ def test_transformation_family_semantics_and_lineage(
         assert all(len(requirement.alternatives) >= 1 for requirement in positive_claim.citation_requirements)
 
 
-def test_second_template_transformations_derive_from_template_not_fixture_constants() -> None:
+@pytest.mark.parametrize("transformation_name", ALL_TRANSFORMATION_NAMES)
+def test_second_template_transformations_derive_from_template_not_fixture_constants(
+    transformation_name: str,
+) -> None:
     template = _second_catalog_template()
     case = _generate_case(
         template=template,
-        transformation_name="multi_source",
+        transformation_name=transformation_name,
         seed=19,
     )
 
-    assert case.answer == _expected_answer_for_transformation(template, "multi_source")
-    assert "Mercury" not in case.answer
-    assert "1977" not in case.answer
-    _assert_positive_source_targets_slice_exact_text(
+    _assert_case_derives_from_template(
         case,
         template=template,
-        transformation_name="multi_source",
+        transformation_name=transformation_name,
     )
-    _assert_answer_targets_are_authored(
-        case,
-        template=template,
-        transformation_name="multi_source",
-    )
+    assert case.answer != EXPECTED_BEHAVIOR_BY_TRANSFORMATION[transformation_name].expected_answer
 
 
 @pytest.mark.parametrize(
@@ -344,6 +340,44 @@ def test_exact_target_spans_match_authored_evidence_for_fixture_template(
         template=template,
         transformation_name=transformation_name,
     )
+
+
+@pytest.mark.parametrize("transformation_name", ALL_TRANSFORMATION_NAMES)
+def test_different_seeds_change_identity_but_not_semantics(
+    transformation_name: str,
+) -> None:
+    template = _second_catalog_template()
+    seed_23_case = _generate_case(
+        template=template,
+        transformation_name=transformation_name,
+        seed=23,
+    )
+    seed_24_case = _generate_case(
+        template=template,
+        transformation_name=transformation_name,
+        seed=24,
+    )
+
+    _assert_case_derives_from_template(
+        seed_23_case,
+        template=template,
+        transformation_name=transformation_name,
+    )
+    _assert_case_derives_from_template(
+        seed_24_case,
+        template=template,
+        transformation_name=transformation_name,
+    )
+    assert seed_23_case.generation is not None
+    assert seed_24_case.generation is not None
+    assert seed_23_case.generation.seed == 23
+    assert seed_24_case.generation.seed == 24
+    assert seed_23_case.case_id == _authoritative_case_id(seed_23_case)
+    assert seed_24_case.case_id == _authoritative_case_id(seed_24_case)
+    assert seed_23_case.case_id != seed_24_case.case_id
+    assert _case_dump_without_identity_and_generation(
+        seed_23_case
+    ) == _case_dump_without_identity_and_generation(seed_24_case)
 
 
 def test_every_catalog_family_produces_positive_and_adversarial_siblings() -> None:
@@ -771,6 +805,26 @@ def _assert_answer_targets_are_authored(
             assert all(source.text != case.answer for source in case.sources)
 
 
+def _assert_case_derives_from_template(
+    case: EvaluationCase,
+    *,
+    template,
+    transformation_name: str,
+) -> None:
+    assert case.document_family_id == template.family_id
+    assert case.answer == _expected_answer_for_transformation(template, transformation_name)
+    _assert_answer_targets_are_authored(
+        case,
+        template=template,
+        transformation_name=transformation_name,
+    )
+    _assert_positive_source_targets_slice_exact_text(
+        case,
+        template=template,
+        transformation_name=transformation_name,
+    )
+
+
 @dataclass(frozen=True)
 class ExpectedRequirement:
     source_id: str
@@ -913,6 +967,15 @@ def _authoritative_case_id(case: EvaluationCase) -> str:
     from evaluation.canonical import authoritative_case_id
 
     return authoritative_case_id(case)
+
+
+def _case_dump_without_identity_and_generation(case: EvaluationCase) -> dict[str, object]:
+    return case.model_copy(
+        update={
+            "case_id": "case-seed-agnostic",
+            "generation": None,
+        }
+    ).model_dump(mode="json")
 
 
 def _second_catalog_template():
