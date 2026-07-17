@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import Counter
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import date
 from importlib import import_module
@@ -8,7 +9,7 @@ from importlib import import_module
 import pytest
 
 from evaluation.canonical import canonical_json_bytes, sha256_hex
-from evaluation.schema import EvaluationCase
+from evaluation.schema import CharSpan, EvaluationCase
 
 ALL_TRANSFORMATION_NAMES = (
     "negation",
@@ -204,17 +205,18 @@ def test_transformations_are_deterministic_for_fixed_seed(
     transformation_name: str,
 ) -> None:
     template = _fixture_template()
-    cases_module = _cases_module()
+    first = _generate_case(
+        template=template,
+        transformation_name=transformation_name,
+        seed=23,
+    )
+    second = _generate_case(
+        template=template,
+        transformation_name=transformation_name,
+        seed=23,
+    )
 
-    first = cases_module.generate_cases_for_template(template=template, seed=23)
-    second = cases_module.generate_cases_for_template(template=template, seed=23)
-
-    first_cases = _cases_by_transformation(first)
-    second_cases = _cases_by_transformation(second)
-
-    assert first_cases[transformation_name].model_dump(mode="json") == second_cases[
-        transformation_name
-    ].model_dump(mode="json")
+    assert first.model_dump(mode="json") == second.model_dump(mode="json")
 
 
 @pytest.mark.parametrize("transformation_name", ALL_TRANSFORMATION_NAMES)
@@ -222,11 +224,11 @@ def test_transformation_family_semantics_and_lineage(
     transformation_name: str,
 ) -> None:
     template = _fixture_template()
-    cases_module = _cases_module()
-    cases = _cases_by_transformation(
-        cases_module.generate_cases_for_template(template=template, seed=23)
+    case = _generate_case(
+        template=template,
+        transformation_name=transformation_name,
+        seed=23,
     )
-    case = cases[transformation_name]
     expected = EXPECTED_BEHAVIOR_BY_TRANSFORMATION[transformation_name]
 
     assert case.document_family_id == template.family_id
@@ -234,7 +236,7 @@ def test_transformation_family_semantics_and_lineage(
     assert case.provenance.kind == "authored"
     assert case.generation is not None
     assert case.generation.seed == 23
-    assert case.generation.generator_name == "evaluation.builders.cases"
+    assert case.generation.generator_name == "evaluation.builders.transformations"
     assert case.generation.prompt_version == "authored-v1"
     assert case.generation.notes is not None
     assert f"family={template.family_id}" in case.generation.notes
@@ -243,8 +245,10 @@ def test_transformation_family_semantics_and_lineage(
     assert case.case_id
     assert case.case_id != ""
     assert case.answer == expected.expected_answer
+    assert case.answer == _expected_answer_for_transformation(template, transformation_name)
 
     assert tuple(source.source_id for source in case.sources[:1]) == ("source-primary",)
+    assert case.dataset_version == "1.0.0"
     assert case.review is None
     assert case.split == "train"
     assert len(case.evaluation_units) == 1
@@ -268,8 +272,16 @@ def test_transformation_family_semantics_and_lineage(
         else:
             assert claim.citation_requirements == ()
 
-    _assert_positive_source_targets_slice_exact_text(case)
-    _assert_answer_targets_are_authored(case, template)
+    _assert_positive_source_targets_slice_exact_text(
+        case,
+        template=template,
+        transformation_name=transformation_name,
+    )
+    _assert_answer_targets_are_authored(
+        case,
+        template=template,
+        transformation_name=transformation_name,
+    )
 
     if transformation_name == "duplicate_distractor":
         assert case.sources[1].source_id == "source-distractor"
@@ -283,6 +295,55 @@ def test_transformation_family_semantics_and_lineage(
         positive_claim = _positive_claim(case)
         assert len(positive_claim.citation_requirements) == 2
         assert all(len(requirement.alternatives) >= 1 for requirement in positive_claim.citation_requirements)
+
+
+def test_second_template_transformations_derive_from_template_not_fixture_constants() -> None:
+    template = _second_catalog_template()
+    case = _generate_case(
+        template=template,
+        transformation_name="multi_source",
+        seed=19,
+    )
+
+    assert case.answer == _expected_answer_for_transformation(template, "multi_source")
+    assert "Mercury" not in case.answer
+    assert "1977" not in case.answer
+    _assert_positive_source_targets_slice_exact_text(
+        case,
+        template=template,
+        transformation_name="multi_source",
+    )
+    _assert_answer_targets_are_authored(
+        case,
+        template=template,
+        transformation_name="multi_source",
+    )
+
+
+@pytest.mark.parametrize(
+    "transformation_name",
+    ("unicode", "duplicate_distractor", "multi_span", "multi_source", "unsupported_clause"),
+)
+def test_exact_target_spans_match_authored_evidence_for_fixture_template(
+    transformation_name: str,
+) -> None:
+    template = _fixture_template()
+    case = _generate_case(
+        template=template,
+        transformation_name=transformation_name,
+        seed=29,
+    )
+
+    _assert_positive_source_targets_slice_exact_text(
+        case,
+        template=template,
+        transformation_name=transformation_name,
+    )
+    _assert_answer_targets_are_authored(
+        case,
+        template=template,
+        transformation_name=transformation_name,
+    )
 
 
 def test_every_catalog_family_produces_positive_and_adversarial_siblings() -> None:
@@ -312,10 +373,11 @@ def test_catalog_generation_is_order_independent_after_stable_sorting() -> None:
 
 
 def test_case_ids_are_authoritative_and_labels_do_not_depend_on_runtime_outputs() -> None:
-    cases_module = _cases_module()
-    case = _cases_by_transformation(
-        cases_module.generate_cases_for_template(template=_fixture_template(), seed=17)
-    )["multi_source"]
+    case = _generate_case(
+        template=_fixture_template(),
+        transformation_name="multi_source",
+        seed=17,
+    )
 
     assert case.case_id.startswith("case-")
     assert case.case_id == _authoritative_case_id(case)
@@ -653,10 +715,6 @@ def _fixture_template():
     )
 
 
-def _cases_by_transformation(cases: tuple[EvaluationCase, ...]) -> dict[str, EvaluationCase]:
-    return {case.transformation_family_id: case for case in cases}
-
-
 def _positive_claim(case: EvaluationCase):
     for claim in case.evaluation_units[0].claims:
         if claim.label == "entailed":
@@ -664,30 +722,183 @@ def _positive_claim(case: EvaluationCase):
     raise AssertionError("expected an entailed claim")
 
 
-def _assert_positive_source_targets_slice_exact_text(case: EvaluationCase) -> None:
+def _assert_positive_source_targets_slice_exact_text(
+    case: EvaluationCase,
+    *,
+    template,
+    transformation_name: str,
+) -> None:
     source_text_by_id = {source.source_id: source.text for source in case.sources}
+    expected_requirements = _expected_positive_requirements(
+        template=template,
+        transformation_name=transformation_name,
+    )
 
     for claim in case.evaluation_units[0].claims:
-        for requirement in claim.citation_requirements:
-            for alternative in requirement.alternatives:
-                for span in alternative.spans:
-                    assert (
-                        source_text_by_id[alternative.source_id][span.start : span.end]
-                        != ""
-                    )
+        if claim.label != "entailed":
+            continue
+
+        assert len(claim.citation_requirements) == len(expected_requirements)
+        for requirement, expected in zip(
+            claim.citation_requirements,
+            expected_requirements,
+            strict=True,
+        ):
+            assert len(requirement.alternatives) == 1
+            alternative = requirement.alternatives[0]
+            assert alternative.source_id == expected.source_id
+            assert alternative.spans == expected.spans
+            for span, expected_text in zip(
+                alternative.spans,
+                expected.texts,
+                strict=True,
+            ):
+                assert source_text_by_id[alternative.source_id][span.start : span.end] == expected_text
 
 
-def _assert_answer_targets_are_authored(case: EvaluationCase, template) -> None:
+def _assert_answer_targets_are_authored(
+    case: EvaluationCase,
+    *,
+    template,
+    transformation_name: str,
+) -> None:
+    assert case.answer == _expected_answer_for_transformation(template, transformation_name)
     for unit in case.evaluation_units:
         assert case.answer[unit.answer_span.start : unit.answer_span.end] == unit.text
         for claim in unit.claims:
             assert case.answer[claim.answer_span.start : claim.answer_span.end] == claim.text
             assert claim.text in case.answer
             assert all(source.text != case.answer for source in case.sources)
-    expected_answers = {
-        behavior.expected_answer for behavior in EXPECTED_BEHAVIOR_BY_TRANSFORMATION.values()
+
+
+@dataclass(frozen=True)
+class ExpectedRequirement:
+    source_id: str
+    spans: tuple[CharSpan, ...]
+    texts: tuple[str, ...]
+
+
+def _generate_case(*, template, transformation_name: str, seed: int) -> EvaluationCase:
+    transformation = _transformation_by_name(transformation_name)
+    cases = transformation.generate(template, seed)
+    assert len(cases) == 1
+    return cases[0]
+
+
+def _transformation_by_name(transformation_name: str):
+    transformations = _transformations_module()
+    by_name = {
+        transformation.name: transformation
+        for transformation in transformations.TRANSFORMATIONS
     }
-    assert case.answer in expected_answers
+    return by_name[transformation_name]
+
+
+def _fact_for_transformation(template, transformation_name: str):
+    matches = [
+        fact for fact in template.facts if transformation_name in fact.adversarial_variants
+    ]
+    assert len(matches) == 1
+    return matches[0]
+
+
+def _variant_config(template, transformation_name: str) -> Mapping[str, object]:
+    config = _fact_for_transformation(template, transformation_name).adversarial_variants[
+        transformation_name
+    ]
+    assert isinstance(config, Mapping)
+    return config
+
+
+def _formatted_claim_text(template, transformation_name: str, *, variant: bool) -> str:
+    fact = _fact_for_transformation(template, transformation_name)
+    config = _variant_config(template, transformation_name) if variant else {}
+    claim_template = (
+        config.get("claim_template", fact.claim_template)
+        if isinstance(config, Mapping)
+        else fact.claim_template
+    )
+    slots = dict(fact.slots)
+    if isinstance(config, Mapping) and "slots" in config:
+        slots.update(_string_mapping(config["slots"]))
+    return str(claim_template).format(**slots)
+
+
+def _expected_answer_for_transformation(template, transformation_name: str) -> str:
+    if transformation_name == "unsupported_clause":
+        suffix = str(_variant_config(template, transformation_name)["unsupported_suffix"])
+        return _formatted_claim_text(template, transformation_name, variant=False) + suffix
+    return _formatted_claim_text(template, transformation_name, variant=True)
+
+
+def _expected_positive_requirements(
+    *,
+    template,
+    transformation_name: str,
+) -> tuple[ExpectedRequirement, ...]:
+    positive_transformations = {
+        "unicode",
+        "duplicate_distractor",
+        "multi_span",
+        "multi_source",
+        "unsupported_clause",
+    }
+    if transformation_name not in positive_transformations:
+        return ()
+
+    fact = _fact_for_transformation(template, transformation_name)
+    evidence_by_slot = {evidence.slot_id: evidence for evidence in fact.evidence}
+
+    if transformation_name == "multi_source":
+        secondary_text = str(_variant_config(template, transformation_name)["secondary_source_text"])
+        secondary_evidence = [
+            evidence
+            for evidence in fact.evidence
+            if evidence.text in secondary_text
+        ]
+        assert len(secondary_evidence) == 1
+        secondary = secondary_evidence[0]
+        primary_evidence = tuple(
+            evidence for evidence in fact.evidence if evidence.slot_id != secondary.slot_id
+        )
+        secondary_span = _span(secondary_text, secondary.text)
+        return (
+            ExpectedRequirement(
+                source_id="source-primary",
+                spans=tuple(evidence.span for evidence in primary_evidence),
+                texts=tuple(evidence.text for evidence in primary_evidence),
+            ),
+            ExpectedRequirement(
+                source_id="source-secondary",
+                spans=(CharSpan.model_validate(secondary_span),),
+                texts=(secondary.text,),
+            ),
+        )
+
+    if transformation_name == "multi_span":
+        slot_ids = _string_tuple(_variant_config(template, transformation_name), "evidence_slot_ids")
+        evidence = tuple(evidence_by_slot[slot_id] for slot_id in slot_ids)
+    else:
+        evidence = fact.evidence
+
+    return (
+        ExpectedRequirement(
+            source_id="source-primary",
+            spans=tuple(item.span for item in evidence),
+            texts=tuple(item.text for item in evidence),
+        ),
+    )
+
+
+def _string_mapping(value: object) -> dict[str, str]:
+    assert isinstance(value, Mapping)
+    return {str(key): str(item) for key, item in value.items()}
+
+
+def _string_tuple(config: Mapping[str, object], key: str) -> tuple[str, ...]:
+    raw = config[key]
+    assert isinstance(raw, tuple)
+    return tuple(str(item) for item in raw)
 
 
 def _canonical_case_digest(cases: tuple[EvaluationCase, ...]) -> str:
@@ -702,6 +913,17 @@ def _authoritative_case_id(case: EvaluationCase) -> str:
     from evaluation.canonical import authoritative_case_id
 
     return authoritative_case_id(case)
+
+
+def _second_catalog_template():
+    authored_sources = _authored_sources_module()
+    template = next(
+        template
+        for template in authored_sources.AUTHORED_FACT_TEMPLATES
+        if template.family_id == "finance-01-harbor-fund"
+    )
+    assert template.family_id != _fixture_template().family_id
+    return template
 
 
 def _span(text: str, fragment: str) -> dict[str, int]:
