@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
+
 from evaluation.builders.authored_sources import AUTHORED_FACT_TEMPLATES, FactTemplate
 from evaluation.builders.transformations import TRANSFORMATIONS, Transformation
 from evaluation.canonical import authoritative_case_id
@@ -11,11 +13,11 @@ from evaluation.schema import EvaluationCase
 def generate_cases_for_template(
     template: FactTemplate,
     seed: int,
-    transformations: tuple[Transformation, ...] = TRANSFORMATIONS,
+    transformations: Iterable[Transformation] = TRANSFORMATIONS,
 ) -> tuple[EvaluationCase, ...]:
     """Expand one template using the provided stable transformation ordering."""
 
-    ordered_transformations = _validated_transformations(transformations)
+    ordered_transformations = _validated_transformations(tuple(transformations))
     cases: list[EvaluationCase] = []
     seen_case_ids: set[str] = set()
 
@@ -43,17 +45,17 @@ def generate_cases_for_template(
 
 def generate_all_authored_cases(
     seed: int,
-    templates: tuple[FactTemplate, ...] = AUTHORED_FACT_TEMPLATES,
-    transformations: tuple[Transformation, ...] = TRANSFORMATIONS,
+    templates: Iterable[FactTemplate] = AUTHORED_FACT_TEMPLATES,
+    transformations: Iterable[Transformation] = TRANSFORMATIONS,
 ) -> tuple[EvaluationCase, ...]:
     """Expand the full authored catalog independent of caller template ordering."""
 
-    ordered_transformations = _validated_transformations(transformations)
+    ordered_templates = _sorted_unique_templates(tuple(templates))
+    ordered_transformations = _validated_transformations(tuple(transformations))
     transformation_rank = {
         transformation.name: index
         for index, transformation in enumerate(ordered_transformations)
     }
-    ordered_templates = _sorted_unique_templates(templates)
 
     cases: list[EvaluationCase] = []
     seen_case_ids: set[str] = set()

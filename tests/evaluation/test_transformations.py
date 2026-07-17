@@ -420,6 +420,168 @@ def test_generate_cases_for_template_rejects_transformations_that_emit_two_cases
         )
 
 
+def test_generate_cases_for_template_accepts_generator_transformations() -> None:
+    cases_module = _cases_module()
+    tuple_cases = cases_module.generate_cases_for_template(
+        template=_fixture_template(),
+        seed=23,
+    )
+    generator_cases = cases_module.generate_cases_for_template(
+        template=_fixture_template(),
+        seed=23,
+        transformations=(
+            transformation for transformation in _transformations_module().TRANSFORMATIONS
+        ),
+    )
+
+    assert tuple(case.case_id for case in generator_cases) == tuple(
+        case.case_id for case in tuple_cases
+    )
+    assert _canonical_case_digest(generator_cases) == _canonical_case_digest(tuple_cases)
+
+
+def test_generate_all_authored_cases_accepts_generator_templates_and_transformations() -> None:
+    authored_sources = _authored_sources_module()
+    cases_module = _cases_module()
+    tuple_cases = cases_module.generate_all_authored_cases(seed=31)
+    generator_cases = cases_module.generate_all_authored_cases(
+        seed=31,
+        templates=(template for template in authored_sources.AUTHORED_FACT_TEMPLATES),
+        transformations=(
+            transformation for transformation in _transformations_module().TRANSFORMATIONS
+        ),
+    )
+
+    assert [case.case_id for case in generator_cases] == [case.case_id for case in tuple_cases]
+    assert _canonical_case_digest(generator_cases) == _canonical_case_digest(tuple_cases)
+
+
+def test_generate_cases_for_template_rejects_duplicate_transformation_names() -> None:
+    cases_module = _cases_module()
+
+    with pytest.raises(
+        ValueError,
+        match=r"^duplicate transformation name 'negation' is not allowed$",
+    ):
+        cases_module.generate_cases_for_template(
+            template=_fixture_template(),
+            seed=23,
+            transformations=(
+                _transformation_by_name("negation"),
+                _transformation_by_name("negation"),
+            ),
+        )
+
+
+def test_generate_cases_for_template_rejects_wrong_document_family_id() -> None:
+    cases_module = _cases_module()
+
+    with pytest.raises(
+        ValueError,
+        match=r"^generated case document family does not match the input template$",
+    ):
+        cases_module.generate_cases_for_template(
+            template=_fixture_template(),
+            seed=23,
+            transformations=(
+                _StaticTransformation(
+                    name="negation",
+                    cases=(
+                        _case_for("negation", seed=23).model_copy(
+                            update={"document_family_id": "science-wrong-family"}
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+
+def test_generate_cases_for_template_rejects_wrong_transformation_family_id() -> None:
+    cases_module = _cases_module()
+
+    with pytest.raises(
+        ValueError,
+        match=r"^generated case transformation family does not match the input transformation$",
+    ):
+        cases_module.generate_cases_for_template(
+            template=_fixture_template(),
+            seed=23,
+            transformations=(
+                _StaticTransformation(
+                    name="negation",
+                    cases=(
+                        _case_for("negation", seed=23).model_copy(
+                            update={"transformation_family_id": "number"}
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+
+def test_generate_cases_for_template_rejects_non_authoritative_case_id() -> None:
+    cases_module = _cases_module()
+
+    with pytest.raises(
+        ValueError,
+        match=r"^generated case id must match the authoritative case id$",
+    ):
+        cases_module.generate_cases_for_template(
+            template=_fixture_template(),
+            seed=23,
+            transformations=(
+                _StaticTransformation(
+                    name="negation",
+                    cases=(
+                        _case_for("negation", seed=23).model_copy(
+                            update={"case_id": "case-not-authoritative"}
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+
+def test_generate_all_authored_cases_rejects_duplicate_template_family_ids() -> None:
+    cases_module = _cases_module()
+    template = _fixture_template()
+
+    with pytest.raises(
+        ValueError,
+        match=r"^template family ids must be unique$",
+    ):
+        cases_module.generate_all_authored_cases(
+            seed=23,
+            templates=(template, template),
+            transformations=(_transformation_by_name("negation"),),
+        )
+
+
+def test_generate_cases_for_template_rejects_duplicate_output_case_ids() -> None:
+    cases_module = _cases_module()
+
+    with pytest.raises(
+        ValueError,
+        match=r"^duplicate case id 'case-[0-9a-f]{20}' in template 'science-orbital-archive'$",
+    ):
+        cases_module.generate_cases_for_template(
+            template=_fixture_template(),
+            seed=23,
+            transformations=(
+                _CollidingTransformation(
+                    validation_name="alpha",
+                    runtime_name="negation",
+                    cases=(_case_for("negation", seed=23),),
+                ),
+                _CollidingTransformation(
+                    validation_name="beta",
+                    runtime_name="negation",
+                    cases=(_case_for("negation", seed=23),),
+                ),
+            ),
+        )
+
+
 def test_catalog_generation_is_order_independent_after_stable_sorting() -> None:
     authored_sources = _authored_sources_module()
     cases_module = _cases_module()
@@ -880,6 +1042,14 @@ def _generate_case(*, template, transformation_name: str, seed: int) -> Evaluati
     return cases[0]
 
 
+def _case_for(transformation_name: str, *, seed: int) -> EvaluationCase:
+    return _generate_case(
+        template=_fixture_template(),
+        transformation_name=transformation_name,
+        seed=seed,
+    )
+
+
 def _transformation_by_name(transformation_name: str):
     transformations = _transformations_module()
     by_name = {
@@ -1072,3 +1242,30 @@ def _with_cardinality_override(cardinality: str):
         else transformation
         for transformation in transformations.TRANSFORMATIONS
     )
+
+
+@dataclass(frozen=True)
+class _StaticTransformation:
+    name: str
+    cases: tuple[EvaluationCase, ...]
+
+    def generate(self, template, seed: int) -> tuple[EvaluationCase, ...]:
+        return self.cases
+
+
+@dataclass
+class _CollidingTransformation:
+    validation_name: str
+    runtime_name: str
+    cases: tuple[EvaluationCase, ...]
+    _name_reads: int = 0
+
+    @property
+    def name(self) -> str:
+        self._name_reads += 1
+        if self._name_reads == 1:
+            return self.validation_name
+        return self.runtime_name
+
+    def generate(self, template, seed: int) -> tuple[EvaluationCase, ...]:
+        return self.cases
