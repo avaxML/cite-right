@@ -150,7 +150,7 @@ def test_authored_catalog_is_balanced_and_structurally_valid() -> None:
     fact_type = authored_sources.Fact
     template_type = authored_sources.FactTemplate
 
-    assert len(templates) >= 60
+    assert len(templates) == 60
     assert len({template.family_id for template in templates}) == len(templates)
     assert tuple(template.family_id for template in templates) == tuple(
         sorted(template.family_id for template in templates)
@@ -159,7 +159,7 @@ def test_authored_catalog_is_balanced_and_structurally_valid() -> None:
     domain_counts = Counter(template.domain for template in templates)
     assert tuple(sorted(domain_counts)) == BALANCED_DOMAINS
     for domain in BALANCED_DOMAINS:
-        assert domain_counts[domain] >= 10
+        assert domain_counts[domain] == 10
 
     for template in templates:
         assert isinstance(template, template_type)
@@ -402,6 +402,68 @@ def test_fact_validation_rejects_evidence_out_of_source_order() -> None:
         )
 
 
+def test_fact_is_deeply_immutable_and_round_trips_from_json() -> None:
+    authored_sources = _authored_sources_module()
+    source_text = "Mercury completes one orbit every 88 days."
+    fact = authored_sources.Fact(
+        fact_id="fact-orbit",
+        claim_template="{subject} completes one orbit every {period} days.",
+        slots={
+            "subject": "Mercury",
+            "period": "88",
+        },
+        answer_slots=("subject", "period"),
+        evidence=(
+            {
+                "slot_id": "subject",
+                "text": "Mercury",
+                "span": _span(source_text, "Mercury"),
+            },
+            {
+                "slot_id": "period",
+                "text": "88",
+                "span": _span(source_text, "88"),
+            },
+        ),
+        adversarial_variants={
+            "number": {
+                "slots": {
+                    "period": "89",
+                }
+            },
+            "negation": {
+                "claim_template": "{subject} does not complete one orbit every {period} days."
+            },
+        },
+    )
+
+    with pytest.raises(TypeError):
+        fact.slots["subject"] = "Venus"
+
+    with pytest.raises(TypeError):
+        fact.adversarial_variants["new"] = {}
+
+    with pytest.raises(TypeError):
+        fact.adversarial_variants["number"]["slots"]["period"] = "90"
+
+    dumped_once = fact.model_dump(mode="json")
+    dumped_twice = fact.model_dump(mode="json")
+    assert dumped_once == dumped_twice
+
+    dumped_json_once = fact.model_dump_json()
+    dumped_json_twice = fact.model_dump_json()
+    assert dumped_json_once == dumped_json_twice
+
+    round_tripped = authored_sources.Fact.model_validate_json(dumped_json_once)
+    assert round_tripped == fact
+
+    with pytest.raises(TypeError):
+        round_tripped.slots["subject"] = "Venus"
+
+    with pytest.raises(TypeError):
+        round_tripped.adversarial_variants["number"]["slots"]["period"] = "90"
+
+
 def test_fact_template_validation_rejects_out_of_bounds_evidence_span() -> None:
     authored_sources = _authored_sources_module()
 
@@ -440,6 +502,14 @@ def test_fact_template_validation_rejects_out_of_bounds_evidence_span() -> None:
         )
 
 
+def test_fixture_template_fact_ids_are_sorted() -> None:
+    template = _fixture_template()
+
+    assert tuple(fact.fact_id for fact in template.facts) == tuple(
+        sorted(fact.fact_id for fact in template.facts)
+    )
+
+
 def _fixture_template():
     authored_sources = _authored_sources_module()
     source_text = (
@@ -454,13 +524,14 @@ def _fixture_template():
         source_text=source_text,
         facts=(
             authored_sources.Fact(
-                fact_id="fact-orbit",
-                claim_template="{planet} completes one orbit every {days} days.",
+                fact_id="fact-conjunction",
+                claim_template="{planet} completes one orbit every {days} days and the mission launched in {launch_year}.",
                 slots={
                     "planet": "Mercury",
                     "days": "88",
+                    "launch_year": "1977",
                 },
-                answer_slots=("planet", "days"),
+                answer_slots=("planet", "days", "launch_year"),
                 evidence=(
                     {
                         "slot_id": "planet",
@@ -472,14 +543,16 @@ def _fixture_template():
                         "text": "88",
                         "span": _span(source_text, "88"),
                     },
+                    {
+                        "slot_id": "launch_year",
+                        "text": "1977",
+                        "span": _span(source_text, "1977"),
+                    },
                 ),
                 adversarial_variants={
-                    "negation": {"claim_template": "{planet} does not complete one orbit every {days} days."},
-                    "number": {"slots": {"days": "89"}},
-                    "unit": {"claim_template": "{planet} completes one orbit every {days} weeks."},
-                    "entity": {"slots": {"planet": "Venus"}},
-                    "relation": {"claim_template": "{planet} begins one orbit every {days} days."},
-                    "multi_span": {"evidence_slot_ids": ("planet", "days")},
+                    "multi_source": {
+                        "secondary_source_text": "Mission logs confirm the launch year was 1977."
+                    }
                 },
             ),
             authored_sources.Fact(
@@ -525,6 +598,35 @@ def _fixture_template():
                 },
             ),
             authored_sources.Fact(
+                fact_id="fact-orbit",
+                claim_template="{planet} completes one orbit every {days} days.",
+                slots={
+                    "planet": "Mercury",
+                    "days": "88",
+                },
+                answer_slots=("planet", "days"),
+                evidence=(
+                    {
+                        "slot_id": "planet",
+                        "text": "Mercury",
+                        "span": _span(source_text, "Mercury"),
+                    },
+                    {
+                        "slot_id": "days",
+                        "text": "88",
+                        "span": _span(source_text, "88"),
+                    },
+                ),
+                adversarial_variants={
+                    "negation": {"claim_template": "{planet} does not complete one orbit every {days} days."},
+                    "number": {"slots": {"days": "89"}},
+                    "unit": {"claim_template": "{planet} completes one orbit every {days} weeks."},
+                    "entity": {"slots": {"planet": "Venus"}},
+                    "relation": {"claim_template": "{planet} begins one orbit every {days} days."},
+                    "multi_span": {"evidence_slot_ids": ("planet", "days")},
+                },
+            ),
+            authored_sources.Fact(
                 fact_id="fact-unicode",
                 claim_template="Engineers call the guidance mode {mode_name} in internal notes.",
                 slots={
@@ -540,38 +642,6 @@ def _fixture_template():
                 ),
                 adversarial_variants={
                     "unicode": {"slots": {"mode_name": "café-safe"}},
-                },
-            ),
-            authored_sources.Fact(
-                fact_id="fact-conjunction",
-                claim_template="{planet} completes one orbit every {days} days and the mission launched in {launch_year}.",
-                slots={
-                    "planet": "Mercury",
-                    "days": "88",
-                    "launch_year": "1977",
-                },
-                answer_slots=("planet", "days", "launch_year"),
-                evidence=(
-                    {
-                        "slot_id": "planet",
-                        "text": "Mercury",
-                        "span": _span(source_text, "Mercury"),
-                    },
-                    {
-                        "slot_id": "days",
-                        "text": "88",
-                        "span": _span(source_text, "88"),
-                    },
-                    {
-                        "slot_id": "launch_year",
-                        "text": "1977",
-                        "span": _span(source_text, "1977"),
-                    },
-                ),
-                adversarial_variants={
-                    "multi_source": {
-                        "secondary_source_text": "Mission logs confirm the launch year was 1977."
-                    }
                 },
             ),
         ),

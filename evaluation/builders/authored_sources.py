@@ -2,24 +2,27 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterator, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date
 from types import MappingProxyType
-from typing import Literal
+from typing import Generic, Literal, Self, TypeVar
 from unicodedata import normalize
 
 from pydantic import BaseModel as PydanticBaseModel
 from pydantic import (
     ConfigDict,
+    GetCoreSchemaHandler,
     field_serializer,
     field_validator,
     model_validator,
 )
+from pydantic_core import CoreSchema, core_schema
 
 from evaluation.schema import CharSpan
 
 Domain = Literal["science", "finance", "policy", "technology", "health", "history"]
+_ValueT = TypeVar("_ValueT")
 
 STRICT_MODEL_CONFIG = ConfigDict(frozen=True, extra="forbid", strict=True)
 REQUIRED_TRANSFORMATION_NAMES = (
@@ -37,6 +40,64 @@ REQUIRED_TRANSFORMATION_NAMES = (
     "multi_source",
 )
 RETRIEVAL_DATE = date(2026, 7, 17)
+
+
+class FrozenMapping(Mapping[str, _ValueT], Generic[_ValueT]):
+    """Concrete immutable mapping preserved by Pydantic validation."""
+
+    __slots__ = ("_items", "_lookup")
+    _items: tuple[tuple[str, _ValueT], ...]
+    _lookup: dict[str, _ValueT]
+
+    def __init__(
+        self,
+        items: Mapping[str, _ValueT],
+    ) -> None:
+        tuple_items = tuple((key, value) for key, value in items.items())
+        self._items = tuple_items
+        self._lookup = dict(tuple_items)
+        if len(self._lookup) != len(self._items):
+            raise ValueError("frozen mappings must not contain duplicate keys")
+
+    def __getitem__(self, key: str) -> _ValueT:
+        return self._lookup[key]
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self._lookup)
+
+    def __len__(self) -> int:
+        return len(self._items)
+
+    def __repr__(self) -> str:
+        return f"FrozenMapping({dict(self._items)!r})"
+
+    def __hash__(self) -> int:
+        return hash(self._items)
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, Mapping):
+            return dict(self.items()) == dict(other.items())
+        return False
+
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls,
+        source_type: object,
+        handler: GetCoreSchemaHandler,
+    ) -> CoreSchema:
+        del source_type, handler
+        return core_schema.no_info_plain_validator_function(cls._validate_input)
+
+    @classmethod
+    def _validate_input(cls, value: object) -> Self:
+        if isinstance(value, cls):
+            return value
+        if not isinstance(value, Mapping):
+            raise ValueError("frozen mappings must be provided as mappings")
+        return cls(value)
+
+    def to_dict(self) -> dict[str, _ValueT]:
+        return {key: value for key, value in self._items}
 
 
 class Evidence(PydanticBaseModel):
@@ -57,12 +118,12 @@ class Fact(PydanticBaseModel):
 
     fact_id: str
     claim_template: str
-    # MappingProxyType preserves `str.format(**fact.slots)` ergonomics while
+    # FrozenMapping preserves `str.format(**fact.slots)` ergonomics while
     # preventing post-construction mutation of the authored slot inventory.
-    slots: Mapping[str, str]
+    slots: FrozenMapping[str]
     answer_slots: tuple[str, ...]
     evidence: tuple[Evidence, ...]
-    adversarial_variants: Mapping[str, Mapping[str, object]]
+    adversarial_variants: FrozenMapping[object]
 
     @field_validator("fact_id", "claim_template")
     @classmethod
@@ -71,7 +132,7 @@ class Fact(PydanticBaseModel):
 
     @field_validator("slots", mode="before")
     @classmethod
-    def _freeze_slots(cls, value: object) -> Mapping[str, str]:
+    def _freeze_slots(cls, value: object) -> FrozenMapping[str]:
         return _freeze_string_mapping(
             value,
             empty_message="facts must define at least one slot",
@@ -94,17 +155,17 @@ class Fact(PydanticBaseModel):
     def _freeze_adversarial_variants(
         cls,
         value: object,
-    ) -> Mapping[str, Mapping[str, object]]:
+    ) -> FrozenMapping[object]:
         return _freeze_variant_mapping(value)
 
     @field_serializer("slots")
-    def _serialize_slots(self, value: Mapping[str, str]) -> dict[str, str]:
-        return dict(value)
+    def _serialize_slots(self, value: FrozenMapping[str]) -> dict[str, str]:
+        return value.to_dict()
 
     @field_serializer("adversarial_variants")
     def _serialize_adversarial_variants(
         self,
-        value: Mapping[str, Mapping[str, object]],
+        value: FrozenMapping[object],
     ) -> dict[str, dict[str, object]]:
         return {
             key: _materialize_json_like(config)
@@ -535,102 +596,137 @@ def _build_template(*, domain: Domain, spec: _DomainSpec, seed: _FamilySeed) -> 
             Fact(
                 fact_id="fact-conjunction",
                 claim_template=spec.conjunction_claim_template,
-                slots={
-                    "subject": seed.subject,
-                    "period": seed.period,
-                    "year": seed.year,
-                    "event_label": seed.event_label,
-                },
+                slots=_freeze_string_mapping(
+                    {
+                        "subject": seed.subject,
+                        "period": seed.period,
+                        "year": seed.year,
+                        "event_label": seed.event_label,
+                    },
+                    empty_message="facts must define at least one slot",
+                    key_message="slot ids must be non-empty",
+                    value_message="slot text must be non-empty",
+                ),
                 answer_slots=("subject", "period", "year"),
                 evidence=(
                     _evidence(source_text, "subject", seed.subject),
                     _evidence(source_text, "period", seed.period),
                     _evidence(source_text, "year", seed.year),
                 ),
-                adversarial_variants={
-                    "multi_source": {
-                        "secondary_source_text": spec.secondary_source_template.format(
-                            event_label=seed.event_label,
-                            year=seed.year,
-                        )
+                adversarial_variants=_freeze_variant_mapping(
+                    {
+                        "multi_source": {
+                            "secondary_source_text": spec.secondary_source_template.format(
+                                event_label=seed.event_label,
+                                year=seed.year,
+                            )
+                        }
                     }
-                },
+                ),
             ),
             Fact(
                 fact_id="fact-cycle",
                 claim_template=spec.cycle_claim_template,
-                slots={
-                    "subject": seed.subject,
-                    "period": seed.period,
-                },
+                slots=_freeze_string_mapping(
+                    {
+                        "subject": seed.subject,
+                        "period": seed.period,
+                    },
+                    empty_message="facts must define at least one slot",
+                    key_message="slot ids must be non-empty",
+                    value_message="slot text must be non-empty",
+                ),
                 answer_slots=("subject", "period"),
                 evidence=(
                     _evidence(source_text, "subject", seed.subject),
                     _evidence(source_text, "period", seed.period),
                 ),
-                adversarial_variants={
-                    "negation": {"claim_template": spec.negated_cycle_template},
-                    "number": {"slots": {"period": str(int(seed.period) + 1)}},
-                    "unit": {"claim_template": spec.unit_cycle_template},
-                    "entity": {"slots": {"subject": seed.alternate_subject}},
-                    "relation": {"claim_template": spec.relation_cycle_template},
-                    "multi_span": {"evidence_slot_ids": ("subject", "period")},
-                },
+                adversarial_variants=_freeze_variant_mapping(
+                    {
+                        "negation": {"claim_template": spec.negated_cycle_template},
+                        "number": {"slots": {"period": str(int(seed.period) + 1)}},
+                        "unit": {"claim_template": spec.unit_cycle_template},
+                        "entity": {"slots": {"subject": seed.alternate_subject}},
+                        "relation": {"claim_template": spec.relation_cycle_template},
+                        "multi_span": {"evidence_slot_ids": ("subject", "period")},
+                    }
+                ),
             ),
             Fact(
                 fact_id="fact-date",
                 claim_template=spec.date_claim_template,
-                slots={
-                    "event_label": seed.event_label,
-                    "year": seed.year,
-                },
+                slots=_freeze_string_mapping(
+                    {
+                        "event_label": seed.event_label,
+                        "year": seed.year,
+                    },
+                    empty_message="facts must define at least one slot",
+                    key_message="slot ids must be non-empty",
+                    value_message="slot text must be non-empty",
+                ),
                 answer_slots=("year",),
                 evidence=(
                     _evidence(source_text, "year", seed.year),
                 ),
-                adversarial_variants={
-                    "date": {"slots": {"year": str(int(seed.year) + 1)}},
-                    "duplicate_distractor": {
-                        "distractor_source_text": spec.date_claim_template.format(
-                            event_label=seed.event_label,
-                            year=str(int(seed.year) + 1),
-                        )
-                    },
-                },
+                adversarial_variants=_freeze_variant_mapping(
+                    {
+                        "date": {"slots": {"year": str(int(seed.year) + 1)}},
+                        "duplicate_distractor": {
+                            "distractor_source_text": spec.date_claim_template.format(
+                                event_label=seed.event_label,
+                                year=str(int(seed.year) + 1),
+                            )
+                        },
+                    }
+                ),
             ),
             Fact(
                 fact_id="fact-modality",
                 claim_template=spec.modality_claim_template,
-                slots={
-                    "program_label": seed.program_label,
-                    "end_year": seed.end_year,
-                },
+                slots=_freeze_string_mapping(
+                    {
+                        "program_label": seed.program_label,
+                        "end_year": seed.end_year,
+                    },
+                    empty_message="facts must define at least one slot",
+                    key_message="slot ids must be non-empty",
+                    value_message="slot text must be non-empty",
+                ),
                 answer_slots=("end_year",),
                 evidence=(
                     _evidence(source_text, "end_year", seed.end_year),
                 ),
-                adversarial_variants={
-                    "modality": {
-                        "claim_template": spec.modality_variant_template
-                    },
-                    "unsupported_clause": {
-                        "unsupported_suffix": spec.unsupported_suffix
-                    },
-                },
+                adversarial_variants=_freeze_variant_mapping(
+                    {
+                        "modality": {
+                            "claim_template": spec.modality_variant_template
+                        },
+                        "unsupported_clause": {
+                            "unsupported_suffix": spec.unsupported_suffix
+                        },
+                    }
+                ),
             ),
             Fact(
                 fact_id="fact-unicode",
                 claim_template=spec.unicode_claim_template,
-                slots={
-                    "mode_name": normalize("NFD", seed.unicode_term_nfc),
-                },
+                slots=_freeze_string_mapping(
+                    {
+                        "mode_name": normalize("NFD", seed.unicode_term_nfc),
+                    },
+                    empty_message="facts must define at least one slot",
+                    key_message="slot ids must be non-empty",
+                    value_message="slot text must be non-empty",
+                ),
                 answer_slots=("mode_name",),
                 evidence=(
                     _evidence(source_text, "mode_name", normalize("NFD", seed.unicode_term_nfc)),
                 ),
-                adversarial_variants={
-                    "unicode": {"slots": {"mode_name": seed.unicode_term_nfc}}
-                },
+                adversarial_variants=_freeze_variant_mapping(
+                    {
+                        "unicode": {"slots": {"mode_name": seed.unicode_term_nfc}}
+                    }
+                ),
             ),
         ),
         provenance_title=f"{seed.event_label.title()} reference packet",
@@ -658,7 +754,7 @@ def _freeze_string_mapping(
     empty_message: str,
     key_message: str,
     value_message: str,
-) -> Mapping[str, str]:
+) -> FrozenMapping[str]:
     if not isinstance(value, Mapping):
         raise ValueError(empty_message)
     copied: dict[str, str] = {}
@@ -673,13 +769,13 @@ def _freeze_string_mapping(
     for key in copied:
         if not key.strip():
             raise ValueError(key_message)
-    return MappingProxyType(copied)
+    return FrozenMapping(copied)
 
 
-def _freeze_variant_mapping(value: object) -> Mapping[str, Mapping[str, object]]:
+def _freeze_variant_mapping(value: object) -> FrozenMapping[object]:
     if not isinstance(value, Mapping) or not value:
         raise ValueError("facts must define at least one adversarial variant")
-    frozen_variants: dict[str, Mapping[str, object]] = {}
+    frozen_variants: dict[str, object] = {}
     for raw_name, raw_config in value.items():
         if not isinstance(raw_name, str):
             raise ValueError("adversarial variant names must be non-empty")
@@ -687,10 +783,10 @@ def _freeze_variant_mapping(value: object) -> Mapping[str, Mapping[str, object]]
         if not isinstance(raw_config, Mapping) or not raw_config:
             raise ValueError("adversarial variants must define non-empty configuration")
         frozen_variants[name] = _deep_freeze_mapping(raw_config)
-    return MappingProxyType(frozen_variants)
+    return FrozenMapping(frozen_variants)
 
 
-def _deep_freeze_mapping(value: Mapping[object, object]) -> Mapping[str, object]:
+def _deep_freeze_mapping(value: Mapping[object, object]) -> FrozenMapping[object]:
     frozen: dict[str, object] = {}
     for raw_key, raw_value in value.items():
         if not isinstance(raw_key, str):
@@ -701,7 +797,7 @@ def _deep_freeze_mapping(value: Mapping[object, object]) -> Mapping[str, object]
             raw_key, "adversarial variant configuration keys must be non-empty"
         )
         frozen[key] = _deep_freeze_value(raw_value)
-    return MappingProxyType(frozen)
+    return FrozenMapping(frozen)
 
 
 def _deep_freeze_value(value: object) -> object:
@@ -712,7 +808,9 @@ def _deep_freeze_value(value: object) -> object:
     return value
 
 
-def _materialize_json_like(value: Mapping[str, object]) -> dict[str, object]:
+def _materialize_json_like(value: object) -> dict[str, object]:
+    if not isinstance(value, Mapping):
+        raise TypeError("expected mapping-shaped JSON-like value")
     materialized: dict[str, object] = {}
     for key, item in value.items():
         if isinstance(item, Mapping):
