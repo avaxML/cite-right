@@ -161,6 +161,14 @@ def test_multi_source_claim_requires_all_requirements() -> None:
     claim = case.evaluation_units[0].claims[0]
 
     assert case.evaluation_units[0].expected_status == "supported"
+    assert case.generation is not None
+    assert case.generation.recipe_id == "recipe-001"
+    assert case.review is not None
+    assert case.review.state == "approved"
+    assert "generation" in case.model_dump(mode="json")
+    assert "review" in case.model_dump(mode="json")
+    assert "generation_recipe" not in case.model_dump(mode="json")
+    assert "review_record" not in case.model_dump(mode="json")
     assert len(claim.citation_requirements) == 2
     assert claim.citation_requirements[0].requirement_id == "req-paris"
     assert claim.citation_requirements[1].requirement_id == "req-berlin"
@@ -172,6 +180,13 @@ def test_multi_source_claim_requires_all_requirements() -> None:
 
     with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
         EvaluationCase.model_validate(invalid_case)
+
+    deprecated_name_case = _make_valid_case_data()
+    deprecated_name_case["generation_recipe"] = deprecated_name_case["generation"]
+    deprecated_name_case["review_record"] = deprecated_name_case["review"]
+
+    with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
+        EvaluationCase.model_validate(deprecated_name_case)
 
 
 def test_case_offsets_slice_exact_answer_and_source_text() -> None:
@@ -299,14 +314,14 @@ def _make_valid_case_data() -> dict[str, Any]:
             },
         ),
         "difficulty_tags": ("multi_source", "alternative_targets"),
-        "generation_recipe": {
+        "generation": {
             "recipe_id": "recipe-001",
             "generator_name": "hand-authored",
             "prompt_version": "v1",
             "seed": 7,
             "notes": "Two-source conjunction with alternative targets.",
         },
-        "review_record": {
+        "review": {
             "state": "approved",
             "reviewer": "schema-task",
             "reviewed_at": date(2026, 7, 17),

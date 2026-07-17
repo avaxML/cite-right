@@ -172,8 +172,8 @@ class EvaluationCase(BaseModel):
     answer: str
     evaluation_units: tuple[EvaluationUnit, ...]
     difficulty_tags: tuple[str, ...] = Field(default_factory=tuple)
-    generation_recipe: GenerationRecipe
-    review_record: ReviewRecord
+    generation: GenerationRecipe | None = None
+    review: ReviewRecord | None = None
 
     @model_validator(mode="after")
     def _validate_case(self) -> EvaluationCase:
