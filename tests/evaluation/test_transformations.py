@@ -392,6 +392,34 @@ def test_every_catalog_family_produces_positive_and_adversarial_siblings() -> No
         assert tuple(case.transformation_family_id for case in cases) == ALL_TRANSFORMATION_NAMES
 
 
+def test_generate_cases_for_template_rejects_transformations_that_emit_no_cases() -> None:
+    cases_module = _cases_module()
+
+    with pytest.raises(
+        ValueError,
+        match="each transformation must generate exactly one case per template",
+    ):
+        cases_module.generate_cases_for_template(
+            template=_fixture_template(),
+            seed=23,
+            transformations=_with_cardinality_override("missing"),
+        )
+
+
+def test_generate_cases_for_template_rejects_transformations_that_emit_two_cases() -> None:
+    cases_module = _cases_module()
+
+    with pytest.raises(
+        ValueError,
+        match="each transformation must generate exactly one case per template",
+    ):
+        cases_module.generate_cases_for_template(
+            template=_fixture_template(),
+            seed=23,
+            transformations=_with_cardinality_override("duplicated"),
+        )
+
+
 def test_catalog_generation_is_order_independent_after_stable_sorting() -> None:
     authored_sources = _authored_sources_module()
     cases_module = _cases_module()
@@ -1017,3 +1045,30 @@ def _cases_module():
 
 def _transformations_module():
     return import_module("evaluation.builders.transformations")
+
+
+@dataclass(frozen=True)
+class _CardinalityOverrideTransformation:
+    name: str
+    cardinality: str
+
+    def generate(self, template, seed: int) -> tuple[EvaluationCase, ...]:
+        real_cases = _transformation_by_name(self.name).generate(template, seed)
+        assert len(real_cases) == 1
+        if self.cardinality == "missing":
+            return ()
+        if self.cardinality == "duplicated":
+            second_cases = _transformation_by_name(self.name).generate(template, seed + 1)
+            assert len(second_cases) == 1
+            return (real_cases[0], second_cases[0])
+        raise AssertionError(f"unexpected cardinality override {self.cardinality!r}")
+
+
+def _with_cardinality_override(cardinality: str):
+    transformations = _transformations_module()
+    return tuple(
+        _CardinalityOverrideTransformation(name="negation", cardinality=cardinality)
+        if transformation.name == "negation"
+        else transformation
+        for transformation in transformations.TRANSFORMATIONS
+    )

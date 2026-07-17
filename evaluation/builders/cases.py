@@ -20,18 +20,23 @@ def generate_cases_for_template(
     seen_case_ids: set[str] = set()
 
     for transformation in ordered_transformations:
-        for case in transformation.generate(template, seed):
-            _validate_generated_case(
-                case=case,
-                document_family_id=template.family_id,
-                transformation_family_id=transformation.name,
+        generated_cases = tuple(transformation.generate(template, seed))
+        if len(generated_cases) != 1:
+            raise ValueError(
+                "each transformation must generate exactly one case per template"
             )
-            _remember_unique_case_id(
-                case_id=case.case_id,
-                seen_case_ids=seen_case_ids,
-                context=f"template {template.family_id!r}",
-            )
-            cases.append(case)
+        case = generated_cases[0]
+        _validate_generated_case(
+            case=case,
+            document_family_id=template.family_id,
+            transformation_family_id=transformation.name,
+        )
+        _remember_unique_case_id(
+            case_id=case.case_id,
+            seen_case_ids=seen_case_ids,
+            context=f"template {template.family_id!r}",
+        )
+        cases.append(case)
 
     return tuple(cases)
 
