@@ -1520,6 +1520,35 @@ def test_real_source_provenance_rejects_misleading_canonical_urls(
         )
 
 
+@pytest.mark.parametrize(
+    ("origin_url", "publisher"),
+    (
+        ("https://www.nasa.gov.evil.gov/example", "NASA"),
+        ("https://www.xn--nasa-9o0a.gov/example", "NASA"),
+        ("https://www.epa.gov/example", "NASA"),
+        ("https://www.nasa.gov/example", "Unknown Federal Publisher"),
+    ),
+)
+def test_real_source_provenance_binds_origin_host_to_declared_publisher(
+    origin_url: str,
+    publisher: str,
+) -> None:
+    real_sources = _real_sources_module()
+    base = _real_source_provenance_fixture()
+
+    with pytest.raises(
+        ValueError,
+        match="origin_url hostname must match the declared publisher",
+    ):
+        real_sources.RealSourceProvenance.model_validate(
+            {
+                **base,
+                "origin_url": origin_url,
+                "publisher": publisher,
+            }
+        )
+
+
 def test_real_source_loaders_fail_closed_for_duplicate_records_and_join_gaps(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,

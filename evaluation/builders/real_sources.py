@@ -6,6 +6,7 @@ import json
 import re
 from datetime import date
 from pathlib import Path
+from types import MappingProxyType
 from typing import Literal
 from urllib.parse import urlsplit
 
@@ -56,6 +57,20 @@ DATA_ROOT = Path(__file__).resolve().parent.parent / "data" / "v1"
 REAL_SOURCES_PATH = DATA_ROOT / "sources" / "real.json"
 PROVENANCE_PATH = DATA_ROOT / "provenance.json"
 _DNS_LABEL_PATTERN = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$")
+_PUBLISHER_ORIGIN_HOSTS = MappingProxyType(
+    {
+        "NASA": "www.nasa.gov",
+        "U.S. Environmental Protection Agency": "www.epa.gov",
+        "U.S. Geological Survey": "www.usgs.gov",
+        "U.S. Department of Energy": "www.energy.gov",
+        "NOAA Pacific Marine Environmental Laboratory": "www.pmel.noaa.gov",
+        "Centers for Disease Control and Prevention": "www.cdc.gov",
+        "National Archives": "www.archives.gov",
+        "Federal Deposit Insurance Corporation": "www.fdic.gov",
+        "National Institute of Standards and Technology": "www.nist.gov",
+        "USAGov": "www.usa.gov",
+    }
+)
 
 
 class RealSourceProvenance(BaseModel):
@@ -134,6 +149,11 @@ class RealSourceProvenance(BaseModel):
             raise ValueError("snapshot_hash must equal sha256 of source_text")
         if self.statutory_url != STATUTORY_URL:
             raise ValueError("statutory_url must equal the 17 U.S.C. 105 basis URL")
+        expected_origin_host = _PUBLISHER_ORIGIN_HOSTS.get(self.publisher)
+        if expected_origin_host is None:
+            raise ValueError("origin_url hostname must match the declared publisher")
+        if _canonical_origin_hostname(self.origin_url) != expected_origin_host:
+            raise ValueError("origin_url hostname must match the declared publisher")
         return self
 
 
@@ -589,6 +609,16 @@ def _validate_official_https_url(value: str, *, message: str) -> str:
     if any(_DNS_LABEL_PATTERN.fullmatch(label) is None for label in labels):
         raise ValueError(message)
     return value
+
+
+def _canonical_origin_hostname(value: str) -> str:
+    return _validated_hostname(value)
+
+
+def _validated_hostname(value: str) -> str:
+    parsed = urlsplit(value)
+    assert parsed.hostname is not None
+    return parsed.hostname
 
 
 def _require_non_empty(value: str, message: str) -> str:
