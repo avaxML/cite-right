@@ -67,12 +67,12 @@
   {
     "family_id": "finance-fdic-what-we-do",
     "domain": "finance",
-    "source_text": "maintain stability and public confidence in the nation's financial system",
-    "supported_answer": "maintain stability and public confidence in the nation's financial system",
-    "snapshot_hash": "daf1a3f9e66e1d51d332bc0f3a15e3fcf69422f7c6bc0a628729bf6e726f8447",
+    "source_text": "maintain stability and public confidence in the nation’s financial system",
+    "supported_answer": "maintain stability and public confidence in the nation’s financial system",
+    "snapshot_hash": "57f37c4a4631249953258e6143122459a88d1d78d079aebbbfb5e6504c5c9784",
     "challenge": {
       "kind": "partial",
-      "answer": "maintain stability and public confidence in the nation's financial system. It was created by a private trade association.",
+      "answer": "maintain stability and public confidence in the nation’s financial system. It was created by a private trade association.",
       "distractor_family_id": null,
       "unsupported_suffix": " It was created by a private trade association."
     }

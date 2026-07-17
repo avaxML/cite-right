@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import json
 import socket
 from collections import Counter
@@ -1271,6 +1272,25 @@ def test_real_source_catalog_has_complete_local_provenance_and_balanced_domains(
         assert item.snapshot_hash == sha256_hex(item.source_text.encode("utf-8"))
 
 
+def test_real_source_catalog_keeps_fdic_snapshot_byte_exact_with_unicode_apostrophe() -> None:
+    real_sources = _real_sources_module()
+    families = {
+        family.family_id: family
+        for family in real_sources.load_real_source_families()
+    }
+
+    fdic_text = families["finance-fdic-what-we-do"].source_text
+
+    assert fdic_text == "maintain stability and public confidence in the nation’s financial system"
+    assert "nation’s" in fdic_text
+    assert "nation's" not in fdic_text
+    assert fdic_text.encode("utf-8") == (
+        "maintain stability and public confidence in the nation’s financial system".encode(
+            "utf-8"
+        )
+    )
+
+
 def test_real_source_models_reject_missing_metadata_local_text_hash_mismatch_and_third_party_credit() -> None:
     real_sources = _real_sources_module()
     source_text = "A black hole is a region in space where gravity is strong."
@@ -1340,6 +1360,228 @@ def test_real_source_models_reject_missing_metadata_local_text_hash_mismatch_and
             }
         )
 
+    with pytest.raises(ValueError, match="origin_url must use https:// and point to an official source"):
+        real_sources.RealSourceProvenance.model_validate(
+            {
+                **base,
+                "origin_url": "file:///tmp/not-official",
+            }
+        )
+
+    with pytest.raises(ValueError, match="policy_url must use https:// and point to an official source"):
+        real_sources.RealSourceProvenance.model_validate(
+            {
+                **base,
+                "policy_url": "http://www.nasa.gov/not-secure",
+            }
+        )
+
+    with pytest.raises(ValueError, match="policy_url must use https:// and point to an official source"):
+        real_sources.RealSourceProvenance.model_validate(
+            {
+                **base,
+                "policy_url": "file:///tmp/policy",
+            }
+        )
+
+    with pytest.raises(ValueError, match="statutory_url must use https:// and point to an official source"):
+        real_sources.RealSourceProvenance.model_validate(
+            {
+                **base,
+                "statutory_url": "http://uscode.house.gov/not-secure",
+            }
+        )
+
+    with pytest.raises(ValueError, match="statutory_url must use https:// and point to an official source"):
+        real_sources.RealSourceProvenance.model_validate(
+            {
+                **base,
+                "statutory_url": "file:///tmp/statute",
+            }
+        )
+
+    with pytest.raises(ValueError, match="policy_url must use https:// and point to an official source"):
+        real_sources.RealSourceProvenance.model_validate(
+            {
+                **base,
+                "policy_url": " ",
+            }
+        )
+
+    with pytest.raises(Exception, match="Field required"):
+        real_sources.RealSourceProvenance.model_validate(
+            {
+                key: value
+                for key, value in base.items()
+                if key != "policy_url"
+            }
+        )
+
+    with pytest.raises(ValueError, match="statutory_url must use https:// and point to an official source"):
+        real_sources.RealSourceProvenance.model_validate(
+            {
+                **base,
+                "statutory_url": " ",
+            }
+        )
+
+    with pytest.raises(Exception, match="Field required"):
+        real_sources.RealSourceProvenance.model_validate(
+            {
+                key: value
+                for key, value in base.items()
+                if key != "statutory_url"
+            }
+        )
+
+    with pytest.raises(ValueError, match="page_title must be non-empty"):
+        real_sources.RealSourceProvenance.model_validate(
+            {
+                **base,
+                "page_title": " ",
+            }
+        )
+
+    with pytest.raises(Exception, match="Field required"):
+        real_sources.RealSourceProvenance.model_validate(
+            {
+                key: value
+                for key, value in base.items()
+                if key != "page_title"
+            }
+        )
+
+    with pytest.raises(ValueError, match="publisher must be non-empty"):
+        real_sources.RealSourceProvenance.model_validate(
+            {
+                **base,
+                "publisher": " ",
+            }
+        )
+
+    with pytest.raises(Exception, match="Field required"):
+        real_sources.RealSourceProvenance.model_validate(
+            {
+                key: value
+                for key, value in base.items()
+                if key != "publisher"
+            }
+        )
+
+
+def test_real_source_loaders_fail_closed_for_duplicate_records_and_join_gaps(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+) -> None:
+    real_sources = _real_sources_module()
+    source_payload, provenance_payload = _read_real_source_payloads()
+
+    duplicate_sources_path = tmp_path / "duplicate-real.json"
+    duplicate_provenance_path = tmp_path / "duplicate-provenance.json"
+    duplicate_sources_path.write_text(
+        json.dumps([source_payload[0], source_payload[0]], ensure_ascii=False),
+        encoding="utf-8",
+    )
+    duplicate_provenance_path.write_text(
+        json.dumps(provenance_payload, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(real_sources, "REAL_SOURCES_PATH", duplicate_sources_path)
+    monkeypatch.setattr(real_sources, "PROVENANCE_PATH", duplicate_provenance_path)
+    with pytest.raises(ValueError, match=r"duplicate family_id 'environment-doe-solar'"):
+        real_sources.load_real_source_families()
+
+    unique_sources_path = tmp_path / "unique-real.json"
+    unique_provenance_path = tmp_path / "unique-provenance.json"
+    unique_sources_path.write_text(
+        json.dumps(source_payload, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    duplicate_unique_provenance_path = tmp_path / "duplicate-only-provenance.json"
+    duplicate_unique_provenance_path.write_text(
+        json.dumps([provenance_payload[0], provenance_payload[0]], ensure_ascii=False),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(real_sources, "REAL_SOURCES_PATH", unique_sources_path)
+    monkeypatch.setattr(real_sources, "PROVENANCE_PATH", duplicate_unique_provenance_path)
+    with pytest.raises(
+        ValueError,
+        match=r"duplicate family_id 'environment-doe-solar' in provenance records",
+    ):
+        real_sources.load_real_source_provenance()
+
+    unique_provenance_path.write_text(
+        json.dumps(provenance_payload, ensure_ascii=False),
+        encoding="utf-8",
+    )
+
+    missing_provenance_path = tmp_path / "missing-provenance.json"
+    missing_provenance_payload = [
+        item
+        for item in provenance_payload
+        if item["family_id"] != "finance-fdic-what-we-do"
+    ]
+    missing_provenance_path.write_text(
+        json.dumps(missing_provenance_payload, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(real_sources, "REAL_SOURCES_PATH", unique_sources_path)
+    monkeypatch.setattr(real_sources, "PROVENANCE_PATH", missing_provenance_path)
+    with pytest.raises(
+        ValueError,
+        match=r"missing provenance record for family_id 'finance-fdic-what-we-do'",
+    ):
+        real_sources.load_real_source_families()
+
+    missing_source_path = tmp_path / "missing-source.json"
+    missing_source_payload = [
+        item
+        for item in source_payload
+        if item["family_id"] != "finance-fdic-what-we-do"
+    ]
+    missing_source_path.write_text(
+        json.dumps(missing_source_payload, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(real_sources, "REAL_SOURCES_PATH", missing_source_path)
+    monkeypatch.setattr(real_sources, "PROVENANCE_PATH", unique_provenance_path)
+    with pytest.raises(
+        ValueError,
+        match="provenance.json contains family_ids that are missing from real.json",
+    ):
+        real_sources.load_real_source_families()
+
+
+def test_real_sources_module_has_no_cite_right_or_align_citations_dependency() -> None:
+    real_sources = _real_sources_module()
+    assert real_sources.__file__ is not None
+    source_path = Path(real_sources.__file__)
+    source_text = source_path.read_text(encoding="utf-8")
+    module_ast = ast.parse(source_text, filename=str(source_path))
+
+    imported_modules = {
+        alias.name
+        for node in ast.walk(module_ast)
+        if isinstance(node, ast.Import)
+        for alias in node.names
+    }
+    imported_from_modules = {
+        node.module
+        for node in ast.walk(module_ast)
+        if isinstance(node, ast.ImportFrom) and node.module is not None
+    }
+
+    assert "cite_right" not in source_text
+    assert "align_citations" not in source_text
+    assert all(
+        name != "cite_right" and not name.startswith("cite_right.")
+        for name in imported_modules
+    )
+    assert all(
+        name != "cite_right" and not name.startswith("cite_right.")
+        for name in imported_from_modules
+    )
+
 
 def test_real_case_generation_is_offline_deterministic_and_balanced(
     monkeypatch: pytest.MonkeyPatch,
@@ -1357,12 +1599,12 @@ def test_real_case_generation_is_offline_deterministic_and_balanced(
     assert tuple(case.case_id for case in first) == tuple(case.case_id for case in second)
     assert _canonical_case_digest(first) == _canonical_case_digest(second)
     assert _canonical_case_digest(first) == real_sources.REAL_CASES_CANONICAL_DIGEST
-    assert _canonical_case_digest(first) == "87c7b7f0105086f88ef956645a0bfd64dedeec7a62762334118434c584701082"
+    assert _canonical_case_digest(first) == "6701c281952707ba458c349250799b6914b292737a861fa7151bbbc40249e651"
 
     assert len(combined) == 750
     assert len({case.case_id for case in combined}) == 750
     assert _canonical_case_digest(combined) == real_sources.ALL_CASES_CANONICAL_DIGEST
-    assert _canonical_case_digest(combined) == "adc04042c7277aad819407257e3887f9caac9cb8c48156fca8f29b2b0fef862c"
+    assert _canonical_case_digest(combined) == "de129ef6567aa03ef5581bb4525a5bb33ea341adf135e3571a3c5705213e6a89"
 
     challenge_counts = Counter(case.transformation_family_id for case in first if case.transformation_family_id != "real-positive")
     assert challenge_counts == {
@@ -1457,6 +1699,18 @@ def test_real_source_json_artifacts_exist_and_round_trip() -> None:
 
 def _real_sources_module():
     return import_module("evaluation.builders.real_sources")
+
+
+def _read_real_source_payloads() -> tuple[list[dict[str, object]], list[dict[str, object]]]:
+    family_payload = json.loads(
+        Path("evaluation/data/v1/sources/real.json").read_text(encoding="utf-8")
+    )
+    provenance_payload = json.loads(
+        Path("evaluation/data/v1/provenance.json").read_text(encoding="utf-8")
+    )
+    assert isinstance(family_payload, list)
+    assert isinstance(provenance_payload, list)
+    return family_payload, provenance_payload
 
 
 def _disable_network(monkeypatch: pytest.MonkeyPatch) -> None:
