@@ -170,6 +170,11 @@ def test_build_command_is_deterministic_for_fixed_seed(tmp_path: Path) -> None:
         _freeze_cli_date("2026-07-18")
         assert main(["build", "--output", str(right), "--seed", "20260717"]) == 0
     assert stderr.getvalue() == ""
+    for case_file in ("train.json", "dev.json", "holdout.json"):
+        case_payload = json.loads((left / case_file).read_bytes())
+        assert [item["case_id"] for item in case_payload] == sorted(
+            item["case_id"] for item in case_payload
+        )
     for relative_path in (
         "train.json",
         "dev.json",

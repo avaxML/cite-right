@@ -10,7 +10,7 @@ import stat
 import sys
 import tempfile
 import uuid
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from datetime import date
 from pathlib import Path
 from typing import Sequence
@@ -169,9 +169,15 @@ def _command_build(*, output_dir: Path, seed: int) -> dict[str, object]:
     )
     validation_report.assert_valid()
 
-    train_cases = tuple(case for case in assigned_cases if case.split == "train")
-    dev_cases = tuple(case for case in assigned_cases if case.split == "dev")
-    holdout_cases = tuple(case for case in assigned_cases if case.split == "holdout")
+    train_cases = _canonical_case_order(
+        case for case in assigned_cases if case.split == "train"
+    )
+    dev_cases = _canonical_case_order(
+        case for case in assigned_cases if case.split == "dev"
+    )
+    holdout_cases = _canonical_case_order(
+        case for case in assigned_cases if case.split == "holdout"
+    )
     dev_ledger = ReviewLedger(dataset_version=manifest.dataset_version, schema_version=manifest.schema_version)
 
     if output_dir.exists():
@@ -446,7 +452,7 @@ def _load_present_case_files(bundle_root: Path) -> tuple[EvaluationCase, ...]:
         if not path.exists():
             continue
         cases.extend(_load_cases_file(path))
-    return tuple(cases)
+    return _canonical_case_order(cases)
 
 
 def _resolve_holdout_review_ledger_path(plaintext_path: Path) -> Path:
@@ -469,11 +475,26 @@ def _load_cases_file(path: Path) -> tuple[EvaluationCase, ...]:
         raise ValueError(f"{path} must use canonical JSON ordering")
     if not isinstance(payload, list):
         raise ValueError(f"{path} must be a canonical JSON array")
-    return tuple(
+    cases = tuple(
         EvaluationCase.model_validate_json(
             json.dumps(item, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
         )
         for item in payload
+    )
+    if cases != _canonical_case_order(cases):
+        raise ValueError(f"{path} case records must use canonical case order")
+    return cases
+
+
+def _canonical_case_order(cases: Iterable[EvaluationCase]) -> tuple[EvaluationCase, ...]:
+    return tuple(
+        sorted(
+            cases,
+            key=lambda case: (
+                case.case_id,
+                canonical_json_bytes(case.model_dump(mode="json")),
+            ),
+        )
     )
 
 

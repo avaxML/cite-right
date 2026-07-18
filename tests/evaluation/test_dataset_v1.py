@@ -92,8 +92,18 @@ def test_dataset_v1_dev_reviews_and_public_holdout_attestation_are_complete() ->
 
 def test_dataset_v1_regenerates_canonical_splits_without_cross_split_leakage() -> None:
     regenerated = _regenerated_cases()
-    train = tuple(case for case in regenerated if case.split == "train")
-    dev = tuple(case for case in regenerated if case.split == "dev")
+    train = tuple(
+        sorted(
+            (case for case in regenerated if case.split == "train"),
+            key=lambda case: case.case_id,
+        )
+    )
+    dev = tuple(
+        sorted(
+            (case for case in regenerated if case.split == "dev"),
+            key=lambda case: case.case_id,
+        )
+    )
     expected_manifest = build_private_manifest(train + dev, generated_at=None)
     actual_manifest = DatasetManifest.model_validate_json(
         (DATASET_ROOT / "manifest.json").read_bytes()

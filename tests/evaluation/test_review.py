@@ -754,14 +754,14 @@ def test_load_review_ledger_rejects_malformed_noncanonical_unknown_fields_and_du
         load_review_ledger(bad_hash)
 
 
-def test_checked_in_empty_scaffold_is_canonical_and_incomplete_for_current_corpus() -> None:
+def test_checked_in_dev_ledger_is_canonical_complete_and_excludes_holdout() -> None:
     scaffold_path = Path("evaluation/data/v1/dev_reviews.json")
     ledger = load_review_ledger(scaffold_path)
 
-    assert ledger.entries == ()
+    assert ledger.entries
     assert scaffold_path.read_bytes() == canonical_json_bytes(ledger)
 
-    corpus = generate_all_authored_cases(seed=31) + generate_real_cases()
+    corpus = generate_all_authored_cases(seed=20260717) + generate_real_cases()
     assignment_report = assign_splits(corpus, seed=20260717)
     assigned = apply_split_assignments(corpus, assignment_report.assignment_by_case_id)
 
@@ -779,14 +779,14 @@ def test_checked_in_empty_scaffold_is_canonical_and_incomplete_for_current_corpu
     assert dev_claim_count > 0
     assert holdout_claim_count > 0
     assert dev_report.total_claims == dev_claim_count
-    assert dev_report.missing_claims == dev_claim_count
+    assert dev_report.approved_claims == dev_claim_count
+    assert dev_report.missing_claims == 0
+    assert dev_report.complete is True
     assert holdout_report.total_claims == holdout_claim_count
     assert holdout_report.missing_claims == holdout_claim_count
-    assert dev_report.complete is False
     assert holdout_report.complete is False
 
-    with pytest.raises(ValueError):
-        assert_review_complete(assigned, ledger, split="dev")
+    assert_review_complete(assigned, ledger, split="dev")
     with pytest.raises(ValueError):
         assert_review_complete(assigned, ledger, split="holdout")
 
