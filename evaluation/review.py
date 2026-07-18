@@ -766,6 +766,11 @@ def _render_source_blocks(source: Source, claim: ClaimAnnotation) -> list[str]:
         "<div class=\"source-title\">",
         f"<strong>Source {escape(source.source_id)}</strong>",
         "</div>",
+        "<div class=\"meta\">",
+        _meta_row("Chunk ID", source.chunk_id),
+        _meta_row("Chunk start", source.chunk_char_start),
+        _meta_row("Chunk end", source.chunk_char_end),
+        "</div>",
         f"<pre>{escape(source.text)}</pre>",
     ]
     if claim.citation_requirements:
@@ -789,12 +794,13 @@ def _render_source_blocks(source: Source, claim: ClaimAnnotation) -> list[str]:
 
 
 def _highlight_source_text(text: str, spans: Sequence[CharSpan]) -> str:
-    merged = _merge_spans(tuple((span.start, span.end) for span in spans))
-    if not merged:
+    ordered = tuple(sorted((span.start, span.end) for span in spans))
+    if not ordered:
         return escape(text)
+    _validate_renderable_spans(ordered)
     parts: list[str] = []
     cursor = 0
-    for index, (start, end) in enumerate(merged, start=1):
+    for index, (start, end) in enumerate(ordered, start=1):
         parts.append(escape(text[cursor:start]))
         parts.append(
             f"<mark class=\"target-span\" data-span-index=\"{index}\">{escape(text[start:end])}</mark>"
@@ -804,18 +810,12 @@ def _highlight_source_text(text: str, spans: Sequence[CharSpan]) -> str:
     return "".join(parts)
 
 
-def _merge_spans(spans: Sequence[tuple[int, int]]) -> tuple[tuple[int, int], ...]:
-    if not spans:
-        return ()
-    ordered = sorted(spans)
-    merged: list[tuple[int, int]] = [ordered[0]]
-    for start, end in ordered[1:]:
-        last_start, last_end = merged[-1]
-        if start <= last_end:
-            merged[-1] = (last_start, max(last_end, end))
-            continue
-        merged.append((start, end))
-    return tuple(merged)
+def _validate_renderable_spans(spans: Sequence[tuple[int, int]]) -> None:
+    previous_end: int | None = None
+    for start, end in spans:
+        if previous_end is not None and start < previous_end:
+            raise ValueError("overlapping citation spans cannot be rendered exactly")
+        previous_end = end
 
 
 def _meta_row(label: str, value: object) -> str:

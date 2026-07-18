@@ -347,6 +347,18 @@ def test_render_review_queue_html_escapes_all_data_and_avoids_script_injection()
             notes='notes & "<danger>"',
         ),
     )
+    hostile_case = _copy_case(
+        hostile_case,
+        sources=(
+            Source(
+                source_id="source-1",
+                text='Source says <script>alert("x")</script> & more.',
+                chunk_id='chunk<danger>&"1"',
+                chunk_char_start=100,
+                chunk_char_end=145,
+            ),
+        ),
+    )
 
     html = render_review_queue_html(build_review_queue((hostile_case,)))
 
@@ -357,6 +369,9 @@ def test_render_review_queue_html_escapes_all_data_and_avoids_script_injection()
     assert "&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt; &amp; more." in html
     assert "family&lt;danger&gt;&amp;&quot;x&quot;" in html
     assert "https://example.com/query?a=1&amp;b=&quot;two&quot;" in html
+    assert "chunk&lt;danger&gt;&amp;&quot;1&quot;" in html
+    assert ">100<" in html
+    assert ">145<" in html
     assert 'data-case-id="case-render"' in html
     assert 'data-family-id="family&lt;danger&gt;&amp;&quot;x&quot;"' in html
 
@@ -374,7 +389,7 @@ def test_render_review_queue_html_highlights_exact_targets_without_losing_source
                 answer='Alpha and "Beta"',
                 requirement_id="req-1",
                 source_id="source-1",
-                spans=((0, 5), (17, 21)),
+                spans=((0, 5), (5, 11), (17, 21)),
                 acceptable_retrieval_source_ids=("source-1",),
             ),
         ),
@@ -387,7 +402,65 @@ def test_render_review_queue_html_highlights_exact_targets_without_losing_source
     assert "Requirement req-1" in normalized
     assert "Alternative 1" in normalized
     assert 'Alpha &lt;tag&gt; and &quot;Beta&quot; &amp; Gamma.' in html
-    assert html.count('class="target-span"') == 2
+    assert html.count('class="target-span"') == 3
+    assert "</mark><mark" in html
+    assert 'data-span-start="0"' in html
+    assert 'data-span-end="5"' in html
+    assert 'data-span-start="5"' in html
+    assert 'data-span-end="11"' in html
+    assert 'data-span-start="17"' in html
+    assert 'data-span-end="21"' in html
+
+
+def test_render_review_queue_html_keeps_overlapping_alternatives_independently_auditable() -> None:
+    case = _build_case(
+        family_id="family-overlap",
+        transformation_id="overlap",
+        source_texts=('Alpha <tag> and "Beta" & Gamma.',),
+        answer='Alpha and "Beta"',
+        split="dev",
+        claims=(
+            ClaimAnnotation(
+                claim_id="claim-1",
+                answer_span=CharSpan(start=0, end=len('Alpha and "Beta"')),
+                text='Alpha and "Beta"',
+                label="entailed",
+                citation_requirements=(
+                    CitationRequirement(
+                        requirement_id="req-1",
+                        alternatives=(
+                            CitationTarget(
+                                source_id="source-1",
+                                spans=(
+                                    CharSpan(start=0, end=5),
+                                    CharSpan(start=5, end=11),
+                                ),
+                            ),
+                            CitationTarget(
+                                source_id="source-1",
+                                spans=(
+                                    CharSpan(start=0, end=11),
+                                    CharSpan(start=17, end=21),
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+                acceptable_retrieval_source_ids=("source-1",),
+            ),
+        ),
+    )
+
+    html = render_review_queue_html(build_review_queue((case,)))
+    normalized = _normalize_space(_strip_tags(html))
+
+    assert normalized.count('Alpha <tag> and "Beta" & Gamma.') >= 3
+    assert "Alternative 1" in normalized
+    assert "Alternative 2" in normalized
+    assert html.count('data-span-start="0"') >= 2
+    assert html.count('data-span-end="11"') >= 2
+    assert 'data-span-start="17"' in html
+    assert 'data-span-end="21"' in html
 
 
 def test_review_completion_counts_and_gate_rules_distinguish_current_stale_and_incomplete_states() -> None:
