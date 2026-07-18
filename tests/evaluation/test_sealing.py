@@ -14,7 +14,7 @@ import pytest
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
-from evaluation.canonical import canonical_json_bytes
+from evaluation.canonical import canonical_json_bytes, sha256_hex
 from evaluation.review import ReviewLedger, make_review_record
 from evaluation.schema import EvaluationCase
 
@@ -141,6 +141,116 @@ def test_verify_public_manifest_rejects_noncanonical_hash_signature_count_schema
 
     payload = json.loads(manifest_path.read_text(encoding="utf-8"))
     manifest_path.write_text(json.dumps(payload, indent=2, sort_keys=False), encoding="utf-8")
+    with pytest.raises(ValueError, match="canonical JSON"):
+        verify_public_manifest(
+            manifest_path,
+            ciphertext_path=ciphertext_path,
+            public_key_path=public_key_path,
+        )
+
+
+@pytest.mark.parametrize(
+    ("field_name", "field_value", "message"),
+    (
+        ("dataset_version", "9.9.9", "dataset_version"),
+        ("schema_version", "9.9.9", "schema_version"),
+    ),
+)
+def test_verify_public_manifest_rejects_envelope_manifest_version_mismatches_even_when_hash_and_signature_match(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    field_name: str,
+    field_value: str,
+    message: str,
+) -> None:
+    from evaluation.sealing import seal_holdout, verify_public_manifest
+
+    cases = _build_holdout_cases()
+    ledger = _approved_review_ledger(cases)
+    public_key_path = tmp_path / "attestation-public.pem"
+    _install_signing_keys(tmp_path, monkeypatch, public_key_path=public_key_path)
+
+    ciphertext_path = tmp_path / "holdout.sealed.json"
+    manifest_path = tmp_path / "holdout.public.json"
+    seal_holdout(
+        cases,
+        ledger=ledger,
+        ciphertext_path=ciphertext_path,
+        public_manifest_path=manifest_path,
+        public_key_path=public_key_path,
+        generated_at="2026-07-18",
+    )
+
+    envelope_payload = json.loads(ciphertext_path.read_text(encoding="utf-8"))
+    envelope_payload[field_name] = field_value
+    ciphertext_path.write_bytes(canonical_json_bytes(envelope_payload))
+
+    manifest_payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest_payload["ciphertext_sha256"] = sha256_hex(ciphertext_path.read_bytes())
+    _resign_manifest_payload(tmp_path / "attestation-private.pem", manifest_payload)
+    manifest_path.write_bytes(canonical_json_bytes(manifest_payload))
+
+    with pytest.raises(ValueError, match=message):
+        verify_public_manifest(
+            manifest_path,
+            ciphertext_path=ciphertext_path,
+            public_key_path=public_key_path,
+        )
+
+
+def test_verify_public_manifest_rejects_malformed_and_noncanonical_envelopes(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from evaluation.sealing import seal_holdout, verify_public_manifest
+
+    cases = _build_holdout_cases()
+    ledger = _approved_review_ledger(cases)
+    public_key_path = tmp_path / "attestation-public.pem"
+    _install_signing_keys(tmp_path, monkeypatch, public_key_path=public_key_path)
+
+    ciphertext_path = tmp_path / "holdout.sealed.json"
+    manifest_path = tmp_path / "holdout.public.json"
+    seal_holdout(
+        cases,
+        ledger=ledger,
+        ciphertext_path=ciphertext_path,
+        public_manifest_path=manifest_path,
+        public_key_path=public_key_path,
+        generated_at="2026-07-18",
+    )
+
+    ciphertext_path.write_text("[]", encoding="utf-8")
+    malformed_manifest_payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    malformed_manifest_payload["ciphertext_sha256"] = sha256_hex(ciphertext_path.read_bytes())
+    _resign_manifest_payload(tmp_path / "attestation-private.pem", malformed_manifest_payload)
+    manifest_path.write_bytes(canonical_json_bytes(malformed_manifest_payload))
+
+    with pytest.raises(ValueError, match="sealed holdout envelope"):
+        verify_public_manifest(
+            manifest_path,
+            ciphertext_path=ciphertext_path,
+            public_key_path=public_key_path,
+        )
+
+    seal_holdout(
+        cases,
+        ledger=ledger,
+        ciphertext_path=ciphertext_path,
+        public_manifest_path=manifest_path,
+        public_key_path=public_key_path,
+        generated_at="2026-07-18",
+    )
+    envelope_payload = json.loads(ciphertext_path.read_text(encoding="utf-8"))
+    ciphertext_path.write_text(
+        json.dumps(envelope_payload, indent=2, sort_keys=False),
+        encoding="utf-8",
+    )
+    noncanonical_manifest_payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+    noncanonical_manifest_payload["ciphertext_sha256"] = sha256_hex(ciphertext_path.read_bytes())
+    _resign_manifest_payload(tmp_path / "attestation-private.pem", noncanonical_manifest_payload)
+    manifest_path.write_bytes(canonical_json_bytes(noncanonical_manifest_payload))
+
     with pytest.raises(ValueError, match="canonical JSON"):
         verify_public_manifest(
             manifest_path,
@@ -464,6 +574,48 @@ def test_seal_holdout_redacts_public_manifest_and_avoids_partial_publication_on_
     assert not failing_manifest_path.exists()
 
 
+def test_seal_holdout_rolls_back_if_public_manifest_replace_fails(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from evaluation.sealing import seal_holdout
+
+    cases = _build_holdout_cases()
+    ledger = _approved_review_ledger(cases)
+    public_key_path = tmp_path / "attestation-public.pem"
+    _install_signing_keys(tmp_path, monkeypatch, public_key_path=public_key_path)
+
+    ciphertext_path = tmp_path / "holdout.sealed.json"
+    manifest_path = tmp_path / "holdout.public.json"
+    ciphertext_path.write_bytes(b"ciphertext-old")
+    manifest_path.write_bytes(b"manifest-old")
+
+    original_replace = os.replace
+    call_count = {"value": 0}
+
+    def failing_replace(src: str | os.PathLike[str], dst: str | os.PathLike[str]) -> None:
+        call_count["value"] += 1
+        if call_count["value"] == 4:
+            raise RuntimeError("simulated manifest replace failure")
+        original_replace(src, dst)
+
+    monkeypatch.setattr(os, "replace", failing_replace)
+
+    with pytest.raises(RuntimeError, match="manifest replace failure"):
+        seal_holdout(
+            cases,
+            ledger=ledger,
+            ciphertext_path=ciphertext_path,
+            public_manifest_path=manifest_path,
+            public_key_path=public_key_path,
+            generated_at="2026-07-18",
+        )
+
+    assert ciphertext_path.read_bytes() == b"ciphertext-old"
+    assert manifest_path.read_bytes() == b"manifest-old"
+    assert not any(path.name.startswith(".holdout") for path in tmp_path.iterdir())
+
+
 def test_sealing_cli_uses_env_keys_and_verifies_public_manifest(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -695,3 +847,15 @@ def _install_signing_keys(
 
     monkeypatch.setenv("CITE_RIGHT_HOLDOUT_KEY_FILE", str(holdout_key_path))
     monkeypatch.setenv("CITE_RIGHT_ATTESTATION_KEY_FILE", str(private_key_path))
+
+
+def _resign_manifest_payload(private_key_path: Path, manifest_payload: dict[str, object]) -> None:
+    private_key = serialization.load_pem_private_key(
+        private_key_path.read_bytes(),
+        password=None,
+    )
+    assert isinstance(private_key, Ed25519PrivateKey)
+    unsigned_payload = {key: value for key, value in manifest_payload.items() if key != "signature"}
+    manifest_payload["signature"] = base64.b64encode(
+        private_key.sign(canonical_json_bytes(unsigned_payload))
+    ).decode("ascii")

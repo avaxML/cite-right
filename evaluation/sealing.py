@@ -250,6 +250,16 @@ def verify_public_manifest(
         public_key.verify(signature, _public_attestation_bytes(manifest))
     except InvalidSignature as exc:
         raise ValueError("public manifest signature verification failed") from exc
+
+    envelope = _load_canonical_envelope(Path(ciphertext_path), ciphertext_bytes)
+    if envelope.dataset_version != manifest.dataset_version:
+        raise ValueError(
+            "sealed holdout envelope dataset_version does not match the signed public manifest"
+        )
+    if envelope.schema_version != manifest.schema_version:
+        raise ValueError(
+            "sealed holdout envelope schema_version does not match the signed public manifest"
+        )
     return manifest
 
 
@@ -446,12 +456,19 @@ def _write_artifacts_atomically(
     public_manifest_bytes: bytes,
 ) -> None:
     temp_paths: list[str] = []
+    backup_paths: list[Path] = []
+    rollback_paths: list[tuple[Path, Path | None]] = []
+    committed = False
     parents = {ciphertext_path.parent, public_manifest_path.parent}
     for parent in parents:
         if not parent.exists():
             raise FileNotFoundError(f"artifact parent directory does not exist: {parent}")
     try:
-        ciphertext_temp = _write_temp_file(ciphertext_path.parent, ciphertext_path.name, ciphertext_bytes)
+        ciphertext_temp = _write_temp_file(
+            ciphertext_path.parent,
+            ciphertext_path.name,
+            ciphertext_bytes,
+        )
         temp_paths.append(ciphertext_temp)
         manifest_temp = _write_temp_file(
             public_manifest_path.parent,
@@ -459,17 +476,56 @@ def _write_artifacts_atomically(
             public_manifest_bytes,
         )
         temp_paths.append(manifest_temp)
+
+        ciphertext_backup = _backup_existing_path(ciphertext_path)
+        if ciphertext_backup is not None:
+            backup_paths.append(ciphertext_backup)
+        rollback_paths.append((ciphertext_path, ciphertext_backup))
         os.replace(ciphertext_temp, ciphertext_path)
         _fsync_directory(ciphertext_path.parent)
+
+        manifest_backup = _backup_existing_path(public_manifest_path)
+        if manifest_backup is not None:
+            backup_paths.append(manifest_backup)
+        rollback_paths.append((public_manifest_path, manifest_backup))
         os.replace(manifest_temp, public_manifest_path)
         _fsync_directory(public_manifest_path.parent)
-        temp_paths.clear()
+        committed = True
+    except Exception:
+        for target_path, backup_path in reversed(rollback_paths):
+            if backup_path is None:
+                try:
+                    target_path.unlink()
+                except FileNotFoundError:
+                    pass
+                continue
+            try:
+                if backup_path.exists():
+                    os.replace(backup_path, target_path)
+            except FileNotFoundError:
+                pass
+        raise
     finally:
         for temp_path in temp_paths:
             try:
                 os.unlink(temp_path)
             except FileNotFoundError:
                 pass
+        if committed:
+            for backup_path in backup_paths:
+                try:
+                    backup_path.unlink()
+                except FileNotFoundError:
+                    pass
+
+
+def _backup_existing_path(path: Path) -> Path | None:
+    if not path.exists():
+        return None
+    backup_fd, backup_name = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.bak.")
+    os.close(backup_fd)
+    os.replace(path, backup_name)
+    return Path(backup_name)
 
 
 def _write_temp_file(parent: Path, name: str, payload: bytes) -> str:
