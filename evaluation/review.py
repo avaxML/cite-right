@@ -785,7 +785,15 @@ def _render_source_blocks(source: Source, claim: ClaimAnnotation) -> list[str]:
                             f"<div class=\"label\">Requirement {escape(requirement.requirement_id)}"
                             f" | Alternative {alternative_index} | Source {escape(source.source_id)}</div>"
                         ),
-                        f"<pre>{_highlight_source_text(source.text, alternative.spans)}</pre>",
+                        "<pre>"
+                        + _highlight_source_text(
+                            source.text,
+                            alternative.spans,
+                            source_id=source.source_id,
+                            requirement_id=requirement.requirement_id,
+                            alternative_index=alternative_index,
+                        )
+                        + "</pre>",
                         "</div>",
                     )
                 )
@@ -793,7 +801,14 @@ def _render_source_blocks(source: Source, claim: ClaimAnnotation) -> list[str]:
     return lines
 
 
-def _highlight_source_text(text: str, spans: Sequence[CharSpan]) -> str:
+def _highlight_source_text(
+    text: str,
+    spans: Sequence[CharSpan],
+    *,
+    source_id: str,
+    requirement_id: str,
+    alternative_index: int,
+) -> str:
     ordered = tuple(sorted((span.start, span.end) for span in spans))
     if not ordered:
         return escape(text)
@@ -803,7 +818,13 @@ def _highlight_source_text(text: str, spans: Sequence[CharSpan]) -> str:
     for index, (start, end) in enumerate(ordered, start=1):
         parts.append(escape(text[cursor:start]))
         parts.append(
-            f"<mark class=\"target-span\" data-span-index=\"{index}\">{escape(text[start:end])}</mark>"
+            (
+                f"<mark class=\"target-span\" data-span-index=\"{index}\" "
+                f"data-span-start=\"{start}\" data-span-end=\"{end}\" "
+                f"data-source-id=\"{escape(source_id)}\" "
+                f"data-requirement-id=\"{escape(requirement_id)}\" "
+                f"data-alternative-index=\"{alternative_index}\">{escape(text[start:end])}</mark>"
+            )
         )
         cursor = end
     parts.append(escape(text[cursor:]))
