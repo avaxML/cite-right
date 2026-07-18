@@ -640,6 +640,71 @@ def test_seal_holdout_rolls_back_if_public_manifest_replace_fails_and_fsyncs_rol
         assert fsync_calls[1:] == [manifest_dir, ciphertext_dir]
 
 
+@pytest.mark.parametrize("shared_parent", [True, False])
+def test_seal_holdout_preserves_backups_if_rollback_restore_fails(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    shared_parent: bool,
+) -> None:
+    import evaluation.sealing as sealing
+
+    cases = _build_holdout_cases()
+    ledger = _approved_review_ledger(cases)
+    public_key_path = tmp_path / "attestation-public.pem"
+    _install_signing_keys(tmp_path, monkeypatch, public_key_path=public_key_path)
+
+    if shared_parent:
+        ciphertext_dir = tmp_path
+        manifest_dir = tmp_path
+    else:
+        ciphertext_dir = tmp_path / "ciphertext"
+        manifest_dir = tmp_path / "manifest"
+        ciphertext_dir.mkdir()
+        manifest_dir.mkdir()
+
+    ciphertext_path = ciphertext_dir / "holdout.sealed.json"
+    manifest_path = manifest_dir / "holdout.public.json"
+    ciphertext_path.write_bytes(b"ciphertext-old")
+    manifest_path.write_bytes(b"manifest-old")
+
+    original_replace = os.replace
+    call_count = {"value": 0}
+
+    def failing_replace(src: str | os.PathLike[str], dst: str | os.PathLike[str]) -> None:
+        call_count["value"] += 1
+        if call_count["value"] == 4:
+            raise RuntimeError("simulated manifest replace failure")
+        if call_count["value"] == 5:
+            raise RuntimeError("simulated rollback restore failure")
+        original_replace(src, dst)
+
+    monkeypatch.setattr(os, "replace", failing_replace)
+
+    with pytest.raises(sealing.ArtifactPublicationRollbackError) as exc_info:
+        sealing.seal_holdout(
+            cases,
+            ledger=ledger,
+            ciphertext_path=ciphertext_path,
+            public_manifest_path=manifest_path,
+            public_key_path=public_key_path,
+            generated_at="2026-07-18",
+        )
+
+    assert "simulated manifest replace failure" in str(exc_info.value)
+    assert "simulated rollback restore failure" in str(exc_info.value)
+    assert ".bak." in str(exc_info.value)
+    assert exc_info.value.recoverable_backup_paths
+
+    backup_paths = tuple(Path(path) for path in exc_info.value.recoverable_backup_paths)
+    assert all(path.exists() for path in backup_paths)
+    assert ciphertext_path.read_bytes() != b"ciphertext-old"
+    assert not manifest_path.exists()
+    for backup_path in backup_paths:
+        backup_bytes = backup_path.read_bytes()
+        assert backup_bytes in {b"ciphertext-old", b"manifest-old"}
+    assert not any(".tmp." in path.name for path in tmp_path.rglob("*"))
+
+
 def test_sealing_cli_uses_env_keys_and_verifies_public_manifest(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

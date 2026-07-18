@@ -39,6 +39,25 @@ AESGCM_NONCE_BYTES = 12
 DEFAULT_PUBLIC_KEY_PATH = Path("evaluation/data/v1/holdout_public_key.pem")
 
 
+class ArtifactPublicationRollbackError(RuntimeError):
+    def __init__(
+        self,
+        *,
+        original_error: BaseException,
+        rollback_error: BaseException,
+        recoverable_backup_paths: tuple[str, ...],
+    ) -> None:
+        self.original_error = original_error
+        self.rollback_error = rollback_error
+        self.recoverable_backup_paths = recoverable_backup_paths
+        backup_display = ", ".join(recoverable_backup_paths) or "none"
+        super().__init__(
+            "holdout artifact publication failed and rollback was incomplete; "
+            f"publication_error={original_error}; rollback_error={rollback_error}; "
+            f"recoverable_backups={backup_display}"
+        )
+
+
 class SealedHoldoutEnvelope(BaseModel):
     model_config = STRICT_MODEL_CONFIG
 
@@ -458,6 +477,7 @@ def _write_artifacts_atomically(
     temp_paths: list[str] = []
     backup_paths: list[Path] = []
     rollback_paths: list[tuple[Path, Path | None]] = []
+    cleanup_backups = False
     parents = {ciphertext_path.parent, public_manifest_path.parent}
     for parent in parents:
         if not parent.exists():
@@ -489,6 +509,7 @@ def _write_artifacts_atomically(
         rollback_paths.append((public_manifest_path, manifest_backup))
         os.replace(manifest_temp, public_manifest_path)
         _fsync_directory(public_manifest_path.parent)
+        cleanup_backups = True
     except Exception as original_exc:
         rollback_parent_order: list[Path] = []
         rollback_parent_seen: set[Path] = set()
@@ -514,8 +535,18 @@ def _write_artifacts_atomically(
                     continue
             for rollback_parent in rollback_parent_order:
                 _fsync_directory(rollback_parent)
+            cleanup_backups = True
         except Exception as rollback_exc:
-            raise rollback_exc from original_exc
+            recoverable_backup_paths = tuple(
+                str(path)
+                for path in backup_paths
+                if path.exists()
+            )
+            raise ArtifactPublicationRollbackError(
+                original_error=original_exc,
+                rollback_error=rollback_exc,
+                recoverable_backup_paths=recoverable_backup_paths,
+            ) from rollback_exc
         raise
     finally:
         for temp_path in temp_paths:
@@ -523,11 +554,12 @@ def _write_artifacts_atomically(
                 os.unlink(temp_path)
             except FileNotFoundError:
                 pass
-        for backup_path in backup_paths:
-            try:
-                backup_path.unlink()
-            except FileNotFoundError:
-                pass
+        if cleanup_backups:
+            for backup_path in backup_paths:
+                try:
+                    backup_path.unlink()
+                except FileNotFoundError:
+                    pass
 
 
 def _backup_existing_path(path: Path) -> Path | None:
