@@ -661,11 +661,228 @@ def test_smoke_worker_runs_in_a_bounded_isolated_process_without_downloads() -> 
     assert payload["failures"] == []
 
 
+def test_compare_smoke_command_reports_canonical_deltas_for_matching_artifacts(
+    tmp_path: Path,
+) -> None:
+    _performance_module_or_skip()
+
+    left_path = tmp_path / "left.json"
+    right_path = tmp_path / "right.json"
+    left_payload = _smoke_artifact_payload(
+        backend="python",
+        correctness_hash="c" * 64,
+        protocol_hash="p" * 64,
+        workload_hash="w" * 64,
+        raw_samples_ns=[100, 120, 140],
+    )
+    right_payload = _smoke_artifact_payload(
+        backend="python",
+        correctness_hash="c" * 64,
+        protocol_hash="p" * 64,
+        workload_hash="w" * 64,
+        raw_samples_ns=[80, 100, 160],
+    )
+    left_path.write_bytes(canonical_json_bytes(left_payload))
+    right_path.write_bytes(canonical_json_bytes(right_payload))
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "evaluation.performance",
+            "compare-smoke",
+            str(left_path),
+            str(right_path),
+        ],
+        cwd=Path(__file__).resolve().parents[2],
+        env=_offline_subprocess_env(),
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=20,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stderr == ""
+    payload = json.loads(result.stdout)
+    assert payload["ok"] is True
+    assert payload["left"] == str(left_path)
+    assert payload["right"] == str(right_path)
+    assert payload["correctness_hash"] == left_payload["correctness_hash"]
+    assert payload["protocol_hash"] == left_payload["protocol_hash"]
+    assert payload["workload_hash"] == left_payload["workload_hash"]
+    assert payload["backend"] == "python"
+    assert payload["raw_samples_ns"]["left"] == [100, 120, 140]
+    assert payload["raw_samples_ns"]["right"] == [80, 100, 160]
+    assert payload["timing"]["median_delta_ns"] == -20
+    assert payload["timing"]["median_ratio"] == pytest.approx(100 / 120)
+    assert payload["timing"]["mean_delta_ns"] == pytest.approx((-20) / 3)
+    assert payload["timing"]["mean_ratio"] == pytest.approx((340 / 3) / 120)
+    assert payload["timing"]["variance_delta_ns"] == pytest.approx((3200 / 3) - (800 / 9))
+    assert canonical_json_bytes(payload) == result.stdout.encode("utf-8")
+
+
+def test_compare_smoke_command_exits_one_with_structured_stderr_for_mismatched_hashes(
+    tmp_path: Path,
+) -> None:
+    _performance_module_or_skip()
+
+    left_path = tmp_path / "left.json"
+    right_path = tmp_path / "right.json"
+    left_path.write_bytes(
+        canonical_json_bytes(
+            _smoke_artifact_payload(
+                backend="python",
+                correctness_hash="c" * 64,
+                protocol_hash="p" * 64,
+                workload_hash="w" * 64,
+                raw_samples_ns=[100, 120, 140],
+            )
+        )
+    )
+    right_path.write_bytes(
+        canonical_json_bytes(
+            _smoke_artifact_payload(
+                backend="python",
+                correctness_hash="d" * 64,
+                protocol_hash="p" * 64,
+                workload_hash="w" * 64,
+                raw_samples_ns=[100, 120, 140],
+            )
+        )
+    )
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "evaluation.performance",
+            "compare-smoke",
+            str(left_path),
+            str(right_path),
+        ],
+        cwd=Path(__file__).resolve().parents[2],
+        env=_offline_subprocess_env(),
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=20,
+    )
+
+    assert result.returncode == 1
+    assert result.stdout == ""
+    payload = json.loads(result.stderr)
+    assert payload["ok"] is False
+    assert payload["error"]["type"] in {"ValueError", "RuntimeError"}
+    assert "correctness_hash" in payload["error"]["message"]
+
+
+def test_compare_smoke_command_exits_one_with_structured_stderr_for_malformed_artifact(
+    tmp_path: Path,
+) -> None:
+    _performance_module_or_skip()
+
+    left_path = tmp_path / "left.json"
+    right_path = tmp_path / "right.json"
+    left_path.write_text("{not-json", encoding="utf-8")
+    right_path.write_bytes(
+        canonical_json_bytes(
+            _smoke_artifact_payload(
+                backend="python",
+                correctness_hash="c" * 64,
+                protocol_hash="p" * 64,
+                workload_hash="w" * 64,
+                raw_samples_ns=[100, 120, 140],
+            )
+        )
+    )
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "evaluation.performance",
+            "compare-smoke",
+            str(left_path),
+            str(right_path),
+        ],
+        cwd=Path(__file__).resolve().parents[2],
+        env=_offline_subprocess_env(),
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=20,
+    )
+
+    assert result.returncode == 1
+    assert result.stdout == ""
+    payload = json.loads(result.stderr)
+    assert payload["ok"] is False
+    assert payload["error"]["type"] in {"JSONDecodeError", "ValueError"}
+    assert "traceback" not in payload["error"]["message"].lower()
+
+
 def _performance_module_or_skip() -> Any:
     return pytest.importorskip(
         "evaluation.performance",
         reason="evaluation.performance is not implemented yet",
     )
+
+
+def _offline_subprocess_env() -> dict[str, str]:
+    env = dict(os.environ)
+    env["PYTHONPATH"] = str(Path(__file__).resolve().parents[2])
+    env["HF_HUB_OFFLINE"] = "1"
+    env["TRANSFORMERS_OFFLINE"] = "1"
+    env["CITE_RIGHT_DISABLE_MODEL_DOWNLOADS"] = "1"
+    return env
+
+
+def _smoke_artifact_payload(
+    *,
+    backend: str,
+    correctness_hash: str,
+    protocol_hash: str,
+    workload_hash: str,
+    raw_samples_ns: list[int],
+) -> dict[str, Any]:
+    return {
+        "backend": backend,
+        "correctness_hash": correctness_hash,
+        "protocol_hash": protocol_hash,
+        "workload_hash": workload_hash,
+        "warmup_count": 1,
+        "trial_count": len(raw_samples_ns),
+        "raw_samples_ns": raw_samples_ns,
+        "failures": [],
+        "workload": {
+            "strata": [
+                "one_shot",
+                "prepared",
+                "small_candidates",
+                "medium_candidates",
+                "large_candidates",
+                "short_sources",
+                "long_sources",
+                "single_sentence_answers",
+                "multi_sentence_answers",
+                "embeddings_off",
+                "embeddings_on",
+            ],
+            "selected_case_ids": [
+                "python:embeddings-off:one-shot:small:short:single",
+                "python:embeddings-on:prepared:medium:long:multi",
+            ],
+            "selected_backend_ids": [backend],
+        },
+        "environment": {
+            "python_version": platform.python_version(),
+            "platform": platform.platform(),
+            "cpu": platform.processor(),
+            "git_revision": "f" * 40,
+            "dependencies": {"pydantic": "2.0.0"},
+        },
+    }
 
 
 def _sample_measurement(

@@ -19,7 +19,7 @@ from evaluation.tuning_bundle import worker_launch_spec
 from tests.evaluation.test_tuning_bundle import _write_dataset_fixture
 
 
-def test_cli_help_lists_exact_six_foundational_commands() -> None:
+def test_cli_help_lists_exact_seven_commands() -> None:
     result = subprocess.run(
         [sys.executable, "-m", "evaluation.cli", "--help"],
         check=False,
@@ -34,11 +34,112 @@ def test_cli_help_lists_exact_six_foundational_commands() -> None:
         "verify-public-manifest",
         "build-tuning-bundle",
         "promote",
+        "performance-smoke",
     ]
     command_block = result.stdout.split("{", 1)[1].split("}", 1)[0].split(",")
     assert command_block == commands
     for command in commands:
         assert command in result.stdout
+
+
+def test_performance_smoke_command_writes_requested_canonical_artifact_and_structured_stdout(
+    tmp_path: Path,
+) -> None:
+    output_path = tmp_path / "performance-smoke.json"
+    result = subprocess.run(
+        [sys.executable, "-m", "evaluation.cli", "performance-smoke", "--output", str(output_path)],
+        cwd=Path(__file__).resolve().parents[2],
+        env=_offline_subprocess_env(),
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=20,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stderr == ""
+    stdout_payload = json.loads(result.stdout)
+    assert stdout_payload["ok"] is True
+    assert stdout_payload["command"] == "performance-smoke"
+    assert stdout_payload["output"] == str(output_path)
+
+    artifact = json.loads(output_path.read_text(encoding="utf-8"))
+    assert artifact["backend"] in {"python", "rust"}
+    assert artifact["backend"] == stdout_payload["backend"]
+    assert artifact["correctness_hash"] == stdout_payload["correctness_hash"]
+    assert artifact["protocol_hash"] == stdout_payload["protocol_hash"]
+    assert artifact["workload_hash"] == stdout_payload["workload_hash"]
+    assert artifact["warmup_count"] >= 0
+    assert artifact["trial_count"] >= 1
+    assert artifact["raw_samples_ns"] == stdout_payload["raw_samples_ns"]
+    assert artifact["failures"] == []
+    assert artifact["workload"]["strata"] == [
+        "one_shot",
+        "prepared",
+        "small_candidates",
+        "medium_candidates",
+        "large_candidates",
+        "short_sources",
+        "long_sources",
+        "single_sentence_answers",
+        "multi_sentence_answers",
+        "embeddings_off",
+        "embeddings_on",
+    ]
+    assert artifact["workload"]["selected_case_ids"] == sorted(artifact["workload"]["selected_case_ids"])
+    assert artifact["workload"]["selected_case_ids"] == list(dict.fromkeys(artifact["workload"]["selected_case_ids"]))
+    assert set(artifact["workload"]["selected_backend_ids"]).issubset({"python", "rust"})
+    assert artifact["environment"]["git_revision"]
+    assert artifact["environment"]["python_version"]
+    assert canonical_json_bytes(artifact) == output_path.read_bytes()
+
+
+def test_performance_smoke_command_uses_repeatable_workload_and_correctness_hashes_across_runs(
+    tmp_path: Path,
+) -> None:
+    left_path = tmp_path / "left.json"
+    right_path = tmp_path / "right.json"
+
+    left = subprocess.run(
+        [sys.executable, "-m", "evaluation.cli", "performance-smoke", "--output", str(left_path)],
+        cwd=Path(__file__).resolve().parents[2],
+        env=_offline_subprocess_env(),
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=20,
+    )
+    right = subprocess.run(
+        [sys.executable, "-m", "evaluation.cli", "performance-smoke", "--output", str(right_path)],
+        cwd=Path(__file__).resolve().parents[2],
+        env=_offline_subprocess_env(),
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=20,
+    )
+
+    assert left.returncode == 0, left.stderr
+    assert right.returncode == 0, right.stderr
+
+    left_artifact = json.loads(left_path.read_text(encoding="utf-8"))
+    right_artifact = json.loads(right_path.read_text(encoding="utf-8"))
+
+    assert left_artifact["correctness_hash"] == right_artifact["correctness_hash"]
+    assert left_artifact["protocol_hash"] == right_artifact["protocol_hash"]
+    assert left_artifact["workload_hash"] == right_artifact["workload_hash"]
+    assert left_artifact["workload"] == right_artifact["workload"]
+    assert left_artifact["raw_samples_ns"] != []
+    assert right_artifact["raw_samples_ns"] != []
+
+
+def _offline_subprocess_env() -> dict[str, str]:
+    env = dict(os.environ)
+    env["PYTHONPATH"] = str(Path(__file__).resolve().parents[2])
+    env["HF_HUB_OFFLINE"] = "1"
+    env["TRANSFORMERS_OFFLINE"] = "1"
+    env["CITE_RIGHT_DISABLE_MODEL_DOWNLOADS"] = "1"
+    return env
 
 
 def test_cli_unknown_and_missing_arguments_exit_two() -> None:
