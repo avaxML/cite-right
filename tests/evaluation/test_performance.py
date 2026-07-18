@@ -966,8 +966,18 @@ def _smoke_artifact_payload(
     workload_hash: str,
     raw_samples_ns: list[int],
 ) -> dict[str, Any]:
+    ordered_samples = sorted(raw_samples_ns)
+    sample_count = len(raw_samples_ns)
+    median = float(ordered_samples[sample_count // 2])
+    duration_summary = {
+        "sample_count": sample_count,
+        "total_duration_ns": sum(raw_samples_ns),
+        "median_duration_ns": median,
+        "p95_duration_ns": ordered_samples[-1],
+    }
     return {
         "backend": backend,
+        "dataset_hash": "d" * 64,
         "correctness_hash": correctness_hash,
         "protocol_hash": protocol_hash,
         "workload_hash": workload_hash,
@@ -975,6 +985,30 @@ def _smoke_artifact_payload(
         "trial_count": len(raw_samples_ns),
         "raw_samples_ns": raw_samples_ns,
         "failures": [],
+        "scenarios": [
+            {
+                "scenario_id": f"{backend}:embeddings-off:one-shot:small:short:single",
+                "backend": backend,
+                "execution_path": "one-shot",
+                "embeddings": "off",
+                "candidate_bucket": "small",
+                "source_length": "short",
+                "answer_shape": "single",
+                "correctness_hash": "e" * 64,
+                "raw_samples_ns": raw_samples_ns,
+                "prepared_corpus": {
+                    "sample_count": sample_count,
+                    "total_duration_ns": 0,
+                    "median_duration_ns": 0.0,
+                    "p95_duration_ns": 0,
+                },
+                "answer": duration_summary,
+                "end_to_end": duration_summary,
+                "throughput_cases_per_second": sample_count * 1_000_000_000
+                / sum(raw_samples_ns),
+                "peak_memory_bytes": 1024,
+            }
+        ],
         "workload": {
             "strata": [
                 "one_shot",

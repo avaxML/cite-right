@@ -27,6 +27,7 @@ from evaluation.manifest import (
     build_private_manifest,
     verify_private_manifest_expectations,
 )
+from evaluation.performance import run_performance_smoke
 from evaluation.review import ReviewLedger, assert_review_complete, load_review_ledger
 from evaluation.schema import EvaluationCase
 from evaluation.sealing import (
@@ -104,6 +105,9 @@ def build_parser() -> argparse.ArgumentParser:
     promote_parser.add_argument("--staging", required=True)
     promote_parser.add_argument("--dataset", required=True)
 
+    performance_parser = subparsers.add_parser("performance-smoke")
+    performance_parser.add_argument("--output", required=True)
+
     return parser
 
 
@@ -141,6 +145,8 @@ def _dispatch(args: argparse.Namespace) -> dict[str, object]:
         return _command_build_tuning_bundle(dataset_dir=Path(args.dataset), output_dir=Path(args.output))
     if command == "promote":
         return _command_promote(staging_dir=Path(args.staging), dataset_dir=Path(args.dataset))
+    if command == "performance-smoke":
+        return _command_performance_smoke(output_path=Path(args.output))
     raise _CliUsageError(f"unknown command {command!r}")
 
 
@@ -319,6 +325,10 @@ def _command_promote(*, staging_dir: Path, dataset_dir: Path) -> dict[str, objec
         "dataset": str(dataset_dir),
         "staging": str(staging_dir),
     }
+
+
+def _command_performance_smoke(*, output_path: Path) -> dict[str, object]:
+    return run_performance_smoke(output_path=output_path)
 
 
 def _validate_promotion_staging(staging_root: Path) -> tuple[str, ...]:
