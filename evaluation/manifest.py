@@ -173,6 +173,8 @@ class PublicHoldoutManifest(BaseModel):
     schema_version: str
     generated_at: str | None = None
     holdout_case_count: int
+    total_claim_count: int
+    reviewed_claim_count: int
     distributions: FrozenMapping[FrozenMapping[int]]
     ciphertext_sha256: str
     public_key_fingerprint: str | None = None
@@ -241,6 +243,14 @@ class PublicHoldoutManifest(BaseModel):
             raise ValueError("public holdout expected_status distributions must use the fixed buckets")
         if tuple(sorted(self.distributions["provenance_kind"])) != tuple(sorted(PROVENANCE_KINDS)):
             raise ValueError("public holdout provenance_kind distributions must use the fixed buckets")
+        if self.total_claim_count < 0:
+            raise ValueError("public holdout total_claim_count must be non-negative")
+        if self.reviewed_claim_count < 0:
+            raise ValueError("public holdout reviewed_claim_count must be non-negative")
+        if self.reviewed_claim_count > self.total_claim_count:
+            raise ValueError(
+                "public holdout reviewed_claim_count must not exceed total_claim_count"
+            )
         return self
 
 
@@ -323,15 +333,29 @@ def build_public_holdout_manifest(
     private_manifest: DatasetManifest,
     *,
     ciphertext_sha256: str,
+    total_claim_count: int | None = None,
+    reviewed_claim_count: int | None = None,
     public_key_fingerprint: str | None = None,
     signature: str | None = None,
 ) -> PublicHoldoutManifest:
     holdout_distributions = private_manifest.distributions["holdout"]
+    resolved_total_claim_count = (
+        total_claim_count
+        if total_claim_count is not None
+        else sum(_int_value(count) for count in holdout_distributions["expected_status"].values())
+    )
+    resolved_reviewed_claim_count = (
+        reviewed_claim_count
+        if reviewed_claim_count is not None
+        else resolved_total_claim_count
+    )
     return PublicHoldoutManifest(
         dataset_version=private_manifest.dataset_version,
         schema_version=private_manifest.schema_version,
         generated_at=private_manifest.generated_at,
         holdout_case_count=private_manifest.split_case_counts["holdout"],
+        total_claim_count=resolved_total_claim_count,
+        reviewed_claim_count=resolved_reviewed_claim_count,
         distributions=cast(
             FrozenMapping[FrozenMapping[int]],
             _freeze_two_level_int_mapping(

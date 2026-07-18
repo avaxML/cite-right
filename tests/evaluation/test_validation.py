@@ -6,7 +6,7 @@ from collections import Counter
 from collections.abc import Mapping
 from copy import deepcopy
 from datetime import date
-from typing import Any, cast
+from typing import Any, TypedDict, cast
 
 import pytest
 from pydantic import ValidationError
@@ -1072,7 +1072,13 @@ def _manifest_fixture() -> tuple[DatasetManifest, tuple[EvaluationCase, ...]]:
     return build_private_manifest(assigned, generated_at="2026-07-17"), assigned
 
 
-def _valid_public_manifest_kwargs() -> dict[str, str]:
+class _PublicManifestKwargs(TypedDict):
+    ciphertext_sha256: str
+    public_key_fingerprint: str
+    signature: str
+
+
+def _valid_public_manifest_kwargs() -> _PublicManifestKwargs:
     return {
         "ciphertext_sha256": _VALID_SHA256,
         "public_key_fingerprint": _VALID_FINGERPRINT,
