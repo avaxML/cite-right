@@ -1081,27 +1081,67 @@ def _valid_public_manifest_kwargs() -> dict[str, str]:
 
 
 def _assert_private_manifest_is_deeply_immutable(manifest: DatasetManifest) -> None:
-    with pytest.raises(TypeError):
-        cast(Any, manifest.split_sha256)["train"] = "0" * 64
-    with pytest.raises(TypeError):
-        cast(Any, manifest.split_case_counts)["train"] = 0
-    with pytest.raises(TypeError):
-        cast(Any, manifest.distributions)["secret"] = {"domain": {}}
-    with pytest.raises(TypeError):
-        cast(Any, manifest.distributions["overall"])["domain"] = {}
-    with pytest.raises(TypeError):
-        cast(Any, manifest.distributions["overall"]["domain"])["science"] = 0
-    with pytest.raises(TypeError):
-        cast(Any, manifest.review_state_counts)["secret"] = {"missing": 1}
-    with pytest.raises(TypeError):
-        cast(Any, manifest.review_state_counts["overall"])["missing"] = 0
+    _assert_frozen_mapping_contract(manifest.split_sha256, sample_key="train")
+    _assert_frozen_mapping_contract(manifest.split_case_counts, sample_key="train")
+    _assert_frozen_mapping_contract(manifest.distributions, sample_key="overall")
+    _assert_frozen_mapping_contract(
+        manifest.distributions["overall"],
+        sample_key="domain",
+    )
+    _assert_frozen_mapping_contract(
+        manifest.distributions["overall"]["domain"],
+        sample_key="science",
+    )
+    _assert_frozen_mapping_contract(manifest.review_state_counts, sample_key="overall")
+    _assert_frozen_mapping_contract(
+        manifest.review_state_counts["overall"],
+        sample_key="missing",
+    )
 
 
 def _assert_public_manifest_is_deeply_immutable(manifest: PublicHoldoutManifest) -> None:
+    _assert_frozen_mapping_contract(manifest.distributions, sample_key="domain")
+    _assert_frozen_mapping_contract(
+        manifest.distributions["domain"],
+        sample_key="science",
+    )
+
+
+def _read_lookup(mapping: Any) -> object:
+    return mapping._lookup
+
+
+def _assign_items(mapping: Any) -> None:
+    mapping._items = ()
+
+
+def _delete_items(mapping: Any) -> None:
+    del mapping._items
+
+
+def _assert_frozen_mapping_contract(mapping: Any, *, sample_key: str) -> None:
+    baseline_items = tuple(mapping.items())
+    baseline_keys = tuple(iter(mapping))
+    baseline_hash = hash(mapping)
+    baseline_repr = repr(mapping)
+    baseline_dump = mapping.to_dict()
+    assert mapping[sample_key] == dict(baseline_items)[sample_key]
+    assert mapping == dict(baseline_items)
+    with pytest.raises(AttributeError):
+        _read_lookup(mapping)
     with pytest.raises(TypeError):
-        cast(Any, manifest.distributions)["secret"] = {}
+        _assign_items(mapping)
     with pytest.raises(TypeError):
-        cast(Any, manifest.distributions["domain"])["science"] = 0
+        _delete_items(mapping)
+    with pytest.raises(TypeError):
+        cast(Any, mapping)[sample_key] = object()
+    with pytest.raises(TypeError):
+        del cast(Any, mapping)[sample_key]
+    assert tuple(mapping.items()) == baseline_items
+    assert tuple(iter(mapping)) == baseline_keys
+    assert hash(mapping) == baseline_hash
+    assert repr(mapping) == baseline_repr
+    assert mapping.to_dict() == baseline_dump
 
 
 def _make_valid_case_mapping(*, case_id: str) -> dict[str, Any]:

@@ -54,22 +54,29 @@ _ValueT = TypeVar("_ValueT")
 class FrozenMapping(Mapping[str, _ValueT], Generic[_ValueT]):
     """Concrete immutable mapping preserved by Pydantic validation."""
 
-    __slots__ = ("_items", "_lookup")
+    __slots__ = ("_items",)
     _items: tuple[tuple[str, _ValueT], ...]
-    _lookup: dict[str, _ValueT]
 
     def __init__(self, items: Mapping[str, object]) -> None:
         tuple_items = tuple((key, cast(_ValueT, value)) for key, value in items.items())
-        self._items = tuple_items
-        self._lookup = dict(tuple_items)
-        if len(self._lookup) != len(self._items):
+        if len({key for key, _ in tuple_items}) != len(tuple_items):
             raise ValueError("frozen mappings must not contain duplicate keys")
+        object.__setattr__(self, "_items", tuple_items)
+
+    def __setattr__(self, name: str, value: object) -> None:
+        raise TypeError(f"{self.__class__.__name__} is immutable")
+
+    def __delattr__(self, name: str) -> None:
+        raise TypeError(f"{self.__class__.__name__} is immutable")
 
     def __getitem__(self, key: str) -> _ValueT:
-        return self._lookup[key]
+        for item_key, item_value in self._items:
+            if item_key == key:
+                return item_value
+        raise KeyError(key)
 
     def __iter__(self) -> Iterator[str]:
-        return iter(self._lookup)
+        return (key for key, _ in self._items)
 
     def __len__(self) -> int:
         return len(self._items)
