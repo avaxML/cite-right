@@ -4,6 +4,8 @@ import dataclasses
 import json
 import os
 import stat
+import subprocess
+import sys
 from datetime import date
 from pathlib import Path
 
@@ -254,20 +256,107 @@ def test_load_tuning_bundle_returns_immutable_train_dev_only_object(
 
 
 def test_worker_launch_spec_scrubs_sensitive_environment_variables(tmp_path: Path) -> None:
+    bundle_dir = tmp_path / "bundle"
+    bundle_dir.mkdir()
+    (bundle_dir / "manifest.json").write_text("{}", encoding="utf-8")
+    (bundle_dir / "train.json").write_text("[]", encoding="utf-8")
+    (bundle_dir / "dev.json").write_text("[]", encoding="utf-8")
+    with pytest.raises(ValueError):
+        worker_launch_spec(
+            bundle_dir,
+            base_env={
+                "PATH": os.environ.get("PATH", ""),
+                "PYTHONPATH": "/tmp/untrusted",
+                "PYTHONSAFEPATH": "0",
+                "CITE_RIGHT_HOLDOUT_KEY_FILE": "/secret/holdout.key",
+                "CITE_RIGHT_ATTESTATION_KEY_FILE": "/secret/attestation.pem",
+            },
+        )
+
+
+def test_worker_launch_spec_launches_repo_worker_from_bundle_cwd(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    dataset_dir, _ = _write_dataset_fixture(tmp_path, monkeypatch)
+    bundle_dir = tmp_path / "tuning"
+    build_tuning_bundle(dataset_dir, bundle_dir)
+
     spec = worker_launch_spec(
-        tmp_path / "bundle",
+        bundle_dir,
         base_env={
             "PATH": os.environ.get("PATH", ""),
+            "PYTHONPATH": "/tmp/untrusted",
+            "PYTHONSAFEPATH": "0",
             "CITE_RIGHT_HOLDOUT_KEY_FILE": "/secret/holdout.key",
             "CITE_RIGHT_ATTESTATION_KEY_FILE": "/secret/attestation.pem",
         },
     )
 
     assert spec.command[1:] == ("-m", "evaluation.worker")
-    assert spec.cwd == tmp_path / "bundle"
-    assert spec.env["PYTHONPATH"].endswith("/Users/lsv5tim/Projects/cite-right")
+    assert spec.command[0] == sys.executable
+    assert spec.cwd == bundle_dir
+    assert spec.env["PYTHONPATH"] == str(Path(__file__).resolve().parents[2])
+    assert spec.env["PYTHONSAFEPATH"] == "1"
     assert "CITE_RIGHT_HOLDOUT_KEY_FILE" not in spec.env
     assert "CITE_RIGHT_ATTESTATION_KEY_FILE" not in spec.env
+
+    result = subprocess.run(
+        spec.command,
+        cwd=spec.cwd,
+        env=dict(spec.env),
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["ok"] is True
+    assert payload["train_case_count"] == 1
+    assert payload["dev_case_count"] == 1
+
+
+def test_worker_launch_spec_safe_import_path_blocks_bundle_module_hijack(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    dataset_dir, _ = _write_dataset_fixture(tmp_path, monkeypatch)
+    bundle_dir = tmp_path / "tuning"
+    build_tuning_bundle(dataset_dir, bundle_dir)
+
+    spec = worker_launch_spec(
+        bundle_dir,
+        base_env={
+            "PATH": os.environ.get("PATH", ""),
+            "PYTHONPATH": "/tmp/untrusted",
+            "PYTHONSAFEPATH": "0",
+        },
+    )
+
+    marker_path = tmp_path / "malicious-imported.txt"
+    malicious_package = bundle_dir / "evaluation"
+    malicious_package.mkdir()
+    (malicious_package / "__init__.py").write_text("", encoding="utf-8")
+    (malicious_package / "worker.py").write_text(
+        (
+            "from pathlib import Path\n"
+            f"Path({str(marker_path)!r}).write_text('executed', encoding='utf-8')\n"
+            "raise SystemExit(99)\n"
+        ),
+        encoding="utf-8",
+    )
+
+    result = subprocess.run(
+        spec.command,
+        cwd=spec.cwd,
+        env=dict(spec.env),
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 1
+    assert not marker_path.exists()
+    assert "unexpected files in tuning bundle: evaluation" in result.stderr
 
 
 def _write_dataset_fixture(

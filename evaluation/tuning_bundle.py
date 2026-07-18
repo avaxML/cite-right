@@ -274,13 +274,16 @@ def worker_launch_spec(
     *,
     base_env: Mapping[str, str] | None = None,
 ) -> WorkerLaunchSpec:
+    bundle_root = Path(bundle_dir)
+    load_tuning_bundle(bundle_root)
     env = dict(os.environ if base_env is None else base_env)
     env.pop("CITE_RIGHT_ATTESTATION_KEY_FILE", None)
     env.pop("CITE_RIGHT_HOLDOUT_KEY_FILE", None)
     env["PYTHONPATH"] = str(Path(__file__).resolve().parent.parent)
+    env["PYTHONSAFEPATH"] = "1"
     return WorkerLaunchSpec(
         command=(sys.executable, "-m", "evaluation.worker"),
-        cwd=Path(bundle_dir),
+        cwd=bundle_root,
         env=env,
     )
 
