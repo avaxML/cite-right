@@ -228,7 +228,7 @@ def summarize_measurements(
     ordered_samples = tuple(samples)
     measured_samples = ordered_samples[warmup_count:]
     failures = tuple(
-        sample.failure for sample in ordered_samples if sample.failure is not None
+        sample.failure for sample in measured_samples if sample.failure is not None
     )
     prepared_durations = tuple(
         sample.prepared_corpus_duration_ns for sample in measured_samples

@@ -123,6 +123,56 @@ def test_summarize_measurements_excludes_warmups_from_measured_sample_count() ->
     assert report.measured_sample_count == 2
 
 
+def test_summarize_measurements_excludes_warmup_failures_from_measured_report() -> None:
+    performance = _performance_module_or_skip()
+
+    report = performance.summarize_measurements(
+        samples=(
+            _sample_measurement(
+                performance,
+                case_id="warmup-fail",
+                document_family_id="family-a",
+                split="dev",
+                prepared_corpus_duration_ns=5,
+                answer_duration_ns=7,
+                total_duration_ns=12,
+                failure=_failure_record(
+                    performance,
+                    case_id="warmup-fail",
+                    document_family_id="family-a",
+                    split="dev",
+                    stage="answer",
+                    error_type="RuntimeError",
+                    message="warmup boom",
+                ),
+            ),
+            _sample_measurement(
+                performance,
+                case_id="case-1",
+                document_family_id="family-a",
+                split="dev",
+                prepared_corpus_duration_ns=11,
+                answer_duration_ns=19,
+                total_duration_ns=30,
+            ),
+        ),
+        warmup_count=1,
+        backend="python",
+        workload=_workload_selection(
+            performance, selected_case_ids=("warmup-fail", "case-1")
+        ),
+        environment=_environment_metadata(performance, backend="python"),
+    )
+
+    assert report.warmup_count == 1
+    assert report.measured_sample_count == 1
+    assert report.failure_count == 0
+    assert report.failures == ()
+    assert report.prepared_corpus.total_duration_ns == 11
+    assert report.answer.total_duration_ns == 19
+    assert report.end_to_end.total_duration_ns == 30
+
+
 def test_summarize_measurements_uses_median_for_measured_end_to_end_samples() -> None:
     performance = _performance_module_or_skip()
 
