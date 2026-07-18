@@ -43,6 +43,32 @@ def test_match_citations_returns_match_result_for_exact_source_and_span_set() ->
     assert result.errors == ()
 
 
+def test_match_citations_exact_preserves_adjacent_span_boundaries() -> None:
+    result = match_citations(
+        emissions=(_emission("source-a", (0, 5), (5, 10)),),
+        requirements=(_requirement("req-1", _target("source-a", (0, 10))),),
+        threshold="exact",
+    )
+
+    assert _match_summary(result) == ()
+    assert result.unmatched_emission_indices == (0,)
+    assert result.unmatched_requirement_ids == ("req-1",)
+
+
+def test_match_citations_exact_ignores_span_order() -> None:
+    result = match_citations(
+        emissions=(_emission("source-a", (10, 14), (0, 4)),),
+        requirements=(_requirement("req-1", _target("source-a", (0, 4), (10, 14))),),
+        threshold="exact",
+    )
+
+    assert _match_summary(result) == (
+        _match("req-1", 0, "source-a", ((0, 4), (10, 14)), 1.0),
+    )
+    assert result.unmatched_emission_indices == ()
+    assert result.unmatched_requirement_ids == ()
+
+
 def test_match_citations_enforces_union_iou_boundary_at_point_nine() -> None:
     requirement = _requirement("req-1", _target("source-a", (0, 10)))
 

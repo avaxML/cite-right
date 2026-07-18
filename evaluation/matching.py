@@ -218,9 +218,11 @@ def _best_edge_for_requirement(
     best_score: Fraction | None = None
 
     for alternative in sorted(requirement.alternatives, key=_target_key):
+        alternative_exact_spans = _sort_spans(alternative.spans)
         alternative_canonical_spans = _canonicalize_spans(alternative.spans)
         score = _match_score(
             alternative_source_id=alternative.source_id,
+            alternative_exact_spans=alternative_exact_spans,
             alternative_spans=alternative_canonical_spans,
             emission=emission,
             threshold=threshold,
@@ -259,6 +261,7 @@ def _best_edge_for_requirement(
 def _match_score(
     *,
     alternative_source_id: str,
+    alternative_exact_spans: tuple[CharSpan, ...],
     alternative_spans: tuple[CharSpan, ...],
     emission: _NormalizedEmission,
     threshold: MatchingThreshold,
@@ -266,7 +269,8 @@ def _match_score(
     if alternative_source_id != emission.emission.source_id:
         return None
     if threshold == "exact":
-        if _span_key(alternative_spans) == _span_key(emission.canonical_spans):
+        emission_exact_spans = _sort_spans(emission.emission.spans)
+        if _span_key(alternative_exact_spans) == _span_key(emission_exact_spans):
             return Fraction(1, 1)
         return None
 
@@ -421,7 +425,7 @@ def _match_sort_key(
 
 
 def _canonicalize_spans(spans: Sequence[CharSpan]) -> tuple[CharSpan, ...]:
-    ordered = sorted(spans, key=_char_span_key)
+    ordered = _sort_spans(spans)
     if not ordered:
         return ()
 
@@ -433,6 +437,10 @@ def _canonicalize_spans(spans: Sequence[CharSpan]) -> tuple[CharSpan, ...]:
             continue
         merged.append(span)
     return tuple(merged)
+
+
+def _sort_spans(spans: Sequence[CharSpan]) -> tuple[CharSpan, ...]:
+    return tuple(sorted(spans, key=_char_span_key))
 
 
 def _span_key(spans: Sequence[CharSpan]) -> tuple[tuple[int, int], ...]:
