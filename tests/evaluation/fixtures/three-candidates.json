@@ -1,0 +1,127 @@
+{
+  "baseline": {
+    "gates": {
+      "contradiction_false_citation_tolerance": 0,
+      "exact_precision_wilson_lower_min": 0.75,
+      "offset_invalid_tolerance": 0,
+      "p95_latency_budget_ns": 150,
+      "peak_memory_budget_bytes": 1200
+    },
+    "hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+  },
+  "candidates": [
+    {
+      "backend": "python",
+      "candidate_id": "candidate-offset-loss",
+      "code_path_id": "config-only",
+      "config": {
+        "min_final_score": 0.25,
+        "top_k": 2
+      },
+      "embeddings": "off",
+      "synthetic_result": {
+        "dev_metrics": {
+          "contradiction_false_citation_count": 0,
+          "exact_precision_lower": 0.9,
+          "offset_invalid_count": 1,
+          "output_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "requirement_recall": 0.95,
+          "retrieval_mrr": 0.9,
+          "run_error_count": 0,
+          "status_macro_f1": 0.9
+        },
+        "resource_metrics": {
+          "median_duration_ns": 90,
+          "p95_duration_ns": 100,
+          "peak_memory_bytes": 1000
+        },
+        "train_metrics": {
+          "contradiction_false_citation_count": 0,
+          "exact_precision_lower": 0.9,
+          "offset_invalid_count": 1,
+          "output_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+          "requirement_recall": 0.9,
+          "retrieval_mrr": 0.8,
+          "run_error_count": 0,
+          "status_macro_f1": 0.8
+        }
+      }
+    },
+    {
+      "backend": "python",
+      "candidate_id": "candidate-recall-lose",
+      "code_path_id": "config-only",
+      "config": {
+        "min_final_score": 0.3,
+        "top_k": 2
+      },
+      "embeddings": "off",
+      "synthetic_result": {
+        "dev_metrics": {
+          "contradiction_false_citation_count": 0,
+          "exact_precision_lower": 0.8,
+          "offset_invalid_count": 0,
+          "output_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+          "requirement_recall": 0.8,
+          "retrieval_mrr": 0.9,
+          "run_error_count": 0,
+          "status_macro_f1": 0.8
+        },
+        "resource_metrics": {
+          "median_duration_ns": 80,
+          "p95_duration_ns": 120,
+          "peak_memory_bytes": 1000
+        },
+        "train_metrics": {
+          "contradiction_false_citation_count": 0,
+          "exact_precision_lower": 0.8,
+          "offset_invalid_count": 0,
+          "output_sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "requirement_recall": 0.75,
+          "retrieval_mrr": 0.85,
+          "run_error_count": 0,
+          "status_macro_f1": 0.75
+        }
+      }
+    },
+    {
+      "backend": "python",
+      "candidate_id": "candidate-recall-win",
+      "code_path_id": "config-only",
+      "config": {
+        "min_final_score": 0.28,
+        "top_k": 3
+      },
+      "embeddings": "off",
+      "synthetic_result": {
+        "dev_metrics": {
+          "contradiction_false_citation_count": 0,
+          "exact_precision_lower": 0.8,
+          "offset_invalid_count": 0,
+          "output_sha256": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+          "requirement_recall": 0.85,
+          "retrieval_mrr": 0.7,
+          "run_error_count": 0,
+          "status_macro_f1": 0.7
+        },
+        "resource_metrics": {
+          "median_duration_ns": 95,
+          "p95_duration_ns": 130,
+          "peak_memory_bytes": 1100
+        },
+        "train_metrics": {
+          "contradiction_false_citation_count": 0,
+          "exact_precision_lower": 0.8,
+          "offset_invalid_count": 0,
+          "output_sha256": "9999999999999999999999999999999999999999999999999999999999999999",
+          "requirement_recall": 0.8,
+          "retrieval_mrr": 0.7,
+          "run_error_count": 0,
+          "status_macro_f1": 0.7
+        }
+      }
+    }
+  ],
+  "parent_experiment_id": "task16-smoke",
+  "schema_version": "evaluation.search-space.v1"
+}

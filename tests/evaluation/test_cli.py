@@ -19,7 +19,7 @@ from evaluation.tuning_bundle import worker_launch_spec
 from tests.evaluation.test_tuning_bundle import _write_dataset_fixture
 
 
-def test_cli_help_lists_exact_eight_commands() -> None:
+def test_cli_help_lists_exact_nine_commands() -> None:
     result = subprocess.run(
         [sys.executable, "-m", "evaluation.cli", "--help"],
         check=False,
@@ -36,6 +36,7 @@ def test_cli_help_lists_exact_eight_commands() -> None:
         "promote",
         "performance-smoke",
         "baseline",
+        "tune",
     ]
     command_block = result.stdout.split("{", 1)[1].split("}", 1)[0].split(",")
     assert command_block == commands
@@ -204,6 +205,54 @@ def test_baseline_command_dispatches_to_builder_and_emits_structured_stdout(
     assert payload["command"] == "baseline"
     assert payload["output"] == str(output_path)
     assert payload["selected_baseline_id"] == "strict/python/off"
+
+
+def test_tune_command_dispatches_to_runner_and_emits_structured_stdout(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    output_path = tmp_path / "tune.json"
+    captured: dict[str, Path] = {}
+
+    def fake_run_tuning(
+        *, tuning_bundle: Path, search_space_path: Path, output_path: Path
+    ) -> dict[str, object]:
+        captured["tuning_bundle"] = tuning_bundle
+        captured["search_space_path"] = search_space_path
+        captured["output_path"] = output_path
+        return {
+            "command": "tune",
+            "output": str(output_path),
+            "best_candidate_id": "candidate-recall-win",
+        }
+
+    monkeypatch.setattr("evaluation.cli.run_tuning", fake_run_tuning)
+
+    stdout = io.StringIO()
+    stderr = io.StringIO()
+    with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+        exit_code = main(
+            [
+                "tune",
+                "--tuning-bundle",
+                str(tmp_path / "tuning"),
+                "--search-space",
+                str(tmp_path / "space.json"),
+                "--output",
+                str(output_path),
+            ]
+        )
+
+    assert exit_code == 0
+    assert stderr.getvalue() == ""
+    assert captured["tuning_bundle"] == tmp_path / "tuning"
+    assert captured["search_space_path"] == tmp_path / "space.json"
+    assert captured["output_path"] == output_path
+    payload = json.loads(stdout.getvalue())
+    assert payload["ok"] is True
+    assert payload["command"] == "tune"
+    assert payload["output"] == str(output_path)
+    assert payload["best_candidate_id"] == "candidate-recall-win"
 
 
 def _offline_subprocess_env() -> dict[str, str]:

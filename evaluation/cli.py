@@ -24,6 +24,7 @@ from evaluation.builders.real_sources import (
     generate_real_cases,
 )
 from evaluation.canonical import canonical_json_bytes
+from evaluation.hill_climb import run_tuning
 from evaluation.manifest import (
     DatasetManifest,
     build_private_manifest,
@@ -115,6 +116,11 @@ def build_parser() -> argparse.ArgumentParser:
     baseline_parser.add_argument("--tuning-bundle", required=True, dest="tuning_bundle")
     baseline_parser.add_argument("--output", required=True)
 
+    tune_parser = subparsers.add_parser("tune")
+    tune_parser.add_argument("--tuning-bundle", required=True, dest="tuning_bundle")
+    tune_parser.add_argument("--search-space", required=True, dest="search_space")
+    tune_parser.add_argument("--output", required=True)
+
     return parser
 
 
@@ -161,6 +167,12 @@ def _dispatch(args: argparse.Namespace) -> dict[str, object]:
     if command == "baseline":
         return build_baseline(
             tuning_bundle=Path(args.tuning_bundle), output_path=Path(args.output)
+        )
+    if command == "tune":
+        return run_tuning(
+            tuning_bundle=Path(args.tuning_bundle),
+            search_space_path=Path(args.search_space),
+            output_path=Path(args.output),
         )
     raise _CliUsageError(f"unknown command {command!r}")
 

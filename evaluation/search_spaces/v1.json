@@ -1,0 +1,48 @@
+{
+  "candidates": [
+    {
+      "backend": "python",
+      "candidate_id": "strict-baseline",
+      "code_path_id": "config-only",
+      "config": {
+        "max_citations_per_source": 1,
+        "max_retrieval_support": 2,
+        "min_answer_coverage": 0.4,
+        "min_final_score": 0.3,
+        "supported_answer_coverage": 0.7,
+        "top_k": 2
+      },
+      "embeddings": "off"
+    },
+    {
+      "backend": "python",
+      "candidate_id": "strict-higher-top-k",
+      "code_path_id": "config-only",
+      "config": {
+        "max_citations_per_source": 1,
+        "max_retrieval_support": 3,
+        "min_answer_coverage": 0.4,
+        "min_final_score": 0.28,
+        "supported_answer_coverage": 0.7,
+        "top_k": 3
+      },
+      "embeddings": "off"
+    },
+    {
+      "backend": "python",
+      "candidate_id": "strict-lower-final-threshold",
+      "code_path_id": "config-only",
+      "config": {
+        "max_citations_per_source": 1,
+        "max_retrieval_support": 2,
+        "min_answer_coverage": 0.4,
+        "min_final_score": 0.25,
+        "supported_answer_coverage": 0.7,
+        "top_k": 2
+      },
+      "embeddings": "off"
+    }
+  ],
+  "parent_experiment_id": "task16-initial-search",
+  "schema_version": "evaluation.search-space.v1"
+}
