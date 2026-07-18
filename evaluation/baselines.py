@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 import platform
 import subprocess
@@ -188,7 +189,7 @@ def build_baseline(*, tuning_bundle: Path, output_path: Path) -> dict[str, objec
     report: dict[str, object] = {
         "schema_version": SCHEMA_VERSION,
         "dataset_version": bundle.manifest.dataset_version,
-        "dataset_hash": sha256_hex(canonical_json_bytes(bundle.manifest)),
+        "dataset_hash": bundle.manifest.dataset_manifest_sha256,
         "git_revision": _git_revision(),
         "code_snapshot_sha256": _code_snapshot_sha256(),
         "worktree_dirty": _worktree_dirty(),
@@ -230,10 +231,46 @@ def compare_baselines(
     margin = _declared_performance_margin(left, right)
     if any(ratio > 1.0 + margin or ratio < 1.0 - margin for ratio in ratios.values()):
         raise ValueError("baseline performance exceeded the declared variance envelope")
+    p95_ratios = _scenario_metric_ratios(
+        left,
+        right,
+        extractor=lambda scenario: _duration_metric(scenario, "p95_duration_ns"),
+    )
+    p95_margin = _declared_gate_margin(
+        left,
+        right,
+        key="all_scenario_p95_noise_margin",
+        fallback_key="p95_noise_margin",
+    )
+    if any(
+        ratio > 1.0 + p95_margin or ratio < 1.0 - p95_margin
+        for ratio in p95_ratios.values()
+    ):
+        raise ValueError("baseline p95 latency exceeded the declared variance envelope")
+    peak_memory_ratios = _scenario_metric_ratios(
+        left,
+        right,
+        extractor=lambda scenario: _int_metric(scenario, "peak_memory_bytes"),
+    )
+    peak_memory_margin = _declared_gate_margin(
+        left,
+        right,
+        key="all_scenario_peak_memory_noise_margin",
+        fallback_key="peak_memory_noise_margin",
+    )
+    if any(
+        ratio > 1.0 + peak_memory_margin or ratio < 1.0 - peak_memory_margin
+        for ratio in peak_memory_ratios.values()
+    ):
+        raise ValueError("baseline peak memory exceeded the declared variance envelope")
     return {
         "correctness_equal": True,
         "performance_median_ratios": ratios,
         "performance_noise_margin": margin,
+        "p95_latency_ratios": p95_ratios,
+        "p95_noise_margin": p95_margin,
+        "peak_memory_ratios": peak_memory_ratios,
+        "peak_memory_noise_margin": peak_memory_margin,
     }
 
 
@@ -511,6 +548,14 @@ def _freeze_gates(
         else int(max(peak_values) * (1.0 + peak_margin)),
         "p95_noise_margin": p95_margin,
         "peak_memory_noise_margin": peak_margin,
+        "all_scenario_p95_noise_margin": _scenario_metric_margin(
+            _scenario_index(performance_trials),
+            lambda scenario: _duration_metric(scenario, "p95_duration_ns"),
+        ),
+        "all_scenario_peak_memory_noise_margin": _scenario_metric_margin(
+            _scenario_index(performance_trials),
+            lambda scenario: _int_metric(scenario, "peak_memory_bytes"),
+        ),
         "performance_noise_margin": _scenario_metric_margin(
             _scenario_index(performance_trials),
             lambda scenario: _duration_metric(scenario, "median_duration_ns"),
@@ -540,34 +585,11 @@ def _correctness_signature(report: Mapping[str, object]) -> object:
 def _performance_median_ratios(
     left: Mapping[str, object], right: Mapping[str, object]
 ) -> dict[str, float]:
-    def values(report: Mapping[str, object]) -> dict[str, float]:
-        trials = report.get("performance_trials", [])
-        collected: dict[str, list[int]] = {}
-        if isinstance(trials, list):
-            for trial in trials:
-                if not isinstance(trial, Mapping):
-                    continue
-                for scenario in trial.get("scenarios", []):
-                    if not isinstance(scenario, Mapping):
-                        continue
-                    duration = scenario.get("end_to_end")
-                    if isinstance(duration, Mapping) and isinstance(
-                        duration.get("median_duration_ns"), (int, float)
-                    ):
-                        collected.setdefault(
-                            str(scenario.get("scenario_id")), []
-                        ).append(int(duration["median_duration_ns"]))
-        return {key: sum(items) / len(items) for key, items in collected.items()}
-
-    left_values = values(left)
-    right_values = values(right)
-    if left_values.keys() != right_values.keys():
-        raise ValueError("baseline performance scenarios differ")
-    return {
-        key: right_values[key] / left_values[key]
-        for key in left_values
-        if left_values[key] > 0
-    }
+    return _scenario_metric_ratios(
+        left,
+        right,
+        extractor=lambda scenario: _duration_metric(scenario, "median_duration_ns"),
+    )
 
 
 def _selected_performance_scenarios(
@@ -630,18 +652,70 @@ def _scenario_metric_margin(
 def _declared_performance_margin(
     left: Mapping[str, object], right: Mapping[str, object]
 ) -> float:
+    return _declared_gate_margin(left, right, key="performance_noise_margin")
+
+
+def _declared_gate_margin(
+    left: Mapping[str, object],
+    right: Mapping[str, object],
+    *,
+    key: str,
+    fallback_key: str | None = None,
+) -> float:
     margins: list[float] = []
     for report in (left, right):
         gates = report.get("gates")
         if isinstance(gates, Mapping):
-            value = gates.get("performance_noise_margin")
+            value = gates.get(key)
+            if value is None and fallback_key is not None:
+                value = gates.get(fallback_key)
             if isinstance(value, (int, float)):
                 margins.append(float(value))
     if not margins:
         return 0.25
-    if len(margins) != 2 or any(not 0.0 <= margin < 1.0 for margin in margins):
-        raise ValueError("baseline performance noise margins are invalid")
+    if len(margins) != 2 or any(
+        not math.isfinite(margin) or margin < 0.0 for margin in margins
+    ):
+        raise ValueError(f"baseline {key} values are invalid")
     return max(margins)
+
+
+def _scenario_metric_ratios(
+    left: Mapping[str, object],
+    right: Mapping[str, object],
+    *,
+    extractor: Callable[[Mapping[str, object]], int | None],
+) -> dict[str, float]:
+    left_values = _scenario_metric_means(left, extractor=extractor)
+    right_values = _scenario_metric_means(right, extractor=extractor)
+    if left_values.keys() != right_values.keys():
+        raise ValueError("baseline performance scenarios differ")
+    return {
+        key: right_values[key] / left_values[key]
+        for key in left_values
+        if left_values[key] > 0
+    }
+
+
+def _scenario_metric_means(
+    report: Mapping[str, object],
+    *,
+    extractor: Callable[[Mapping[str, object]], int | None],
+) -> dict[str, float]:
+    trials = report.get("performance_trials", [])
+    collected: dict[str, list[int]] = {}
+    if isinstance(trials, list):
+        for trial in trials:
+            if not isinstance(trial, Mapping):
+                continue
+            for scenario in trial.get("scenarios", []):
+                if not isinstance(scenario, Mapping):
+                    continue
+                value = extractor(scenario)
+                if value is None:
+                    continue
+                collected.setdefault(str(scenario.get("scenario_id")), []).append(value)
+    return {key: sum(items) / len(items) for key, items in collected.items()}
 
 
 def _duration_metric(scenario: Mapping[str, object], key: str) -> int | None:

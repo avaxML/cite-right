@@ -57,7 +57,9 @@ def test_performance_models_are_frozen_and_literal_contracts_are_stable() -> Non
 def test_duration_models_reject_negative_counts_and_durations() -> None:
     performance = _performance_module_or_skip()
 
-    with pytest.raises(ValidationError, match="duration and count fields must be non-negative"):
+    with pytest.raises(
+        ValidationError, match="duration and count fields must be non-negative"
+    ):
         performance.DurationSummary(
             sample_count=-1,
             total_duration_ns=0,
@@ -65,7 +67,9 @@ def test_duration_models_reject_negative_counts_and_durations() -> None:
             p95_duration_ns=0,
         )
 
-    with pytest.raises(ValidationError, match="duration and count fields must be non-negative"):
+    with pytest.raises(
+        ValidationError, match="duration and count fields must be non-negative"
+    ):
         _sample_measurement(
             performance,
             case_id="case-1",
@@ -76,7 +80,9 @@ def test_duration_models_reject_negative_counts_and_durations() -> None:
             total_duration_ns=0,
         )
 
-    with pytest.raises(ValidationError, match="cache snapshot fields must be non-negative"):
+    with pytest.raises(
+        ValidationError, match="cache snapshot fields must be non-negative"
+    ):
         performance.CacheSnapshot(entries=-1, bytes=0)
 
 
@@ -115,7 +121,9 @@ def test_summarize_measurements_excludes_warmups_from_measured_sample_count() ->
         ),
         warmup_count=1,
         backend="python",
-        workload=_workload_selection(performance, selected_case_ids=("warmup", "case-1", "case-2")),
+        workload=_workload_selection(
+            performance, selected_case_ids=("warmup", "case-1", "case-2")
+        ),
         environment=_environment_metadata(performance, backend="python"),
     )
 
@@ -199,7 +207,9 @@ def test_summarize_measurements_uses_nearest_rank_p95_with_ceil_indexing() -> No
     assert report.end_to_end.p95_duration_ns == 60
 
 
-def test_summarize_measurements_derives_throughput_from_total_measured_duration() -> None:
+def test_summarize_measurements_derives_throughput_from_total_measured_duration() -> (
+    None
+):
     performance = _performance_module_or_skip()
 
     report = _summarize_with_measured_totals(
@@ -299,9 +309,7 @@ def test_summarize_measurements_keeps_measured_failures_in_denominators() -> Non
     assert report.answer.total_duration_ns == 42
     assert report.end_to_end.sample_count == 3
     assert report.end_to_end.total_duration_ns == 68
-    assert report.throughput_cases_per_second == pytest.approx(
-        3 * 1_000_000_000 / 68
-    )
+    assert report.throughput_cases_per_second == pytest.approx(3 * 1_000_000_000 / 68)
 
 
 def test_summarize_measurements_reports_retained_cache_when_observable() -> None:
@@ -334,7 +342,9 @@ def test_summarize_measurements_reports_retained_cache_when_observable() -> None
         ),
         warmup_count=0,
         backend="python",
-        workload=_workload_selection(performance, selected_case_ids=("case-1", "case-2")),
+        workload=_workload_selection(
+            performance, selected_case_ids=("case-1", "case-2")
+        ),
         environment=_environment_metadata(performance, backend="python"),
     )
 
@@ -373,14 +383,18 @@ def test_summarize_measurements_reports_peak_memory_from_the_measured_maximum() 
         ),
         warmup_count=0,
         backend="python",
-        workload=_workload_selection(performance, selected_case_ids=("case-1", "case-2")),
+        workload=_workload_selection(
+            performance, selected_case_ids=("case-1", "case-2")
+        ),
         environment=_environment_metadata(performance, backend="python"),
     )
 
     assert report.peak_memory_bytes == 250
 
 
-def test_build_environment_metadata_captures_runtime_package_backend_and_hashes() -> None:
+def test_build_environment_metadata_captures_runtime_package_backend_and_hashes() -> (
+    None
+):
     performance = _performance_module_or_skip()
     workload = _workload_selection(
         performance,
@@ -407,7 +421,9 @@ def test_build_environment_metadata_captures_runtime_package_backend_and_hashes(
     )
 
 
-def test_select_workload_is_deterministic_for_seed_and_family_filter_and_excludes_holdout() -> None:
+def test_select_workload_is_deterministic_for_seed_and_family_filter_and_excludes_holdout() -> (
+    None
+):
     performance = _performance_module_or_skip()
     cases = (
         _case(case_id="train-a", split="train", document_family_id="family-a"),
@@ -490,9 +506,7 @@ def test_run_benchmark_uses_fake_clock_for_duration_math_and_reports_failures_ex
     assert report.answer.sample_count == 2
     assert report.end_to_end.total_duration_ns == 51
     assert report.end_to_end.sample_count == 2
-    assert report.throughput_cases_per_second == pytest.approx(
-        2 * 1_000_000_000 / 51
-    )
+    assert report.throughput_cases_per_second == pytest.approx(2 * 1_000_000_000 / 51)
     assert len(report.failures) == 1
     assert report.failures[0].case_id == "case-fail"
     assert report.failures[0].stage == "answer"
@@ -500,7 +514,9 @@ def test_run_benchmark_uses_fake_clock_for_duration_math_and_reports_failures_ex
     assert "boom" in report.failures[0].message
 
 
-def test_run_benchmark_uses_workload_selection_order_even_when_input_is_reversed() -> None:
+def test_run_benchmark_uses_workload_selection_order_even_when_input_is_reversed() -> (
+    None
+):
     performance = _performance_module_or_skip()
     cases = (
         _case(case_id="case-a", split="dev", document_family_id="family-b"),
@@ -673,6 +689,7 @@ def test_performance_smoke_artifact_records_real_scenario_measurements(
     assert len(payload["dataset_hash"]) == 64
     scenarios = payload["scenarios"]
     assert scenarios
+    assert payload["measurement_iterations"] >= 25
     assert {scenario["execution_path"] for scenario in scenarios} == {
         "one-shot",
         "prepared",
@@ -716,7 +733,9 @@ def test_performance_smoke_artifact_records_real_scenario_measurements(
         assert scenario["answer"]["sample_count"] == payload["trial_count"]
         assert scenario["end_to_end"]["sample_count"] == payload["trial_count"]
         assert scenario["throughput_cases_per_second"] >= 0
-        assert scenario["peak_memory_bytes"] is None or scenario["peak_memory_bytes"] >= 0
+        assert (
+            scenario["peak_memory_bytes"] is None or scenario["peak_memory_bytes"] >= 0
+        )
     assert payload["raw_samples_ns"] == [
         sum(scenario["raw_end_to_end_samples_ns"][index] for scenario in scenarios)
         for index in range(payload["trial_count"])
@@ -732,18 +751,18 @@ def test_smoke_scenarios_execute_real_one_shot_prepared_and_embedding_paths(
     monkeypatch.setattr(
         performance,
         "_execute_one_shot",
-        lambda *, case, backend, embedder: calls.append(
-            ("one-shot", embedder is not None, backend)
-        )
-        or [{"case_id": case.case_id}],
+        lambda *, case, backend, embedder: (
+            calls.append(("one-shot", embedder is not None, backend))
+            or [{"case_id": case.case_id}]
+        ),
     )
     monkeypatch.setattr(
         performance,
         "_execute_prepared",
-        lambda *, case, backend, embedder: calls.append(
-            ("prepared", embedder is not None, backend)
-        )
-        or [{"case_id": case.case_id}],
+        lambda *, case, backend, embedder: (
+            calls.append(("prepared", embedder is not None, backend))
+            or [{"case_id": case.case_id}]
+        ),
     )
 
     scenarios = performance._smoke_scenarios()
@@ -799,7 +818,9 @@ def test_smoke_trial_replaces_import_paths_strips_holdout_keys_and_sets_timeout(
     performance._run_smoke_trial(request)
 
     child_env = captured["env"]
-    assert child_env["PYTHONPATH"] == str(Path(performance.__file__).resolve().parents[1])
+    assert child_env["PYTHONPATH"] == str(
+        Path(performance.__file__).resolve().parents[1]
+    )
     assert child_env["PYTHONSAFEPATH"] == "1"
     assert "CITE_RIGHT_HOLDOUT_KEY_FILE" not in child_env
     assert "CITE_RIGHT_ATTESTATION_KEY_FILE" not in child_env
@@ -871,7 +892,9 @@ def test_compare_smoke_command_reports_canonical_deltas_for_matching_artifacts(
     assert payload["timing"]["mean_delta_ns"] == pytest.approx((-20) / 3)
     assert payload["timing"]["mean_ratio"] == pytest.approx((340 / 3) / 120)
     # Population variance: right = 10400 / 9, left = 800 / 3.
-    assert payload["timing"]["variance_delta_ns"] == pytest.approx((10400 / 9) - (800 / 3))
+    assert payload["timing"]["variance_delta_ns"] == pytest.approx(
+        (10400 / 9) - (800 / 3)
+    )
     assert canonical_json_bytes(payload) == result.stdout.encode("utf-8")
 
 
@@ -1016,6 +1039,7 @@ def _smoke_artifact_payload(
         "workload_hash": workload_hash,
         "warmup_count": 1,
         "trial_count": len(raw_samples_ns),
+        "measurement_iterations": 25,
         "raw_samples_ns": raw_samples_ns,
         "failures": [],
         "scenarios": [
@@ -1039,7 +1063,8 @@ def _smoke_artifact_payload(
                 },
                 "answer": duration_summary,
                 "end_to_end": duration_summary,
-                "throughput_cases_per_second": sample_count * 1_000_000_000
+                "throughput_cases_per_second": sample_count
+                * 1_000_000_000
                 / sum(raw_samples_ns),
                 "peak_memory_bytes": 1024,
             }

@@ -61,7 +61,7 @@ def test_performance_smoke_command_writes_requested_canonical_artifact_and_struc
         check=False,
         capture_output=True,
         text=True,
-        timeout=20,
+        timeout=90,
     )
 
     assert result.returncode == 0, result.stderr
@@ -129,7 +129,7 @@ def test_performance_smoke_command_uses_repeatable_workload_and_correctness_hash
         check=False,
         capture_output=True,
         text=True,
-        timeout=20,
+        timeout=90,
     )
     right = subprocess.run(
         [
@@ -145,7 +145,7 @@ def test_performance_smoke_command_uses_repeatable_workload_and_correctness_hash
         check=False,
         capture_output=True,
         text=True,
-        timeout=20,
+        timeout=90,
     )
 
     assert left.returncode == 0, left.stderr

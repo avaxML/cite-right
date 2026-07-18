@@ -96,8 +96,25 @@ def test_reports_reject_holdout_names_and_comparison_checks_correctness() -> Non
         "code_snapshot_sha256": "b" * 64,
         "selected_baseline_id": "strict/python/off",
         "matrix": [{"id": "strict/python/off", "train": {"output_sha256": "a"}}],
-        "performance_trials": [],
-        "gates": {"performance_noise_margin": 0.25},
+        "performance_trials": [
+            {
+                "scenarios": [
+                    {
+                        "scenario_id": "s1",
+                        "end_to_end": {
+                            "median_duration_ns": 100,
+                            "p95_duration_ns": 120,
+                        },
+                        "peak_memory_bytes": 1000,
+                    }
+                ]
+            }
+        ],
+        "gates": {
+            "performance_noise_margin": 0.25,
+            "p95_noise_margin": 0.15,
+            "peak_memory_noise_margin": 0.10,
+        },
     }
     assert compare_baselines(left, left)["correctness_equal"] is True
     right = {
@@ -112,9 +129,55 @@ def test_reports_reject_holdout_names_and_comparison_checks_correctness() -> Non
         left,
         {
             **left,
-            "gates": {"performance_noise_margin": 0.35},
+            "gates": {
+                "performance_noise_margin": 0.35,
+                "p95_noise_margin": 0.20,
+                "peak_memory_noise_margin": 0.12,
+            },
         },
     )["performance_noise_margin"] == pytest.approx(0.35)
+    with pytest.raises(ValueError, match="p95 latency"):
+        compare_baselines(
+            left,
+            {
+                **left,
+                "performance_trials": [
+                    {
+                        "scenarios": [
+                            {
+                                "scenario_id": "s1",
+                                "end_to_end": {
+                                    "median_duration_ns": 100,
+                                    "p95_duration_ns": 150,
+                                },
+                                "peak_memory_bytes": 1000,
+                            }
+                        ]
+                    }
+                ],
+            },
+        )
+    with pytest.raises(ValueError, match="peak memory"):
+        compare_baselines(
+            left,
+            {
+                **left,
+                "performance_trials": [
+                    {
+                        "scenarios": [
+                            {
+                                "scenario_id": "s1",
+                                "end_to_end": {
+                                    "median_duration_ns": 100,
+                                    "p95_duration_ns": 120,
+                                },
+                                "peak_memory_bytes": 1110,
+                            }
+                        ]
+                    }
+                ],
+            },
+        )
 
 
 def test_build_baseline_freezes_selected_resource_gates_from_selected_policy_only(
@@ -215,6 +278,7 @@ def test_build_baseline_freezes_selected_resource_gates_from_selected_policy_onl
     matrix = report_map["matrix"]
 
     assert report_map["selected_baseline_id"] == "strict/python/off"
+    assert report_map["dataset_hash"] == "3" * 64
     assert isinstance(optional_coverage, Mapping)
     assert optional_coverage["rust_backend"] == "available"
     assert (
@@ -238,6 +302,40 @@ def test_build_baseline_freezes_selected_resource_gates_from_selected_policy_onl
     assert gates["peak_memory_budget_bytes"] == 1102
     assert gates["p95_latency_budget_ns"] < 200
     assert json.loads(output_path.read_text(encoding="utf-8")) == report
+
+
+def test_compare_baselines_accepts_large_non_negative_declared_noise_margins() -> None:
+    left = {
+        "schema_version": "evaluation.baseline.v1",
+        "dataset_hash": "a" * 64,
+        "code_snapshot_sha256": "b" * 64,
+        "selected_baseline_id": "strict/python/off",
+        "matrix": [{"id": "strict/python/off", "train": {"output_sha256": "a"}}],
+        "performance_trials": [
+            {
+                "scenarios": [
+                    {
+                        "scenario_id": "s1",
+                        "end_to_end": {
+                            "median_duration_ns": 100,
+                            "p95_duration_ns": 100,
+                        },
+                        "peak_memory_bytes": 1000,
+                    }
+                ]
+            }
+        ],
+        "gates": {
+            "performance_noise_margin": 1.5,
+            "p95_noise_margin": 2.0,
+            "peak_memory_noise_margin": 1.1,
+        },
+    }
+    result = compare_baselines(left, left)
+
+    assert result["performance_noise_margin"] == pytest.approx(1.5)
+    assert result["p95_noise_margin"] == pytest.approx(2.0)
+    assert result["peak_memory_noise_margin"] == pytest.approx(1.1)
 
 
 def _case() -> EvaluationCase:

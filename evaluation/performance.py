@@ -38,8 +38,9 @@ AnswerCaseFn: TypeAlias = Callable[[EvaluationCase, object], object]
 MAX_EXCEPTION_MESSAGE_CODEPOINTS = 256
 TRUNCATION_MARKER = "... [truncated]"
 SMOKE_PROTOCOL_VERSION = "evaluation.performance.smoke.v1"
-SMOKE_TRIAL_COUNT = 3
+SMOKE_TRIAL_COUNT = 20
 SMOKE_WARMUP_COUNT = 1
+SMOKE_MEASUREMENT_ITERATIONS = 25
 SMOKE_WORKER_TIMEOUT_SECONDS = 20
 SMOKE_STRATA = (
     "one_shot",
@@ -174,9 +175,7 @@ class WorkloadSelection(_FrozenModel):
         if len(set(self.selected_document_family_ids)) != len(
             self.selected_document_family_ids
         ):
-            raise ValueError(
-                "selected_document_family_ids must not contain duplicates"
-            )
+            raise ValueError("selected_document_family_ids must not contain duplicates")
         return self
 
 
@@ -194,7 +193,9 @@ class EnvironmentMetadata(_FrozenModel):
         for field_name in ("config_sha256", "workload_sha256"):
             value = getattr(self, field_name)
             if len(value) != 64 or any(ch not in "0123456789abcdef" for ch in value):
-                raise ValueError(f"{field_name} must be a 64-character lowercase hex digest")
+                raise ValueError(
+                    f"{field_name} must be a 64-character lowercase hex digest"
+                )
         return self
 
 
@@ -231,9 +232,7 @@ class BenchmarkReport(_FrozenModel):
                 "prepared_corpus summary must use the measured sample count"
             )
         if self.end_to_end.sample_count != self.measured_sample_count:
-            raise ValueError(
-                "end_to_end summary must use the measured sample count"
-            )
+            raise ValueError("end_to_end summary must use the measured sample count")
         if self.failure_count != len(self.failures):
             raise ValueError("failure_count must equal len(failures)")
         if len(self.failures) > len(self.samples):
@@ -307,7 +306,9 @@ class SmokeScenarioReport(_FrozenModel):
             self.raw_samples_ns,
             self.raw_end_to_end_samples_ns,
         )
-        if any(not series or any(sample < 0 for sample in series) for series in raw_series):
+        if any(
+            not series or any(sample < 0 for sample in series) for series in raw_series
+        ):
             raise ValueError("raw timing series must contain non-negative samples")
         expected_count = len(self.raw_samples_ns)
         if any(len(series) != expected_count for series in raw_series):
@@ -319,9 +320,7 @@ class SmokeScenarioReport(_FrozenModel):
             raise ValueError("scenario summaries must use the raw trial sample count")
         if self.answer.total_duration_ns != sum(self.raw_samples_ns):
             raise ValueError("answer summary total must equal sum(raw_samples_ns)")
-        if self.prepared_corpus.total_duration_ns != sum(
-            self.raw_prepared_samples_ns
-        ):
+        if self.prepared_corpus.total_duration_ns != sum(self.raw_prepared_samples_ns):
             raise ValueError("prepared summary total must equal its raw samples")
         if self.end_to_end.total_duration_ns != sum(self.raw_end_to_end_samples_ns):
             raise ValueError("end-to-end summary total must equal its raw samples")
@@ -340,6 +339,7 @@ class SmokeArtifact(_FrozenModel):
     workload_hash: str
     warmup_count: int
     trial_count: int
+    measurement_iterations: int
     raw_samples_ns: list[int]
     failures: list[FailureRecord] = []
     scenarios: list[SmokeScenarioReport]
@@ -354,7 +354,11 @@ class SmokeArtifact(_FrozenModel):
                 raise ValueError(
                     f"{field_name} must be a 64-character lowercase digest"
                 )
-        if self.warmup_count < 0 or self.trial_count < 0:
+        if (
+            self.warmup_count < 0
+            or self.trial_count < 0
+            or self.measurement_iterations <= 0
+        ):
             raise ValueError("warmup_count and trial_count must be non-negative")
         if self.trial_count != len(self.raw_samples_ns):
             raise ValueError("trial_count must equal len(raw_samples_ns)")
@@ -378,9 +382,9 @@ class SmokeArtifact(_FrozenModel):
         ):
             raise ValueError("each scenario must contain trial_count raw samples")
         scenario_backends = {scenario.backend for scenario in self.scenarios}
-        if scenario_backends != set(self.workload.selected_backend_ids) or scenario_backends != set(
-            self.backends
-        ):
+        if scenario_backends != set(
+            self.workload.selected_backend_ids
+        ) or scenario_backends != set(self.backends):
             raise ValueError("artifact, scenario, and workload backends must match")
         return self
 
@@ -667,7 +671,9 @@ def run_performance_smoke(*, output_path: Path) -> dict[str, object]:
     workload = SmokeWorkload(
         strata=list(SMOKE_STRATA),
         selected_case_ids=sorted({case.case_id for case in cases}),
-        selected_backend_ids=list(dict.fromkeys(scenario.backend for scenario in scenarios)),
+        selected_backend_ids=list(
+            dict.fromkeys(scenario.backend for scenario in scenarios)
+        ),
     )
     scenario_reports: list[SmokeScenarioReport] = []
     failures: list[FailureRecord] = []
@@ -745,9 +751,12 @@ def run_performance_smoke(*, output_path: Path) -> dict[str, object]:
         dataset_hash=dataset_hash,
         correctness_hash=correctness_hash,
         protocol_hash=_smoke_protocol_hash(),
-        workload_hash=sha256_hex(canonical_json_bytes(workload.model_dump(mode="python"))),
+        workload_hash=sha256_hex(
+            canonical_json_bytes(workload.model_dump(mode="python"))
+        ),
         warmup_count=SMOKE_WARMUP_COUNT,
         trial_count=SMOKE_TRIAL_COUNT,
+        measurement_iterations=SMOKE_MEASUREMENT_ITERATIONS,
         raw_samples_ns=list(aggregate_samples),
         failures=list(failures),
         scenarios=scenario_reports,
@@ -914,30 +923,40 @@ def _measure_smoke_scenario(
 
     embedder = _DeterministicEmbedder() if scenario.embeddings == "on" else None
     prepared_ns = 0
+    correctness_hashes: set[str] = set()
     if scenario.execution_path == "one-shot":
         started = time.perf_counter_ns()
-        outputs = _execute_one_shot(
-            case=scenario.case,
-            backend=scenario.backend,
-            embedder=embedder,
+        for _ in range(SMOKE_MEASUREMENT_ITERATIONS):
+            outputs = _execute_one_shot(
+                case=scenario.case,
+                backend=scenario.backend,
+                embedder=embedder,
+            )
+            correctness_hashes.add(_output_correctness_hash(outputs))
+        answer_ns = _average_iteration_duration(
+            _clamp_duration(time.perf_counter_ns() - started)
         )
-        answer_ns = _clamp_duration(time.perf_counter_ns() - started)
     else:
         prepared_started = time.perf_counter_ns()
-        corpus = PreparedCitationCorpus.from_sources(
-            _citation_sources(scenario.case),
-            config=CitationConfig(),
-            embedder=embedder,
+        for _ in range(SMOKE_MEASUREMENT_ITERATIONS):
+            corpus = PreparedCitationCorpus.from_sources(
+                _citation_sources(scenario.case),
+                config=CitationConfig(),
+                embedder=embedder,
+            )
+        prepared_ns = _average_iteration_duration(
+            _clamp_duration(time.perf_counter_ns() - prepared_started)
         )
-        prepared_ns = _clamp_duration(time.perf_counter_ns() - prepared_started)
         answer_started = time.perf_counter_ns()
-        outputs = list(corpus.align(scenario.case.answer, backend=scenario.backend))
-        answer_ns = _clamp_duration(time.perf_counter_ns() - answer_started)
+        for _ in range(SMOKE_MEASUREMENT_ITERATIONS):
+            outputs = list(corpus.align(scenario.case.answer, backend=scenario.backend))
+            correctness_hashes.add(_output_correctness_hash(outputs))
+        answer_ns = _average_iteration_duration(
+            _clamp_duration(time.perf_counter_ns() - answer_started)
+        )
 
-    output_payload = [
-        output.model_dump(mode="json") if isinstance(output, BaseModel) else output
-        for output in outputs
-    ]
+    if len(correctness_hashes) != 1:
+        raise RuntimeError("repeated smoke iterations changed correctness outputs")
     return SmokeWorkerSuccessResponse(
         ok=True,
         backend=scenario.backend,
@@ -948,7 +967,7 @@ def _measure_smoke_scenario(
         answer_total_ns=answer_ns,
         end_to_end_total_ns=prepared_ns + answer_ns,
         raw_sample_ns=answer_ns,
-        correctness_hash=sha256_hex(canonical_json_bytes(output_payload)),
+        correctness_hash=next(iter(correctness_hashes)),
         peak_memory_bytes=_default_peak_memory_reader(),
     )
 
@@ -985,15 +1004,23 @@ def _throughput_cases_per_second(*, sample_count: int, total_duration_ns: int) -
 
 
 def _max_peak_memory(samples: Sequence[SampleMeasurement]) -> int | None:
-    peaks = [sample.peak_memory_bytes for sample in samples if sample.peak_memory_bytes is not None]
+    peaks = [
+        sample.peak_memory_bytes
+        for sample in samples
+        if sample.peak_memory_bytes is not None
+    ]
     if not peaks:
         return None
     return max(peaks)
 
 
 def _cache_retention(samples: Sequence[SampleMeasurement]) -> CacheRetention | None:
-    before_snapshots = [sample.cache_before for sample in samples if sample.cache_before is not None]
-    after_snapshots = [sample.cache_after for sample in samples if sample.cache_after is not None]
+    before_snapshots = [
+        sample.cache_before for sample in samples if sample.cache_before is not None
+    ]
+    after_snapshots = [
+        sample.cache_after for sample in samples if sample.cache_after is not None
+    ]
     if not before_snapshots or not after_snapshots:
         return None
 
@@ -1038,6 +1065,18 @@ def _truncate_codepoints(value: str, *, max_codepoints: int) -> str:
 
 def _clamp_duration(value: int) -> int:
     return max(value, 0)
+
+
+def _average_iteration_duration(total_duration_ns: int) -> int:
+    return total_duration_ns // SMOKE_MEASUREMENT_ITERATIONS
+
+
+def _output_correctness_hash(outputs: Sequence[object]) -> str:
+    output_payload = [
+        output.model_dump(mode="json") if isinstance(output, BaseModel) else output
+        for output in outputs
+    ]
+    return sha256_hex(canonical_json_bytes(output_payload))
 
 
 def _ordered_selected_cases(
@@ -1090,7 +1129,9 @@ def _default_prepare_corpus(case: EvaluationCase) -> dict[str, object]:
     }
 
 
-def _default_answer_case(case: EvaluationCase, prepared_corpus: object) -> dict[str, object]:
+def _default_answer_case(
+    case: EvaluationCase, prepared_corpus: object
+) -> dict[str, object]:
     prepared = prepared_corpus if isinstance(prepared_corpus, Mapping) else {}
     return {
         "case_id": case.case_id,
@@ -1366,6 +1407,11 @@ def _assert_matching_smoke_metadata(
         raise ValueError(
             f"smoke artifacts differ at trial_count: {left.trial_count} != {right.trial_count}"
         )
+    if left.measurement_iterations != right.measurement_iterations:
+        raise ValueError(
+            "smoke artifacts differ at measurement_iterations: "
+            f"{left.measurement_iterations} != {right.measurement_iterations}"
+        )
     left_scenarios = {
         scenario.scenario_id: (scenario.backend, scenario.correctness_hash)
         for scenario in left.scenarios
@@ -1375,7 +1421,9 @@ def _assert_matching_smoke_metadata(
         for scenario in right.scenarios
     }
     if left_scenarios != right_scenarios:
-        raise ValueError("smoke artifacts contain different scenarios or scenario outputs")
+        raise ValueError(
+            "smoke artifacts contain different scenarios or scenario outputs"
+        )
 
 
 def _compare_scenario_timings(
@@ -1552,8 +1600,7 @@ def _rust_backend_supported() -> bool:
     except ImportError:
         return False
     return all(
-        hasattr(_core, name)
-        for name in ("align_pair_details", "align_batch_details")
+        hasattr(_core, name) for name in ("align_pair_details", "align_batch_details")
     )
 
 
@@ -1651,6 +1698,7 @@ def _smoke_protocol_hash() -> str:
         ),
         "trial_count": SMOKE_TRIAL_COUNT,
         "warmup_count": SMOKE_WARMUP_COUNT,
+        "measurement_iterations": SMOKE_MEASUREMENT_ITERATIONS,
         "worker_entrypoint": "python -m evaluation.performance smoke-worker",
     }
     return sha256_hex(canonical_json_bytes(payload))
@@ -1663,8 +1711,7 @@ def _default_smoke_worker_request() -> SmokeWorkerRequest:
         backend="python",
         warmup_count=SMOKE_WARMUP_COUNT,
         cases=[
-            case.model_dump(mode="json", exclude_computed_fields=True)
-            for case in cases
+            case.model_dump(mode="json", exclude_computed_fields=True) for case in cases
         ],
     )
 
@@ -1700,13 +1747,13 @@ def _write_structured_error(exc: Exception) -> None:
 
 
 def _write_stderr_json(
-    payload: BaseModel | Mapping[str, object] | list[object] | tuple[object, ...]
+    payload: BaseModel | Mapping[str, object] | list[object] | tuple[object, ...],
 ) -> None:
     sys.stderr.write(canonical_json_bytes(payload).decode("utf-8"))
 
 
 def _write_stdout_json(
-    payload: BaseModel | Mapping[str, object] | list[object] | tuple[object, ...]
+    payload: BaseModel | Mapping[str, object] | list[object] | tuple[object, ...],
 ) -> None:
     sys.stdout.write(canonical_json_bytes(payload).decode("utf-8"))
 
