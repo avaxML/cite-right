@@ -365,6 +365,44 @@ def test_promote_preserves_backup_when_rollback_restore_fails(
     assert (backup_dirs[0] / "sentinel.txt").read_text(encoding="utf-8") == "original"
 
 
+def test_promote_revalidates_copied_snapshot_before_replace_on_staging_race(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    staging_dir = _write_promotion_staging_fixture(tmp_path / "staging", monkeypatch)
+    dataset_dir = tmp_path / "dataset-live"
+    dataset_dir.mkdir()
+    (dataset_dir / "sentinel.txt").write_text("original", encoding="utf-8")
+
+    import evaluation.cli as cli
+
+    original_copy_regular_file = cli._copy_regular_file
+    race_triggered = False
+
+    def racing_copy(source: Path, destination: Path) -> None:
+        nonlocal race_triggered
+        if source == staging_dir / "train.json" and not race_triggered:
+            tampered_payload = json.loads(source.read_text(encoding="utf-8"))
+            tampered_payload[0]["split"] = "holdout"
+            source.write_bytes(canonical_json_bytes(tampered_payload))
+            race_triggered = True
+        original_copy_regular_file(source, destination)
+
+    monkeypatch.setattr(cli, "_copy_regular_file", racing_copy)
+
+    stderr = io.StringIO()
+    with contextlib.redirect_stderr(stderr):
+        exit_code = main(["promote", "--staging", str(staging_dir), "--dataset", str(dataset_dir)])
+
+    assert race_triggered is True
+    assert exit_code == 1
+    payload = json.loads(stderr.getvalue())
+    assert payload["ok"] is False
+    assert "train.json may contain only train cases" in payload["error"]["message"]
+    assert (dataset_dir / "sentinel.txt").read_text(encoding="utf-8") == "original"
+    assert not any(path.name.startswith(".dataset-live.tmp.") for path in tmp_path.iterdir() if path.is_dir())
+
+
 def _freeze_cli_date(iso_date: str) -> None:
     import evaluation.cli as cli
 

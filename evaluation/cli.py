@@ -10,9 +10,9 @@ import stat
 import sys
 import tempfile
 import uuid
+from collections.abc import Mapping
 from datetime import date
 from pathlib import Path
-from collections.abc import Mapping
 from typing import Sequence
 
 from evaluation.builders.cases import generate_all_authored_cases
@@ -306,6 +306,7 @@ def _command_promote(*, staging_dir: Path, dataset_dir: Path) -> dict[str, objec
             destination = temp_dir / relative_path
             destination.parent.mkdir(parents=True, exist_ok=True)
             _copy_regular_file(staging_root / relative_path, destination)
+        _validate_promotion_staging(temp_dir)
         _fsync_tree(temp_dir)
         _atomic_replace_directory(temp_dir, dataset_dir)
         _fsync_directory(dataset_parent)
