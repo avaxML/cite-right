@@ -431,6 +431,7 @@ def test_catalog_multi_span_cases_require_separated_proposition_evidence() -> No
         assert second_text == expected_second
         assert first_text.removesuffix(".") == answer_prefix
         assert period in second_text
+        assert f"every {period} days" in second_text
         assert any(
             character.isalpha()
             for character in source_text[first_span.end : second_span.start]
@@ -701,7 +702,7 @@ def test_catalog_generation_is_order_independent_after_stable_sorting() -> None:
     assert [case.case_id for case in forward] == [case.case_id for case in reverse]
     assert _canonical_case_digest(forward) == _canonical_case_digest(repeat)
     assert _canonical_case_digest(forward) == _canonical_case_digest(reverse)
-    assert _canonical_case_digest(forward) == "651142bd1bc5f40aa807ee59bd71fd642b11b80215b1cd1196a1423451cc7eeb"
+    assert _canonical_case_digest(forward) == "4867b0fde638dcf2da7a3e3e8e52080d1c955ae1cfa2b64b924d2c7f37dcb139"
 
 
 def test_case_ids_are_authoritative_and_labels_do_not_depend_on_runtime_outputs() -> None:
@@ -1024,11 +1025,11 @@ def _fixture_template():
                     "multi_span": {
                         "citation_texts": (
                             "Mercury completes one orbit.",
-                            "That orbit lasts 88 days.",
+                            "That orbital completion recurs every 88 days.",
                         ),
                         "primary_source_text": (
                             "Mercury completes one orbit. Archive staff track telescope windows separately. "
-                            "That orbit lasts 88 days."
+                            "That orbital completion recurs every 88 days."
                         ),
                     },
                 },
@@ -1816,7 +1817,7 @@ def test_real_case_generation_is_offline_deterministic_and_balanced(
     assert len(combined) == 750
     assert len({case.case_id for case in combined}) == 750
     assert _canonical_case_digest(combined) == real_sources.ALL_CASES_CANONICAL_DIGEST
-    assert _canonical_case_digest(combined) == "d82c674362634225fcedd45dfb0b68daa8c6d4a6b91ae00ef9d27e9796591f28"
+    assert _canonical_case_digest(combined) == "5b0ce437462ad3ecc1e8334dac614018420c492543c39df9d7e59ca41abba031"
 
     challenge_counts = Counter(case.transformation_family_id for case in first if case.transformation_family_id != "real-positive")
     assert challenge_counts == {

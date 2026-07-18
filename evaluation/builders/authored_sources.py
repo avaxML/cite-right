@@ -309,11 +309,11 @@ _DOMAIN_SPECS: Mapping[Domain, _DomainSpec] = MappingProxyType(
             multi_span_source_template=(
                 "{subject} completes one orbit. "
                 "Archive staff track {event_label} telescope windows separately. "
-                "That orbit lasts {period} days."
+                "That orbital completion recurs every {period} days."
             ),
             multi_span_citation_templates=(
                 "{subject} completes one orbit.",
-                "That orbit lasts {period} days.",
+                "That orbital completion recurs every {period} days.",
             ),
             date_claim_template="The {event_label} bulletin was issued in {year}.",
             modality_claim_template=(
@@ -348,11 +348,11 @@ _DOMAIN_SPECS: Mapping[Domain, _DomainSpec] = MappingProxyType(
             multi_span_source_template=(
                 "{subject} closes the reporting cycle. "
                 "Desk staff publish {event_label} compliance notes separately. "
-                "That reporting cycle lasts {period} days."
+                "That reporting-cycle closure recurs every {period} days."
             ),
             multi_span_citation_templates=(
                 "{subject} closes the reporting cycle.",
-                "That reporting cycle lasts {period} days.",
+                "That reporting-cycle closure recurs every {period} days.",
             ),
             date_claim_template="The {event_label} fund opened in {year}.",
             modality_claim_template=(
@@ -386,11 +386,11 @@ _DOMAIN_SPECS: Mapping[Domain, _DomainSpec] = MappingProxyType(
             relation_cycle_template="{subject} funds the review cycle every {period} days.",
             multi_span_source_template=(
                 "{subject} renews the review cycle. Clerks archive {event_label} agenda packets separately. "
-                "That review cycle lasts {period} days."
+                "That review-cycle renewal recurs every {period} days."
             ),
             multi_span_citation_templates=(
                 "{subject} renews the review cycle.",
-                "That review cycle lasts {period} days.",
+                "That review-cycle renewal recurs every {period} days.",
             ),
             date_claim_template="The {event_label} ordinance took effect in {year}.",
             modality_claim_template=(
@@ -426,11 +426,11 @@ _DOMAIN_SPECS: Mapping[Domain, _DomainSpec] = MappingProxyType(
             multi_span_source_template=(
                 "{subject} completes one backup cycle. "
                 "Operators rotate {event_label} storage checks weekly. "
-                "That backup cycle lasts {period} days."
+                "That backup-cycle completion recurs every {period} days."
             ),
             multi_span_citation_templates=(
                 "{subject} completes one backup cycle.",
-                "That backup cycle lasts {period} days.",
+                "That backup-cycle completion recurs every {period} days.",
             ),
             date_claim_template="The {event_label} platform launched in {year}.",
             modality_claim_template=(
@@ -464,11 +464,11 @@ _DOMAIN_SPECS: Mapping[Domain, _DomainSpec] = MappingProxyType(
             relation_cycle_template="{subject} schedules one screening cycle every {period} days.",
             multi_span_source_template=(
                 "{subject} completes one screening cycle. Nurses log {event_label} intake notes separately. "
-                "That screening cycle lasts {period} days."
+                "That screening-cycle completion recurs every {period} days."
             ),
             multi_span_citation_templates=(
                 "{subject} completes one screening cycle.",
-                "That screening cycle lasts {period} days.",
+                "That screening-cycle completion recurs every {period} days.",
             ),
             date_claim_template="The {event_label} clinic opened in {year}.",
             modality_claim_template=(

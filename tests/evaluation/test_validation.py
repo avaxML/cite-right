@@ -992,7 +992,7 @@ def test_current_corpus_manifest_is_deterministic_and_validation_only_flags_revi
         for finding in validation_report.findings
         if finding.code == "leakage_shingle_overlap_warning"
     ]
-    assert len(shingle_warnings) in {0, 137}
+    assert len(shingle_warnings) in {0, 176}
 
 
 def _build_case(
