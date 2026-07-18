@@ -458,7 +458,6 @@ def _write_artifacts_atomically(
     temp_paths: list[str] = []
     backup_paths: list[Path] = []
     rollback_paths: list[tuple[Path, Path | None]] = []
-    committed = False
     parents = {ciphertext_path.parent, public_manifest_path.parent}
     for parent in parents:
         if not parent.exists():
@@ -490,20 +489,33 @@ def _write_artifacts_atomically(
         rollback_paths.append((public_manifest_path, manifest_backup))
         os.replace(manifest_temp, public_manifest_path)
         _fsync_directory(public_manifest_path.parent)
-        committed = True
-    except Exception:
-        for target_path, backup_path in reversed(rollback_paths):
-            if backup_path is None:
+    except Exception as original_exc:
+        rollback_parent_order: list[Path] = []
+        rollback_parent_seen: set[Path] = set()
+        try:
+            for target_path, backup_path in reversed(rollback_paths):
+                rollback_parent = target_path.parent
+                if backup_path is None:
+                    try:
+                        target_path.unlink()
+                    except FileNotFoundError:
+                        continue
+                    if rollback_parent not in rollback_parent_seen:
+                        rollback_parent_seen.add(rollback_parent)
+                        rollback_parent_order.append(rollback_parent)
+                    continue
                 try:
-                    target_path.unlink()
+                    if backup_path.exists():
+                        os.replace(backup_path, target_path)
+                        if rollback_parent not in rollback_parent_seen:
+                            rollback_parent_seen.add(rollback_parent)
+                            rollback_parent_order.append(rollback_parent)
                 except FileNotFoundError:
-                    pass
-                continue
-            try:
-                if backup_path.exists():
-                    os.replace(backup_path, target_path)
-            except FileNotFoundError:
-                pass
+                    continue
+            for rollback_parent in rollback_parent_order:
+                _fsync_directory(rollback_parent)
+        except Exception as rollback_exc:
+            raise rollback_exc from original_exc
         raise
     finally:
         for temp_path in temp_paths:
@@ -511,12 +523,11 @@ def _write_artifacts_atomically(
                 os.unlink(temp_path)
             except FileNotFoundError:
                 pass
-        if committed:
-            for backup_path in backup_paths:
-                try:
-                    backup_path.unlink()
-                except FileNotFoundError:
-                    pass
+        for backup_path in backup_paths:
+            try:
+                backup_path.unlink()
+            except FileNotFoundError:
+                pass
 
 
 def _backup_existing_path(path: Path) -> Path | None:

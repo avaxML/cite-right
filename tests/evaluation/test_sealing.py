@@ -574,24 +574,37 @@ def test_seal_holdout_redacts_public_manifest_and_avoids_partial_publication_on_
     assert not failing_manifest_path.exists()
 
 
-def test_seal_holdout_rolls_back_if_public_manifest_replace_fails(
+@pytest.mark.parametrize("shared_parent", [True, False])
+def test_seal_holdout_rolls_back_if_public_manifest_replace_fails_and_fsyncs_rollback_parents(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
+    shared_parent: bool,
 ) -> None:
-    from evaluation.sealing import seal_holdout
+    import evaluation.sealing as sealing
 
     cases = _build_holdout_cases()
     ledger = _approved_review_ledger(cases)
     public_key_path = tmp_path / "attestation-public.pem"
     _install_signing_keys(tmp_path, monkeypatch, public_key_path=public_key_path)
 
-    ciphertext_path = tmp_path / "holdout.sealed.json"
-    manifest_path = tmp_path / "holdout.public.json"
+    if shared_parent:
+        ciphertext_dir = tmp_path
+        manifest_dir = tmp_path
+    else:
+        ciphertext_dir = tmp_path / "ciphertext"
+        manifest_dir = tmp_path / "manifest"
+        ciphertext_dir.mkdir()
+        manifest_dir.mkdir()
+
+    ciphertext_path = ciphertext_dir / "holdout.sealed.json"
+    manifest_path = manifest_dir / "holdout.public.json"
     ciphertext_path.write_bytes(b"ciphertext-old")
     manifest_path.write_bytes(b"manifest-old")
 
     original_replace = os.replace
     call_count = {"value": 0}
+    fsync_calls: list[Path] = []
+    original_fsync_directory = sealing._fsync_directory
 
     def failing_replace(src: str | os.PathLike[str], dst: str | os.PathLike[str]) -> None:
         call_count["value"] += 1
@@ -599,10 +612,15 @@ def test_seal_holdout_rolls_back_if_public_manifest_replace_fails(
             raise RuntimeError("simulated manifest replace failure")
         original_replace(src, dst)
 
+    def tracking_fsync_directory(path: Path) -> None:
+        fsync_calls.append(path)
+        original_fsync_directory(path)
+
     monkeypatch.setattr(os, "replace", failing_replace)
+    monkeypatch.setattr(sealing, "_fsync_directory", tracking_fsync_directory)
 
     with pytest.raises(RuntimeError, match="manifest replace failure"):
-        seal_holdout(
+        sealing.seal_holdout(
             cases,
             ledger=ledger,
             ciphertext_path=ciphertext_path,
@@ -613,7 +631,13 @@ def test_seal_holdout_rolls_back_if_public_manifest_replace_fails(
 
     assert ciphertext_path.read_bytes() == b"ciphertext-old"
     assert manifest_path.read_bytes() == b"manifest-old"
-    assert not any(path.name.startswith(".holdout") for path in tmp_path.iterdir())
+    assert not any(path.name.startswith(".holdout") for path in tmp_path.rglob("*"))
+
+    if shared_parent:
+        assert fsync_calls == [tmp_path, tmp_path]
+    else:
+        assert fsync_calls[0] == ciphertext_dir
+        assert fsync_calls[1:] == [manifest_dir, ciphertext_dir]
 
 
 def test_sealing_cli_uses_env_keys_and_verifies_public_manifest(
