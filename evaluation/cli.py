@@ -195,8 +195,14 @@ def _command_build(*, output_dir: Path, seed: int) -> dict[str, object]:
                 )
             ],
         )
-        _copy_regular_file(REAL_SOURCES_PATH, temp_dir / "sources" / "real.json")
-        _copy_regular_file(PROVENANCE_PATH, temp_dir / "provenance.json")
+        _write_json(
+            temp_dir / "sources" / "real.json",
+            json.loads(_read_regular_file(REAL_SOURCES_PATH)),
+        )
+        _write_json(
+            temp_dir / "provenance.json",
+            json.loads(_read_regular_file(PROVENANCE_PATH)),
+        )
         _fsync_tree(temp_dir)
         os.replace(temp_dir, output_dir)
         _fsync_directory(parent)

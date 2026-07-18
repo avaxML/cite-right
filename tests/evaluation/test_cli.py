@@ -181,6 +181,9 @@ def test_build_command_is_deterministic_for_fixed_seed(tmp_path: Path) -> None:
         "sources/real.json",
     ):
         assert (left / relative_path).read_bytes() == (right / relative_path).read_bytes()
+        if relative_path.endswith(".json"):
+            payload = json.loads((left / relative_path).read_bytes())
+            assert (left / relative_path).read_bytes() == canonical_json_bytes(payload)
     assert main(["validate", "--bundle", str(left)]) == 0
 
 
