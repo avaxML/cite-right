@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import importlib
 from collections.abc import Callable, Sequence
-from typing import Any, get_args
+from typing import Any, Literal, get_args
 
 import pytest
 
@@ -422,7 +422,7 @@ def _span_citations(
     end: int,
     citations: Sequence[Citation] = (),
     retrieval_support: Sequence[RetrievalSupport] = (),
-    status: str,
+    status: Literal["supported", "partial", "unsupported"],
 ) -> SpanCitations:
     return SpanCitations(
         answer_span=AnswerSpan(
