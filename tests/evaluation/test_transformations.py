@@ -423,10 +423,14 @@ def test_catalog_multi_span_cases_require_separated_proposition_evidence() -> No
         first_span, second_span = target.spans
         first_text = source_text[first_span.start : first_span.end]
         second_text = source_text[second_span.start : second_span.end]
+        answer_prefix, cadence = case.answer.rsplit(" every ", maxsplit=1)
+        period = cadence.removesuffix(" days.")
 
         assert claim.requires_non_contiguous_evidence is True
         assert first_text == expected_first
         assert second_text == expected_second
+        assert first_text.removesuffix(".") == answer_prefix
+        assert period in second_text
         assert any(
             character.isalpha()
             for character in source_text[first_span.end : second_span.start]
@@ -697,7 +701,7 @@ def test_catalog_generation_is_order_independent_after_stable_sorting() -> None:
     assert [case.case_id for case in forward] == [case.case_id for case in reverse]
     assert _canonical_case_digest(forward) == _canonical_case_digest(repeat)
     assert _canonical_case_digest(forward) == _canonical_case_digest(reverse)
-    assert _canonical_case_digest(forward) == "1111e8fedd6d1a173ab34973226bb4ed626ef76fdf15088370fcb6f3f81c40da"
+    assert _canonical_case_digest(forward) == "651142bd1bc5f40aa807ee59bd71fd642b11b80215b1cd1196a1423451cc7eeb"
 
 
 def test_case_ids_are_authoritative_and_labels_do_not_depend_on_runtime_outputs() -> None:
@@ -1812,7 +1816,7 @@ def test_real_case_generation_is_offline_deterministic_and_balanced(
     assert len(combined) == 750
     assert len({case.case_id for case in combined}) == 750
     assert _canonical_case_digest(combined) == real_sources.ALL_CASES_CANONICAL_DIGEST
-    assert _canonical_case_digest(combined) == "6d1d9725c4dddddc426f03d009e7fb6d680fdb31e737ed05257d057e479796b6"
+    assert _canonical_case_digest(combined) == "d82c674362634225fcedd45dfb0b68daa8c6d4a6b91ae00ef9d27e9796591f28"
 
     challenge_counts = Counter(case.transformation_family_id for case in first if case.transformation_family_id != "real-positive")
     assert challenge_counts == {

@@ -271,7 +271,6 @@ class _DomainSpec:
     negated_cycle_template: str
     unit_cycle_template: str
     relation_cycle_template: str
-    multi_span_claim_template: str
     multi_span_source_template: str
     multi_span_citation_templates: tuple[str, str]
     date_claim_template: str
@@ -307,10 +306,6 @@ _DOMAIN_SPECS: Mapping[Domain, _DomainSpec] = MappingProxyType(
             ),
             unit_cycle_template="{subject} completes one orbit every {period} weeks.",
             relation_cycle_template="{subject} documents one orbit every {period} days.",
-            multi_span_claim_template=(
-                "{subject} completes one orbit in the {event_label} cycle every "
-                "{period} days."
-            ),
             multi_span_source_template=(
                 "{subject} completes one orbit. "
                 "Archive staff track {event_label} telescope windows separately. "
@@ -350,9 +345,6 @@ _DOMAIN_SPECS: Mapping[Domain, _DomainSpec] = MappingProxyType(
             ),
             unit_cycle_template="{subject} closes the reporting cycle every {period} weeks.",
             relation_cycle_template="{subject} audits the reporting cycle every {period} days.",
-            multi_span_claim_template=(
-                "{subject} closes the {event_label} cycle every {period} days."
-            ),
             multi_span_source_template=(
                 "{subject} closes the reporting cycle. "
                 "Desk staff publish {event_label} compliance notes separately. "
@@ -392,9 +384,6 @@ _DOMAIN_SPECS: Mapping[Domain, _DomainSpec] = MappingProxyType(
             ),
             unit_cycle_template="{subject} renews the review cycle every {period} weeks.",
             relation_cycle_template="{subject} funds the review cycle every {period} days.",
-            multi_span_claim_template=(
-                "{subject} renews the review cycle every {period} days."
-            ),
             multi_span_source_template=(
                 "{subject} renews the review cycle. Clerks archive {event_label} agenda packets separately. "
                 "That review cycle lasts {period} days."
@@ -434,9 +423,6 @@ _DOMAIN_SPECS: Mapping[Domain, _DomainSpec] = MappingProxyType(
             ),
             unit_cycle_template="{subject} completes one backup cycle every {period} weeks.",
             relation_cycle_template="{subject} archives one backup cycle every {period} days.",
-            multi_span_claim_template=(
-                "{subject} completes one backup cycle every {period} days."
-            ),
             multi_span_source_template=(
                 "{subject} completes one backup cycle. "
                 "Operators rotate {event_label} storage checks weekly. "
@@ -476,9 +462,6 @@ _DOMAIN_SPECS: Mapping[Domain, _DomainSpec] = MappingProxyType(
             ),
             unit_cycle_template="{subject} completes one screening cycle every {period} weeks.",
             relation_cycle_template="{subject} schedules one screening cycle every {period} days.",
-            multi_span_claim_template=(
-                "{subject} completes one screening cycle every {period} days."
-            ),
             multi_span_source_template=(
                 "{subject} completes one screening cycle. Nurses log {event_label} intake notes separately. "
                 "That screening cycle lasts {period} days."
@@ -517,9 +500,6 @@ _DOMAIN_SPECS: Mapping[Domain, _DomainSpec] = MappingProxyType(
             ),
             unit_cycle_template="{subject} rotates through the gallery every {period} weeks.",
             relation_cycle_template="{subject} curates the gallery every {period} days.",
-            multi_span_claim_template=(
-                "{subject} rotates through the gallery every {period} days."
-            ),
             multi_span_source_template=(
                 "{subject} rotates through the gallery. "
                 "Curators catalog {event_label} placards separately. "
@@ -746,8 +726,6 @@ def _build_template(*, domain: Domain, spec: _DomainSpec, seed: _FamilySeed) -> 
                         "entity": {"slots": {"subject": seed.alternate_subject}},
                         "relation": {"claim_template": spec.relation_cycle_template},
                         "multi_span": {
-                            "claim_template": spec.multi_span_claim_template,
-                            "slots": {"event_label": seed.event_label},
                             "citation_texts": tuple(
                                 template.format(
                                     subject=seed.subject,
