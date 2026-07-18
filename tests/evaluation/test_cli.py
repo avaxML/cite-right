@@ -297,6 +297,29 @@ def test_promote_success_replaces_dataset_with_allowlisted_files_only(
     ]
 
 
+def test_validate_rejects_corrupted_manifest_in_promoted_train_dev_snapshot(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    staging_dir = _write_promotion_staging_fixture(tmp_path / "staging", monkeypatch)
+    dataset_dir = tmp_path / "dataset-live"
+
+    assert main(["promote", "--staging", str(staging_dir), "--dataset", str(dataset_dir)]) == 0
+
+    manifest_payload = json.loads((dataset_dir / "manifest.json").read_text(encoding="utf-8"))
+    manifest_payload["split_case_counts"]["train"] = 999
+    (dataset_dir / "manifest.json").write_bytes(canonical_json_bytes(manifest_payload))
+
+    stderr = io.StringIO()
+    with contextlib.redirect_stderr(stderr):
+        exit_code = main(["validate", "--bundle", str(dataset_dir)])
+
+    assert exit_code == 1
+    payload = json.loads(stderr.getvalue())
+    assert payload["ok"] is False
+    assert "manifest" in payload["error"]["message"]
+
+
 def test_promote_rejects_unknown_empty_directories_and_manifest_mismatch(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

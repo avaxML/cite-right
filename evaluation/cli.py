@@ -373,7 +373,7 @@ def _validate_promotion_staging(staging_root: Path) -> tuple[str, ...]:
 
     ledger = load_review_ledger(staging_root / "dev_reviews.json")
     assert_review_complete(dev_cases, ledger, split="dev")
-    manifest = _load_non_holdout_manifest(
+    manifest = _load_dataset_manifest(
         staging_root / "manifest.json",
         cases=train_cases + dev_cases,
     )
@@ -408,14 +408,7 @@ def _load_private_manifest_if_present(
     manifest_path = bundle_root / "manifest.json"
     if not manifest_path.exists():
         return None
-    raw_bytes = _read_regular_file(manifest_path)
-    payload = json.loads(raw_bytes)
-    manifest = DatasetManifest.model_validate(payload)
-    if raw_bytes != canonical_json_bytes(manifest):
-        raise ValueError(f"{manifest_path} must use canonical JSON ordering")
-    if any(case.split == "holdout" for case in cases):
-        return manifest
-    return None
+    return _load_dataset_manifest(manifest_path, cases=cases)
 
 
 def _load_present_case_files(bundle_root: Path) -> tuple[EvaluationCase, ...]:
@@ -456,7 +449,7 @@ def _load_cases_file(path: Path) -> tuple[EvaluationCase, ...]:
     )
 
 
-def _load_non_holdout_manifest(
+def _load_dataset_manifest(
     manifest_path: Path,
     *,
     cases: tuple[EvaluationCase, ...],
