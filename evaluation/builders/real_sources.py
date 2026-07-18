@@ -407,6 +407,8 @@ def _build_challenge_case(
     if challenge.kind == "partial":
         assert challenge.unsupported_suffix is not None
         supported_end = len(family.source_text)
+        unsupported_text = challenge.answer[supported_end:].lstrip(" \t\n\r.,;:!?-")
+        unsupported_start = len(challenge.answer) - len(unsupported_text)
         unit = EvaluationUnit(
             unit_id="unit-answer",
             answer_span=CharSpan(start=0, end=len(challenge.answer)),
@@ -423,10 +425,10 @@ def _build_challenge_case(
                 ClaimAnnotation(
                     claim_id="claim-unsupported",
                     answer_span=CharSpan(
-                        start=supported_end,
+                        start=unsupported_start,
                         end=len(challenge.answer),
                     ),
-                    text=challenge.answer[supported_end:],
+                    text=unsupported_text,
                     label="not_in_sources",
                 ),
             ),
@@ -628,10 +630,10 @@ def _require_non_empty(value: str, message: str) -> str:
 
 
 REAL_CASES_CANONICAL_DIGEST = (
-    "6701c281952707ba458c349250799b6914b292737a861fa7151bbbc40249e651"
+    "7d5bc92d9020a35ff730c720bae70b632d87d74d1d21b788e0f024a03b851637"
 )
 ALL_CASES_CANONICAL_DIGEST = (
-    "de129ef6567aa03ef5581bb4525a5bb33ea341adf135e3571a3c5705213e6a89"
+    "6d1d9725c4dddddc426f03d009e7fb6d680fdb31e737ed05257d057e479796b6"
 )
 
 

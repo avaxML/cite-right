@@ -83,7 +83,7 @@ EXPECTED_BEHAVIOR_BY_TRANSFORMATION = {
         expected_claim_count=1,
     ),
     "entity": ExpectedFamilyBehavior(
-        claim_label="contradicted",
+        claim_label="not_in_sources",
         expected_answer="Venus completes one orbit every 88 days.",
         requires_citations=False,
         expected_status="unsupported",
@@ -91,8 +91,8 @@ EXPECTED_BEHAVIOR_BY_TRANSFORMATION = {
         expected_claim_count=1,
     ),
     "relation": ExpectedFamilyBehavior(
-        claim_label="contradicted",
-        expected_answer="Mercury begins one orbit every 88 days.",
+        claim_label="not_in_sources",
+        expected_answer="Mercury documents one orbit every 88 days.",
         requires_citations=False,
         expected_status="unsupported",
         expected_source_count=1,
@@ -100,7 +100,7 @@ EXPECTED_BEHAVIOR_BY_TRANSFORMATION = {
     ),
     "modality": ExpectedFamilyBehavior(
         claim_label="not_in_sources",
-        expected_answer="The probe will remain active through 2030.",
+        expected_answer="The report states the probe will remain active through 2030.",
         requires_citations=False,
         expected_status="unsupported",
         expected_source_count=1,
@@ -108,7 +108,7 @@ EXPECTED_BEHAVIOR_BY_TRANSFORMATION = {
     ),
     "unsupported_clause": ExpectedFamilyBehavior(
         claim_label="not_in_sources",
-        expected_answer="The probe should remain active through 2030. It is powered by a thorium battery.",
+        expected_answer="The report states the probe should remain active through 2030. It is powered by a thorium battery.",
         requires_citations=False,
         expected_status="partial",
         expected_source_count=1,
@@ -140,11 +140,11 @@ EXPECTED_BEHAVIOR_BY_TRANSFORMATION = {
     ),
     "multi_source": ExpectedFamilyBehavior(
         claim_label="entailed",
-        expected_answer="Mercury completes one orbit every 88 days and the mission launched in 1977.",
+        expected_answer="Mercury completes one orbit every 88 days. The mission launched in 1977.",
         requires_citations=True,
         expected_status="supported",
         expected_source_count=2,
-        expected_claim_count=1,
+        expected_claim_count=2,
     ),
 }
 
@@ -264,6 +264,9 @@ def test_transformation_family_semantics_and_lineage(
         assert len(claims) == 2
         assert claims[0].label == "entailed"
         assert claims[1].label == "not_in_sources"
+    elif transformation_name == "multi_source":
+        assert len(claims) == 2
+        assert all(claim.label == "entailed" for claim in claims)
     else:
         assert len(claims) == 1
         assert claims[0].label == expected.claim_label
@@ -295,10 +298,65 @@ def test_transformation_family_semantics_and_lineage(
         target = positive_claim.citation_requirements[0].alternatives[0]
         assert len(target.spans) == 2
         assert positive_claim.requires_non_contiguous_evidence is True
+        gap_text = case.sources[0].text[target.spans[0].end : target.spans[1].start]
+        assert any(character.isalpha() for character in gap_text)
     elif transformation_name == "multi_source":
-        positive_claim = _positive_claim(case)
-        assert len(positive_claim.citation_requirements) == 2
-        assert all(len(requirement.alternatives) >= 1 for requirement in positive_claim.citation_requirements)
+        entailed_claims = [claim for claim in claims if claim.label == "entailed"]
+        assert len(entailed_claims) == 2
+        assert tuple(claim.text for claim in entailed_claims) == (
+            "Mercury completes one orbit every 88 days.",
+            "The mission launched in 1977.",
+        )
+        assert case.sources[0].text == "Mercury completes one orbit every 88 days."
+        assert case.sources[1].text == "Mission logs confirm the launch year was 1977."
+        assert tuple(
+            requirement.alternatives[0].source_id
+            for claim in entailed_claims
+            for requirement in claim.citation_requirements
+        ) == ("source-primary", "source-secondary")
+
+
+def test_authored_entity_and_relation_variants_are_not_in_sources_across_catalog() -> None:
+    authored_sources = _authored_sources_module()
+
+    for template in authored_sources.AUTHORED_FACT_TEMPLATES:
+        for transformation_name in ("entity", "relation"):
+            case = _generate_case(
+                template=template,
+                transformation_name=transformation_name,
+                seed=23,
+            )
+            claim = case.evaluation_units[0].claims[0]
+
+            assert claim.label == "not_in_sources"
+            assert claim.citation_requirements == ()
+            assert claim.text == case.answer
+            assert all(claim.text not in source.text for source in case.sources)
+
+
+def test_authored_entailed_targets_are_minimal_propositions_not_bare_slots() -> None:
+    authored_sources = _authored_sources_module()
+
+    for template in authored_sources.AUTHORED_FACT_TEMPLATES:
+        for transformation_name in (
+            "unicode",
+            "duplicate_distractor",
+            "multi_span",
+            "multi_source",
+            "unsupported_clause",
+        ):
+            case = _generate_case(
+                template=template,
+                transformation_name=transformation_name,
+                seed=23,
+            )
+            target_texts = _entailed_target_texts(case)
+            fact = _fact_for_transformation(template, transformation_name)
+
+            assert target_texts
+            assert all(text != evidence.text for text in target_texts for evidence in fact.evidence)
+            assert all(len(text.split()) >= 3 for text in target_texts)
+            assert all(any(character.isalpha() for character in text) for text in target_texts)
 
 
 @pytest.mark.parametrize("transformation_name", ALL_TRANSFORMATION_NAMES)
@@ -344,6 +402,35 @@ def test_exact_target_spans_match_authored_evidence_for_fixture_template(
         template=template,
         transformation_name=transformation_name,
     )
+
+
+def test_catalog_multi_span_cases_require_separated_proposition_evidence() -> None:
+    authored_sources = _authored_sources_module()
+
+    for template in authored_sources.AUTHORED_FACT_TEMPLATES:
+        case = _generate_case(
+            template=template,
+            transformation_name="multi_span",
+            seed=29,
+        )
+        expected_first, expected_second = _string_tuple(
+            _variant_config(template, "multi_span"),
+            "citation_texts",
+        )
+        claim = case.evaluation_units[0].claims[0]
+        target = claim.citation_requirements[0].alternatives[0]
+        source_text = case.sources[0].text
+        first_span, second_span = target.spans
+        first_text = source_text[first_span.start : first_span.end]
+        second_text = source_text[second_span.start : second_span.end]
+
+        assert claim.requires_non_contiguous_evidence is True
+        assert first_text == expected_first
+        assert second_text == expected_second
+        assert any(
+            character.isalpha()
+            for character in source_text[first_span.end : second_span.start]
+        )
 
 
 @pytest.mark.parametrize("transformation_name", ALL_TRANSFORMATION_NAMES)
@@ -610,7 +697,7 @@ def test_catalog_generation_is_order_independent_after_stable_sorting() -> None:
     assert [case.case_id for case in forward] == [case.case_id for case in reverse]
     assert _canonical_case_digest(forward) == _canonical_case_digest(repeat)
     assert _canonical_case_digest(forward) == _canonical_case_digest(reverse)
-    assert _canonical_case_digest(forward) == "568df690f1248d0ad56fcebda8f8d45222a7e7a44e7747bf3311c707d64cc74e"
+    assert _canonical_case_digest(forward) == "1111e8fedd6d1a173ab34973226bb4ed626ef76fdf15088370fcb6f3f81c40da"
 
 
 def test_case_ids_are_authoritative_and_labels_do_not_depend_on_runtime_outputs() -> None:
@@ -622,7 +709,7 @@ def test_case_ids_are_authoritative_and_labels_do_not_depend_on_runtime_outputs(
 
     assert case.case_id.startswith("case-")
     assert case.case_id == _authoritative_case_id(case)
-    assert case.answer == "Mercury completes one orbit every 88 days and the mission launched in 1977."
+    assert case.answer == "Mercury completes one orbit every 88 days. The mission launched in 1977."
 
 
 def test_fact_validation_rejects_unresolved_answer_slots() -> None:
@@ -854,7 +941,11 @@ def _fixture_template():
                 ),
                 adversarial_variants={
                     "multi_source": {
-                        "secondary_source_text": "Mission logs confirm the launch year was 1977."
+                        "answer_text": "Mercury completes one orbit every 88 days. The mission launched in 1977.",
+                        "primary_claim_text": "Mercury completes one orbit every 88 days.",
+                        "primary_source_text": "Mercury completes one orbit every 88 days.",
+                        "secondary_claim_text": "The mission launched in 1977.",
+                        "secondary_source_text": "Mission logs confirm the launch year was 1977.",
                     }
                 },
             ),
@@ -879,7 +970,7 @@ def _fixture_template():
             ),
             authored_sources.Fact(
                 fact_id="fact-modality",
-                claim_template="The probe should remain active through {end_year}.",
+                claim_template="The report states the probe should remain active through {end_year}.",
                 slots={
                     "end_year": "2030",
                 },
@@ -893,7 +984,7 @@ def _fixture_template():
                 ),
                 adversarial_variants={
                     "modality": {
-                        "claim_template": "The probe will remain active through {end_year}."
+                        "claim_template": "The report states the probe will remain active through {end_year}."
                     },
                     "unsupported_clause": {
                         "unsupported_suffix": " It is powered by a thorium battery."
@@ -925,8 +1016,17 @@ def _fixture_template():
                     "number": {"slots": {"days": "89"}},
                     "unit": {"claim_template": "{planet} completes one orbit every {days} weeks."},
                     "entity": {"slots": {"planet": "Venus"}},
-                    "relation": {"claim_template": "{planet} begins one orbit every {days} days."},
-                    "multi_span": {"evidence_slot_ids": ("planet", "days")},
+                    "relation": {"claim_template": "{planet} documents one orbit every {days} days."},
+                    "multi_span": {
+                        "citation_texts": (
+                            "Mercury completes one orbit.",
+                            "That orbit lasts 88 days.",
+                        ),
+                        "primary_source_text": (
+                            "Mercury completes one orbit. Archive staff track telescope windows separately. "
+                            "That orbit lasts 88 days."
+                        ),
+                    },
                 },
             ),
             authored_sources.Fact(
@@ -970,15 +1070,20 @@ def _assert_positive_source_targets_slice_exact_text(
     transformation_name: str,
 ) -> None:
     source_text_by_id = {source.source_id: source.text for source in case.sources}
-    expected_requirements = _expected_positive_requirements(
+    expected_requirement_groups = _expected_positive_requirements(
         template=template,
         transformation_name=transformation_name,
     )
+    entailed_claims = [
+        claim for claim in case.evaluation_units[0].claims if claim.label == "entailed"
+    ]
 
-    for claim in case.evaluation_units[0].claims:
-        if claim.label != "entailed":
-            continue
-
+    assert len(entailed_claims) == len(expected_requirement_groups)
+    for claim, expected_requirements in zip(
+        entailed_claims,
+        expected_requirement_groups,
+        strict=True,
+    ):
         assert len(claim.citation_requirements) == len(expected_requirements)
         for requirement, expected in zip(
             claim.citation_requirements,
@@ -1093,7 +1198,17 @@ def _formatted_claim_text(template, transformation_name: str, *, variant: bool) 
     return str(claim_template).format(**slots)
 
 
+def _formatted_variant_text(template, transformation_name: str, key: str) -> str:
+    fact = _fact_for_transformation(template, transformation_name)
+    config = _variant_config(template, transformation_name)
+    raw_value = config[key]
+    assert isinstance(raw_value, str)
+    return raw_value.format(**dict(fact.slots))
+
+
 def _expected_answer_for_transformation(template, transformation_name: str) -> str:
+    if transformation_name == "multi_source":
+        return _formatted_variant_text(template, transformation_name, "answer_text")
     if transformation_name == "unsupported_clause":
         suffix = str(_variant_config(template, transformation_name)["unsupported_suffix"])
         return _formatted_claim_text(template, transformation_name, variant=False) + suffix
@@ -1104,7 +1219,7 @@ def _expected_positive_requirements(
     *,
     template,
     transformation_name: str,
-) -> tuple[ExpectedRequirement, ...]:
+) -> tuple[tuple[ExpectedRequirement, ...], ...]:
     positive_transformations = {
         "unicode",
         "duplicate_distractor",
@@ -1115,46 +1230,46 @@ def _expected_positive_requirements(
     if transformation_name not in positive_transformations:
         return ()
 
-    fact = _fact_for_transformation(template, transformation_name)
-    evidence_by_slot = {evidence.slot_id: evidence for evidence in fact.evidence}
-
     if transformation_name == "multi_source":
-        secondary_text = str(_variant_config(template, transformation_name)["secondary_source_text"])
-        secondary_evidence = [
-            evidence
-            for evidence in fact.evidence
-            if evidence.text in secondary_text
-        ]
-        assert len(secondary_evidence) == 1
-        secondary = secondary_evidence[0]
-        primary_evidence = tuple(
-            evidence for evidence in fact.evidence if evidence.slot_id != secondary.slot_id
-        )
-        secondary_span = _span(secondary_text, secondary.text)
         return (
-            ExpectedRequirement(
-                source_id="source-primary",
-                spans=tuple(evidence.span for evidence in primary_evidence),
-                texts=tuple(evidence.text for evidence in primary_evidence),
+            (
+                ExpectedRequirement(
+                    source_id="source-primary",
+                    spans=(CharSpan(start=0, end=len(_formatted_variant_text(template, transformation_name, "primary_source_text"))),),
+                    texts=(_formatted_variant_text(template, transformation_name, "primary_source_text"),),
+                ),
             ),
-            ExpectedRequirement(
-                source_id="source-secondary",
-                spans=(CharSpan.model_validate(secondary_span),),
-                texts=(secondary.text,),
+            (
+                ExpectedRequirement(
+                    source_id="source-secondary",
+                    spans=(CharSpan(start=0, end=len(_formatted_variant_text(template, transformation_name, "secondary_source_text"))),),
+                    texts=(_formatted_variant_text(template, transformation_name, "secondary_source_text"),),
+                ),
             ),
         )
 
     if transformation_name == "multi_span":
-        slot_ids = _string_tuple(_variant_config(template, transformation_name), "evidence_slot_ids")
-        evidence = tuple(evidence_by_slot[slot_id] for slot_id in slot_ids)
-    else:
-        evidence = fact.evidence
+        primary_source_text = _formatted_variant_text(template, transformation_name, "primary_source_text")
+        citation_texts = _string_tuple(_variant_config(template, transformation_name), "citation_texts")
+        return (
+            (
+                ExpectedRequirement(
+                    source_id="source-primary",
+                    spans=tuple(CharSpan.model_validate(_span(primary_source_text, text)) for text in citation_texts),
+                    texts=citation_texts,
+                ),
+            ),
+        )
+
+    proposition_text = _formatted_claim_text(template, transformation_name, variant=False)
 
     return (
-        ExpectedRequirement(
-            source_id="source-primary",
-            spans=tuple(item.span for item in evidence),
-            texts=tuple(item.text for item in evidence),
+        (
+            ExpectedRequirement(
+                source_id="source-primary",
+                spans=(CharSpan.model_validate(_span(template.source_text, proposition_text)),),
+                texts=(proposition_text,),
+            ),
         ),
     )
 
@@ -1168,6 +1283,19 @@ def _string_tuple(config: Mapping[str, object], key: str) -> tuple[str, ...]:
     raw = config[key]
     assert isinstance(raw, tuple)
     return tuple(str(item) for item in raw)
+
+
+def _entailed_target_texts(case: EvaluationCase) -> tuple[str, ...]:
+    source_text_by_id = {source.source_id: source.text for source in case.sources}
+    return tuple(
+        source_text_by_id[alternative.source_id][span.start : span.end]
+        for unit in case.evaluation_units
+        for claim in unit.claims
+        if claim.label == "entailed"
+        for requirement in claim.citation_requirements
+        for alternative in requirement.alternatives
+        for span in alternative.spans
+    )
 
 
 def _canonical_case_digest(cases: tuple[EvaluationCase, ...]) -> str:
@@ -1679,12 +1807,12 @@ def test_real_case_generation_is_offline_deterministic_and_balanced(
     assert tuple(case.case_id for case in first) == tuple(case.case_id for case in second)
     assert _canonical_case_digest(first) == _canonical_case_digest(second)
     assert _canonical_case_digest(first) == real_sources.REAL_CASES_CANONICAL_DIGEST
-    assert _canonical_case_digest(first) == "6701c281952707ba458c349250799b6914b292737a861fa7151bbbc40249e651"
+    assert _canonical_case_digest(first) == "7d5bc92d9020a35ff730c720bae70b632d87d74d1d21b788e0f024a03b851637"
 
     assert len(combined) == 750
     assert len({case.case_id for case in combined}) == 750
     assert _canonical_case_digest(combined) == real_sources.ALL_CASES_CANONICAL_DIGEST
-    assert _canonical_case_digest(combined) == "de129ef6567aa03ef5581bb4525a5bb33ea341adf135e3571a3c5705213e6a89"
+    assert _canonical_case_digest(combined) == "6d1d9725c4dddddc426f03d009e7fb6d680fdb31e737ed05257d057e479796b6"
 
     challenge_counts = Counter(case.transformation_family_id for case in first if case.transformation_family_id != "real-positive")
     assert challenge_counts == {
@@ -1741,6 +1869,7 @@ def test_real_cases_slice_exact_local_snapshots_and_match_expected_semantics() -
             first_claim, second_claim = case.evaluation_units[0].claims
             assert first_claim.label == "entailed"
             assert second_claim.label == "not_in_sources"
+            assert second_claim.text == second_claim.text.lstrip(" \t\n\r.,;:!?-")
             target = first_claim.citation_requirements[0].alternatives[0]
             assert target.source_id == "source-primary"
             assert target.spans == (CharSpan(start=0, end=len(primary_source.text)),)

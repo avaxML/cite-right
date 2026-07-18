@@ -271,6 +271,9 @@ class _DomainSpec:
     negated_cycle_template: str
     unit_cycle_template: str
     relation_cycle_template: str
+    multi_span_claim_template: str
+    multi_span_source_template: str
+    multi_span_citation_templates: tuple[str, str]
     date_claim_template: str
     modality_claim_template: str
     modality_variant_template: str
@@ -303,7 +306,20 @@ _DOMAIN_SPECS: Mapping[Domain, _DomainSpec] = MappingProxyType(
                 "{subject} does not complete one orbit every {period} days."
             ),
             unit_cycle_template="{subject} completes one orbit every {period} weeks.",
-            relation_cycle_template="{subject} begins one orbit every {period} days.",
+            relation_cycle_template="{subject} documents one orbit every {period} days.",
+            multi_span_claim_template=(
+                "{subject} completes one orbit in the {event_label} cycle every "
+                "{period} days."
+            ),
+            multi_span_source_template=(
+                "{subject} completes one orbit. "
+                "Archive staff track {event_label} telescope windows separately. "
+                "That orbit lasts {period} days."
+            ),
+            multi_span_citation_templates=(
+                "{subject} completes one orbit.",
+                "That orbit lasts {period} days.",
+            ),
             date_claim_template="The {event_label} bulletin was issued in {year}.",
             modality_claim_template=(
                 "The report states the {program_label} should remain active through "
@@ -333,7 +349,19 @@ _DOMAIN_SPECS: Mapping[Domain, _DomainSpec] = MappingProxyType(
                 "{subject} does not close the reporting cycle every {period} days."
             ),
             unit_cycle_template="{subject} closes the reporting cycle every {period} weeks.",
-            relation_cycle_template="{subject} opens the reporting cycle every {period} days.",
+            relation_cycle_template="{subject} audits the reporting cycle every {period} days.",
+            multi_span_claim_template=(
+                "{subject} closes the {event_label} cycle every {period} days."
+            ),
+            multi_span_source_template=(
+                "{subject} closes the reporting cycle. "
+                "Desk staff publish {event_label} compliance notes separately. "
+                "That reporting cycle lasts {period} days."
+            ),
+            multi_span_citation_templates=(
+                "{subject} closes the reporting cycle.",
+                "That reporting cycle lasts {period} days.",
+            ),
             date_claim_template="The {event_label} fund opened in {year}.",
             modality_claim_template=(
                 "The desk memo states the {program_label} should remain active through "
@@ -363,7 +391,18 @@ _DOMAIN_SPECS: Mapping[Domain, _DomainSpec] = MappingProxyType(
                 "{subject} does not renew the review cycle every {period} days."
             ),
             unit_cycle_template="{subject} renews the review cycle every {period} weeks.",
-            relation_cycle_template="{subject} starts the review cycle every {period} days.",
+            relation_cycle_template="{subject} funds the review cycle every {period} days.",
+            multi_span_claim_template=(
+                "{subject} renews the review cycle every {period} days."
+            ),
+            multi_span_source_template=(
+                "{subject} renews the review cycle. Clerks archive {event_label} agenda packets separately. "
+                "That review cycle lasts {period} days."
+            ),
+            multi_span_citation_templates=(
+                "{subject} renews the review cycle.",
+                "That review cycle lasts {period} days.",
+            ),
             date_claim_template="The {event_label} ordinance took effect in {year}.",
             modality_claim_template=(
                 "The committee memo states the {program_label} should remain active "
@@ -394,7 +433,19 @@ _DOMAIN_SPECS: Mapping[Domain, _DomainSpec] = MappingProxyType(
                 "{subject} does not complete one backup cycle every {period} days."
             ),
             unit_cycle_template="{subject} completes one backup cycle every {period} weeks.",
-            relation_cycle_template="{subject} begins one backup cycle every {period} days.",
+            relation_cycle_template="{subject} archives one backup cycle every {period} days.",
+            multi_span_claim_template=(
+                "{subject} completes one backup cycle every {period} days."
+            ),
+            multi_span_source_template=(
+                "{subject} completes one backup cycle. "
+                "Operators rotate {event_label} storage checks weekly. "
+                "That backup cycle lasts {period} days."
+            ),
+            multi_span_citation_templates=(
+                "{subject} completes one backup cycle.",
+                "That backup cycle lasts {period} days.",
+            ),
             date_claim_template="The {event_label} platform launched in {year}.",
             modality_claim_template=(
                 "The operations memo states the {program_label} should remain active "
@@ -424,7 +475,18 @@ _DOMAIN_SPECS: Mapping[Domain, _DomainSpec] = MappingProxyType(
                 "{subject} does not complete one screening cycle every {period} days."
             ),
             unit_cycle_template="{subject} completes one screening cycle every {period} weeks.",
-            relation_cycle_template="{subject} begins one screening cycle every {period} days.",
+            relation_cycle_template="{subject} schedules one screening cycle every {period} days.",
+            multi_span_claim_template=(
+                "{subject} completes one screening cycle every {period} days."
+            ),
+            multi_span_source_template=(
+                "{subject} completes one screening cycle. Nurses log {event_label} intake notes separately. "
+                "That screening cycle lasts {period} days."
+            ),
+            multi_span_citation_templates=(
+                "{subject} completes one screening cycle.",
+                "That screening cycle lasts {period} days.",
+            ),
             date_claim_template="The {event_label} clinic opened in {year}.",
             modality_claim_template=(
                 "The care memo states the {program_label} should remain active through "
@@ -454,7 +516,19 @@ _DOMAIN_SPECS: Mapping[Domain, _DomainSpec] = MappingProxyType(
                 "{subject} does not rotate through the gallery every {period} days."
             ),
             unit_cycle_template="{subject} rotates through the gallery every {period} weeks.",
-            relation_cycle_template="{subject} appears in the gallery every {period} days.",
+            relation_cycle_template="{subject} curates the gallery every {period} days.",
+            multi_span_claim_template=(
+                "{subject} rotates through the gallery every {period} days."
+            ),
+            multi_span_source_template=(
+                "{subject} rotates through the gallery. "
+                "Curators catalog {event_label} placards separately. "
+                "That rotation recurs every {period} days."
+            ),
+            multi_span_citation_templates=(
+                "{subject} rotates through the gallery.",
+                "That rotation recurs every {period} days.",
+            ),
             date_claim_template="The {event_label} exhibit opened in {year}.",
             modality_claim_template=(
                 "The curator memo states the {program_label} should remain active "
@@ -616,6 +690,29 @@ def _build_template(*, domain: Domain, spec: _DomainSpec, seed: _FamilySeed) -> 
                 adversarial_variants=_freeze_variant_mapping(
                     {
                         "multi_source": {
+                            "answer_text": (
+                                spec.cycle_claim_template.format(
+                                    subject=seed.subject,
+                                    period=seed.period,
+                                )
+                                + " "
+                                + spec.date_claim_template.format(
+                                    event_label=seed.event_label,
+                                    year=seed.year,
+                                )
+                            ),
+                            "primary_claim_text": spec.cycle_claim_template.format(
+                                subject=seed.subject,
+                                period=seed.period,
+                            ),
+                            "primary_source_text": spec.cycle_claim_template.format(
+                                subject=seed.subject,
+                                period=seed.period,
+                            ),
+                            "secondary_claim_text": spec.date_claim_template.format(
+                                event_label=seed.event_label,
+                                year=seed.year,
+                            ),
                             "secondary_source_text": spec.secondary_source_template.format(
                                 event_label=seed.event_label,
                                 year=seed.year,
@@ -648,7 +745,23 @@ def _build_template(*, domain: Domain, spec: _DomainSpec, seed: _FamilySeed) -> 
                         "unit": {"claim_template": spec.unit_cycle_template},
                         "entity": {"slots": {"subject": seed.alternate_subject}},
                         "relation": {"claim_template": spec.relation_cycle_template},
-                        "multi_span": {"evidence_slot_ids": ("subject", "period")},
+                        "multi_span": {
+                            "claim_template": spec.multi_span_claim_template,
+                            "slots": {"event_label": seed.event_label},
+                            "citation_texts": tuple(
+                                template.format(
+                                    subject=seed.subject,
+                                    event_label=seed.event_label,
+                                    period=seed.period,
+                                )
+                                for template in spec.multi_span_citation_templates
+                            ),
+                            "primary_source_text": spec.multi_span_source_template.format(
+                                subject=seed.subject,
+                                event_label=seed.event_label,
+                                period=seed.period,
+                            ),
+                        },
                     }
                 ),
             ),

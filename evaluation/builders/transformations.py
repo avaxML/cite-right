@@ -22,9 +22,8 @@ from evaluation.schema import (
     SupportLabel,
 )
 
-_NEGATIVE_TRANSFORMATIONS = frozenset(
-    {"negation", "number", "unit", "date", "entity", "relation"}
-)
+_CONTRADICTED_TRANSFORMATIONS = frozenset({"negation", "number", "unit", "date"})
+_NOT_IN_SOURCES_TRANSFORMATIONS = frozenset({"entity", "relation", "modality"})
 _POSITIVE_TRANSFORMATIONS = frozenset(
     {
         "unicode",
@@ -89,6 +88,11 @@ def _build_case(
         answer=answer,
         fact=fact,
         transformation_name=transformation_name,
+        template_source_text=_primary_source_text_for_transformation(
+            fact,
+            transformation_name,
+            template_source_text=template.source_text,
+        ),
     )
     temporary_case = EvaluationCase(
         case_id="case-pending",
@@ -130,7 +134,10 @@ def _build_evaluation_unit(
     answer: str,
     fact: Fact,
     transformation_name: str,
+    template_source_text: str,
 ) -> EvaluationUnit:
+    if transformation_name == "multi_source":
+        return _build_multi_source_unit(answer=answer, fact=fact)
     if transformation_name == "unsupported_clause":
         faithful_claim = _claim_text(fact, transformation_name, use_variant=False)
         suffix = _variant_string(fact, transformation_name, "unsupported_suffix")
@@ -142,10 +149,11 @@ def _build_evaluation_unit(
                 answer_span=CharSpan(start=0, end=len(faithful_claim)),
                 text=faithful_claim,
                 label="entailed",
-                citation_requirements=_single_source_requirements(
+                citation_requirements=_single_source_text_requirements(
                     requirement_id="req-primary",
                     source_id="source-primary",
-                    evidence=fact.evidence,
+                    source_text=template_source_text,
+                    proposition_text=faithful_claim,
                 ),
                 acceptable_retrieval_source_ids=("source-primary",),
             ),
@@ -171,6 +179,7 @@ def _build_evaluation_unit(
         citation_requirements=_citation_requirements_for_transformation(
             fact=fact,
             transformation_name=transformation_name,
+            template_source_text=template_source_text,
         ),
         acceptable_retrieval_source_ids=_retrieval_source_ids_for_transformation(
             transformation_name
@@ -185,10 +194,89 @@ def _build_evaluation_unit(
     )
 
 
+def _build_multi_source_unit(*, answer: str, fact: Fact) -> EvaluationUnit:
+    primary_claim_text = _variant_string(fact, "multi_source", "primary_claim_text")
+    secondary_claim_text = _variant_string(fact, "multi_source", "secondary_claim_text")
+    if not answer.startswith(primary_claim_text):
+        raise ValueError("multi_source answer must start with primary_claim_text")
+    secondary_start = answer.find(secondary_claim_text, len(primary_claim_text))
+    if secondary_start < 0:
+        raise ValueError("multi_source answer must contain secondary_claim_text")
+
+    return EvaluationUnit(
+        unit_id="unit-answer",
+        answer_span=CharSpan(start=0, end=len(answer)),
+        text=answer,
+        claims=(
+            ClaimAnnotation(
+                claim_id="claim-primary",
+                answer_span=CharSpan(start=0, end=len(primary_claim_text)),
+                text=primary_claim_text,
+                label="entailed",
+                citation_requirements=(
+                    CitationRequirement(
+                        requirement_id="req-primary",
+                        alternatives=(
+                            CitationTarget(
+                                source_id="source-primary",
+                                spans=(
+                                    CharSpan(
+                                        start=0,
+                                        end=len(
+                                            _variant_string(
+                                                fact,
+                                                "multi_source",
+                                                "primary_source_text",
+                                            )
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+                acceptable_retrieval_source_ids=("source-primary",),
+            ),
+            ClaimAnnotation(
+                claim_id="claim-secondary",
+                answer_span=CharSpan(
+                    start=secondary_start,
+                    end=secondary_start + len(secondary_claim_text),
+                ),
+                text=secondary_claim_text,
+                label="entailed",
+                citation_requirements=(
+                    CitationRequirement(
+                        requirement_id="req-secondary",
+                        alternatives=(
+                            CitationTarget(
+                                source_id="source-secondary",
+                                spans=(
+                                    CharSpan(
+                                        start=0,
+                                        end=len(
+                                            _variant_string(
+                                                fact,
+                                                "multi_source",
+                                                "secondary_source_text",
+                                            )
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+                acceptable_retrieval_source_ids=("source-secondary",),
+            ),
+        ),
+    )
+
+
 def _label_for_transformation(transformation_name: str) -> SupportLabel:
-    if transformation_name in _NEGATIVE_TRANSFORMATIONS:
+    if transformation_name in _CONTRADICTED_TRANSFORMATIONS:
         return "contradicted"
-    if transformation_name == "modality":
+    if transformation_name in _NOT_IN_SOURCES_TRANSFORMATIONS:
         return "not_in_sources"
     if transformation_name in _POSITIVE_TRANSFORMATIONS:
         return "entailed"
@@ -199,59 +287,36 @@ def _citation_requirements_for_transformation(
     *,
     fact: Fact,
     transformation_name: str,
+    template_source_text: str,
 ) -> tuple[CitationRequirement, ...]:
     if transformation_name not in _POSITIVE_TRANSFORMATIONS:
         return ()
     if transformation_name == "multi_source":
-        secondary_text = _variant_string(fact, transformation_name, "secondary_source_text")
-        secondary_evidence = tuple(
-            evidence for evidence in fact.evidence if evidence.text in secondary_text
-        )
-        if len(secondary_evidence) != 1:
-            raise ValueError(
-                "multi_source transformations require exactly one evidence fragment in the secondary source"
-            )
-        shared_evidence = secondary_evidence[0]
-        primary_evidence = tuple(
-            evidence
-            for evidence in fact.evidence
-            if evidence.slot_id != shared_evidence.slot_id
-        )
-        if not primary_evidence:
-            raise ValueError(
-                "multi_source transformations require primary-only evidence spans"
-            )
+        return ()
+    if transformation_name == "multi_span":
+        config = _variant_config(fact, transformation_name)
+        primary_source_text = _variant_string(fact, transformation_name, "primary_source_text")
+        citation_texts = _string_tuple(config, "citation_texts")
         return (
             CitationRequirement(
                 requirement_id="req-primary",
                 alternatives=(
                     CitationTarget(
                         source_id="source-primary",
-                        spans=tuple(evidence.span for evidence in primary_evidence),
-                    ),
-                ),
-            ),
-            CitationRequirement(
-                requirement_id="req-secondary",
-                alternatives=(
-                    CitationTarget(
-                        source_id="source-secondary",
-                        spans=(_find_unique_span(secondary_text, shared_evidence.text),),
+                        spans=tuple(
+                            _find_unique_span(primary_source_text, text)
+                            for text in citation_texts
+                        ),
                     ),
                 ),
             ),
         )
-    if transformation_name == "multi_span":
-        config = _variant_config(fact, transformation_name)
-        slot_ids = tuple(_string_tuple(config, "evidence_slot_ids"))
-        evidence_by_slot = {evidence.slot_id: evidence for evidence in fact.evidence}
-        evidence = tuple(evidence_by_slot[slot_id] for slot_id in slot_ids)
-    else:
-        evidence = fact.evidence
-    return _single_source_requirements(
+    proposition_text = _claim_text(fact, transformation_name, use_variant=False)
+    return _single_source_text_requirements(
         requirement_id="req-primary",
         source_id="source-primary",
-        evidence=evidence,
+        source_text=template_source_text,
+        proposition_text=proposition_text,
     )
 
 
@@ -276,6 +341,26 @@ def _single_source_requirements(
     )
 
 
+def _single_source_text_requirements(
+    *,
+    requirement_id: str,
+    source_id: str,
+    source_text: str,
+    proposition_text: str,
+) -> tuple[CitationRequirement, ...]:
+    return (
+        CitationRequirement(
+            requirement_id=requirement_id,
+            alternatives=(
+                CitationTarget(
+                    source_id=source_id,
+                    spans=(_find_unique_span(source_text, proposition_text),),
+                ),
+            ),
+        ),
+    )
+
+
 def _retrieval_source_ids_for_transformation(
     transformation_name: str,
 ) -> tuple[str, ...]:
@@ -291,7 +376,16 @@ def _sources_for_transformation(
     fact: Fact,
     transformation_name: str,
 ) -> tuple[Source, ...]:
-    sources = [Source(source_id="source-primary", text=template.source_text)]
+    sources = [
+        Source(
+            source_id="source-primary",
+            text=_primary_source_text_for_transformation(
+                fact,
+                transformation_name,
+                template_source_text=template.source_text,
+            ),
+        )
+    ]
     if transformation_name == "duplicate_distractor":
         sources.append(
             Source(
@@ -310,6 +404,9 @@ def _sources_for_transformation(
 
 
 def _answer_for_transformation(fact: Fact, transformation_name: str) -> str:
+    config = _variant_config(fact, transformation_name)
+    if "answer_text" in config:
+        return _require_string(config["answer_text"], "answer_text").format(**dict(fact.slots))
     if transformation_name == "unsupported_clause":
         return _claim_text(fact, transformation_name, use_variant=False) + _variant_string(
             fact,
@@ -322,11 +419,12 @@ def _answer_for_transformation(fact: Fact, transformation_name: str) -> str:
 def _claim_text(fact: Fact, transformation_name: str, *, use_variant: bool) -> str:
     config = _variant_config(fact, transformation_name)
     slots = dict(fact.slots)
-    slot_updates = _string_mapping(config.get("slots"))
-    slots.update(slot_updates)
     claim_template = fact.claim_template
-    if use_variant and "claim_template" in config:
-        claim_template = _require_string(config["claim_template"], "claim_template")
+    if use_variant:
+        slot_updates = _string_mapping(config.get("slots"))
+        slots.update(slot_updates)
+        if "claim_template" in config:
+            claim_template = _require_string(config["claim_template"], "claim_template")
     return claim_template.format(**slots)
 
 
@@ -358,6 +456,22 @@ def _variant_string(fact: Fact, transformation_name: str, key: str) -> str:
     if key not in config:
         raise ValueError(f"missing required variant key {key!r}")
     return _require_string(config[key], key)
+
+
+def _primary_source_text_for_transformation(
+    fact: Fact,
+    transformation_name: str,
+    *,
+    template_source_text: str | None = None,
+) -> str:
+    config = _variant_config(fact, transformation_name)
+    if "primary_source_text" in config:
+        return _variant_string(fact, transformation_name, "primary_source_text").format(
+            **dict(fact.slots)
+        )
+    if template_source_text is None:
+        raise ValueError("template_source_text is required when primary_source_text is not set")
+    return template_source_text
 
 
 def _string_mapping(value: object) -> dict[str, str]:
