@@ -61,6 +61,7 @@ class ValidationReport(BaseModel):
 class DatasetBundle:
     case_records: tuple[RecordInput, ...]
     expected_private_manifest: DatasetManifest | None
+    actual_manifest_generated_at: str | None
     require_reviews: bool
 
     def __init__(
@@ -68,6 +69,7 @@ class DatasetBundle:
         *,
         case_records: Iterable[RecordInput],
         expected_private_manifest: DatasetManifest | None = None,
+        actual_manifest_generated_at: str | None = None,
         require_reviews: bool = False,
     ) -> None:
         frozen_records = tuple(_freeze_record(record) for record in case_records)
@@ -75,6 +77,9 @@ class DatasetBundle:
             raise ValueError("case_records must not be empty")
         object.__setattr__(self, "case_records", frozen_records)
         object.__setattr__(self, "expected_private_manifest", expected_private_manifest)
+        object.__setattr__(
+            self, "actual_manifest_generated_at", actual_manifest_generated_at
+        )
         object.__setattr__(self, "require_reviews", require_reviews)
 
 
@@ -195,7 +200,11 @@ def validate_dataset(bundle: DatasetBundle) -> ValidationReport:
     if bundle.expected_private_manifest is not None and ordered_valid_cases:
         actual_manifest = build_private_manifest(
             ordered_valid_cases,
-            generated_at=bundle.expected_private_manifest.generated_at,
+            generated_at=(
+                bundle.actual_manifest_generated_at
+                if bundle.actual_manifest_generated_at is not None
+                else bundle.expected_private_manifest.generated_at
+            ),
         )
         for mismatch in verify_private_manifest_expectations(
             actual_manifest,

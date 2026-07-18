@@ -12,6 +12,7 @@ from evaluation.builders.cases import generate_all_authored_cases
 from evaluation.builders.real_sources import generate_real_cases
 from evaluation.canonical import authoritative_case_id, canonical_json_bytes, sha256_hex
 from evaluation.manifest import (
+    DatasetManifest,
     build_private_manifest,
     build_public_holdout_manifest,
     verify_private_manifest_expectations,
@@ -541,6 +542,140 @@ def test_validate_dataset_reports_expected_manifest_mismatch() -> None:
     assert "manifest_mismatch" in _finding_codes(report)
 
 
+def test_verify_private_manifest_expectations_reports_every_mutated_leaf() -> None:
+    manifest, assigned_cases = _manifest_fixture()
+    del assigned_cases
+    original_science = manifest.distributions["overall"]["domain"]["science"]
+    original_train_supported = manifest.distributions["train"]["expected_status"][
+        "supported"
+    ]
+    original_overall_missing = manifest.review_state_counts["overall"]["missing"]
+    original_dev_missing = manifest.review_state_counts["dev"]["missing"]
+    expected_payload = deepcopy(manifest.model_dump(mode="json"))
+    expected_payload["generated_at"] = "2026-07-18"
+    expected_payload["distributions"]["overall"]["domain"]["science"] += 7
+    expected_payload["distributions"]["train"]["expected_status"]["supported"] += 3
+    expected_payload["review_state_counts"]["overall"]["missing"] += 2
+    expected_payload["review_state_counts"]["dev"]["missing"] += 5
+    expected = DatasetManifest.model_validate(expected_payload)
+
+    mismatches = verify_private_manifest_expectations(manifest, expected)
+
+    assert tuple(mismatch.path for mismatch in mismatches) == (
+        "manifest.distributions.overall.domain.science",
+        "manifest.distributions.train.expected_status.supported",
+        "manifest.generated_at",
+        "manifest.review_state_counts.dev.missing",
+        "manifest.review_state_counts.overall.missing",
+    )
+    assert tuple(mismatch.message for mismatch in mismatches) == (
+        (
+            "manifest.distributions.overall.domain.science expected "
+            f"{original_science + 7} but found {original_science}"
+        ),
+        (
+            "manifest.distributions.train.expected_status.supported expected "
+            f"{original_train_supported + 3} but found {original_train_supported}"
+        ),
+        "manifest.generated_at expected '2026-07-18' but found '2026-07-17'",
+        (
+            "manifest.review_state_counts.dev.missing expected "
+            f"{original_dev_missing + 5} but found {original_dev_missing}"
+        ),
+        (
+            "manifest.review_state_counts.overall.missing expected "
+            f"{original_overall_missing + 2} but found {original_overall_missing}"
+        ),
+    )
+
+
+def test_verify_private_manifest_expectations_reports_missing_and_unexpected_mapping_keys() -> None:
+    manifest, assigned_cases = _manifest_fixture()
+    del assigned_cases
+    missing_payload = deepcopy(manifest.model_dump(mode="json"))
+    del missing_payload["distributions"]["overall"]["domain"]["science"]
+    missing_expected = DatasetManifest.model_validate(missing_payload)
+
+    missing_mismatches = verify_private_manifest_expectations(manifest, missing_expected)
+
+    assert tuple(mismatch.path for mismatch in missing_mismatches) == (
+        "manifest.distributions.overall.domain.science",
+    )
+    assert missing_mismatches[0].message == (
+        "manifest.distributions.overall.domain.science unexpected key in actual mapping"
+    )
+
+    unexpected_payload = deepcopy(manifest.model_dump(mode="json"))
+    unexpected_payload["distributions"]["overall"]["domain"]["surprise"] = 11
+    unexpected_expected = DatasetManifest.model_validate(unexpected_payload)
+
+    unexpected_mismatches = verify_private_manifest_expectations(
+        manifest, unexpected_expected
+    )
+
+    assert tuple(mismatch.path for mismatch in unexpected_mismatches) == (
+        "manifest.distributions.overall.domain.surprise",
+    )
+    assert unexpected_mismatches[0].message == (
+        "manifest.distributions.overall.domain.surprise expected key missing from actual mapping"
+    )
+
+
+def test_validate_dataset_emits_manifest_mismatch_findings_for_every_manifest_difference() -> None:
+    manifest, assigned_cases = _manifest_fixture()
+    original_science = manifest.distributions["overall"]["domain"]["science"]
+    original_train_supported = manifest.distributions["train"]["expected_status"][
+        "supported"
+    ]
+    original_overall_missing = manifest.review_state_counts["overall"]["missing"]
+    original_dev_missing = manifest.review_state_counts["dev"]["missing"]
+    expected_payload = deepcopy(manifest.model_dump(mode="json"))
+    expected_payload["generated_at"] = "2026-07-18"
+    expected_payload["distributions"]["overall"]["domain"]["science"] += 7
+    expected_payload["distributions"]["train"]["expected_status"]["supported"] += 3
+    expected_payload["review_state_counts"]["overall"]["missing"] += 2
+    expected_payload["review_state_counts"]["dev"]["missing"] += 5
+    expected = DatasetManifest.model_validate(expected_payload)
+
+    report = validate_dataset(
+        DatasetBundle(
+            case_records=assigned_cases,
+            expected_private_manifest=expected,
+            actual_manifest_generated_at=manifest.generated_at,
+        )
+    )
+
+    mismatch_findings = tuple(
+        finding for finding in report.findings if finding.code == "manifest_mismatch"
+    )
+    assert tuple(finding.path for finding in mismatch_findings) == (
+        "manifest.distributions.overall.domain.science",
+        "manifest.distributions.train.expected_status.supported",
+        "manifest.generated_at",
+        "manifest.review_state_counts.dev.missing",
+        "manifest.review_state_counts.overall.missing",
+    )
+    assert tuple(finding.message for finding in mismatch_findings) == (
+        (
+            "manifest.distributions.overall.domain.science expected "
+            f"{original_science + 7} but found {original_science}"
+        ),
+        (
+            "manifest.distributions.train.expected_status.supported expected "
+            f"{original_train_supported + 3} but found {original_train_supported}"
+        ),
+        "manifest.generated_at expected '2026-07-18' but found '2026-07-17'",
+        (
+            "manifest.review_state_counts.dev.missing expected "
+            f"{original_dev_missing + 5} but found {original_dev_missing}"
+        ),
+        (
+            "manifest.review_state_counts.overall.missing expected "
+            f"{original_overall_missing + 2} but found {original_overall_missing}"
+        ),
+    )
+
+
 def test_current_corpus_manifest_is_deterministic_and_validation_only_flags_reviews() -> None:
     corpus = generate_all_authored_cases(seed=31) + generate_real_cases()
     assignment_report = assign_splits(corpus, seed=20260717)
@@ -654,6 +789,13 @@ def _build_case(
         review=review,
     )
     return base_case.model_copy(update={"case_id": authoritative_case_id(base_case)})
+
+
+def _manifest_fixture() -> tuple[DatasetManifest, tuple[EvaluationCase, ...]]:
+    corpus = generate_all_authored_cases(seed=31) + generate_real_cases()
+    assignment_report = assign_splits(corpus, seed=20260717)
+    assigned = apply_split_assignments(corpus, assignment_report.assignment_by_case_id)
+    return build_private_manifest(assigned, generated_at="2026-07-17"), assigned
 
 
 def _make_valid_case_mapping(*, case_id: str) -> dict[str, Any]:

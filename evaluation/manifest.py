@@ -155,44 +155,13 @@ def verify_private_manifest_expectations(
     expected: DatasetManifest,
 ) -> tuple[ManifestMismatch, ...]:
     mismatches: list[ManifestMismatch] = []
-    _compare_manifest_field(
+    _compare_manifest_value(
         mismatches,
-        path="dataset_version",
-        actual=actual.dataset_version,
-        expected=expected.dataset_version,
+        path="manifest",
+        actual=actual.model_dump(mode="json"),
+        expected=expected.model_dump(mode="json"),
     )
-    _compare_manifest_field(
-        mismatches,
-        path="schema_version",
-        actual=actual.schema_version,
-        expected=expected.schema_version,
-    )
-    _compare_manifest_field(
-        mismatches,
-        path="overall_sha256",
-        actual=actual.overall_sha256,
-        expected=expected.overall_sha256,
-    )
-    _compare_manifest_field(
-        mismatches,
-        path="total_case_count",
-        actual=actual.total_case_count,
-        expected=expected.total_case_count,
-    )
-    for split_name in SPLIT_NAMES:
-        _compare_manifest_field(
-            mismatches,
-            path=f"split_sha256.{split_name}",
-            actual=actual.split_sha256[split_name],
-            expected=expected.split_sha256[split_name],
-        )
-        _compare_manifest_field(
-            mismatches,
-            path=f"split_case_counts.{split_name}",
-            actual=actual.split_case_counts[split_name],
-            expected=expected.split_case_counts[split_name],
-        )
-    return tuple(mismatches)
+    return tuple(sorted(mismatches, key=lambda mismatch: (mismatch.path, mismatch.message)))
 
 
 def _validated_cases(cases: Iterable[EvaluationCase]) -> tuple[EvaluationCase, ...]:
@@ -260,13 +229,68 @@ def _case_expected_status(case: EvaluationCase) -> ExpectedStatus:
     return "partial"
 
 
-def _compare_manifest_field(
+def _compare_manifest_value(
     mismatches: list[ManifestMismatch],
     *,
     path: str,
     actual: object,
     expected: object,
 ) -> None:
+    if isinstance(actual, Mapping) and isinstance(expected, Mapping):
+        actual_keys = set(actual)
+        expected_keys = set(expected)
+        for key in sorted(actual_keys | expected_keys):
+            child_path = f"{path}.{key}"
+            if key not in expected:
+                mismatches.append(
+                    ManifestMismatch(
+                        path=child_path,
+                        message=f"{child_path} unexpected key in actual mapping",
+                    )
+                )
+                continue
+            if key not in actual:
+                mismatches.append(
+                    ManifestMismatch(
+                        path=child_path,
+                        message=f"{child_path} expected key missing from actual mapping",
+                    )
+                )
+                continue
+            _compare_manifest_value(
+                mismatches,
+                path=child_path,
+                actual=actual[key],
+                expected=expected[key],
+            )
+        return
+    if isinstance(actual, list | tuple) and isinstance(expected, list | tuple):
+        max_length = max(len(actual), len(expected))
+        for index in range(max_length):
+            child_path = f"{path}.{index}"
+            if index >= len(expected):
+                mismatches.append(
+                    ManifestMismatch(
+                        path=child_path,
+                        message=f"{child_path} unexpected index in actual sequence",
+                    )
+                )
+                continue
+            if index >= len(actual):
+                mismatches.append(
+                    ManifestMismatch(
+                        path=child_path,
+                        message=f"{child_path} expected index missing from actual sequence",
+                    )
+                )
+                continue
+            _compare_manifest_value(
+                mismatches,
+                path=child_path,
+                actual=actual[index],
+                expected=expected[index],
+            )
+        return
     if actual == expected:
         return
     mismatches.append(
