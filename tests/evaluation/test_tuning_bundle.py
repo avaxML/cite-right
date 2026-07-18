@@ -380,6 +380,7 @@ def _write_dataset_fixture(
         )
     )
     (dataset_dir / "provenance.json").write_bytes(_canonical_json_bytes([]))
+    (dataset_dir / "sources" / "authored.json").write_bytes(_canonical_json_bytes([]))
     (dataset_dir / "sources" / "real.json").write_bytes(_canonical_json_bytes([]))
     dev_ledger = ReviewLedger(
         dataset_version="1.0.0",

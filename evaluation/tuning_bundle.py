@@ -35,6 +35,7 @@ _ALLOWED_DATASET_FILES = frozenset(
         "holdout_reviews.json",
         "manifest.json",
         "provenance.json",
+        "sources/authored.json",
         "sources/real.json",
         "train.json",
     }
