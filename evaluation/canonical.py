@@ -4,19 +4,23 @@ from __future__ import annotations
 
 import hashlib
 import json
-from typing import Mapping
+import math
+from collections.abc import Mapping
 
 from pydantic import BaseModel
 
 from evaluation.schema import EvaluationCase
 
 
-def canonical_json_bytes(value: BaseModel | Mapping[str, object]) -> bytes:
-    payload = (
-        value.model_dump(mode="json")
-        if isinstance(value, BaseModel)
-        else _normalize_mapping(value)
-    )
+def canonical_json_bytes(value: BaseModel | Mapping[str, object] | list[object] | tuple[object, ...]) -> bytes:
+    if isinstance(value, BaseModel):
+        payload = _normalize_json_value(value.model_dump(mode="json"))
+    elif isinstance(value, Mapping):
+        payload = _normalize_mapping(value)
+    elif isinstance(value, (list, tuple)):
+        payload = [_normalize_json_value(item) for item in value]
+    else:
+        raise TypeError("canonical_json_bytes accepts BaseModel, mapping, list, or tuple inputs")
     return json.dumps(
         payload,
         ensure_ascii=False,
@@ -62,8 +66,16 @@ def _normalize_mapping(value: Mapping[str, object]) -> dict[str, object]:
 
 
 def _normalize_json_value(value: object) -> object:
+    if isinstance(value, BaseModel):
+        return _normalize_json_value(value.model_dump(mode="json"))
     if isinstance(value, Mapping):
         return _normalize_mapping(value)
     if isinstance(value, (list, tuple)):
         return [_normalize_json_value(item) for item in value]
+    if isinstance(value, float) and not math.isfinite(value):
+        raise ValueError("Out of range float values are not JSON compliant")
+    if isinstance(value, range):
+        raise TypeError("canonical JSON arrays must be list or tuple instances")
+    if isinstance(value, (bytes, bytearray, memoryview)):
+        raise TypeError("canonical JSON values must not include bytes-like objects")
     return value

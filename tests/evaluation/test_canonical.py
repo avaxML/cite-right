@@ -55,10 +55,40 @@ def test_canonical_json_bytes_normalizes_non_plain_mappings_recursively() -> Non
     assert canonical_json_bytes(payload) == b'{"a":{"charlie":3,"delta":4},"b":2}'
 
 
+def test_canonical_json_bytes_normalizes_nested_lists_and_tuples_recursively() -> None:
+    payload = {
+        "items": (
+            {"values": [3, 2, 1]},
+            {"values": ({"beta": 2, "alpha": 1},)},
+        )
+    }
+
+    assert (
+        canonical_json_bytes(payload)
+        == b'{"items":[{"values":[3,2,1]},{"values":[{"alpha":1,"beta":2}]}]}'
+    )
+
+
 def test_canonical_json_bytes_rejects_nested_non_finite_floats_after_normalization() -> None:
     payload = MappingProxyType({"outer": UserDict({"value": math.inf})})
 
     with pytest.raises(ValueError, match="Out of range float values are not JSON compliant"):
+        canonical_json_bytes(payload)
+
+
+@pytest.mark.parametrize("value", ["text", b"bytes"])
+def test_canonical_json_bytes_rejects_top_level_string_and_bytes_inputs(value: object) -> None:
+    with pytest.raises(
+        TypeError,
+        match="canonical_json_bytes accepts BaseModel, mapping, list, or tuple inputs",
+    ):
+        canonical_json_bytes(cast(Any, value))
+
+
+def test_canonical_json_bytes_rejects_nested_non_list_tuple_sequences() -> None:
+    payload = {"items": range(3)}
+
+    with pytest.raises(TypeError, match="canonical JSON arrays must be list or tuple instances"):
         canonical_json_bytes(payload)
 
 
