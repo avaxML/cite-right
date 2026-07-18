@@ -24,6 +24,11 @@ RunErrorCode: TypeAlias = Literal[
     "unmappable_answer_span",
 ]
 Clock: TypeAlias = Callable[[], int]
+MAX_EXCEPTION_MESSAGE_CODEPOINTS = 256
+TRUNCATION_MARKER = "... [truncated]"
+NON_MONOTONIC_CLOCK_MESSAGE = "clock produced a negative duration"
+
+
 class _FrozenModel(BaseModel):
     model_config = STRICT_MODEL_CONFIG
 
@@ -108,16 +113,28 @@ def execute_case(
             case_id=case.case_id,
             backend=backend,
             config=canonical_config,
-            duration_ns=finished_at - started_at,
+            duration_ns=_clamp_duration_ns(started_at=started_at, finished_at=finished_at),
             error=RunError(
                 code="exception",
-                message=str(exc),
+                message=_bounded_exception_message(exc),
                 exception_type=type(exc).__name__,
             ),
         )
 
     finished_at = clock()
     duration_ns = finished_at - started_at
+    if duration_ns < 0:
+        return CaseRun(
+            case_id=case.case_id,
+            backend=backend,
+            config=canonical_config,
+            duration_ns=0,
+            error=RunError(
+                code="exception",
+                message=NON_MONOTONIC_CLOCK_MESSAGE,
+                exception_type="NonMonotonicClockError",
+            ),
+        )
     if timeout_ns is not None and duration_ns > timeout_ns:
         return CaseRun(
             case_id=case.case_id,
@@ -156,6 +173,23 @@ def _resolve_config(config: CitationConfig | Mapping[str, object]) -> CitationCo
     if isinstance(config, CitationConfig):
         return config
     return CitationConfig.model_validate(config)
+
+
+def _bounded_exception_message(exc: BaseException) -> str:
+    return _truncate_codepoints(str(exc), max_codepoints=MAX_EXCEPTION_MESSAGE_CODEPOINTS)
+
+
+def _truncate_codepoints(value: str, *, max_codepoints: int) -> str:
+    if len(value) <= max_codepoints:
+        return value
+    head_length = max_codepoints - len(TRUNCATION_MARKER)
+    if head_length <= 0:
+        raise ValueError("max_codepoints must be larger than the truncation marker")
+    return f"{value[:head_length]}{TRUNCATION_MARKER}"
+
+
+def _clamp_duration_ns(*, started_at: int, finished_at: int) -> int:
+    return max(finished_at - started_at, 0)
 
 
 def _freeze_json_like(value: object) -> object:

@@ -256,6 +256,35 @@ def test_execute_case_captures_runtime_exceptions_as_run_errors(
     assert run.duration_ns == 9
 
 
+def test_execute_case_bounds_exception_messages_deterministically(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    runner = _runner_module()
+    case = _case_with_gap_between_units()
+    sensitive_tail = "DO_NOT_LEAK_THIS_TAIL"
+    long_message = f"prefix {'x' * 600} {sensitive_tail}"
+
+    def boom(*args: Any, **kwargs: Any) -> list[SpanCitations]:
+        raise RuntimeError(long_message)
+
+    monkeypatch.setattr(runner, "align_citations", boom)
+
+    run = runner.execute_case(
+        case=case,
+        backend="python",
+        config=_strict_config(),
+        clock=_clock(600, 612),
+    )
+
+    assert run.error is not None
+    assert run.error.code == "exception"
+    assert run.error.exception_type == "RuntimeError"
+    assert len(run.error.message) == runner.MAX_EXCEPTION_MESSAGE_CODEPOINTS
+    assert run.error.message.endswith(runner.TRUNCATION_MARKER)
+    assert sensitive_tail not in run.error.message
+    assert run.duration_ns == 12
+
+
 def test_execute_case_captures_timeouts_with_an_injected_clock(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -285,6 +314,39 @@ def test_execute_case_captures_timeouts_with_an_injected_clock(
     assert run.error is not None
     assert run.error.code == "timeout"
     assert run.duration_ns == 250
+
+
+def test_execute_case_reports_non_monotonic_clock_before_timeout_checks(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    runner = _runner_module()
+    case = _case_with_gap_between_units()
+    exact = _span_citations(
+        text="Alpha section",
+        start=0,
+        end=13,
+        citations=(
+            _citation("source-alpha", 0, 13, "Alpha support"),
+        ),
+        status="supported",
+    )
+    _patch_align_citations(monkeypatch, runner, outputs=[exact])
+
+    run = runner.execute_case(
+        case=case,
+        backend="python",
+        config=_strict_config(),
+        clock=_clock(1_000, 900),
+        timeout_ns=1,
+    )
+
+    assert run.outputs == ()
+    assert run.output_unit_ids == ()
+    assert run.duration_ns == 0
+    assert run.error is not None
+    assert run.error.code == "exception"
+    assert run.error.exception_type == "NonMonotonicClockError"
+    assert run.error.message == runner.NON_MONOTONIC_CLOCK_MESSAGE
 
 
 def test_execute_case_allows_empty_outputs_without_promoting_an_error(
