@@ -177,6 +177,7 @@ class BenchmarkReport(_FrozenModel):
     environment: EnvironmentMetadata
     warmup_count: int
     measured_sample_count: int
+    failure_count: int
     prepared_corpus: DurationSummary
     answer: DurationSummary
     end_to_end: DurationSummary
@@ -188,18 +189,26 @@ class BenchmarkReport(_FrozenModel):
 
     @model_validator(mode="after")
     def _validate_report(self) -> BenchmarkReport:
-        if self.warmup_count < 0 or self.measured_sample_count < 0:
+        if (
+            self.warmup_count < 0
+            or self.measured_sample_count < 0
+            or self.failure_count < 0
+        ):
             raise ValueError("duration and count fields must be non-negative")
         if self.throughput_cases_per_second < 0:
             raise ValueError("throughput must be non-negative")
         if self.peak_memory_bytes is not None and self.peak_memory_bytes < 0:
             raise ValueError("peak memory must be non-negative")
-        expected_sample_count = self.measured_sample_count
-        for summary in (self.prepared_corpus, self.answer, self.end_to_end):
-            if summary.sample_count != expected_sample_count:
-                raise ValueError(
-                    "duration summaries must use the measured sample count"
-                )
+        if self.prepared_corpus.sample_count != self.measured_sample_count:
+            raise ValueError(
+                "prepared_corpus summary must use the measured sample count"
+            )
+        if self.end_to_end.sample_count != self.measured_sample_count:
+            raise ValueError(
+                "end_to_end summary must use the measured sample count"
+            )
+        if self.failure_count != len(self.failures):
+            raise ValueError("failure_count must equal len(failures)")
         if len(self.failures) > len(self.samples):
             raise ValueError("failure count cannot exceed sample count")
         return self
@@ -218,26 +227,27 @@ def summarize_measurements(
 
     ordered_samples = tuple(samples)
     measured_samples = ordered_samples[warmup_count:]
-    measured_successes = tuple(
-        sample for sample in measured_samples if sample.failure is None
-    )
     failures = tuple(
         sample.failure for sample in ordered_samples if sample.failure is not None
     )
-
     prepared_durations = tuple(
-        sample.prepared_corpus_duration_ns for sample in measured_successes
+        sample.prepared_corpus_duration_ns for sample in measured_samples
     )
-    answer_durations = tuple(sample.answer_duration_ns for sample in measured_successes)
-    total_durations = tuple(sample.total_duration_ns for sample in measured_successes)
+    answer_durations = tuple(
+        sample.answer_duration_ns
+        for sample in measured_samples
+        if sample.failure is None or sample.failure.stage != "prepare_corpus"
+    )
+    total_durations = tuple(sample.total_duration_ns for sample in measured_samples)
 
-    measured_sample_count = len(measured_successes)
+    measured_sample_count = len(measured_samples)
     return BenchmarkReport(
         backend=backend,
         workload=workload,
         environment=environment,
         warmup_count=warmup_count,
         measured_sample_count=measured_sample_count,
+        failure_count=len(failures),
         prepared_corpus=_duration_summary(prepared_durations),
         answer=_duration_summary(answer_durations),
         end_to_end=_duration_summary(total_durations),
@@ -245,8 +255,8 @@ def summarize_measurements(
             sample_count=measured_sample_count,
             total_duration_ns=sum(total_durations),
         ),
-        peak_memory_bytes=_max_peak_memory(measured_successes),
-        cache_retention=_cache_retention(measured_successes),
+        peak_memory_bytes=_max_peak_memory(measured_samples),
+        cache_retention=_cache_retention(measured_samples),
         failures=tuple(failure for failure in failures if failure is not None),
         samples=ordered_samples,
     )
@@ -322,8 +332,7 @@ def run_benchmark(
     read_cache_snapshot: CacheSnapshotReader | None = None,
 ) -> BenchmarkReport:
     workload = select_workload(cases, seed=seed, family_filter=family_filter)
-    selected_case_ids = set(workload.selected_case_ids)
-    selected_cases = tuple(case for case in cases if case.case_id in selected_case_ids)
+    selected_cases = _ordered_selected_cases(cases, workload=workload)
     prepare_corpus_impl = prepare_corpus or _default_prepare_corpus
     answer_case_impl = answer_case or _default_answer_case
     peak_memory_reader = read_peak_memory_bytes or _default_peak_memory_reader
@@ -550,6 +559,44 @@ def _truncate_codepoints(value: str, *, max_codepoints: int) -> str:
 
 def _clamp_duration(value: int) -> int:
     return max(value, 0)
+
+
+def _ordered_selected_cases(
+    cases: Sequence[EvaluationCase], *, workload: WorkloadSelection
+) -> tuple[EvaluationCase, ...]:
+    case_by_id: dict[str, EvaluationCase] = {}
+    duplicate_case_ids: list[str] = []
+
+    for case in cases:
+        if case.case_id in case_by_id:
+            duplicate_case_ids.append(case.case_id)
+            continue
+        case_by_id[case.case_id] = case
+
+    if duplicate_case_ids:
+        duplicates = ", ".join(sorted(set(duplicate_case_ids)))
+        raise ValueError(f"duplicate case ids in benchmark input: {duplicates}")
+
+    selected_cases: list[EvaluationCase] = []
+    missing_case_ids: list[str] = []
+    seen_selected_case_ids: set[str] = set()
+
+    for case_id in workload.selected_case_ids:
+        if case_id in seen_selected_case_ids:
+            raise ValueError(f"duplicate case ids in workload selection: {case_id}")
+        seen_selected_case_ids.add(case_id)
+
+        case = case_by_id.get(case_id)
+        if case is None:
+            missing_case_ids.append(case_id)
+            continue
+        selected_cases.append(case)
+
+    if missing_case_ids:
+        missing = ", ".join(missing_case_ids)
+        raise ValueError(f"missing case ids from benchmark input: {missing}")
+
+    return tuple(selected_cases)
 
 
 def _stable_rank(seed: int, *parts: str) -> str:

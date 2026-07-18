@@ -177,6 +177,83 @@ def test_summarize_measurements_keeps_prepare_and_answer_durations_separate() ->
     assert report.end_to_end.total_duration_ns == 30
 
 
+def test_summarize_measurements_keeps_measured_failures_in_denominators() -> None:
+    performance = _performance_module_or_skip()
+
+    report = performance.summarize_measurements(
+        samples=(
+            _sample_measurement(
+                performance,
+                case_id="case-success",
+                document_family_id="family-a",
+                split="dev",
+                prepared_corpus_duration_ns=10,
+                answer_duration_ns=20,
+                total_duration_ns=30,
+            ),
+            _sample_measurement(
+                performance,
+                case_id="case-answer-fail",
+                document_family_id="family-a",
+                split="dev",
+                prepared_corpus_duration_ns=11,
+                answer_duration_ns=22,
+                total_duration_ns=33,
+                failure=_failure_record(
+                    performance,
+                    case_id="case-answer-fail",
+                    document_family_id="family-a",
+                    split="dev",
+                    stage="answer",
+                    error_type="RuntimeError",
+                    message="boom",
+                ),
+            ),
+            _sample_measurement(
+                performance,
+                case_id="case-prepare-fail",
+                document_family_id="family-a",
+                split="dev",
+                prepared_corpus_duration_ns=5,
+                answer_duration_ns=0,
+                total_duration_ns=5,
+                failure=_failure_record(
+                    performance,
+                    case_id="case-prepare-fail",
+                    document_family_id="family-a",
+                    split="dev",
+                    stage="prepare_corpus",
+                    error_type="RuntimeError",
+                    message="broken prepare",
+                ),
+            ),
+        ),
+        warmup_count=0,
+        backend="python",
+        workload=_workload_selection(
+            performance,
+            selected_case_ids=(
+                "case-success",
+                "case-answer-fail",
+                "case-prepare-fail",
+            ),
+        ),
+        environment=_environment_metadata(performance, backend="python"),
+    )
+
+    assert report.measured_sample_count == 3
+    assert report.failure_count == 2
+    assert report.prepared_corpus.sample_count == 3
+    assert report.prepared_corpus.total_duration_ns == 26
+    assert report.answer.sample_count == 2
+    assert report.answer.total_duration_ns == 42
+    assert report.end_to_end.sample_count == 3
+    assert report.end_to_end.total_duration_ns == 68
+    assert report.throughput_cases_per_second == pytest.approx(
+        3 * 1_000_000_000 / 68
+    )
+
+
 def test_summarize_measurements_reports_retained_cache_when_observable() -> None:
     performance = _performance_module_or_skip()
 
@@ -300,7 +377,9 @@ def test_select_workload_is_deterministic_for_seed_and_family_filter_and_exclude
     assert "holdout-a" not in first.selected_case_ids
 
 
-def test_run_benchmark_uses_fake_clock_for_duration_math_and_reports_failures_explicitly() -> None:
+def test_run_benchmark_uses_fake_clock_for_duration_math_and_reports_failures_explicitly(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     performance = _performance_module_or_skip()
     cases = (
         _case(case_id="warmup", split="dev", document_family_id="family-a"),
@@ -331,6 +410,17 @@ def test_run_benchmark_uses_fake_clock_for_duration_math_and_reports_failures_ex
             raise RuntimeError("boom")
         return f"answer:{case.case_id}"
 
+    monkeypatch.setattr(
+        performance,
+        "select_workload",
+        lambda _cases, *, seed, family_filter=(): performance.WorkloadSelection(
+            seed=seed,
+            family_filter=tuple(family_filter),
+            selected_case_ids=("warmup", "case-ok", "case-fail"),
+            selected_document_family_ids=("family-a",),
+        ),
+    )
+
     report = performance.run_benchmark(
         cases=cases,
         backend="python",
@@ -342,15 +432,127 @@ def test_run_benchmark_uses_fake_clock_for_duration_math_and_reports_failures_ex
         answer_case=answer_case,
     )
 
-    assert report.measured_sample_count == 1
-    assert report.prepared_corpus.total_duration_ns == 10
-    assert report.answer.total_duration_ns == 30
-    assert report.end_to_end.total_duration_ns == 40
+    assert report.measured_sample_count == 2
+    assert report.failure_count == 1
+    assert report.prepared_corpus.total_duration_ns == 13
+    assert report.prepared_corpus.sample_count == 2
+    assert report.answer.total_duration_ns == 38
+    assert report.answer.sample_count == 2
+    assert report.end_to_end.total_duration_ns == 51
+    assert report.end_to_end.sample_count == 2
+    assert report.throughput_cases_per_second == pytest.approx(
+        2 * 1_000_000_000 / 51
+    )
     assert len(report.failures) == 1
     assert report.failures[0].case_id == "case-fail"
     assert report.failures[0].stage == "answer"
     assert report.failures[0].error_type == "RuntimeError"
     assert "boom" in report.failures[0].message
+
+
+def test_run_benchmark_uses_workload_selection_order_even_when_input_is_reversed() -> None:
+    performance = _performance_module_or_skip()
+    cases = (
+        _case(case_id="case-a", split="dev", document_family_id="family-b"),
+        _case(case_id="case-b", split="train", document_family_id="family-a"),
+        _case(case_id="case-c", split="dev", document_family_id="family-a"),
+    )
+
+    forward_report = performance.run_benchmark(
+        cases=cases,
+        backend="python",
+        config={"strict": True},
+        seed=13,
+        warmup_count=1,
+        clock=_fake_clock(0, 1, 1, 2, 10, 11, 11, 12, 20, 21, 21, 22),
+        prepare_corpus=lambda case: case.case_id,
+        answer_case=lambda case, prepared_corpus: prepared_corpus,
+    )
+    reversed_report = performance.run_benchmark(
+        cases=tuple(reversed(cases)),
+        backend="python",
+        config={"strict": True},
+        seed=13,
+        warmup_count=1,
+        clock=_fake_clock(0, 1, 1, 2, 10, 11, 11, 12, 20, 21, 21, 22),
+        prepare_corpus=lambda case: case.case_id,
+        answer_case=lambda case, prepared_corpus: prepared_corpus,
+    )
+
+    assert tuple(sample.case_id for sample in forward_report.samples) == tuple(
+        sample.case_id for sample in reversed_report.samples
+    )
+    assert forward_report.samples[0].case_id == reversed_report.samples[0].case_id
+    assert forward_report.measured_sample_count == reversed_report.measured_sample_count
+    assert forward_report.end_to_end.total_duration_ns == (
+        reversed_report.end_to_end.total_duration_ns
+    )
+
+
+def test_run_benchmark_rejects_duplicate_input_case_ids() -> None:
+    performance = _performance_module_or_skip()
+    cases = (
+        _case(case_id="case-1", split="dev", document_family_id="family-a"),
+        _case(case_id="case-1", split="train", document_family_id="family-b"),
+    )
+
+    original_select_workload = performance.select_workload
+    performance.select_workload = (  # type: ignore[method-assign]
+        lambda _cases, *, seed, family_filter=(): performance.WorkloadSelection(
+            seed=seed,
+            family_filter=tuple(family_filter),
+            selected_case_ids=("case-1",),
+            selected_document_family_ids=("family-a", "family-b"),
+        )
+    )
+    with pytest.raises(ValueError, match="duplicate case ids in benchmark input"):
+        try:
+            performance.run_benchmark(
+                cases=cases,
+                backend="python",
+                config={"strict": True},
+                seed=7,
+                prepare_corpus=lambda case: case.case_id,
+                answer_case=lambda case, prepared_corpus: prepared_corpus,
+            )
+        finally:
+            performance.select_workload = original_select_workload  # type: ignore[method-assign]
+
+
+def test_run_benchmark_rejects_missing_selected_case_ids(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    performance = _performance_module_or_skip()
+    cases = (
+        _case(case_id="case-1", split="dev", document_family_id="family-a"),
+        _case(case_id="case-2", split="dev", document_family_id="family-a"),
+    )
+
+    def fake_select_workload(
+        _cases: tuple[EvaluationCase, ...] | list[EvaluationCase],
+        *,
+        seed: int,
+        family_filter: tuple[str, ...] | list[str] = (),
+    ) -> Any:
+        del _cases, seed, family_filter
+        return performance.WorkloadSelection(
+            seed=7,
+            family_filter=(),
+            selected_case_ids=("missing-case",),
+            selected_document_family_ids=("family-a",),
+        )
+
+    monkeypatch.setattr(performance, "select_workload", fake_select_workload)
+
+    with pytest.raises(ValueError, match="missing case ids from benchmark input"):
+        performance.run_benchmark(
+            cases=cases,
+            backend="python",
+            config={"strict": True},
+            seed=7,
+            prepare_corpus=lambda case: case.case_id,
+            answer_case=lambda case, prepared_corpus: prepared_corpus,
+        )
 
 
 def test_benchmark_report_payload_has_canonical_serialization() -> None:
@@ -377,6 +579,7 @@ def test_benchmark_report_payload_has_canonical_serialization() -> None:
         "answer": payload["answer"],
         "warmup_count": payload["warmup_count"],
         "throughput_cases_per_second": payload["throughput_cases_per_second"],
+        "failure_count": payload["failure_count"],
     }
 
     assert canonical_json_bytes(payload) == canonical_json_bytes(reordered)
@@ -452,6 +655,26 @@ def _environment_metadata(performance: Any, *, backend: str) -> Any:
         backend=backend,
         config_sha256="a" * 64,
         workload_sha256="b" * 64,
+    )
+
+
+def _failure_record(
+    performance: Any,
+    *,
+    case_id: str,
+    document_family_id: str,
+    split: str,
+    stage: str,
+    error_type: str,
+    message: str,
+) -> Any:
+    return performance.FailureRecord(
+        case_id=case_id,
+        document_family_id=document_family_id,
+        split=split,
+        stage=stage,
+        error_type=error_type,
+        message=message,
     )
 
 
