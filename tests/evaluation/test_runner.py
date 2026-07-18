@@ -375,7 +375,7 @@ def test_execute_case_records_backend_specific_runs_in_a_comparable_shape(
 
 
 def _runner_module() -> Any:
-    return importlib.import_module("evaluation.test_runner")
+    return importlib.import_module("evaluation.runner")
 
 
 def _patch_align_citations(
