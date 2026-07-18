@@ -177,6 +177,7 @@ def test_build_command_is_deterministic_for_fixed_seed(tmp_path: Path) -> None:
         "manifest.json",
         "dev_reviews.json",
         "provenance.json",
+        "sources/authored.json",
         "sources/real.json",
     ):
         assert (left / relative_path).read_bytes() == (right / relative_path).read_bytes()
@@ -394,6 +395,7 @@ def test_promote_success_replaces_dataset_with_allowlisted_files_only(
         "holdout_public_key.pem",
         "manifest.json",
         "provenance.json",
+        "sources/authored.json",
         "sources/real.json",
         "train.json",
     ]
@@ -560,6 +562,7 @@ def _write_promotion_staging_fixture(base_dir: Path, monkeypatch: pytest.MonkeyP
         generated_at="2026-07-18",
     )
     (dataset_dir / "manifest.json").write_bytes(canonical_json_bytes(non_holdout_manifest))
+    (dataset_dir / "sources" / "authored.json").write_bytes(canonical_json_bytes([]))
     (dataset_dir / "holdout.json").unlink()
     (dataset_dir / "holdout_reviews.json").unlink()
     assert train_cases and dev_cases

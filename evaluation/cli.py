@@ -15,6 +15,7 @@ from datetime import date
 from pathlib import Path
 from typing import Sequence
 
+from evaluation.builders.authored_sources import AUTHORED_FACT_TEMPLATES
 from evaluation.builders.cases import generate_all_authored_cases
 from evaluation.builders.real_sources import (
     PROVENANCE_PATH,
@@ -45,6 +46,7 @@ _PROMOTION_BASELINE_FILES = frozenset(
         "dev_reviews.json",
         "manifest.json",
         "provenance.json",
+        "sources/authored.json",
         "sources/real.json",
         "train.json",
     }
@@ -183,6 +185,16 @@ def _command_build(*, output_dir: Path, seed: int) -> dict[str, object]:
         _write_json(temp_dir / "holdout.json", [_case_payload(case) for case in holdout_cases])
         _write_json(temp_dir / "manifest.json", manifest)
         _write_json(temp_dir / "dev_reviews.json", dev_ledger)
+        _write_json(
+            temp_dir / "sources" / "authored.json",
+            [
+                template.model_dump(mode="json")
+                for template in sorted(
+                    AUTHORED_FACT_TEMPLATES,
+                    key=lambda item: item.family_id,
+                )
+            ],
+        )
         _copy_regular_file(REAL_SOURCES_PATH, temp_dir / "sources" / "real.json")
         _copy_regular_file(PROVENANCE_PATH, temp_dir / "provenance.json")
         _fsync_tree(temp_dir)
