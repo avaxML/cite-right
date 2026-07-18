@@ -1,18 +1,22 @@
 from __future__ import annotations
 
+import base64
 import json
 from collections import Counter
+from collections.abc import Mapping
 from copy import deepcopy
 from datetime import date
 from typing import Any, cast
 
 import pytest
+from pydantic import ValidationError
 
 from evaluation.builders.cases import generate_all_authored_cases
 from evaluation.builders.real_sources import generate_real_cases
 from evaluation.canonical import authoritative_case_id, canonical_json_bytes, sha256_hex
 from evaluation.manifest import (
     DatasetManifest,
+    PublicHoldoutManifest,
     build_private_manifest,
     build_public_holdout_manifest,
     verify_private_manifest_expectations,
@@ -32,6 +36,20 @@ from evaluation.schema import (
 )
 from evaluation.splitting import apply_split_assignments, assign_splits
 from evaluation.validation import DatasetBundle, validate_dataset
+
+_VALID_SHA256 = "0123456789abcdef" * 4
+_VALID_FINGERPRINT = "fedcba9876543210" * 4
+_VALID_SIGNATURE = base64.b64encode(bytes(range(64))).decode("ascii")
+_PUBLIC_DOMAIN_BUCKETS = (
+    "science",
+    "finance",
+    "policy",
+    "technology",
+    "health",
+    "history",
+    "environment",
+    "other",
+)
 
 
 def test_validate_dataset_reports_raw_schema_failures_and_preserves_denominator() -> None:
@@ -475,6 +493,10 @@ def test_build_private_manifest_is_deterministic_and_order_invariant() -> None:
         "dev": {"missing": 0, "pending": 0, "approved": 1, "rejected": 0},
         "holdout": {"missing": 0, "pending": 0, "approved": 1, "rejected": 0},
     }
+    _assert_private_manifest_is_deeply_immutable(manifest)
+    _assert_private_manifest_is_deeply_immutable(
+        DatasetManifest.model_validate_json(manifest.model_dump_json())
+    )
 
 
 def test_build_public_holdout_manifest_redacts_case_level_data() -> None:
@@ -493,21 +515,33 @@ def test_build_public_holdout_manifest_redacts_case_level_data() -> None:
 
     public_manifest = build_public_holdout_manifest(
         private_manifest,
-        ciphertext_sha256="ciphertext-hash-placeholder",
-        public_key_fingerprint="fingerprint-001",
-        signature="signature-placeholder",
+        ciphertext_sha256=_VALID_SHA256,
+        public_key_fingerprint=_VALID_FINGERPRINT,
+        signature=_VALID_SIGNATURE,
     )
     payload = public_manifest.model_dump(mode="json")
     payload_json = json.dumps(payload, sort_keys=True)
 
     assert payload["dataset_version"] == "1.0.0"
     assert payload["holdout_case_count"] == 1
-    assert payload["ciphertext_sha256"] == "ciphertext-hash-placeholder"
-    assert payload["public_key_fingerprint"] == "fingerprint-001"
-    assert payload["signature"] == "signature-placeholder"
+    assert payload["ciphertext_sha256"] == _VALID_SHA256
+    assert payload["public_key_fingerprint"] == _VALID_FINGERPRINT
+    assert payload["signature"] == _VALID_SIGNATURE
     assert "overall_sha256" not in payload
     assert "split_sha256" not in payload
     assert "review_state_counts" not in payload
+    assert set(payload["distributions"]) == {"domain", "expected_status", "provenance_kind"}
+    assert set(payload["distributions"]["domain"]) == set(_PUBLIC_DOMAIN_BUCKETS)
+    assert set(payload["distributions"]["expected_status"]) == {
+        "supported",
+        "partial",
+        "unsupported",
+    }
+    assert set(payload["distributions"]["provenance_kind"]) == {
+        "authored",
+        "public_domain",
+        "permissive_license",
+    }
     for forbidden in (
         holdout_case.case_id,
         holdout_case.answer,
@@ -518,6 +552,10 @@ def test_build_public_holdout_manifest_redacts_case_level_data() -> None:
         "file_path",
     ):
         assert forbidden not in payload_json
+    _assert_public_manifest_is_deeply_immutable(public_manifest)
+    _assert_public_manifest_is_deeply_immutable(
+        public_manifest.model_validate_json(public_manifest.model_dump_json())
+    )
 
 
 def test_validate_dataset_reports_expected_manifest_mismatch() -> None:
@@ -536,7 +574,7 @@ def test_validate_dataset_reports_expected_manifest_mismatch() -> None:
     )
 
     assert verify_private_manifest_expectations(
-        build_private_manifest((train_case,), generated_at="2026-07-17"),
+        build_private_manifest((train_case,), generated_at=None),
         mismatched,
     )
     assert "manifest_mismatch" in _finding_codes(report)
@@ -562,28 +600,28 @@ def test_verify_private_manifest_expectations_reports_every_mutated_leaf() -> No
     mismatches = verify_private_manifest_expectations(manifest, expected)
 
     assert tuple(mismatch.path for mismatch in mismatches) == (
-        "manifest.distributions.overall.domain.science",
-        "manifest.distributions.train.expected_status.supported",
-        "manifest.generated_at",
-        "manifest.review_state_counts.dev.missing",
-        "manifest.review_state_counts.overall.missing",
+        "/manifest/distributions/overall/domain/science",
+        "/manifest/distributions/train/expected_status/supported",
+        "/manifest/generated_at",
+        "/manifest/review_state_counts/dev/missing",
+        "/manifest/review_state_counts/overall/missing",
     )
     assert tuple(mismatch.message for mismatch in mismatches) == (
         (
-            "manifest.distributions.overall.domain.science expected "
+            "/manifest/distributions/overall/domain/science expected "
             f"{original_science + 7} but found {original_science}"
         ),
         (
-            "manifest.distributions.train.expected_status.supported expected "
+            "/manifest/distributions/train/expected_status/supported expected "
             f"{original_train_supported + 3} but found {original_train_supported}"
         ),
-        "manifest.generated_at expected '2026-07-18' but found '2026-07-17'",
+        "/manifest/generated_at expected '2026-07-18' but found '2026-07-17'",
         (
-            "manifest.review_state_counts.dev.missing expected "
+            "/manifest/review_state_counts/dev/missing expected "
             f"{original_dev_missing + 5} but found {original_dev_missing}"
         ),
         (
-            "manifest.review_state_counts.overall.missing expected "
+            "/manifest/review_state_counts/overall/missing expected "
             f"{original_overall_missing + 2} but found {original_overall_missing}"
         ),
     )
@@ -599,10 +637,10 @@ def test_verify_private_manifest_expectations_reports_missing_and_unexpected_map
     missing_mismatches = verify_private_manifest_expectations(manifest, missing_expected)
 
     assert tuple(mismatch.path for mismatch in missing_mismatches) == (
-        "manifest.distributions.overall.domain.science",
+        "/manifest/distributions/overall/domain/science",
     )
     assert missing_mismatches[0].message == (
-        "manifest.distributions.overall.domain.science unexpected key in actual mapping"
+        "/manifest/distributions/overall/domain/science unexpected key in actual mapping"
     )
 
     unexpected_payload = deepcopy(manifest.model_dump(mode="json"))
@@ -614,10 +652,10 @@ def test_verify_private_manifest_expectations_reports_missing_and_unexpected_map
     )
 
     assert tuple(mismatch.path for mismatch in unexpected_mismatches) == (
-        "manifest.distributions.overall.domain.surprise",
+        "/manifest/distributions/overall/domain/surprise",
     )
     assert unexpected_mismatches[0].message == (
-        "manifest.distributions.overall.domain.surprise expected key missing from actual mapping"
+        "/manifest/distributions/overall/domain/surprise expected key missing from actual mapping"
     )
 
 
@@ -641,7 +679,6 @@ def test_validate_dataset_emits_manifest_mismatch_findings_for_every_manifest_di
         DatasetBundle(
             case_records=assigned_cases,
             expected_private_manifest=expected,
-            actual_manifest_generated_at=manifest.generated_at,
         )
     )
 
@@ -649,31 +686,267 @@ def test_validate_dataset_emits_manifest_mismatch_findings_for_every_manifest_di
         finding for finding in report.findings if finding.code == "manifest_mismatch"
     )
     assert tuple(finding.path for finding in mismatch_findings) == (
-        "manifest.distributions.overall.domain.science",
-        "manifest.distributions.train.expected_status.supported",
-        "manifest.generated_at",
-        "manifest.review_state_counts.dev.missing",
-        "manifest.review_state_counts.overall.missing",
+        "/manifest/distributions/overall/domain/science",
+        "/manifest/distributions/train/expected_status/supported",
+        "/manifest/generated_at",
+        "/manifest/review_state_counts/dev/missing",
+        "/manifest/review_state_counts/overall/missing",
     )
     assert tuple(finding.message for finding in mismatch_findings) == (
         (
-            "manifest.distributions.overall.domain.science expected "
+            "/manifest/distributions/overall/domain/science expected "
             f"{original_science + 7} but found {original_science}"
         ),
         (
-            "manifest.distributions.train.expected_status.supported expected "
+            "/manifest/distributions/train/expected_status/supported expected "
             f"{original_train_supported + 3} but found {original_train_supported}"
         ),
-        "manifest.generated_at expected '2026-07-18' but found '2026-07-17'",
+        "/manifest/generated_at expected '2026-07-18' (str) but found None (NoneType)",
         (
-            "manifest.review_state_counts.dev.missing expected "
+            "/manifest/review_state_counts/dev/missing expected "
             f"{original_dev_missing + 5} but found {original_dev_missing}"
         ),
         (
-            "manifest.review_state_counts.overall.missing expected "
+            "/manifest/review_state_counts/overall/missing expected "
             f"{original_overall_missing + 2} but found {original_overall_missing}"
         ),
     )
+
+
+def test_validate_dataset_reports_manifest_unverifiable_for_duplicate_case_ids() -> None:
+    base_case = _build_case(
+        family_id="family-dup-a",
+        transformation_id="manifest-dup",
+        split="train",
+    )
+    duplicate_case = base_case.model_copy(
+        update={"document_family_id": "family-dup-b", "answer": "distinct answer"}
+    )
+    expected_manifest = build_private_manifest((base_case,), generated_at="2026-07-17")
+
+    report = validate_dataset(
+        DatasetBundle(
+            case_records=(base_case, duplicate_case),
+            expected_private_manifest=expected_manifest,
+        )
+    )
+
+    assert report.total_case_records == 2
+    assert report.invalid_case_records == 2
+    assert any(finding.code == "duplicate_case_id" for finding in report.findings)
+    assert any(
+        finding.code == "manifest_unverifiable"
+        and "/manifest" == finding.path
+        and "duplicate case ids" in finding.message
+        for finding in report.findings
+    )
+
+
+def test_validate_dataset_reports_mixed_dataset_versions_and_manifest_unverifiable() -> None:
+    first = _build_case(
+        family_id="family-version-a",
+        transformation_id="version",
+        split="train",
+    )
+    second = _build_case(
+        family_id="family-version-b",
+        transformation_id="version",
+        split="dev",
+    ).model_copy(update={"dataset_version": "2.0.0"})
+    expected_manifest = build_private_manifest((first,), generated_at="2026-07-17")
+
+    report = validate_dataset(
+        DatasetBundle(
+            case_records=(first, second),
+            expected_private_manifest=expected_manifest,
+        )
+    )
+
+    mixed_findings = [finding for finding in report.findings if finding.code == "mixed_dataset_version"]
+    assert len(mixed_findings) == 1
+    assert mixed_findings[0].path == "/dataset_version"
+    assert report.invalid_case_records == 2
+    assert any(
+        finding.code == "manifest_unverifiable"
+        and "mixed dataset versions" in finding.message
+        for finding in report.findings
+    )
+
+
+def test_validate_dataset_reports_manifest_unverifiable_for_schema_invalid_records() -> None:
+    valid_case = _build_case(
+        family_id="family-valid-manifest",
+        transformation_id="schema-manifest",
+        split="train",
+    )
+    invalid_record = _make_valid_case_mapping(case_id="case-invalid-manifest")
+    invalid_record["evaluation_units"][0]["text"] = "bad slice"
+    expected_manifest = build_private_manifest((valid_case,), generated_at="2026-07-17")
+
+    report = validate_dataset(
+        DatasetBundle(
+            case_records=(valid_case, invalid_record),
+            expected_private_manifest=expected_manifest,
+        )
+    )
+
+    assert report.total_case_records == 2
+    assert report.invalid_case_records == 1
+    assert any(finding.code == "schema_validation_error" for finding in report.findings)
+    assert any(
+        finding.code == "manifest_unverifiable"
+        and "schema-invalid records" in finding.message
+        for finding in report.findings
+    )
+
+
+@pytest.mark.parametrize(
+    ("field_name", "value", "message"),
+    (
+        ("ciphertext_sha256", "ABCDEF" * 10 + "abcd", "ciphertext_sha256 must be 64 lowercase hexadecimal characters"),
+        ("public_key_fingerprint", "zz" * 32, "public_key_fingerprint must be 64 lowercase hexadecimal characters"),
+        ("signature", base64.b64encode(bytes(range(63))).decode("ascii"), "signature must be canonical base64 for exactly 64 bytes"),
+    ),
+)
+def test_build_public_holdout_manifest_rejects_invalid_integrity_fields(
+    field_name: str,
+    value: str,
+    message: str,
+) -> None:
+    manifest, _ = _manifest_fixture()
+    kwargs = _valid_public_manifest_kwargs()
+    kwargs[field_name] = value
+
+    with pytest.raises(ValidationError, match=message):
+        build_public_holdout_manifest(manifest, **kwargs)
+
+
+def test_build_public_holdout_manifest_allowlists_buckets_and_redacts_unknown_private_keys() -> None:
+    manifest, _ = _manifest_fixture()
+    mutated = manifest.model_copy(
+        update={
+            "distributions": {
+                **manifest.distributions,
+                "holdout": {
+                    **manifest.distributions["holdout"],
+                    "domain": {
+                        **manifest.distributions["holdout"]["domain"],
+                        "secret": 9,
+                    },
+                    "transformation_family": {
+                        **manifest.distributions["holdout"]["transformation_family"],
+                        "transform.secret": 11,
+                    },
+                    "difficulty_family": {
+                        **manifest.distributions["holdout"]["difficulty_family"],
+                        "difficulty/secret~value": 13,
+                    },
+                },
+            }
+        }
+    )
+
+    public_manifest = build_public_holdout_manifest(mutated, **_valid_public_manifest_kwargs())
+    payload = public_manifest.model_dump(mode="json")
+    payload_json = json.dumps(payload, sort_keys=True)
+
+    assert set(payload["distributions"]) == {"domain", "expected_status", "provenance_kind"}
+    assert set(payload["distributions"]["domain"]) == set(_PUBLIC_DOMAIN_BUCKETS)
+    assert payload["distributions"]["domain"]["other"] >= 9
+    for forbidden in (
+        "secret",
+        "transform.secret",
+        "difficulty/secret~value",
+        "transformation_family",
+        "difficulty_family",
+    ):
+        assert forbidden not in payload_json
+
+
+def test_verify_private_manifest_expectations_uses_json_pointer_escaping_and_type_strict_scalars() -> None:
+    manifest, _ = _manifest_fixture()
+    actual = manifest.model_copy(
+        update={
+            "split_case_counts": {
+                **manifest.split_case_counts,
+                "train": True,
+            },
+            "distributions": {
+                **manifest.distributions,
+                "overall": {
+                    **manifest.distributions["overall"],
+                    "domain": {
+                        **manifest.distributions["overall"]["domain"],
+                        "a.b/c~d": 1,
+                    },
+                },
+            },
+        }
+    )
+    expected = manifest.model_copy(
+        update={
+            "split_case_counts": {
+                **manifest.split_case_counts,
+                "train": 1,
+            },
+            "distributions": {
+                **manifest.distributions,
+                "overall": {
+                    **manifest.distributions["overall"],
+                    "domain": {
+                        **manifest.distributions["overall"]["domain"],
+                        "a.b/c~d": 2,
+                    },
+                },
+            },
+        }
+    )
+
+    mismatches = verify_private_manifest_expectations(actual, expected)
+
+    assert tuple(mismatch.path for mismatch in mismatches) == (
+        "/manifest/distributions/overall/domain/a.b~1c~0d",
+        "/manifest/split_case_counts/train",
+    )
+    assert mismatches[1].message == (
+        "/manifest/split_case_counts/train expected 1 (int) but found True (bool)"
+    )
+
+
+def test_dataset_bundle_rejects_cycles_but_allows_shared_acyclic_subobjects() -> None:
+    cyclic_mapping: dict[str, object] = {}
+    cyclic_mapping["self"] = cyclic_mapping
+    with pytest.raises(
+        ValueError, match="case records must not contain reference cycles"
+    ):
+        DatasetBundle(case_records=(cyclic_mapping,))
+
+    cyclic_list: list[object] = []
+    cyclic_list.append(cyclic_list)
+    with pytest.raises(
+        ValueError, match="case records must not contain reference cycles"
+    ):
+        DatasetBundle(case_records=({"items": cyclic_list},))
+
+    shared_child = {"value": ("shared",)}
+    bundle = DatasetBundle(
+        case_records=(
+            {
+                "case_id": "case-shared",
+                "left": shared_child,
+                "right": shared_child,
+            },
+        )
+    )
+    record = cast(Mapping[str, object], bundle.case_records[0])
+    assert record["left"] == record["right"]
+
+
+def test_dataset_bundle_rejects_non_string_mapping_keys() -> None:
+    with pytest.raises(
+        TypeError, match="case record mappings must use only string keys"
+    ):
+        DatasetBundle(case_records=(cast(Any, {1: "value"}),))
 
 
 def test_current_corpus_manifest_is_deterministic_and_validation_only_flags_reviews() -> None:
@@ -688,6 +961,7 @@ def test_current_corpus_manifest_is_deterministic_and_validation_only_flags_revi
         DatasetBundle(
             case_records=assigned,
             expected_private_manifest=manifest,
+            actual_manifest_generated_at=manifest.generated_at,
             require_reviews=True,
         )
     )
@@ -796,6 +1070,38 @@ def _manifest_fixture() -> tuple[DatasetManifest, tuple[EvaluationCase, ...]]:
     assignment_report = assign_splits(corpus, seed=20260717)
     assigned = apply_split_assignments(corpus, assignment_report.assignment_by_case_id)
     return build_private_manifest(assigned, generated_at="2026-07-17"), assigned
+
+
+def _valid_public_manifest_kwargs() -> dict[str, str]:
+    return {
+        "ciphertext_sha256": _VALID_SHA256,
+        "public_key_fingerprint": _VALID_FINGERPRINT,
+        "signature": _VALID_SIGNATURE,
+    }
+
+
+def _assert_private_manifest_is_deeply_immutable(manifest: DatasetManifest) -> None:
+    with pytest.raises(TypeError):
+        cast(Any, manifest.split_sha256)["train"] = "0" * 64
+    with pytest.raises(TypeError):
+        cast(Any, manifest.split_case_counts)["train"] = 0
+    with pytest.raises(TypeError):
+        cast(Any, manifest.distributions)["secret"] = {"domain": {}}
+    with pytest.raises(TypeError):
+        cast(Any, manifest.distributions["overall"])["domain"] = {}
+    with pytest.raises(TypeError):
+        cast(Any, manifest.distributions["overall"]["domain"])["science"] = 0
+    with pytest.raises(TypeError):
+        cast(Any, manifest.review_state_counts)["secret"] = {"missing": 1}
+    with pytest.raises(TypeError):
+        cast(Any, manifest.review_state_counts["overall"])["missing"] = 0
+
+
+def _assert_public_manifest_is_deeply_immutable(manifest: PublicHoldoutManifest) -> None:
+    with pytest.raises(TypeError):
+        cast(Any, manifest.distributions)["secret"] = {}
+    with pytest.raises(TypeError):
+        cast(Any, manifest.distributions["domain"])["science"] = 0
 
 
 def _make_valid_case_mapping(*, case_id: str) -> dict[str, Any]:

@@ -2,11 +2,22 @@
 
 from __future__ import annotations
 
+import base64
+import binascii
+import re
 from collections import Counter
-from collections.abc import Iterable, Mapping
-from typing import Literal, cast
+from collections.abc import Iterable, Iterator, Mapping
+from typing import Generic, Literal, Self, TypeVar, cast
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    GetCoreSchemaHandler,
+    field_serializer,
+    field_validator,
+    model_validator,
+)
+from pydantic_core import CoreSchema, core_schema
 
 from evaluation.canonical import canonical_json_bytes, sha256_hex
 from evaluation.schema import EvaluationCase, ExpectedStatus, ProvenanceKind, Split
@@ -14,6 +25,16 @@ from evaluation.schema import EvaluationCase, ExpectedStatus, ProvenanceKind, Sp
 STRICT_MODEL_CONFIG = ConfigDict(frozen=True, extra="forbid", strict=True)
 SCHEMA_VERSION = "1.0.0"
 SPLIT_NAMES: tuple[Split, ...] = ("train", "dev", "holdout")
+PUBLIC_DOMAIN_BUCKETS: tuple[str, ...] = (
+    "science",
+    "finance",
+    "policy",
+    "technology",
+    "health",
+    "history",
+    "environment",
+    "other",
+)
 REVIEW_STATES: tuple[Literal["missing", "pending", "approved", "rejected"], ...] = (
     "missing",
     "pending",
@@ -26,6 +47,69 @@ PROVENANCE_KINDS: tuple[ProvenanceKind, ...] = (
     "public_domain",
     "permissive_license",
 )
+_HEX_64_RE = re.compile(r"^[0-9a-f]{64}$")
+_ValueT = TypeVar("_ValueT")
+
+
+class FrozenMapping(Mapping[str, _ValueT], Generic[_ValueT]):
+    """Concrete immutable mapping preserved by Pydantic validation."""
+
+    __slots__ = ("_items", "_lookup")
+    _items: tuple[tuple[str, _ValueT], ...]
+    _lookup: dict[str, _ValueT]
+
+    def __init__(self, items: Mapping[str, object]) -> None:
+        tuple_items = tuple((key, cast(_ValueT, value)) for key, value in items.items())
+        self._items = tuple_items
+        self._lookup = dict(tuple_items)
+        if len(self._lookup) != len(self._items):
+            raise ValueError("frozen mappings must not contain duplicate keys")
+
+    def __getitem__(self, key: str) -> _ValueT:
+        return self._lookup[key]
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self._lookup)
+
+    def __len__(self) -> int:
+        return len(self._items)
+
+    def __repr__(self) -> str:
+        return f"FrozenMapping({dict(self._items)!r})"
+
+    def __hash__(self) -> int:
+        return hash(self._items)
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, Mapping):
+            return dict(self.items()) == dict(other.items())
+        return False
+
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls,
+        source_type: object,
+        handler: GetCoreSchemaHandler,
+    ) -> CoreSchema:
+        del source_type, handler
+        return core_schema.no_info_plain_validator_function(cls._validate_input)
+
+    @classmethod
+    def _validate_input(cls, value: object) -> Self:
+        if isinstance(value, cls):
+            return value
+        if not isinstance(value, Mapping):
+            raise ValueError("frozen mappings must be provided as mappings")
+        for key in value:
+            if not isinstance(key, str):
+                raise TypeError("frozen mappings must use only string keys")
+        return cls(cast(Mapping[str, object], value))
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            key: _materialize_json_like(value)
+            for key, value in self._items
+        }
 
 
 class DatasetManifest(BaseModel):
@@ -35,11 +119,44 @@ class DatasetManifest(BaseModel):
     schema_version: str
     generated_at: str | None = None
     overall_sha256: str
-    split_sha256: Mapping[Split, str]
+    split_sha256: FrozenMapping[str]
     total_case_count: int
-    split_case_counts: Mapping[Split, int]
-    distributions: Mapping[str, Mapping[str, Mapping[str, int]]]
-    review_state_counts: Mapping[str, Mapping[str, int]]
+    split_case_counts: FrozenMapping[int]
+    distributions: FrozenMapping[FrozenMapping[FrozenMapping[int]]]
+    review_state_counts: FrozenMapping[FrozenMapping[int]]
+
+    @field_validator("split_sha256", mode="before")
+    @classmethod
+    def _freeze_split_sha256(cls, value: object) -> FrozenMapping[str]:
+        return _freeze_string_mapping(value)
+
+    @field_validator("split_case_counts", mode="before")
+    @classmethod
+    def _freeze_split_case_counts(cls, value: object) -> FrozenMapping[int]:
+        return _freeze_int_mapping(value)
+
+    @field_validator("distributions", mode="before")
+    @classmethod
+    def _freeze_distributions(
+        cls,
+        value: object,
+    ) -> FrozenMapping[FrozenMapping[FrozenMapping[int]]]:
+        return _freeze_three_level_int_mapping(value)
+
+    @field_validator("review_state_counts", mode="before")
+    @classmethod
+    def _freeze_review_state_counts(
+        cls,
+        value: object,
+    ) -> FrozenMapping[FrozenMapping[int]]:
+        return _freeze_two_level_int_mapping(value)
+
+    @field_serializer("split_sha256", "split_case_counts", "distributions", "review_state_counts")
+    def _serialize_frozen_mapping(self, value: object) -> dict[str, object]:
+        materialized = _materialize_json_like(value)
+        if not isinstance(materialized, dict):
+            raise TypeError("manifest mapping fields must serialize to dictionaries")
+        return materialized
 
 
 class PublicHoldoutManifest(BaseModel):
@@ -49,10 +166,75 @@ class PublicHoldoutManifest(BaseModel):
     schema_version: str
     generated_at: str | None = None
     holdout_case_count: int
-    distributions: Mapping[str, Mapping[str, int]]
+    distributions: FrozenMapping[FrozenMapping[int]]
     ciphertext_sha256: str
     public_key_fingerprint: str | None = None
     signature: str | None = None
+
+    @field_validator("distributions", mode="before")
+    @classmethod
+    def _freeze_public_distributions(
+        cls,
+        value: object,
+    ) -> FrozenMapping[FrozenMapping[int]]:
+        return _freeze_two_level_int_mapping(value)
+
+    @field_validator("ciphertext_sha256")
+    @classmethod
+    def _validate_ciphertext_sha256(cls, value: str) -> str:
+        return _validate_hex_64(
+            value,
+            field_name="ciphertext_sha256",
+        )
+
+    @field_validator("public_key_fingerprint")
+    @classmethod
+    def _validate_public_key_fingerprint(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        return _validate_hex_64(
+            value,
+            field_name="public_key_fingerprint",
+        )
+
+    @field_validator("signature")
+    @classmethod
+    def _validate_signature(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        try:
+            decoded = base64.b64decode(value, validate=True)
+        except binascii.Error as exc:
+            raise ValueError(
+                "signature must be canonical base64 for exactly 64 bytes"
+            ) from exc
+        if len(decoded) != 64:
+            raise ValueError("signature must be canonical base64 for exactly 64 bytes")
+        if base64.b64encode(decoded).decode("ascii") != value:
+            raise ValueError("signature must be canonical base64 for exactly 64 bytes")
+        return value
+
+    @field_serializer("distributions")
+    def _serialize_distributions(self, value: object) -> dict[str, object]:
+        materialized = _materialize_json_like(value)
+        if not isinstance(materialized, dict):
+            raise TypeError("public manifest distributions must serialize to dictionaries")
+        return materialized
+
+    @model_validator(mode="after")
+    def _validate_distribution_allowlist(self) -> PublicHoldoutManifest:
+        if tuple(sorted(self.distributions)) != tuple(sorted(("domain", "expected_status", "provenance_kind"))):
+            raise ValueError(
+                "public holdout distributions must expose only domain, expected_status, and provenance_kind"
+            )
+        domain_keys = tuple(sorted(self.distributions["domain"]))
+        if domain_keys != tuple(sorted(PUBLIC_DOMAIN_BUCKETS)):
+            raise ValueError("public holdout domain distributions must use the public allowlist buckets")
+        if tuple(sorted(self.distributions["expected_status"])) != tuple(sorted(EXPECTED_STATUSES)):
+            raise ValueError("public holdout expected_status distributions must use the fixed buckets")
+        if tuple(sorted(self.distributions["provenance_kind"])) != tuple(sorted(PROVENANCE_KINDS)):
+            raise ValueError("public holdout provenance_kind distributions must use the fixed buckets")
+        return self
 
 
 class ManifestMismatch(BaseModel):
@@ -116,11 +298,17 @@ def build_private_manifest(
         schema_version=SCHEMA_VERSION,
         generated_at=generated_at,
         overall_sha256=sha256_hex(canonical_json_bytes(overall_payload)),
-        split_sha256=cast(Mapping[Split, str], split_sha256),
+        split_sha256=cast(FrozenMapping[str], _freeze_string_mapping(split_sha256)),
         total_case_count=len(ordered_cases),
-        split_case_counts=cast(Mapping[Split, int], split_case_counts),
-        distributions=distributions,
-        review_state_counts=review_state_counts,
+        split_case_counts=cast(FrozenMapping[int], _freeze_int_mapping(split_case_counts)),
+        distributions=cast(
+            FrozenMapping[FrozenMapping[FrozenMapping[int]]],
+            _freeze_three_level_int_mapping(distributions),
+        ),
+        review_state_counts=cast(
+            FrozenMapping[FrozenMapping[int]],
+            _freeze_two_level_int_mapping(review_state_counts),
+        ),
     )
 
 
@@ -137,13 +325,26 @@ def build_public_holdout_manifest(
         schema_version=private_manifest.schema_version,
         generated_at=private_manifest.generated_at,
         holdout_case_count=private_manifest.split_case_counts["holdout"],
-        distributions={
-            "expected_status": dict(holdout_distributions["expected_status"]),
-            "domain": dict(holdout_distributions["domain"]),
-            "transformation_family": dict(holdout_distributions["transformation_family"]),
-            "difficulty_family": dict(holdout_distributions["difficulty_family"]),
-            "provenance_kind": dict(holdout_distributions["provenance_kind"]),
-        },
+        distributions=cast(
+            FrozenMapping[FrozenMapping[int]],
+            _freeze_two_level_int_mapping(
+                {
+                    "expected_status": {
+                        status: _int_value(
+                            holdout_distributions["expected_status"].get(status, 0)
+                        )
+                        for status in EXPECTED_STATUSES
+                    },
+                    "domain": _public_domain_distribution(holdout_distributions["domain"]),
+                    "provenance_kind": {
+                        kind: _int_value(
+                            holdout_distributions["provenance_kind"].get(kind, 0)
+                        )
+                        for kind in PROVENANCE_KINDS
+                    },
+                }
+            ),
+        ),
         ciphertext_sha256=ciphertext_sha256,
         public_key_fingerprint=public_key_fingerprint,
         signature=signature,
@@ -157,7 +358,7 @@ def verify_private_manifest_expectations(
     mismatches: list[ManifestMismatch] = []
     _compare_manifest_value(
         mismatches,
-        path="manifest",
+        path="/manifest",
         actual=actual.model_dump(mode="json"),
         expected=expected.model_dump(mode="json"),
     )
@@ -239,8 +440,8 @@ def _compare_manifest_value(
     if isinstance(actual, Mapping) and isinstance(expected, Mapping):
         actual_keys = set(actual)
         expected_keys = set(expected)
-        for key in sorted(actual_keys | expected_keys):
-            child_path = f"{path}.{key}"
+        for key in sorted(actual_keys | expected_keys, key=lambda item: str(item)):
+            child_path = _json_pointer_child(path, key)
             if key not in expected:
                 mismatches.append(
                     ManifestMismatch(
@@ -267,7 +468,7 @@ def _compare_manifest_value(
     if isinstance(actual, list | tuple) and isinstance(expected, list | tuple):
         max_length = max(len(actual), len(expected))
         for index in range(max_length):
-            child_path = f"{path}.{index}"
+            child_path = _json_pointer_child(path, index)
             if index >= len(expected):
                 mismatches.append(
                     ManifestMismatch(
@@ -291,7 +492,18 @@ def _compare_manifest_value(
                 expected=expected[index],
             )
         return
-    if actual == expected:
+    if type(actual) is type(expected) and actual == expected:
+        return
+    if type(actual) is not type(expected):
+        mismatches.append(
+            ManifestMismatch(
+                path=path,
+                message=(
+                    f"{path} expected {expected!r} ({type(expected).__name__}) "
+                    f"but found {actual!r} ({type(actual).__name__})"
+                ),
+            )
+        )
         return
     mismatches.append(
         ManifestMismatch(
@@ -301,9 +513,98 @@ def _compare_manifest_value(
     )
 
 
+def _freeze_string_mapping(value: object) -> FrozenMapping[str]:
+    raw_mapping = _require_mapping(value)
+    frozen: dict[str, str] = {}
+    for key, item in raw_mapping.items():
+        if not isinstance(item, str):
+            raise TypeError("manifest string mappings must contain only string values")
+        frozen[key] = item
+    return FrozenMapping(frozen)
+
+
+def _freeze_int_mapping(value: object) -> FrozenMapping[int]:
+    raw_mapping = _require_mapping(value)
+    frozen: dict[str, int] = {}
+    for key, item in raw_mapping.items():
+        frozen[key] = _int_value(item)
+    return FrozenMapping(frozen)
+
+
+def _freeze_two_level_int_mapping(value: object) -> FrozenMapping[FrozenMapping[int]]:
+    raw_mapping = _require_mapping(value)
+    return FrozenMapping(
+        {key: _freeze_int_mapping(item) for key, item in raw_mapping.items()}
+    )
+
+
+def _freeze_three_level_int_mapping(
+    value: object,
+) -> FrozenMapping[FrozenMapping[FrozenMapping[int]]]:
+    raw_mapping = _require_mapping(value)
+    return FrozenMapping(
+        {key: _freeze_two_level_int_mapping(item) for key, item in raw_mapping.items()}
+    )
+
+
+def _require_mapping(value: object) -> Mapping[str, object]:
+    if isinstance(value, FrozenMapping):
+        return cast(Mapping[str, object], value)
+    if not isinstance(value, Mapping):
+        raise ValueError("manifest mappings must be provided as mappings")
+    frozen_input: dict[str, object] = {}
+    for key, item in value.items():
+        if not isinstance(key, str):
+            raise TypeError("manifest mappings must use only string keys")
+        frozen_input[key] = item
+    return frozen_input
+
+
+def _int_value(value: object) -> int:
+    if type(value) is not int:
+        raise TypeError("manifest integer mappings must contain only int values")
+    return cast(int, value)
+
+
+def _materialize_json_like(value: object) -> object:
+    if isinstance(value, FrozenMapping):
+        return value.to_dict()
+    if isinstance(value, Mapping):
+        materialized: dict[str, object] = {}
+        for key, item in value.items():
+            materialized[str(key)] = _materialize_json_like(item)
+        return materialized
+    if isinstance(value, tuple):
+        return [_materialize_json_like(item) for item in value]
+    if isinstance(value, list):
+        return [_materialize_json_like(item) for item in value]
+    return value
+
+
+def _validate_hex_64(value: str, *, field_name: str) -> str:
+    if _HEX_64_RE.fullmatch(value) is None:
+        raise ValueError(f"{field_name} must be 64 lowercase hexadecimal characters")
+    return value
+
+
+def _public_domain_distribution(domain_counts: Mapping[str, int]) -> dict[str, int]:
+    counts = {bucket: 0 for bucket in PUBLIC_DOMAIN_BUCKETS}
+    for key, raw_value in domain_counts.items():
+        bucket = key if key in counts and key != "other" else "other"
+        counts[bucket] += _int_value(raw_value)
+    return counts
+
+
+def _json_pointer_child(path: str, token: object) -> str:
+    escaped = str(token).replace("~", "~0").replace("/", "~1")
+    return f"{path}/{escaped}"
+
+
 __all__ = [
     "DatasetManifest",
+    "FrozenMapping",
     "ManifestMismatch",
+    "PUBLIC_DOMAIN_BUCKETS",
     "PublicHoldoutManifest",
     "SCHEMA_VERSION",
     "build_private_manifest",

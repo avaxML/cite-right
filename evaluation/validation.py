@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
-from copy import deepcopy
 from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Literal, cast
@@ -129,6 +128,21 @@ def validate_dataset(bundle: DatasetBundle) -> ValidationReport:
 
     ordered_valid_cases = tuple(case for _, case in validated_cases)
     case_index_by_id = {case.case_id: index for index, case in validated_cases}
+    dataset_versions = tuple(sorted({case.dataset_version for case in ordered_valid_cases}))
+    if len(dataset_versions) > 1:
+        error_record_indexes.update(index for index, _ in validated_cases)
+        findings.append(
+            ValidationFinding(
+                severity="error",
+                code="mixed_dataset_version",
+                case_id=None,
+                path="/dataset_version",
+                message=(
+                    "dataset records must all share one dataset_version; found "
+                    + ", ".join(repr(version) for version in dataset_versions)
+                ),
+            )
+        )
     for index, case in validated_cases:
         provenance_missing = _missing_provenance_fields(case)
         if provenance_missing:
@@ -139,11 +153,11 @@ def validate_dataset(bundle: DatasetBundle) -> ValidationReport:
                     code="provenance_incomplete",
                     case_id=case.case_id,
                     path="provenance",
-                    message=(
-                        f"{case.provenance.kind} provenance requires "
-                        f"{', '.join(provenance_missing)}"
-                    ),
-                )
+                message=(
+                    f"{case.provenance.kind} provenance requires "
+                    f"{', '.join(provenance_missing)}"
+                ),
+            )
             )
         if bundle.require_reviews and case.split in {"dev", "holdout"}:
             if case.review is None or case.review.state != "approved":
@@ -197,28 +211,59 @@ def validate_dataset(bundle: DatasetBundle) -> ValidationReport:
             )
         )
 
-    if bundle.expected_private_manifest is not None and ordered_valid_cases:
-        actual_manifest = build_private_manifest(
-            ordered_valid_cases,
-            generated_at=(
-                bundle.actual_manifest_generated_at
-                if bundle.actual_manifest_generated_at is not None
-                else bundle.expected_private_manifest.generated_at
-            ),
+    if bundle.expected_private_manifest is not None:
+        manifest_blockers = _manifest_precondition_reasons(
+            total_record_count=len(bundle.case_records),
+            validated_record_count=len(validated_cases),
+            has_duplicate_case_ids=has_duplicate_case_ids,
+            has_mixed_dataset_versions=len(dataset_versions) > 1,
         )
-        for mismatch in verify_private_manifest_expectations(
-            actual_manifest,
-            bundle.expected_private_manifest,
-        ):
+        if manifest_blockers:
             findings.append(
                 ValidationFinding(
                     severity="error",
-                    code="manifest_mismatch",
+                    code="manifest_unverifiable",
                     case_id=None,
-                    path=mismatch.path,
-                    message=mismatch.message,
+                    path="/manifest",
+                    message=(
+                        "private manifest expectations could not be verified because "
+                        + ", ".join(manifest_blockers)
+                    ),
                 )
             )
+        elif ordered_valid_cases:
+            try:
+                actual_manifest = build_private_manifest(
+                    ordered_valid_cases,
+                    generated_at=bundle.actual_manifest_generated_at,
+                )
+            except ValueError as exc:
+                findings.append(
+                    ValidationFinding(
+                        severity="error",
+                        code="manifest_unverifiable",
+                        case_id=None,
+                        path="/manifest",
+                        message=(
+                            "private manifest expectations could not be verified because "
+                            + str(exc)
+                        ),
+                    )
+                )
+            else:
+                for mismatch in verify_private_manifest_expectations(
+                    actual_manifest,
+                    bundle.expected_private_manifest,
+                ):
+                    findings.append(
+                        ValidationFinding(
+                            severity="error",
+                            code="manifest_mismatch",
+                            case_id=None,
+                            path=mismatch.path,
+                            message=mismatch.message,
+                        )
+                    )
 
     ordered_findings = tuple(sorted(findings, key=_finding_sort_key))
     invalid_case_records = len(error_record_indexes)
@@ -235,16 +280,35 @@ def _freeze_record(record: RecordInput) -> RecordInput:
         return record.model_copy(deep=True)
     if not isinstance(record, Mapping):
         raise TypeError("case records must be EvaluationCase or Mapping[str, object]")
-    return cast(Mapping[str, object], _deep_freeze_jsonish(deepcopy(dict(record))))
+    return cast(Mapping[str, object], _deep_freeze_jsonish(record, active_ids=set()))
 
 
-def _deep_freeze_jsonish(value: object) -> object:
+def _deep_freeze_jsonish(value: object, *, active_ids: set[int]) -> object:
     if isinstance(value, Mapping):
-        return MappingProxyType(
-            {str(key): _deep_freeze_jsonish(item) for key, item in value.items()}
-        )
+        value_id = id(value)
+        if value_id in active_ids:
+            raise ValueError("case records must not contain reference cycles")
+        active_ids.add(value_id)
+        try:
+            frozen: dict[str, object] = {}
+            for key, item in value.items():
+                if not isinstance(key, str):
+                    raise TypeError("case record mappings must use only string keys")
+                frozen[key] = _deep_freeze_jsonish(item, active_ids=active_ids)
+            return MappingProxyType(frozen)
+        finally:
+            active_ids.remove(value_id)
     if isinstance(value, list | tuple):
-        return tuple(_deep_freeze_jsonish(item) for item in value)
+        value_id = id(value)
+        if value_id in active_ids:
+            raise ValueError("case records must not contain reference cycles")
+        active_ids.add(value_id)
+        try:
+            return tuple(
+                _deep_freeze_jsonish(item, active_ids=active_ids) for item in value
+            )
+        finally:
+            active_ids.remove(value_id)
     return value
 
 
@@ -570,7 +634,7 @@ def _case_order_finding(cases: tuple[EvaluationCase, ...]) -> ValidationFinding 
                 severity="warning",
                 code="case_order_not_canonical",
                 case_id=observed.case_id,
-                path="case_records",
+                path="/case_records",
                 message=(
                     "case ordering is not canonical; expected "
                     f"{expected.case_id!r} before {observed.case_id!r}"
@@ -589,13 +653,30 @@ def _convert_leakage_finding(finding: LeakageFinding) -> ValidationFinding:
         severity=cast(Literal["error", "warning"], finding.severity),
         code=f"leakage_{finding.code}",
         case_id=finding.case_ids[0] if len(finding.case_ids) == 1 else None,
-        path="case_records",
+        path="/case_records",
         message=(
             f"cases={', '.join(finding.case_ids)}; "
             f"splits={', '.join(finding.split_names)}; "
             f"evidence={finding.evidence}{similarity_suffix}"
         ),
     )
+
+
+def _manifest_precondition_reasons(
+    *,
+    total_record_count: int,
+    validated_record_count: int,
+    has_duplicate_case_ids: bool,
+    has_mixed_dataset_versions: bool,
+) -> tuple[str, ...]:
+    reasons: list[str] = []
+    if has_duplicate_case_ids:
+        reasons.append("duplicate case ids were present")
+    if has_mixed_dataset_versions:
+        reasons.append("mixed dataset versions were present")
+    if validated_record_count != total_record_count:
+        reasons.append("schema-invalid records were present")
+    return tuple(reasons)
 
 
 def _finding_sort_key(finding: ValidationFinding) -> tuple[object, ...]:
