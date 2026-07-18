@@ -3,6 +3,8 @@ from __future__ import annotations
 from typing import Any, get_args
 
 import pytest
+from pydantic import ValidationError
+
 from evaluation.metrics import (
     CaseMetricRecord,
     MetricReport,
@@ -12,7 +14,6 @@ from evaluation.metrics import (
     StatusLabel,
     aggregate_metrics,
 )
-from pydantic import ValidationError
 
 
 def test_status_label_and_models_are_frozen_contracts() -> None:
