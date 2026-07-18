@@ -35,7 +35,9 @@ def test_status_label_and_models_are_frozen_contracts() -> None:
         record.exact_true_positives = 1  # type: ignore[misc]
 
 
-def test_case_metric_record_requires_one_rank_per_eligible_claim_and_positive_ranks() -> None:
+def test_case_metric_record_requires_one_rank_per_eligible_claim_and_positive_ranks() -> (
+    None
+):
     with pytest.raises(
         ValidationError,
         match="retrieval_ranks must contain one entry per retrieval-eligible claim",
@@ -330,6 +332,23 @@ def test_aggregate_metrics_is_permutation_invariant() -> None:
     records = _hand_calculated_records()
 
     assert aggregate_metrics(records) == aggregate_metrics(tuple(reversed(records)))
+
+
+def test_perfect_rate_interval_contains_exact_estimate_despite_float_rounding() -> None:
+    report = aggregate_metrics(
+        (
+            _record(
+                exact_true_positives=1,
+                recall_at_0_9_true_positives=1,
+                recall_at_0_5_true_positives=1,
+                requirement_count=1,
+                matched_requirement_count=1,
+            ),
+        )
+    )
+
+    assert report.exact_recall.estimate == 1.0
+    assert report.exact_recall.upper == 1.0
 
 
 def _hand_calculated_records() -> tuple[CaseMetricRecord, ...]:

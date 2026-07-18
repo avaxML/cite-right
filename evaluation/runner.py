@@ -11,6 +11,7 @@ from pydantic import BaseModel, ConfigDict, field_validator
 from cite_right import align_citations
 from cite_right.core.citation_config import CitationConfig
 from cite_right.core.results import SourceChunk, SourceDocument, SpanCitations
+from cite_right.models.base import Embedder
 from evaluation.canonical import canonical_json_bytes, sha256_hex
 from evaluation.schema import EvaluationCase, Source
 
@@ -92,10 +93,13 @@ def execute_case(
     config: CitationConfig | Mapping[str, object],
     clock: Clock = time.perf_counter_ns,
     timeout_ns: int | None = None,
+    embedder: Embedder | None = None,
 ) -> CaseRun:
     canonical_config = canonicalize_config(config)
     resolved_config = _resolve_config(config)
-    sources = tuple(_to_citation_source(source, index) for index, source in enumerate(case.sources))
+    sources = tuple(
+        _to_citation_source(source, index) for index, source in enumerate(case.sources)
+    )
 
     started_at = clock()
     try:
@@ -105,6 +109,7 @@ def execute_case(
                 sources,
                 config=resolved_config,
                 backend=backend,
+                embedder=embedder,
             )
         )
     except Exception as exc:
@@ -113,7 +118,9 @@ def execute_case(
             case_id=case.case_id,
             backend=backend,
             config=canonical_config,
-            duration_ns=_clamp_duration_ns(started_at=started_at, finished_at=finished_at),
+            duration_ns=_clamp_duration_ns(
+                started_at=started_at, finished_at=finished_at
+            ),
             error=RunError(
                 code="exception",
                 message=_bounded_exception_message(exc),
@@ -176,7 +183,9 @@ def _resolve_config(config: CitationConfig | Mapping[str, object]) -> CitationCo
 
 
 def _bounded_exception_message(exc: BaseException) -> str:
-    return _truncate_codepoints(str(exc), max_codepoints=MAX_EXCEPTION_MESSAGE_CODEPOINTS)
+    return _truncate_codepoints(
+        str(exc), max_codepoints=MAX_EXCEPTION_MESSAGE_CODEPOINTS
+    )
 
 
 def _truncate_codepoints(value: str, *, max_codepoints: int) -> str:
@@ -199,15 +208,16 @@ def _freeze_json_like(value: object) -> object:
         return _freeze_json_like(value.model_dump(mode="json"))
     if isinstance(value, Mapping):
         return tuple(
-            (key, _freeze_json_like(item))
-            for key, item in sorted(value.items())
+            (key, _freeze_json_like(item)) for key, item in sorted(value.items())
         )
     if isinstance(value, (list, tuple)):
         return tuple(_freeze_json_like(item) for item in value)
     raise TypeError("config payload must be JSON-like")
 
 
-def _to_citation_source(source: Source, source_index: int) -> SourceDocument | SourceChunk:
+def _to_citation_source(
+    source: Source, source_index: int
+) -> SourceDocument | SourceChunk:
     if source.chunk_char_start is None or source.chunk_char_end is None:
         return SourceDocument(id=source.source_id, text=source.text)
     return SourceChunk(

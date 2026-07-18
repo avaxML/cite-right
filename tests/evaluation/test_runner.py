@@ -57,9 +57,7 @@ def test_execute_case_records_supported_exact_output_and_single_unit_mapping(
         text="Alpha section",
         start=0,
         end=13,
-        citations=(
-            _citation("source-alpha", 0, 13, "Alpha support"),
-        ),
+        citations=(_citation("source-alpha", 0, 13, "Alpha support"),),
         status="supported",
     )
     _patch_align_citations(monkeypatch, runner, outputs=[exact])
@@ -88,9 +86,7 @@ def test_execute_case_maps_boundary_crossing_answer_spans_to_the_union_of_touche
         text="AlphaBeta",
         start=0,
         end=9,
-        citations=(
-            _citation("source-shared", 0, 9, "AlphaBeta"),
-        ),
+        citations=(_citation("source-shared", 0, 9, "AlphaBeta"),),
         status="supported",
     )
     _patch_align_citations(monkeypatch, runner, outputs=[crossing])
@@ -143,9 +139,7 @@ def test_execute_case_reports_answer_text_mismatches_as_ambiguous_errors(
         text="Alpha mismatch",
         start=0,
         end=13,
-        citations=(
-            _citation("source-alpha", 0, 13, "Alpha support"),
-        ),
+        citations=(_citation("source-alpha", 0, 13, "Alpha support"),),
         status="supported",
     )
     _patch_align_citations(monkeypatch, runner, outputs=[mismatched])
@@ -171,9 +165,7 @@ def test_execute_case_reports_invalid_answer_offsets_explicitly(
         text="Alpha section",
         start=-1,
         end=13,
-        citations=(
-            _citation("source-alpha", 0, 13, "Alpha support"),
-        ),
+        citations=(_citation("source-alpha", 0, 13, "Alpha support"),),
         status="supported",
     )
     _patch_align_citations(monkeypatch, runner, outputs=[invalid])
@@ -294,9 +286,7 @@ def test_execute_case_captures_timeouts_with_an_injected_clock(
         text="Alpha section",
         start=0,
         end=13,
-        citations=(
-            _citation("source-alpha", 0, 13, "Alpha support"),
-        ),
+        citations=(_citation("source-alpha", 0, 13, "Alpha support"),),
         status="supported",
     )
     _patch_align_citations(monkeypatch, runner, outputs=[exact])
@@ -325,9 +315,7 @@ def test_execute_case_reports_non_monotonic_clock_before_timeout_checks(
         text="Alpha section",
         start=0,
         end=13,
-        citations=(
-            _citation("source-alpha", 0, 13, "Alpha support"),
-        ),
+        citations=(_citation("source-alpha", 0, 13, "Alpha support"),),
         status="supported",
     )
     _patch_align_citations(monkeypatch, runner, outputs=[exact])
@@ -406,9 +394,7 @@ def test_execute_case_records_backend_specific_runs_in_a_comparable_shape(
             text="Alpha section",
             start=0,
             end=13,
-            citations=(
-                _citation("source-alpha", 0, 13, "Alpha support"),
-            ),
+            citations=(_citation("source-alpha", 0, 13, "Alpha support"),),
             status="supported",
         )
     ]
@@ -622,9 +608,7 @@ def _case_with_adjacent_units() -> EvaluationCase:
             "document_family_id": "family-adjacent",
             "transformation_family_id": "transformation-adjacent",
             "provenance": {"kind": "authored"},
-            "sources": (
-                {"source_id": "source-shared", "text": source_text},
-            ),
+            "sources": ({"source_id": "source-shared", "text": source_text},),
             "answer": answer,
             "evaluation_units": (
                 {

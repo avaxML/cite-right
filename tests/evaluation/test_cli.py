@@ -19,7 +19,7 @@ from evaluation.tuning_bundle import worker_launch_spec
 from tests.evaluation.test_tuning_bundle import _write_dataset_fixture
 
 
-def test_cli_help_lists_exact_seven_commands() -> None:
+def test_cli_help_lists_exact_eight_commands() -> None:
     result = subprocess.run(
         [sys.executable, "-m", "evaluation.cli", "--help"],
         check=False,
@@ -35,6 +35,7 @@ def test_cli_help_lists_exact_seven_commands() -> None:
         "build-tuning-bundle",
         "promote",
         "performance-smoke",
+        "baseline",
     ]
     command_block = result.stdout.split("{", 1)[1].split("}", 1)[0].split(",")
     assert command_block == commands
@@ -47,7 +48,14 @@ def test_performance_smoke_command_writes_requested_canonical_artifact_and_struc
 ) -> None:
     output_path = tmp_path / "performance-smoke.json"
     result = subprocess.run(
-        [sys.executable, "-m", "evaluation.cli", "performance-smoke", "--output", str(output_path)],
+        [
+            sys.executable,
+            "-m",
+            "evaluation.cli",
+            "performance-smoke",
+            "--output",
+            str(output_path),
+        ],
         cwd=Path(__file__).resolve().parents[2],
         env=_offline_subprocess_env(),
         check=False,
@@ -87,9 +95,15 @@ def test_performance_smoke_command_writes_requested_canonical_artifact_and_struc
         "embeddings_off",
         "embeddings_on",
     ]
-    assert artifact["workload"]["selected_case_ids"] == sorted(artifact["workload"]["selected_case_ids"])
-    assert artifact["workload"]["selected_case_ids"] == list(dict.fromkeys(artifact["workload"]["selected_case_ids"]))
-    assert set(artifact["workload"]["selected_backend_ids"]).issubset({"python", "rust"})
+    assert artifact["workload"]["selected_case_ids"] == sorted(
+        artifact["workload"]["selected_case_ids"]
+    )
+    assert artifact["workload"]["selected_case_ids"] == list(
+        dict.fromkeys(artifact["workload"]["selected_case_ids"])
+    )
+    assert set(artifact["workload"]["selected_backend_ids"]).issubset(
+        {"python", "rust"}
+    )
     assert artifact["environment"]["git_revision"]
     assert artifact["environment"]["python_version"]
     assert canonical_json_bytes(artifact) == output_path.read_bytes()
@@ -102,7 +116,14 @@ def test_performance_smoke_command_uses_repeatable_workload_and_correctness_hash
     right_path = tmp_path / "right.json"
 
     left = subprocess.run(
-        [sys.executable, "-m", "evaluation.cli", "performance-smoke", "--output", str(left_path)],
+        [
+            sys.executable,
+            "-m",
+            "evaluation.cli",
+            "performance-smoke",
+            "--output",
+            str(left_path),
+        ],
         cwd=Path(__file__).resolve().parents[2],
         env=_offline_subprocess_env(),
         check=False,
@@ -111,7 +132,14 @@ def test_performance_smoke_command_uses_repeatable_workload_and_correctness_hash
         timeout=20,
     )
     right = subprocess.run(
-        [sys.executable, "-m", "evaluation.cli", "performance-smoke", "--output", str(right_path)],
+        [
+            sys.executable,
+            "-m",
+            "evaluation.cli",
+            "performance-smoke",
+            "--output",
+            str(right_path),
+        ],
         cwd=Path(__file__).resolve().parents[2],
         env=_offline_subprocess_env(),
         check=False,
@@ -132,6 +160,50 @@ def test_performance_smoke_command_uses_repeatable_workload_and_correctness_hash
     assert left_artifact["workload"] == right_artifact["workload"]
     assert left_artifact["raw_samples_ns"] != []
     assert right_artifact["raw_samples_ns"] != []
+
+
+def test_baseline_command_dispatches_to_builder_and_emits_structured_stdout(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    output_path = tmp_path / "baseline.json"
+    captured: dict[str, Path] = {}
+
+    def fake_build_baseline(
+        *, tuning_bundle: Path, output_path: Path
+    ) -> dict[str, object]:
+        captured["tuning_bundle"] = tuning_bundle
+        captured["output_path"] = output_path
+        return {
+            "command": "baseline",
+            "output": str(output_path),
+            "selected_baseline_id": "strict/python/off",
+        }
+
+    monkeypatch.setattr("evaluation.cli.build_baseline", fake_build_baseline)
+
+    stdout = io.StringIO()
+    stderr = io.StringIO()
+    with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+        exit_code = main(
+            [
+                "baseline",
+                "--tuning-bundle",
+                str(tmp_path / "tuning"),
+                "--output",
+                str(output_path),
+            ]
+        )
+
+    assert exit_code == 0
+    assert stderr.getvalue() == ""
+    assert captured["tuning_bundle"] == tmp_path / "tuning"
+    assert captured["output_path"] == output_path
+    payload = json.loads(stdout.getvalue())
+    assert payload["ok"] is True
+    assert payload["command"] == "baseline"
+    assert payload["output"] == str(output_path)
+    assert payload["selected_baseline_id"] == "strict/python/off"
 
 
 def _offline_subprocess_env() -> dict[str, str]:
@@ -185,7 +257,9 @@ def test_build_command_is_deterministic_for_fixed_seed(tmp_path: Path) -> None:
         "sources/authored.json",
         "sources/real.json",
     ):
-        assert (left / relative_path).read_bytes() == (right / relative_path).read_bytes()
+        assert (left / relative_path).read_bytes() == (
+            right / relative_path
+        ).read_bytes()
         if relative_path.endswith(".json"):
             payload = json.loads((left / relative_path).read_bytes())
             assert (left / relative_path).read_bytes() == canonical_json_bytes(payload)
@@ -211,10 +285,16 @@ def test_build_command_emits_success_json_and_excludes_computed_fields_from_case
 
     for case_file in ("train.json", "dev.json", "holdout.json"):
         case_payload = json.loads((output_dir / case_file).read_text(encoding="utf-8"))
-        assert all("expected_status" not in unit for item in case_payload for unit in item["evaluation_units"])
+        assert all(
+            "expected_status" not in unit
+            for item in case_payload
+            for unit in item["evaluation_units"]
+        )
 
 
-def test_seal_and_verify_public_manifest_commands_succeed(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_seal_and_verify_public_manifest_commands_succeed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     dataset_dir, _ = _write_dataset_fixture(tmp_path, monkeypatch)
     ciphertext_path = tmp_path / "sealed-holdout.aesgcm"
     public_manifest_path = tmp_path / "sealed-holdout.public.json"
@@ -345,7 +425,9 @@ def test_promote_rejects_plaintext_holdout_and_rolls_back_on_replace_failure(
     (dataset_dir / "sentinel.txt").write_text("original", encoding="utf-8")
 
     with contextlib.redirect_stderr(io.StringIO()):
-        exit_code = main(["promote", "--staging", str(staging_dir), "--dataset", str(dataset_dir)])
+        exit_code = main(
+            ["promote", "--staging", str(staging_dir), "--dataset", str(dataset_dir)]
+        )
     assert exit_code == 1
 
     plaintext_removed = staging_dir / "holdout.json"
@@ -365,10 +447,16 @@ def test_promote_rejects_plaintext_holdout_and_rolls_back_on_replace_failure(
     monkeypatch.setattr(cli.os, "replace", flaky_replace)
     stderr = io.StringIO()
     with contextlib.redirect_stderr(stderr):
-        exit_code = main(["promote", "--staging", str(staging_dir), "--dataset", str(dataset_dir)])
+        exit_code = main(
+            ["promote", "--staging", str(staging_dir), "--dataset", str(dataset_dir)]
+        )
     assert exit_code == 1
     assert (dataset_dir / "sentinel.txt").read_text(encoding="utf-8") == "original"
-    assert not any(path.name.startswith(".dataset-live.tmp.") for path in tmp_path.iterdir() if path.is_dir())
+    assert not any(
+        path.name.startswith(".dataset-live.tmp.")
+        for path in tmp_path.iterdir()
+        if path.is_dir()
+    )
 
 
 def test_promote_success_replaces_dataset_with_allowlisted_files_only(
@@ -383,7 +471,9 @@ def test_promote_success_replaces_dataset_with_allowlisted_files_only(
     stdout = io.StringIO()
     stderr = io.StringIO()
     with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
-        exit_code = main(["promote", "--staging", str(staging_dir), "--dataset", str(dataset_dir)])
+        exit_code = main(
+            ["promote", "--staging", str(staging_dir), "--dataset", str(dataset_dir)]
+        )
 
     assert exit_code == 0
     assert stderr.getvalue() == ""
@@ -416,9 +506,14 @@ def test_validate_rejects_corrupted_manifest_in_promoted_train_dev_snapshot(
     staging_dir = _write_promotion_staging_fixture(tmp_path / "staging", monkeypatch)
     dataset_dir = tmp_path / "dataset-live"
 
-    assert main(["promote", "--staging", str(staging_dir), "--dataset", str(dataset_dir)]) == 0
+    assert (
+        main(["promote", "--staging", str(staging_dir), "--dataset", str(dataset_dir)])
+        == 0
+    )
 
-    manifest_payload = json.loads((dataset_dir / "manifest.json").read_text(encoding="utf-8"))
+    manifest_payload = json.loads(
+        (dataset_dir / "manifest.json").read_text(encoding="utf-8")
+    )
     manifest_payload["split_case_counts"]["train"] = 999
     (dataset_dir / "manifest.json").write_bytes(canonical_json_bytes(manifest_payload))
 
@@ -442,19 +537,25 @@ def test_promote_rejects_unknown_empty_directories_and_manifest_mismatch(
     (staging_dir / "unknown-empty-dir").mkdir()
     stderr = io.StringIO()
     with contextlib.redirect_stderr(stderr):
-        exit_code = main(["promote", "--staging", str(staging_dir), "--dataset", str(dataset_dir)])
+        exit_code = main(
+            ["promote", "--staging", str(staging_dir), "--dataset", str(dataset_dir)]
+        )
     assert exit_code == 1
     payload = json.loads(stderr.getvalue())
     assert payload["ok"] is False
     assert "unknown director" in payload["error"]["message"]
 
     (staging_dir / "unknown-empty-dir").rmdir()
-    manifest_payload = json.loads((staging_dir / "manifest.json").read_text(encoding="utf-8"))
+    manifest_payload = json.loads(
+        (staging_dir / "manifest.json").read_text(encoding="utf-8")
+    )
     manifest_payload["split_case_counts"]["train"] = 999
     (staging_dir / "manifest.json").write_bytes(canonical_json_bytes(manifest_payload))
     stderr = io.StringIO()
     with contextlib.redirect_stderr(stderr):
-        exit_code = main(["promote", "--staging", str(staging_dir), "--dataset", str(dataset_dir)])
+        exit_code = main(
+            ["promote", "--staging", str(staging_dir), "--dataset", str(dataset_dir)]
+        )
     assert exit_code == 1
     payload = json.loads(stderr.getvalue())
     assert payload["ok"] is False
@@ -474,19 +575,25 @@ def test_promote_preserves_backup_when_rollback_restore_fails(
 
     original_replace = cli.os.replace
 
-    def broken_replace(src: str | os.PathLike[str], dst: str | os.PathLike[str]) -> None:
+    def broken_replace(
+        src: str | os.PathLike[str], dst: str | os.PathLike[str]
+    ) -> None:
         src_path = Path(src)
         dst_path = Path(dst)
         if dst_path == dataset_dir and src_path.name.startswith(".dataset-live.tmp."):
             raise OSError("simulated publish failure")
-        if dst_path == dataset_dir and src_path.name.startswith(".dataset-live.backup."):
+        if dst_path == dataset_dir and src_path.name.startswith(
+            ".dataset-live.backup."
+        ):
             raise OSError("simulated rollback failure")
         original_replace(src, dst)
 
     monkeypatch.setattr(cli.os, "replace", broken_replace)
     stderr = io.StringIO()
     with contextlib.redirect_stderr(stderr):
-        exit_code = main(["promote", "--staging", str(staging_dir), "--dataset", str(dataset_dir)])
+        exit_code = main(
+            ["promote", "--staging", str(staging_dir), "--dataset", str(dataset_dir)]
+        )
     assert exit_code == 1
     payload = json.loads(stderr.getvalue())
     assert payload["ok"] is False
@@ -527,7 +634,9 @@ def test_promote_revalidates_copied_snapshot_before_replace_on_staging_race(
 
     stderr = io.StringIO()
     with contextlib.redirect_stderr(stderr):
-        exit_code = main(["promote", "--staging", str(staging_dir), "--dataset", str(dataset_dir)])
+        exit_code = main(
+            ["promote", "--staging", str(staging_dir), "--dataset", str(dataset_dir)]
+        )
 
     assert race_triggered is True
     assert exit_code == 1
@@ -535,7 +644,11 @@ def test_promote_revalidates_copied_snapshot_before_replace_on_staging_race(
     assert payload["ok"] is False
     assert "train.json may contain only train cases" in payload["error"]["message"]
     assert (dataset_dir / "sentinel.txt").read_text(encoding="utf-8") == "original"
-    assert not any(path.name.startswith(".dataset-live.tmp.") for path in tmp_path.iterdir() if path.is_dir())
+    assert not any(
+        path.name.startswith(".dataset-live.tmp.")
+        for path in tmp_path.iterdir()
+        if path.is_dir()
+    )
 
 
 def _freeze_cli_date(iso_date: str) -> None:
@@ -551,7 +664,9 @@ def _freeze_cli_date(iso_date: str) -> None:
     cli.date = _FrozenDate
 
 
-def _write_promotion_staging_fixture(base_dir: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+def _write_promotion_staging_fixture(
+    base_dir: Path, monkeypatch: pytest.MonkeyPatch
+) -> Path:
     dataset_dir, _ = _write_dataset_fixture(base_dir, monkeypatch)
     train_cases = tuple(
         EvaluationCase.model_validate_json(
@@ -569,7 +684,9 @@ def _write_promotion_staging_fixture(base_dir: Path, monkeypatch: pytest.MonkeyP
         train_cases + dev_cases,
         generated_at="2026-07-18",
     )
-    (dataset_dir / "manifest.json").write_bytes(canonical_json_bytes(non_holdout_manifest))
+    (dataset_dir / "manifest.json").write_bytes(
+        canonical_json_bytes(non_holdout_manifest)
+    )
     (dataset_dir / "sources" / "authored.json").write_bytes(canonical_json_bytes([]))
     (dataset_dir / "holdout.json").unlink()
     (dataset_dir / "holdout_reviews.json").unlink()

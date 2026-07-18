@@ -15,6 +15,7 @@ from datetime import date
 from pathlib import Path
 from typing import Sequence
 
+from evaluation.baselines import build_baseline
 from evaluation.builders.authored_sources import AUTHORED_FACT_TEMPLATES
 from evaluation.builders.cases import generate_all_authored_cases
 from evaluation.builders.real_sources import (
@@ -110,6 +111,10 @@ def build_parser() -> argparse.ArgumentParser:
     performance_parser = subparsers.add_parser("performance-smoke")
     performance_parser.add_argument("--output", required=True)
 
+    baseline_parser = subparsers.add_parser("baseline")
+    baseline_parser.add_argument("--tuning-bundle", required=True, dest="tuning_bundle")
+    baseline_parser.add_argument("--output", required=True)
+
     return parser
 
 
@@ -144,11 +149,19 @@ def _dispatch(args: argparse.Namespace) -> dict[str, object]:
     if command == "verify-public-manifest":
         return _command_verify_public_manifest(bundle_dir=Path(args.bundle))
     if command == "build-tuning-bundle":
-        return _command_build_tuning_bundle(dataset_dir=Path(args.dataset), output_dir=Path(args.output))
+        return _command_build_tuning_bundle(
+            dataset_dir=Path(args.dataset), output_dir=Path(args.output)
+        )
     if command == "promote":
-        return _command_promote(staging_dir=Path(args.staging), dataset_dir=Path(args.dataset))
+        return _command_promote(
+            staging_dir=Path(args.staging), dataset_dir=Path(args.dataset)
+        )
     if command == "performance-smoke":
         return _command_performance_smoke(output_path=Path(args.output))
+    if command == "baseline":
+        return build_baseline(
+            tuning_bundle=Path(args.tuning_bundle), output_path=Path(args.output)
+        )
     raise _CliUsageError(f"unknown command {command!r}")
 
 
@@ -157,7 +170,9 @@ def _command_build(*, output_dir: Path, seed: int) -> dict[str, object]:
     real_cases = generate_real_cases()
     combined_cases = authored_cases + real_cases
     assignment_report = assign_splits(combined_cases, seed=seed)
-    assigned_cases = apply_split_assignments(combined_cases, assignment_report.assignment_by_case_id)
+    assigned_cases = apply_split_assignments(
+        combined_cases, assignment_report.assignment_by_case_id
+    )
     generated_at = None
     manifest = build_private_manifest(assigned_cases, generated_at=generated_at)
     validation_report = validate_dataset(
@@ -178,7 +193,9 @@ def _command_build(*, output_dir: Path, seed: int) -> dict[str, object]:
     holdout_cases = _canonical_case_order(
         case for case in assigned_cases if case.split == "holdout"
     )
-    dev_ledger = ReviewLedger(dataset_version=manifest.dataset_version, schema_version=manifest.schema_version)
+    dev_ledger = ReviewLedger(
+        dataset_version=manifest.dataset_version, schema_version=manifest.schema_version
+    )
 
     if output_dir.exists():
         raise FileExistsError(f"output directory already exists: {output_dir}")
@@ -186,9 +203,13 @@ def _command_build(*, output_dir: Path, seed: int) -> dict[str, object]:
     temp_dir = Path(tempfile.mkdtemp(dir=parent, prefix=f".{output_dir.name}.tmp."))
     try:
         (temp_dir / "sources").mkdir()
-        _write_json(temp_dir / "train.json", [_case_payload(case) for case in train_cases])
+        _write_json(
+            temp_dir / "train.json", [_case_payload(case) for case in train_cases]
+        )
         _write_json(temp_dir / "dev.json", [_case_payload(case) for case in dev_cases])
-        _write_json(temp_dir / "holdout.json", [_case_payload(case) for case in holdout_cases])
+        _write_json(
+            temp_dir / "holdout.json", [_case_payload(case) for case in holdout_cases]
+        )
         _write_json(temp_dir / "manifest.json", manifest)
         _write_json(temp_dir / "dev_reviews.json", dev_ledger)
         _write_json(
@@ -251,7 +272,9 @@ def _command_validate(*, bundle_dir: Path) -> dict[str, object]:
         DatasetBundle(
             case_records=cases,
             expected_private_manifest=expected_manifest,
-            actual_manifest_generated_at=expected_manifest.generated_at if expected_manifest else None,
+            actual_manifest_generated_at=expected_manifest.generated_at
+            if expected_manifest
+            else None,
         )
     )
     validation_report.assert_valid()
@@ -262,10 +285,14 @@ def _command_validate(*, bundle_dir: Path) -> dict[str, object]:
     return {
         "bundle": str(bundle_root),
         "command": "validate",
-        "error_count": sum(1 for finding in validation_report.findings if finding.severity == "error"),
+        "error_count": sum(
+            1 for finding in validation_report.findings if finding.severity == "error"
+        ),
         "finding_count": len(validation_report.findings),
         "is_valid": validation_report.is_valid,
-        "warning_count": sum(1 for finding in validation_report.findings if finding.severity == "warning"),
+        "warning_count": sum(
+            1 for finding in validation_report.findings if finding.severity == "warning"
+        ),
     }
 
 
@@ -279,7 +306,9 @@ def _command_seal(
     cases = _load_cases_file(plaintext_path)
     ledger_path = _resolve_holdout_review_ledger_path(plaintext_path)
     ledger = load_review_ledger(ledger_path)
-    resolved_public_key = public_key_path or _resolve_public_key_path(public_manifest_path.parent)
+    resolved_public_key = public_key_path or _resolve_public_key_path(
+        public_manifest_path.parent
+    )
     manifest = seal_holdout(
         cases,
         ledger=ledger,
@@ -311,7 +340,9 @@ def _command_verify_public_manifest(*, bundle_dir: Path) -> dict[str, object]:
     }
 
 
-def _command_build_tuning_bundle(*, dataset_dir: Path, output_dir: Path) -> dict[str, object]:
+def _command_build_tuning_bundle(
+    *, dataset_dir: Path, output_dir: Path
+) -> dict[str, object]:
     manifest = build_tuning_bundle(dataset_dir, output_dir)
     return {
         "command": "build-tuning-bundle",
@@ -329,7 +360,9 @@ def _command_promote(*, staging_dir: Path, dataset_dir: Path) -> dict[str, objec
     if dataset_dir.exists() and dataset_dir.is_symlink():
         raise ValueError(f"dataset directory must not be a symlink: {dataset_dir}")
     dataset_parent = _require_parent_directory(dataset_dir)
-    temp_dir = Path(tempfile.mkdtemp(dir=dataset_parent, prefix=f".{dataset_dir.name}.tmp."))
+    temp_dir = Path(
+        tempfile.mkdtemp(dir=dataset_parent, prefix=f".{dataset_dir.name}.tmp.")
+    )
     try:
         (temp_dir / "sources").mkdir()
         for relative_path in staged_files:
@@ -376,24 +409,30 @@ def _validate_promotion_staging(staging_root: Path) -> tuple[str, ...]:
     }
     disallowed = sorted(present_files & _PROMOTION_DISALLOWED_FILES)
     if disallowed:
-        raise ValueError(f"staging directory contains disallowed plaintext holdout artifacts: {', '.join(disallowed)}")
+        raise ValueError(
+            f"staging directory contains disallowed plaintext holdout artifacts: {', '.join(disallowed)}"
+        )
 
     unknown = sorted(
-        present_files
-        - _PROMOTION_BASELINE_FILES
-        - _PROMOTION_OPTIONAL_FILES
+        present_files - _PROMOTION_BASELINE_FILES - _PROMOTION_OPTIONAL_FILES
     )
     if unknown:
-        raise ValueError(f"staging directory contains unknown artifacts: {', '.join(unknown)}")
+        raise ValueError(
+            f"staging directory contains unknown artifacts: {', '.join(unknown)}"
+        )
 
     missing_baseline = sorted(_PROMOTION_BASELINE_FILES - present_files)
     if missing_baseline:
-        raise ValueError(f"staging directory is missing required artifacts: {', '.join(missing_baseline)}")
+        raise ValueError(
+            f"staging directory is missing required artifacts: {', '.join(missing_baseline)}"
+        )
 
     holdout_present = present_files & _PROMOTION_OPTIONAL_FILES
     if holdout_present and holdout_present != _PROMOTION_OPTIONAL_FILES:
         missing_optional = sorted(_PROMOTION_OPTIONAL_FILES - holdout_present)
-        raise ValueError(f"staging directory is missing required holdout artifacts: {', '.join(missing_optional)}")
+        raise ValueError(
+            f"staging directory is missing required holdout artifacts: {', '.join(missing_optional)}"
+        )
 
     for relative_path in sorted(present_files):
         _read_regular_file(staging_root / relative_path)
@@ -427,9 +466,13 @@ def _validate_promotion_staging(staging_root: Path) -> tuple[str, ...]:
             public_key_path=staging_root / "holdout_public_key.pem",
         )
         if public_manifest.dataset_version != manifest.dataset_version:
-            raise ValueError("public holdout manifest dataset_version does not match manifest.json")
+            raise ValueError(
+                "public holdout manifest dataset_version does not match manifest.json"
+            )
         if public_manifest.schema_version != manifest.schema_version:
-            raise ValueError("public holdout manifest schema_version does not match manifest.json")
+            raise ValueError(
+                "public holdout manifest schema_version does not match manifest.json"
+            )
 
     return tuple(sorted(present_files))
 
@@ -486,7 +529,9 @@ def _load_cases_file(path: Path) -> tuple[EvaluationCase, ...]:
     return cases
 
 
-def _canonical_case_order(cases: Iterable[EvaluationCase]) -> tuple[EvaluationCase, ...]:
+def _canonical_case_order(
+    cases: Iterable[EvaluationCase],
+) -> tuple[EvaluationCase, ...]:
     return tuple(
         sorted(
             cases,
@@ -508,16 +553,26 @@ def _load_dataset_manifest(
     manifest = DatasetManifest.model_validate(payload)
     if raw_bytes != canonical_json_bytes(manifest):
         raise ValueError(f"{manifest_path} must use canonical JSON ordering")
-    expected_manifest = build_private_manifest(cases, generated_at=manifest.generated_at)
-    mismatches = verify_private_manifest_expectations(actual=manifest, expected=expected_manifest)
+    expected_manifest = build_private_manifest(
+        cases, generated_at=manifest.generated_at
+    )
+    mismatches = verify_private_manifest_expectations(
+        actual=manifest, expected=expected_manifest
+    )
     if mismatches:
         mismatch = mismatches[0]
-        raise ValueError(f"manifest.json mismatch at {mismatch.path}: {mismatch.message}")
+        raise ValueError(
+            f"manifest.json mismatch at {mismatch.path}: {mismatch.message}"
+        )
     return manifest
 
 
 def _looks_like_tuning_bundle(bundle_root: Path) -> bool:
-    return {path.name for path in bundle_root.iterdir()} == {"dev.json", "manifest.json", "train.json"}
+    return {path.name for path in bundle_root.iterdir()} == {
+        "dev.json",
+        "manifest.json",
+        "train.json",
+    }
 
 
 def _case_payload(case: EvaluationCase) -> dict[str, object]:
@@ -530,7 +585,12 @@ def _copy_regular_file(source: Path, destination: Path) -> None:
 
 def _write_json(
     path: Path,
-    payload: DatasetManifest | ReviewLedger | EvaluationCase | Mapping[str, object] | list[object] | tuple[object, ...],
+    payload: DatasetManifest
+    | ReviewLedger
+    | EvaluationCase
+    | Mapping[str, object]
+    | list[object]
+    | tuple[object, ...],
 ) -> None:
     path.write_bytes(canonical_json_bytes(payload))
 

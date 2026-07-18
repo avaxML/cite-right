@@ -25,14 +25,14 @@ class Rate(BaseModel):
     @model_validator(mode="after")
     def _validate_rate(self) -> Rate:
         _validate_nonnegative(self.numerator, "rate numerator must be non-negative")
-        _validate_nonnegative(
-            self.denominator, "rate denominator must be non-negative"
-        )
+        _validate_nonnegative(self.denominator, "rate denominator must be non-negative")
         if self.numerator > self.denominator:
             raise ValueError("rate numerator must not exceed denominator")
 
         if self.denominator == 0:
-            if any(value is not None for value in (self.estimate, self.lower, self.upper)):
+            if any(
+                value is not None for value in (self.estimate, self.lower, self.upper)
+            ):
                 raise ValueError(
                     "zero-denominator rates must set estimate and interval bounds to None"
                 )
@@ -196,17 +196,13 @@ class CaseMetricRecord(BaseModel):
             <= self.recall_at_0_9_true_positives
             <= self.recall_at_0_5_true_positives
         ):
-            raise ValueError(
-                "exact, 0.9, and 0.5 true positives must be monotonic"
-            )
+            raise ValueError("exact, 0.9, and 0.5 true positives must be monotonic")
         if not (
             self.exact_false_negatives
             >= self.recall_at_0_9_false_negatives
             >= self.recall_at_0_5_false_negatives
         ):
-            raise ValueError(
-                "exact, 0.9, and 0.5 false negatives must be monotonic"
-            )
+            raise ValueError("exact, 0.9, and 0.5 false negatives must be monotonic")
         _validate_not_greater_than(
             self.multi_span_true_positives + self.multi_span_false_negatives,
             self.requirement_count,
@@ -224,9 +220,7 @@ class CaseMetricRecord(BaseModel):
             )
         for rank in self.retrieval_ranks:
             if rank is not None and rank <= 0:
-                raise ValueError(
-                    "retrieval ranks must be positive integers or None"
-                )
+                raise ValueError("retrieval ranks must be positive integers or None")
         return self
 
 
@@ -369,9 +363,15 @@ def aggregate_metrics(records: tuple[CaseMetricRecord, ...]) -> MetricReport:
         ),
         status_confusion_matrix=confusion_matrix,
         status_macro_f1=_status_macro_f1(confusion_matrix),
-        retrieval_recall_at_1=_rate(retrieval_hits_at_1, retrieval_eligible_claim_count),
-        retrieval_recall_at_3=_rate(retrieval_hits_at_3, retrieval_eligible_claim_count),
-        retrieval_recall_at_5=_rate(retrieval_hits_at_5, retrieval_eligible_claim_count),
+        retrieval_recall_at_1=_rate(
+            retrieval_hits_at_1, retrieval_eligible_claim_count
+        ),
+        retrieval_recall_at_3=_rate(
+            retrieval_hits_at_3, retrieval_eligible_claim_count
+        ),
+        retrieval_recall_at_5=_rate(
+            retrieval_hits_at_5, retrieval_eligible_claim_count
+        ),
         retrieval_mrr=(
             None
             if retrieval_eligible_claim_count == 0
@@ -403,8 +403,8 @@ def _rate(numerator: int, denominator: int) -> Rate:
         numerator=numerator,
         denominator=denominator,
         estimate=estimate,
-        lower=max(0.0, center - margin),
-        upper=min(1.0, center + margin),
+        lower=min(estimate, max(0.0, center - margin)),
+        upper=max(estimate, min(1.0, center + margin)),
     )
 
 
@@ -415,9 +415,7 @@ def _status_macro_f1(confusion_matrix: StatusConfusionMatrix) -> float | None:
         "unsupported": confusion_matrix.unsupported,
     }
     total = sum(
-        getattr(row, observed)
-        for row in rows.values()
-        for observed in _STATUS_LABELS
+        getattr(row, observed) for row in rows.values() for observed in _STATUS_LABELS
     )
     if total == 0:
         return None
