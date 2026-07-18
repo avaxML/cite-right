@@ -64,8 +64,9 @@ def test_performance_smoke_command_writes_requested_canonical_artifact_and_struc
     assert stdout_payload["output"] == str(output_path)
 
     artifact = json.loads(output_path.read_text(encoding="utf-8"))
-    assert artifact["backend"] in {"python", "rust"}
-    assert artifact["backend"] == stdout_payload["backend"]
+    assert artifact["backends"]
+    assert set(artifact["backends"]).issubset({"python", "rust"})
+    assert artifact["backends"] == stdout_payload["backends"]
     assert artifact["correctness_hash"] == stdout_payload["correctness_hash"]
     assert artifact["protocol_hash"] == stdout_payload["protocol_hash"]
     assert artifact["workload_hash"] == stdout_payload["workload_hash"]

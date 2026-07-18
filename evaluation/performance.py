@@ -288,6 +288,8 @@ class SmokeScenarioReport(_FrozenModel):
     answer_shape: Literal["single", "multi"]
     correctness_hash: str
     raw_samples_ns: list[int]
+    raw_prepared_samples_ns: list[int]
+    raw_end_to_end_samples_ns: list[int]
     prepared_corpus: DurationSummary
     answer: DurationSummary
     end_to_end: DurationSummary
@@ -300,9 +302,16 @@ class SmokeScenarioReport(_FrozenModel):
             ch not in "0123456789abcdef" for ch in self.correctness_hash
         ):
             raise ValueError("correctness_hash must be a 64-character lowercase digest")
-        if not self.raw_samples_ns or any(sample < 0 for sample in self.raw_samples_ns):
-            raise ValueError("raw_samples_ns must contain non-negative samples")
+        raw_series = (
+            self.raw_prepared_samples_ns,
+            self.raw_samples_ns,
+            self.raw_end_to_end_samples_ns,
+        )
+        if any(not series or any(sample < 0 for sample in series) for series in raw_series):
+            raise ValueError("raw timing series must contain non-negative samples")
         expected_count = len(self.raw_samples_ns)
+        if any(len(series) != expected_count for series in raw_series):
+            raise ValueError("raw timing series must use the same sample count")
         if any(
             summary.sample_count != expected_count
             for summary in (self.prepared_corpus, self.answer, self.end_to_end)
@@ -310,6 +319,12 @@ class SmokeScenarioReport(_FrozenModel):
             raise ValueError("scenario summaries must use the raw trial sample count")
         if self.answer.total_duration_ns != sum(self.raw_samples_ns):
             raise ValueError("answer summary total must equal sum(raw_samples_ns)")
+        if self.prepared_corpus.total_duration_ns != sum(
+            self.raw_prepared_samples_ns
+        ):
+            raise ValueError("prepared summary total must equal its raw samples")
+        if self.end_to_end.total_duration_ns != sum(self.raw_end_to_end_samples_ns):
+            raise ValueError("end-to-end summary total must equal its raw samples")
         if self.throughput_cases_per_second < 0:
             raise ValueError("throughput must be non-negative")
         if self.peak_memory_bytes is not None and self.peak_memory_bytes < 0:
@@ -318,7 +333,7 @@ class SmokeScenarioReport(_FrozenModel):
 
 
 class SmokeArtifact(_FrozenModel):
-    backend: Backend
+    backends: list[Backend]
     dataset_hash: str
     correctness_hash: str
     protocol_hash: str
@@ -351,6 +366,8 @@ class SmokeArtifact(_FrozenModel):
             raise ValueError("dataset_hash must be a 64-character lowercase digest")
         if not self.scenarios:
             raise ValueError("scenarios must not be empty")
+        if not self.backends or len(set(self.backends)) != len(self.backends):
+            raise ValueError("backends must be non-empty and unique")
         if len({scenario.scenario_id for scenario in self.scenarios}) != len(
             self.scenarios
         ):
@@ -361,8 +378,10 @@ class SmokeArtifact(_FrozenModel):
         ):
             raise ValueError("each scenario must contain trial_count raw samples")
         scenario_backends = {scenario.backend for scenario in self.scenarios}
-        if scenario_backends != set(self.workload.selected_backend_ids):
-            raise ValueError("scenario backends must equal workload selected backends")
+        if scenario_backends != set(self.workload.selected_backend_ids) or scenario_backends != set(
+            self.backends
+        ):
+            raise ValueError("artifact, scenario, and workload backends must match")
         return self
 
 
@@ -643,7 +662,6 @@ def run_performance_smoke(*, output_path: Path) -> dict[str, object]:
     if not parent.is_dir():
         raise ValueError(f"output parent directory must be a directory: {parent}")
 
-    backend: Backend = "python"
     scenarios = _smoke_scenarios()
     cases = tuple(scenario.case for scenario in scenarios)
     workload = SmokeWorkload(
@@ -672,7 +690,7 @@ def run_performance_smoke(*, output_path: Path) -> dict[str, object]:
         prepared_samples = [response.prepared_total_ns for response in responses]
         answer_samples = [response.answer_total_ns for response in responses]
         end_to_end_samples = [response.end_to_end_total_ns for response in responses]
-        for index, sample in enumerate(answer_samples):
+        for index, sample in enumerate(end_to_end_samples):
             aggregate_samples[index] += sample
         for response in responses:
             failures.extend(response.failures)
@@ -692,6 +710,8 @@ def run_performance_smoke(*, output_path: Path) -> dict[str, object]:
                 answer_shape=scenario.answer_shape,
                 correctness_hash=next(iter(correctness_hashes)),
                 raw_samples_ns=answer_samples,
+                raw_prepared_samples_ns=prepared_samples,
+                raw_end_to_end_samples_ns=end_to_end_samples,
                 prepared_corpus=_duration_summary(prepared_samples),
                 answer=_duration_summary(answer_samples),
                 end_to_end=_duration_summary(end_to_end_samples),
@@ -721,7 +741,7 @@ def run_performance_smoke(*, output_path: Path) -> dict[str, object]:
     )
 
     artifact = SmokeArtifact(
-        backend=backend,
+        backends=list(workload.selected_backend_ids),
         dataset_hash=dataset_hash,
         correctness_hash=correctness_hash,
         protocol_hash=_smoke_protocol_hash(),
@@ -736,7 +756,7 @@ def run_performance_smoke(*, output_path: Path) -> dict[str, object]:
     )
     _write_atomic_bytes(output_path, canonical_json_bytes(artifact))
     return {
-        "backend": artifact.backend,
+        "backends": list(artifact.backends),
         "command": "performance-smoke",
         "dataset_hash": artifact.dataset_hash,
         "correctness_hash": artifact.correctness_hash,
@@ -1233,7 +1253,7 @@ def _run_compare_smoke(left_path: Path, right_path: Path) -> int:
     left_variance = _population_variance(left_samples)
     right_variance = _population_variance(right_samples)
     payload = {
-        "backend": left.backend,
+        "backends": list(left.backends),
         "correctness_hash": left.correctness_hash,
         "dataset_hash": left.dataset_hash,
         "left": str(left_path),
@@ -1327,7 +1347,7 @@ def _assert_matching_smoke_metadata(
     *, left: SmokeArtifact, right: SmokeArtifact
 ) -> None:
     for field_name in (
-        "backend",
+        "backends",
         "dataset_hash",
         "correctness_hash",
         "protocol_hash",
@@ -1365,21 +1385,45 @@ def _compare_scenario_timings(
     comparison: dict[str, object] = {}
     for left_scenario in left.scenarios:
         right_scenario = right_by_id[left_scenario.scenario_id]
-        left_mean = _mean(left_scenario.raw_samples_ns)
-        right_mean = _mean(right_scenario.raw_samples_ns)
         comparison[left_scenario.scenario_id] = {
-            "mean_delta_ns": right_mean - left_mean,
-            "mean_ratio": _safe_ratio(right_mean, left_mean),
-            "median_delta_ns": (
-                right_scenario.answer.median_duration_ns
-                - left_scenario.answer.median_duration_ns
+            "prepared_corpus": _compare_timing_series(
+                left_scenario.raw_prepared_samples_ns,
+                right_scenario.raw_prepared_samples_ns,
             ),
-            "median_ratio": _safe_ratio(
-                right_scenario.answer.median_duration_ns,
-                left_scenario.answer.median_duration_ns,
+            "answer": _compare_timing_series(
+                left_scenario.raw_samples_ns,
+                right_scenario.raw_samples_ns,
+            ),
+            "end_to_end": _compare_timing_series(
+                left_scenario.raw_end_to_end_samples_ns,
+                right_scenario.raw_end_to_end_samples_ns,
             ),
         }
     return comparison
+
+
+def _compare_timing_series(
+    left_samples: Sequence[int], right_samples: Sequence[int]
+) -> dict[str, float | None]:
+    left_summary = _duration_summary(left_samples)
+    right_summary = _duration_summary(right_samples)
+    left_mean = _mean(left_samples)
+    right_mean = _mean(right_samples)
+    left_variance = _population_variance(left_samples)
+    right_variance = _population_variance(right_samples)
+    return {
+        "mean_delta_ns": right_mean - left_mean,
+        "mean_ratio": _safe_ratio(right_mean, left_mean),
+        "median_delta_ns": (
+            right_summary.median_duration_ns - left_summary.median_duration_ns
+        ),
+        "median_ratio": _safe_ratio(
+            right_summary.median_duration_ns,
+            left_summary.median_duration_ns,
+        ),
+        "variance_delta_ns": right_variance - left_variance,
+        "variance_ratio": _safe_ratio(right_variance, left_variance),
+    }
 
 
 def _smoke_case(
@@ -1528,6 +1572,9 @@ def _smoke_scenarios() -> tuple[SmokeScenario, ...]:
         ...,
     ] = (
         ("one-shot", "off", "small", "short", "single"),
+        ("one-shot", "on", "medium", "long", "multi"),
+        ("one-shot", "off", "large", "long", "multi"),
+        ("prepared", "off", "small", "short", "single"),
         ("prepared", "off", "medium", "long", "multi"),
         ("prepared", "on", "large", "long", "multi"),
     )
@@ -1598,7 +1645,10 @@ def _smoke_correctness_hash(*, cases: Sequence[EvaluationCase]) -> str:
 def _smoke_protocol_hash() -> str:
     payload = {
         "protocol_version": SMOKE_PROTOCOL_VERSION,
-        "raw_sample_definition": "sum(answer_duration_ns for measured samples)",
+        "raw_sample_definition": (
+            "top-level=sum(end_to_end_duration_ns across scenarios); "
+            "per-scenario=prepared, answer, and end-to-end nanoseconds"
+        ),
         "trial_count": SMOKE_TRIAL_COUNT,
         "warmup_count": SMOKE_WARMUP_COUNT,
         "worker_entrypoint": "python -m evaluation.performance smoke-worker",

@@ -686,14 +686,41 @@ def test_performance_smoke_artifact_records_real_scenario_measurements(
     assert {scenario["source_length"] for scenario in scenarios} == {"short", "long"}
     assert {scenario["answer_shape"] for scenario in scenarios} == {"single", "multi"}
     assert "python" in {scenario["backend"] for scenario in scenarios}
+    for execution_path in ("one-shot", "prepared"):
+        path_scenarios = [
+            scenario
+            for scenario in scenarios
+            if scenario["execution_path"] == execution_path
+            and scenario["backend"] == "python"
+        ]
+        assert {scenario["embeddings"] for scenario in path_scenarios} == {"off", "on"}
+        assert {scenario["candidate_bucket"] for scenario in path_scenarios} == {
+            "small",
+            "medium",
+            "large",
+        }
+        assert {scenario["source_length"] for scenario in path_scenarios} == {
+            "short",
+            "long",
+        }
+        assert {scenario["answer_shape"] for scenario in path_scenarios} == {
+            "single",
+            "multi",
+        }
     for scenario in scenarios:
         assert len(scenario["correctness_hash"]) == 64
         assert len(scenario["raw_samples_ns"]) == payload["trial_count"]
+        assert len(scenario["raw_prepared_samples_ns"]) == payload["trial_count"]
+        assert len(scenario["raw_end_to_end_samples_ns"]) == payload["trial_count"]
         assert scenario["prepared_corpus"]["sample_count"] == payload["trial_count"]
         assert scenario["answer"]["sample_count"] == payload["trial_count"]
         assert scenario["end_to_end"]["sample_count"] == payload["trial_count"]
         assert scenario["throughput_cases_per_second"] >= 0
         assert scenario["peak_memory_bytes"] is None or scenario["peak_memory_bytes"] >= 0
+    assert payload["raw_samples_ns"] == [
+        sum(scenario["raw_end_to_end_samples_ns"][index] for scenario in scenarios)
+        for index in range(payload["trial_count"])
+    ]
 
 
 def test_smoke_scenarios_execute_real_one_shot_prepared_and_embedding_paths(
@@ -830,9 +857,15 @@ def test_compare_smoke_command_reports_canonical_deltas_for_matching_artifacts(
     assert payload["correctness_hash"] == left_payload["correctness_hash"]
     assert payload["protocol_hash"] == left_payload["protocol_hash"]
     assert payload["workload_hash"] == left_payload["workload_hash"]
-    assert payload["backend"] == "python"
+    assert payload["backends"] == ["python"]
     assert payload["raw_samples_ns"]["left"] == [100, 120, 140]
     assert payload["raw_samples_ns"]["right"] == [80, 100, 160]
+    scenario_id = "python:embeddings-off:one-shot:small:short:single"
+    assert set(payload["scenario_timing"][scenario_id]) == {
+        "prepared_corpus",
+        "answer",
+        "end_to_end",
+    }
     assert payload["timing"]["median_delta_ns"] == -20
     assert payload["timing"]["median_ratio"] == pytest.approx(100 / 120)
     assert payload["timing"]["mean_delta_ns"] == pytest.approx((-20) / 3)
@@ -976,7 +1009,7 @@ def _smoke_artifact_payload(
         "p95_duration_ns": ordered_samples[-1],
     }
     return {
-        "backend": backend,
+        "backends": [backend],
         "dataset_hash": "d" * 64,
         "correctness_hash": correctness_hash,
         "protocol_hash": protocol_hash,
@@ -996,6 +1029,8 @@ def _smoke_artifact_payload(
                 "answer_shape": "single",
                 "correctness_hash": "e" * 64,
                 "raw_samples_ns": raw_samples_ns,
+                "raw_prepared_samples_ns": [0] * sample_count,
+                "raw_end_to_end_samples_ns": raw_samples_ns,
                 "prepared_corpus": {
                     "sample_count": sample_count,
                     "total_duration_ns": 0,
