@@ -55,6 +55,121 @@ def test_case_metric_record_requires_one_rank_per_eligible_claim_and_positive_ra
         )
 
 
+def test_case_metric_record_rejects_impossible_cross_field_count_combinations() -> None:
+    with pytest.raises(
+        ValidationError,
+        match="exact true positives plus false negatives must equal requirement count",
+    ):
+        _record(
+            exact_true_positives=3,
+            exact_false_negatives=0,
+            requirement_count=1,
+        )
+
+    with pytest.raises(
+        ValidationError,
+        match="0.9 recall true positives plus false negatives must equal requirement count",
+    ):
+        _record(
+            requirement_count=1,
+            exact_true_positives=1,
+            exact_false_negatives=0,
+            matched_requirement_count=1,
+            recall_at_0_9_true_positives=2,
+            recall_at_0_9_false_negatives=0,
+            recall_at_0_5_true_positives=1,
+            recall_at_0_5_false_negatives=0,
+        )
+
+    with pytest.raises(
+        ValidationError,
+        match="0.5 recall true positives plus false negatives must equal requirement count",
+    ):
+        _record(
+            requirement_count=1,
+            exact_true_positives=1,
+            exact_false_negatives=0,
+            matched_requirement_count=1,
+            recall_at_0_9_true_positives=1,
+            recall_at_0_9_false_negatives=0,
+            recall_at_0_5_true_positives=2,
+            recall_at_0_5_false_negatives=0,
+        )
+
+    with pytest.raises(
+        ValidationError,
+        match="exact true positives must not exceed matched requirement count",
+    ):
+        _record(
+            exact_true_positives=2,
+            requirement_count=2,
+            matched_requirement_count=1,
+            exact_false_negatives=0,
+            recall_at_0_9_true_positives=2,
+            recall_at_0_9_false_negatives=0,
+            recall_at_0_5_true_positives=2,
+            recall_at_0_5_false_negatives=0,
+        )
+
+    with pytest.raises(
+        ValidationError,
+        match="exact, 0.9, and 0.5 true positives must be monotonic",
+    ):
+        _record(
+            requirement_count=2,
+            exact_true_positives=2,
+            exact_false_negatives=0,
+            matched_requirement_count=2,
+            recall_at_0_9_true_positives=1,
+            recall_at_0_9_false_negatives=1,
+            recall_at_0_5_true_positives=2,
+            recall_at_0_5_false_negatives=0,
+        )
+
+    with pytest.raises(ValidationError):
+        _record(
+            requirement_count=2,
+            exact_true_positives=0,
+            exact_false_negatives=2,
+            recall_at_0_9_true_positives=1,
+            recall_at_0_9_false_negatives=0,
+            recall_at_0_5_true_positives=2,
+            recall_at_0_5_false_negatives=0,
+        )
+
+    with pytest.raises(
+        ValidationError,
+        match="multi-span true positives plus false negatives must not exceed requirement count",
+    ):
+        _record(
+            requirement_count=1,
+            exact_true_positives=1,
+            exact_false_negatives=0,
+            matched_requirement_count=1,
+            recall_at_0_9_true_positives=1,
+            recall_at_0_9_false_negatives=0,
+            recall_at_0_5_true_positives=1,
+            recall_at_0_5_false_negatives=0,
+            multi_span_true_positives=1,
+            multi_span_false_negatives=1,
+        )
+
+    with pytest.raises(
+        ValidationError,
+        match="multi-span true positives must not exceed exact true positives",
+    ):
+        _record(
+            requirement_count=1,
+            exact_true_positives=0,
+            exact_false_negatives=1,
+            recall_at_0_9_true_positives=0,
+            recall_at_0_9_false_negatives=1,
+            recall_at_0_5_true_positives=0,
+            recall_at_0_5_false_negatives=1,
+            multi_span_true_positives=1,
+        )
+
+
 def test_aggregate_metrics_returns_hand_calculated_raw_count_metrics() -> None:
     report = aggregate_metrics(_hand_calculated_records())
 

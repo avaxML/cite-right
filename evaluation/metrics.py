@@ -165,6 +165,58 @@ class CaseMetricRecord(BaseModel):
             self.contradicted_claim_count,
             "contradicted claim citation count must not exceed contradicted claim count",
         )
+        if (
+            self.exact_true_positives + self.exact_false_negatives
+            != self.requirement_count
+        ):
+            raise ValueError(
+                "exact true positives plus false negatives must equal requirement count"
+            )
+        if (
+            self.recall_at_0_9_true_positives + self.recall_at_0_9_false_negatives
+            != self.requirement_count
+        ):
+            raise ValueError(
+                "0.9 recall true positives plus false negatives must equal requirement count"
+            )
+        if (
+            self.recall_at_0_5_true_positives + self.recall_at_0_5_false_negatives
+            != self.requirement_count
+        ):
+            raise ValueError(
+                "0.5 recall true positives plus false negatives must equal requirement count"
+            )
+        _validate_not_greater_than(
+            self.exact_true_positives,
+            self.matched_requirement_count,
+            "exact true positives must not exceed matched requirement count",
+        )
+        if not (
+            self.exact_true_positives
+            <= self.recall_at_0_9_true_positives
+            <= self.recall_at_0_5_true_positives
+        ):
+            raise ValueError(
+                "exact, 0.9, and 0.5 true positives must be monotonic"
+            )
+        if not (
+            self.exact_false_negatives
+            >= self.recall_at_0_9_false_negatives
+            >= self.recall_at_0_5_false_negatives
+        ):
+            raise ValueError(
+                "exact, 0.9, and 0.5 false negatives must be monotonic"
+            )
+        _validate_not_greater_than(
+            self.multi_span_true_positives + self.multi_span_false_negatives,
+            self.requirement_count,
+            "multi-span true positives plus false negatives must not exceed requirement count",
+        )
+        _validate_not_greater_than(
+            self.multi_span_true_positives,
+            self.exact_true_positives,
+            "multi-span true positives must not exceed exact true positives",
+        )
 
         if len(self.retrieval_ranks) != self.retrieval_eligible_claim_count:
             raise ValueError(
