@@ -7,8 +7,8 @@ from pydantic import ValidationError
 
 from evaluation.matching import (
     EmittedCitation,
-    MatchResult,
     MatchingThreshold,
+    MatchResult,
     match_citations,
 )
 from evaluation.schema import CharSpan, CitationRequirement, CitationTarget
