@@ -661,6 +661,125 @@ def test_smoke_worker_runs_in_a_bounded_isolated_process_without_downloads() -> 
     assert payload["failures"] == []
 
 
+def test_performance_smoke_artifact_records_real_scenario_measurements(
+    tmp_path: Path,
+) -> None:
+    performance = _performance_module_or_skip()
+    output_path = tmp_path / "smoke.json"
+
+    performance.run_performance_smoke(output_path=output_path)
+
+    payload = json.loads(output_path.read_bytes())
+    assert len(payload["dataset_hash"]) == 64
+    scenarios = payload["scenarios"]
+    assert scenarios
+    assert {scenario["execution_path"] for scenario in scenarios} == {
+        "one-shot",
+        "prepared",
+    }
+    assert {scenario["embeddings"] for scenario in scenarios} == {"off", "on"}
+    assert {scenario["candidate_bucket"] for scenario in scenarios} == {
+        "small",
+        "medium",
+        "large",
+    }
+    assert {scenario["source_length"] for scenario in scenarios} == {"short", "long"}
+    assert {scenario["answer_shape"] for scenario in scenarios} == {"single", "multi"}
+    assert "python" in {scenario["backend"] for scenario in scenarios}
+    for scenario in scenarios:
+        assert len(scenario["correctness_hash"]) == 64
+        assert len(scenario["raw_samples_ns"]) == payload["trial_count"]
+        assert scenario["prepared_corpus"]["sample_count"] == payload["trial_count"]
+        assert scenario["answer"]["sample_count"] == payload["trial_count"]
+        assert scenario["end_to_end"]["sample_count"] == payload["trial_count"]
+        assert scenario["throughput_cases_per_second"] >= 0
+        assert scenario["peak_memory_bytes"] is None or scenario["peak_memory_bytes"] >= 0
+
+
+def test_smoke_scenarios_execute_real_one_shot_prepared_and_embedding_paths(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    performance = _performance_module_or_skip()
+    calls: list[tuple[str, bool, str]] = []
+
+    monkeypatch.setattr(
+        performance,
+        "_execute_one_shot",
+        lambda *, case, backend, embedder: calls.append(
+            ("one-shot", embedder is not None, backend)
+        )
+        or [{"case_id": case.case_id}],
+    )
+    monkeypatch.setattr(
+        performance,
+        "_execute_prepared",
+        lambda *, case, backend, embedder: calls.append(
+            ("prepared", embedder is not None, backend)
+        )
+        or [{"case_id": case.case_id}],
+    )
+
+    scenarios = performance._smoke_scenarios()
+    for scenario in scenarios:
+        performance._execute_smoke_scenario(scenario)
+
+    expected = {
+        (scenario.execution_path, scenario.embeddings == "on", scenario.backend)
+        for scenario in scenarios
+    }
+    assert set(calls) == expected
+    assert ("one-shot", False, "python") in calls
+    assert ("prepared", True, "python") in calls
+    if performance._rust_backend_supported():
+        assert any(backend == "rust" for _, _, backend in calls)
+    else:
+        assert all(backend == "python" for _, _, backend in calls)
+
+
+def test_smoke_trial_replaces_import_paths_strips_holdout_keys_and_sets_timeout(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    performance = _performance_module_or_skip()
+    request = performance._default_smoke_worker_request()
+    captured: dict[str, Any] = {}
+
+    def fake_run(*args: Any, **kwargs: Any) -> subprocess.CompletedProcess[bytes]:
+        del args
+        captured.update(kwargs)
+        response = performance.SmokeWorkerSuccessResponse(
+            ok=True,
+            backend="python",
+            warmup_count=1,
+            measured_sample_count=1,
+            failures=[],
+            prepared_total_ns=1,
+            answer_total_ns=2,
+            end_to_end_total_ns=3,
+            raw_sample_ns=2,
+        )
+        return subprocess.CompletedProcess(
+            args=[],
+            returncode=0,
+            stdout=canonical_json_bytes(response),
+            stderr=b"",
+        )
+
+    monkeypatch.setenv("PYTHONPATH", "/tmp/untrusted")
+    monkeypatch.setenv("CITE_RIGHT_HOLDOUT_KEY_FILE", "/tmp/holdout.key")
+    monkeypatch.setenv("CITE_RIGHT_ATTESTATION_KEY_FILE", "/tmp/attestation.key")
+    monkeypatch.setattr(performance.subprocess, "run", fake_run)
+
+    performance._run_smoke_trial(request)
+
+    child_env = captured["env"]
+    assert child_env["PYTHONPATH"] == str(Path(performance.__file__).resolve().parents[1])
+    assert child_env["PYTHONSAFEPATH"] == "1"
+    assert "CITE_RIGHT_HOLDOUT_KEY_FILE" not in child_env
+    assert "CITE_RIGHT_ATTESTATION_KEY_FILE" not in child_env
+    assert isinstance(captured["timeout"], (int, float))
+    assert captured["timeout"] > 0
+
+
 def test_compare_smoke_command_reports_canonical_deltas_for_matching_artifacts(
     tmp_path: Path,
 ) -> None:
@@ -718,7 +837,8 @@ def test_compare_smoke_command_reports_canonical_deltas_for_matching_artifacts(
     assert payload["timing"]["median_ratio"] == pytest.approx(100 / 120)
     assert payload["timing"]["mean_delta_ns"] == pytest.approx((-20) / 3)
     assert payload["timing"]["mean_ratio"] == pytest.approx((340 / 3) / 120)
-    assert payload["timing"]["variance_delta_ns"] == pytest.approx((3200 / 3) - (800 / 9))
+    # Population variance: right = 10400 / 9, left = 800 / 3.
+    assert payload["timing"]["variance_delta_ns"] == pytest.approx((10400 / 9) - (800 / 3))
     assert canonical_json_bytes(payload) == result.stdout.encode("utf-8")
 
 
