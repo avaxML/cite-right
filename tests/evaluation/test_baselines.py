@@ -8,13 +8,14 @@ import pytest
 
 from cite_right import CitationConfig
 from evaluation.baselines import (
+    _validated_performance_metadata,
     accuracy_report,
     baseline_configurations,
     build_baseline,
     compare_baselines,
     report_contains_holdout_data,
 )
-from evaluation.canonical import canonical_json_bytes
+from evaluation.canonical import canonical_json_bytes, sha256_hex
 from evaluation.runner import CaseRun, canonicalize_config
 from evaluation.schema import EvaluationCase
 from evaluation.tuning_bundle import TuningBundle, TuningBundleManifest
@@ -184,31 +185,7 @@ def test_build_baseline_freezes_selected_resource_gates_from_selected_policy_onl
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    case = _case()
-    bundle = TuningBundle(
-        root_dir=tmp_path / "bundle",
-        manifest=TuningBundleManifest.model_validate(
-            {
-                "bundle_version": "1.0.0",
-                "dataset_version": "1.0.0",
-                "schema_version": "1.0.0",
-                "train_case_count": 1,
-                "dev_case_count": 1,
-                "train_claim_count": 1,
-                "dev_claim_count": 1,
-                "train_source_count": 1,
-                "dev_source_count": 1,
-                "train_sha256": "1" * 64,
-                "dev_sha256": "2" * 64,
-                "dataset_manifest_sha256": "3" * 64,
-                "provenance_sha256": "4" * 64,
-                "source_catalog_sha256": "5" * 64,
-                "dev_review_ledger_sha256": "6" * 64,
-            }
-        ),
-        train_cases=(case,),
-        dev_cases=(case,),
-    )
+    bundle = _single_case_bundle(tmp_path)
 
     monkeypatch.setattr("evaluation.baselines.load_tuning_bundle", lambda _: bundle)
     monkeypatch.setattr("evaluation.baselines._rust_backend_supported", lambda: True)
@@ -259,8 +236,18 @@ def test_build_baseline_freezes_selected_resource_gates_from_selected_policy_onl
             rust_off_peak=3_150,
         ),
     }
+    for artifact in artifacts.values():
+        artifact["environment"] = {"git_revision": "deadbeef"}
 
-    def fake_performance_smoke(*, output_path: Path) -> dict[str, object]:
+    strict_control = CitationConfig.strict().model_copy(
+        update={"require_all_answer_tokens_in_evidence": False}
+    )
+
+    def fake_performance_smoke(
+        *, output_path: Path, config: CitationConfig | None = None
+    ) -> dict[str, object]:
+        assert config is not None
+        assert config.model_dump(mode="json") == strict_control.model_dump(mode="json")
         artifact = artifacts[output_path.name]
         output_path.write_text(json.dumps(artifact), encoding="utf-8")
         return artifact
@@ -295,6 +282,19 @@ def test_build_baseline_freezes_selected_resource_gates_from_selected_policy_onl
         if isinstance(item, Mapping)
     )
     assert isinstance(gates, Mapping)
+    selected_matrix = next(
+        item for item in matrix if isinstance(item, Mapping) and item["id"] == "strict/python/off"
+    )
+    assert selected_matrix["config"]["require_all_answer_tokens_in_evidence"] is False
+    assert gates["performance_config_sha256"] == sha256_hex(
+        canonical_json_bytes(selected_matrix["config"])
+    )
+    assert gates["performance_protocol_hash"] == "a" * 64
+    from evaluation.performance import selected_smoke_workload_hash
+
+    assert gates["selected_workload_hash"] == selected_smoke_workload_hash(
+        backend="python", embeddings="off"
+    )
     assert gates["performance_noise_margin"] == pytest.approx(0.3)
     assert gates["p95_noise_margin"] == pytest.approx((125 / 120) - 1.0)
     assert gates["peak_memory_noise_margin"] == pytest.approx(0.05)
@@ -302,6 +302,61 @@ def test_build_baseline_freezes_selected_resource_gates_from_selected_policy_onl
     assert gates["peak_memory_budget_bytes"] == 1102
     assert gates["p95_latency_budget_ns"] < 200
     assert json.loads(output_path.read_text(encoding="utf-8")) == report
+
+
+def test_build_baseline_rejects_code_drift_before_writing_report(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    state = {"snapshot": "c" * 64}
+    artifact = _performance_artifact(
+        python_off_median=100,
+        python_off_p95=120,
+        python_off_peak=1_000,
+        python_on_median=200,
+        python_on_p95=240,
+        python_on_peak=2_000,
+        rust_off_median=300,
+        rust_off_p95=360,
+        rust_off_peak=3_000,
+    )
+    artifact["environment"] = {"git_revision": "deadbeef"}
+
+    monkeypatch.setattr(
+        "evaluation.baselines.load_tuning_bundle",
+        lambda _: _single_case_bundle(tmp_path),
+    )
+    monkeypatch.setattr("evaluation.baselines._rust_backend_supported", lambda: False)
+    monkeypatch.setattr("evaluation.baselines._git_revision", lambda: "deadbeef")
+    monkeypatch.setattr(
+        "evaluation.baselines._code_snapshot_sha256",
+        lambda: state["snapshot"],
+    )
+    monkeypatch.setattr(
+        "evaluation.baselines._load_pinned_embedder",
+        lambda: (None, "unavailable"),
+    )
+    monkeypatch.setattr(
+        "evaluation.baselines._execute_accuracy_inputs", _fake_accuracy_reports
+    )
+
+    def drifting_performance_smoke(
+        *, output_path: Path, config: CitationConfig | None = None
+    ) -> dict[str, object]:
+        assert config is not None
+        output_path.write_text(json.dumps(artifact), encoding="utf-8")
+        state["snapshot"] = "d" * 64
+        return artifact
+
+    monkeypatch.setattr(
+        "evaluation.baselines.run_performance_smoke", drifting_performance_smoke
+    )
+    output_path = tmp_path / "baseline.json"
+
+    with pytest.raises(RuntimeError, match="code snapshot changed"):
+        build_baseline(tuning_bundle=tmp_path / "unused", output_path=output_path)
+
+    assert not output_path.exists()
 
 
 def test_compare_baselines_accepts_large_non_negative_declared_noise_margins() -> None:
@@ -336,6 +391,33 @@ def test_compare_baselines_accepts_large_non_negative_declared_noise_margins() -
     assert result["performance_noise_margin"] == pytest.approx(1.5)
     assert result["p95_noise_margin"] == pytest.approx(2.0)
     assert result["peak_memory_noise_margin"] == pytest.approx(1.1)
+
+
+def test_build_baseline_rejects_mismatched_performance_trial_metadata() -> None:
+    selected_config = CitationConfig.strict().model_copy(
+        update={"require_all_answer_tokens_in_evidence": False}
+    ).model_dump(mode="json")
+    expected_hash = sha256_hex(canonical_json_bytes(selected_config))
+    artifact = _performance_artifact(
+        python_off_median=100,
+        python_off_p95=120,
+        python_off_peak=1_000,
+        python_on_median=200,
+        python_on_p95=240,
+        python_on_peak=2_000,
+        rust_off_median=300,
+        rust_off_p95=360,
+        rust_off_peak=3_000,
+    )
+    artifact["config_sha256"] = expected_hash
+    other = dict(artifact)
+    other["protocol_hash"] = "1" * 64
+
+    with pytest.raises(ValueError, match="protocol hashes"):
+        _validated_performance_metadata(
+            performance_trials=[artifact, other],
+            expected_config_sha256=expected_hash,
+        )
 
 
 def _case() -> EvaluationCase:
@@ -394,6 +476,34 @@ def _fake_accuracy_reports(inputs: object) -> list[tuple[str, object]]:
     return reports
 
 
+def _single_case_bundle(tmp_path: Path) -> TuningBundle:
+    case = _case()
+    return TuningBundle(
+        root_dir=tmp_path / "bundle",
+        manifest=TuningBundleManifest.model_validate(
+            {
+                "bundle_version": "1.0.0",
+                "dataset_version": "1.0.0",
+                "schema_version": "1.0.0",
+                "train_case_count": 1,
+                "dev_case_count": 1,
+                "train_claim_count": 1,
+                "dev_claim_count": 1,
+                "train_source_count": 1,
+                "dev_source_count": 1,
+                "train_sha256": "1" * 64,
+                "dev_sha256": "2" * 64,
+                "dataset_manifest_sha256": "3" * 64,
+                "provenance_sha256": "4" * 64,
+                "source_catalog_sha256": "5" * 64,
+                "dev_review_ledger_sha256": "6" * 64,
+            }
+        ),
+        train_cases=(case,),
+        dev_cases=(case,),
+    )
+
+
 def _supported_run(
     *, case: EvaluationCase, backend: str, config: CitationConfig
 ) -> CaseRun:
@@ -448,7 +558,15 @@ def _performance_artifact(
     rust_off_p95: int,
     rust_off_peak: int,
 ) -> dict[str, object]:
+    strict_control = CitationConfig.strict().model_copy(
+        update={"require_all_answer_tokens_in_evidence": False}
+    )
+    config_payload = strict_control.model_dump(mode="json")
     return {
+        "config": config_payload,
+        "config_sha256": sha256_hex(canonical_json_bytes(config_payload)),
+        "protocol_hash": "a" * 64,
+        "workload_hash": "b" * 64,
         "scenarios": [
             {
                 "scenario_id": "python:embeddings-off:prepared:small:short:single",
@@ -480,7 +598,7 @@ def _performance_artifact(
                 },
                 "peak_memory_bytes": rust_off_peak,
             },
-        ]
+        ],
     }
 
 

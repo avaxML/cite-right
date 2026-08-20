@@ -6,7 +6,7 @@ from bisect import bisect_left, bisect_right
 from collections.abc import Sequence
 from typing import Callable
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
 from cite_right.core.citation_config import CitationConfig
 from cite_right.core.interfaces import Aligner, AnswerSegmenter, Segmenter, Tokenizer
@@ -92,6 +92,12 @@ class PreparedCitationCorpus(BaseModel):
     candidates: list[Candidate]
     idf: IdfWeights
     embedding_index: EmbeddingIndex | None = None
+    _embedding_build_time_ms: float = PrivateAttr(default=0.0)
+
+    @property
+    def embedding_build_time_ms(self) -> float:
+        """Time spent building the reusable source embedding index."""
+        return self._embedding_build_time_ms
 
     @classmethod
     def from_sources(
@@ -113,9 +119,14 @@ class PreparedCitationCorpus(BaseModel):
         )
         candidates = build_candidates(source_passages, tokenizer)
         idf = compute_idf(candidates)
-        embedding_index = build_embedding_index(embedder, candidates)
+        embedding_build_time_ms = 0.0
+        embedding_index = None
+        if embedder is not None:
+            embedding_start = time.perf_counter()
+            embedding_index = build_embedding_index(embedder, candidates)
+            embedding_build_time_ms = (time.perf_counter() - embedding_start) * 1000
 
-        return cls(
+        corpus = cls(
             config=cfg,
             tokenizer=tokenizer,
             source_segmenter=source_segmenter,
@@ -126,6 +137,8 @@ class PreparedCitationCorpus(BaseModel):
             idf=idf,
             embedding_index=embedding_index,
         )
+        corpus._embedding_build_time_ms = embedding_build_time_ms
+        return corpus
 
     def align(
         self,

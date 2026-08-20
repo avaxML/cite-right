@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+from collections import OrderedDict
 from typing import Sequence
 
-_EMBEDDING_CACHE: dict[tuple[str, str], list[float]] = {}
+_MAX_EMBEDDING_CACHE_SIZE = 10_000
+_EMBEDDING_CACHE: OrderedDict[tuple[str, str], list[float]] = OrderedDict()
 
 
 class SentenceTransformerEmbedder:
@@ -49,6 +51,7 @@ class SentenceTransformerEmbedder:
             key = (text, self.model_name)
             if key in _EMBEDDING_CACHE:
                 results[i] = _EMBEDDING_CACHE[key]
+                _EMBEDDING_CACHE.move_to_end(key)
             else:
                 missing_indices.append(i)
                 missing_texts.append(text)
@@ -59,6 +62,8 @@ class SentenceTransformerEmbedder:
             for i, idx in enumerate(missing_indices):
                 vector = encoded_list[i]
                 _EMBEDDING_CACHE[(missing_texts[i], self.model_name)] = vector
+                if len(_EMBEDDING_CACHE) > _MAX_EMBEDDING_CACHE_SIZE:
+                    _EMBEDDING_CACHE.popitem(last=False)
                 results[idx] = vector
 
         return results  # type: ignore

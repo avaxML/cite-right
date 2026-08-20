@@ -150,6 +150,10 @@ class TestAlignCitationsErrorConditions:
 class TestConfigValidation:
     """Test configuration parameter validation."""
 
+    def test_removed_embedding_only_options_raise_migration_error(self) -> None:
+        with pytest.raises(ValidationError, match="retrieval_support"):
+            CitationConfig.model_validate({"allow_embedding_only": True})
+
     def test_config_with_zero_top_k(self) -> None:
         """Verify top_k=0 is handled gracefully."""
         answer = "Test answer."

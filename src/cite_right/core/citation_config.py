@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 if TYPE_CHECKING:
     pass
@@ -68,6 +68,7 @@ class CitationConfig(BaseModel):
 
     max_citations_per_source: int = 2
     max_retrieval_support: int = 3
+    require_all_answer_tokens_in_evidence: bool = False
 
     weights: CitationWeights = Field(default_factory=CitationWeights)
 
@@ -80,6 +81,20 @@ class CitationConfig(BaseModel):
     multi_span_evidence: bool = False
     multi_span_merge_gap_chars: int = 16
     multi_span_max_spans: int = 5
+
+    @model_validator(mode="before")
+    @classmethod
+    def _reject_removed_embedding_only_options(cls, data: object) -> object:
+        if isinstance(data, dict) and {
+            "allow_embedding_only",
+            "supported_embedding_similarity",
+        }.intersection(data):
+            raise ValueError(
+                "allow_embedding_only and supported_embedding_similarity were "
+                "removed; inspect SpanCitations.retrieval_support for semantic "
+                "retrieval signals"
+            )
+        return data
 
     @classmethod
     def strict(cls) -> "CitationConfig":
@@ -107,6 +122,7 @@ class CitationConfig(BaseModel):
             min_final_score=0.3,
             max_citations_per_source=1,
             max_retrieval_support=2,
+            require_all_answer_tokens_in_evidence=True,
         )
 
     @classmethod

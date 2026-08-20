@@ -100,42 +100,41 @@ for result in results:
 ```
 
 Why embeddings help here:
- 
- - The last sentence paraphrases the source, so token overlap alone can fall below the supported threshold.
- - The embedder pulls semantically similar passages into the candidate set; alignment then confirms the exact span and returns precise offsets.
- - Embeddings improve recall, but only alignment-backed matches become citations. High-similarity passages without localized alignment remain retrieval support, not exact evidence.
- 
- 
- ## High-Precision Configuration
- 
- If your application requires extremely high precision (e.g., minimizing or completely eliminating false positive citations on adversarial inputs like negations, numerical updates, or swapped entities), we recommend using the benchmarked optimal high-precision configuration:
- 
- ```python
- from cite_right import CitationConfig, CitationWeights
- 
- # Custom weights optimized to balance alignment and semantic embedding similarity
- high_precision_weights = CitationWeights(
-     alignment=1.0,
-     answer_coverage=1.0,
-     evidence_coverage=0.0,
-     lexical=0.5,
-     embedding=0.5
- )
- 
- # High-precision configuration
- high_precision_config = CitationConfig(
-     top_k=1,
-     min_alignment_score=0,
-     min_answer_coverage=0.4,
-     supported_answer_coverage=0.6,
-     min_embedding_similarity=0.3,
-     min_final_score=2.6,  # Threshold designed to filter out adversarial and near-miss false positives
-     weights=high_precision_weights
- )
- ```
- 
- This configuration was derived using multi-dimensional grid optimization over a rich adversarial RAG dataset and successfully eliminates false positives while preserving robust recall on aligned citations.
- 
+
+- The last sentence paraphrases the source, so token overlap alone can fall below the supported threshold.
+- The embedder pulls semantically similar passages into the candidate set; alignment then confirms the exact span and returns precise offsets.
+- Embeddings improve recall, but only alignment-backed matches become citations. High-similarity passages without localized alignment remain retrieval support, not exact evidence.
+
+## High-Precision Configuration
+
+If your application requires extremely high precision (e.g., minimizing or completely eliminating false positive citations on adversarial inputs like negations, numerical updates, or swapped entities), we recommend using the benchmarked optimal high-precision configuration:
+
+```python
+from cite_right import CitationConfig, CitationWeights
+
+# Custom weights optimized to balance alignment and semantic embedding similarity
+high_precision_weights = CitationWeights(
+    alignment=1.0,
+    answer_coverage=1.0,
+    evidence_coverage=0.0,
+    lexical=0.5,
+    embedding=0.5
+)
+
+# High-precision configuration
+high_precision_config = CitationConfig(
+    top_k=1,
+    min_alignment_score=0,
+    min_answer_coverage=0.4,
+    supported_answer_coverage=0.6,
+    min_embedding_similarity=0.3,
+    min_final_score=2.6,  # Threshold designed to filter out adversarial and near-miss false positives
+    weights=high_precision_weights
+)
+```
+
+This configuration was derived using multi-dimensional grid optimization over a rich adversarial RAG dataset and successfully eliminates false positives while preserving robust recall on aligned citations.
+
 ## Development
 
 ```bash

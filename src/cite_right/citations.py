@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import time
-from typing import Literal, Sequence, TypeAlias
+from collections import Counter
+from typing import Iterable, Literal, Sequence, TypeAlias
 
 from pydantic import BaseModel, ConfigDict
 
@@ -156,7 +157,9 @@ def align_citations(
                 num_answer_spans=align_metrics.num_answer_spans,
                 num_candidates=align_metrics.num_candidates,
                 num_alignments=align_metrics.num_alignments,
-                embedding_time_ms=align_metrics.embedding_time_ms,
+                embedding_time_ms=(
+                    corpus.embedding_build_time_ms + align_metrics.embedding_time_ms
+                ),
                 alignment_time_ms=align_metrics.alignment_time_ms,
             )
         )
@@ -241,10 +244,21 @@ def _process_answer_span(
         selected_candidates = [
             candidates[candidate_index] for candidate_index, _, _ in selected
         ]
-        alignments = aligner.align_batch(
-            answer_tokens,
-            [candidate.token_ids for candidate in selected_candidates],
-        )
+        candidate_token_ids = [
+            candidate.token_ids for candidate in selected_candidates
+        ]
+        align_batch = getattr(aligner, "align_batch", None)
+        if align_batch is None:
+            alignments = [
+                aligner.align(answer_tokens, token_ids)
+                for token_ids in candidate_token_ids
+            ]
+        else:
+            alignments = align_batch(answer_tokens, candidate_token_ids)
+        trusted_alignment_match_counts = type(aligner) in {
+            SmithWatermanAligner,
+            RustSmithWatermanAligner,
+        }
         for (candidate_index, embed_score, lexical_score), candidate, alignment in zip(
             selected,
             selected_candidates,
@@ -258,6 +272,7 @@ def _process_answer_span(
                 candidate=candidate,
                 alignment=alignment,
                 answer_tokens=answer_tokens,
+                trusted_alignment_match_counts=trusted_alignment_match_counts,
                 embed_score=embed_score,
                 lexical_score=lexical_score,
                 cfg=cfg,
@@ -300,6 +315,7 @@ def _build_exact_citation(
     candidate: Candidate,
     alignment: Alignment,
     answer_tokens: list[int],
+    trusted_alignment_match_counts: bool,
     embed_score: float,
     lexical_score: float,
     cfg: CitationConfig,
@@ -309,6 +325,20 @@ def _build_exact_citation(
     final_score = _compute_final_score(metrics, lexical_score, embed_score, cfg)
     if not _should_use_alignment(alignment, metrics, cfg):
         return None
+    if (
+        cfg.require_all_answer_tokens_in_evidence
+        and not (
+            trusted_alignment_match_counts
+            and alignment.matches == len(answer_tokens)
+        )
+    ):
+        if not _answer_tokens_match_evidence(
+            answer_tokens=answer_tokens,
+            evidence_tokens=candidate.token_ids[
+                alignment.token_start : alignment.token_end
+            ],
+        ):
+            return None
     evidence_result = _extract_evidence(candidate, alignment, cfg)
     if evidence_result is None or final_score < cfg.min_final_score:
         return None
@@ -394,6 +424,50 @@ def _compute_final_score(
         + cfg.weights.lexical * lexical_score
         + cfg.weights.embedding * max(0.0, embed_score)
     )
+
+
+def _answer_tokens_match_evidence(
+    *,
+    answer_tokens: Sequence[int],
+    evidence_tokens: Iterable[int],
+) -> bool:
+    if isinstance(evidence_tokens, list) and answer_tokens == evidence_tokens:
+        return True
+    if isinstance(evidence_tokens, Sequence) and len(answer_tokens) == len(
+        evidence_tokens
+    ):
+        if all(
+            answer_token == evidence_token
+            for answer_token, evidence_token in zip(
+                answer_tokens, evidence_tokens, strict=True
+            )
+        ):
+            return True
+    return _answer_token_counts_match_evidence(
+        answer_token_counts=Counter(answer_tokens),
+        evidence_tokens=evidence_tokens,
+    )
+
+
+def _answer_token_counts_match_evidence(
+    *,
+    answer_token_counts: Counter[int],
+    evidence_tokens: Iterable[int],
+) -> bool:
+    remaining = answer_token_counts.copy()
+    if not remaining:
+        return True
+    for token_id in evidence_tokens:
+        count = remaining.get(token_id)
+        if count is None:
+            continue
+        if count == 1:
+            del remaining[token_id]
+            if not remaining:
+                return True
+        else:
+            remaining[token_id] = count - 1
+    return False
 
 
 def _build_citation(

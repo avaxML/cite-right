@@ -1,5 +1,6 @@
 """Tests for the main align_citations API."""
 
+import time
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Sequence
@@ -53,6 +54,29 @@ class CountingBatchAligner:
     ) -> list[Alignment]:
         self.align_batch_calls += 1
         return [self.align(seq1, seq2) for seq2 in seqs]
+
+
+class LegacyAligner:
+    """Custom aligner implementing the pre-batch public protocol."""
+
+    def __init__(self) -> None:
+        self._delegate = SmithWatermanAligner()
+
+    def align(self, seq1: Sequence[int], seq2: Sequence[int]) -> Alignment:
+        return self._delegate.align(seq1, seq2)
+
+
+class TimedEmbedder:
+    """Deterministic embedder that records time spent in encode calls."""
+
+    def __init__(self) -> None:
+        self.elapsed_ms = 0.0
+
+    def encode(self, texts: Sequence[str]) -> list[list[float]]:
+        started = time.perf_counter()
+        time.sleep(0.01)
+        self.elapsed_ms += (time.perf_counter() - started) * 1000
+        return [[1.0, 0.0] for _ in texts]
 
 
 def _test_citation(
@@ -165,6 +189,17 @@ def test_align_citations_uses_batch_alignment_api() -> None:
 
     assert aligner.align_batch_calls == 1
     assert aligner.align_calls <= 2
+
+
+def test_align_citations_accepts_legacy_single_alignment_api() -> None:
+    results = align_citations(
+        "alpha beta gamma.",
+        [SourceDocument(id="match", text="alpha beta gamma.")],
+        config=CitationConfig(top_k=1),
+        aligner=LegacyAligner(),
+    )
+
+    assert results[0].citations[0].source_id == "match"
 
 
 def test_prepared_corpus_align_resolves_default_aligner_once(
@@ -836,6 +871,20 @@ def test_align_citations_wrapper_reports_metrics() -> None:
 
     assert len(captured) == 1
     assert captured[0].total_time_ms >= 0.0
+
+
+def test_align_citations_metrics_include_source_and_query_embeddings() -> None:
+    captured = []
+    embedder = TimedEmbedder()
+
+    align_citations(
+        "Heat pumps reduce emissions.",
+        [SourceDocument(id="energy", text="Heat pumps reduce emissions by 50%.")],
+        embedder=embedder,
+        on_metrics=captured.append,
+    )
+
+    assert captured[0].embedding_time_ms >= embedder.elapsed_ms * 0.9
 
 
 @requires_rust

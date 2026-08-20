@@ -687,6 +687,10 @@ def test_performance_smoke_artifact_records_real_scenario_measurements(
 
     payload = json.loads(output_path.read_bytes())
     assert len(payload["dataset_hash"]) == 64
+    assert payload["config"] == performance.CitationConfig().model_dump(mode="json")
+    assert payload["config_sha256"] == sha256_hex(
+        canonical_json_bytes(payload["config"])
+    )
     scenarios = payload["scenarios"]
     assert scenarios
     assert payload["measurement_iterations"] >= 25
@@ -746,40 +750,70 @@ def test_smoke_scenarios_execute_real_one_shot_prepared_and_embedding_paths(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     performance = _performance_module_or_skip()
-    calls: list[tuple[str, bool, str]] = []
+    calls: list[tuple[str, bool, str, int]] = []
 
     monkeypatch.setattr(
         performance,
         "_execute_one_shot",
-        lambda *, case, backend, embedder: (
-            calls.append(("one-shot", embedder is not None, backend))
+        lambda *, case, backend, config, embedder: (
+            calls.append(("one-shot", embedder is not None, backend, config.top_k))
             or [{"case_id": case.case_id}]
         ),
     )
     monkeypatch.setattr(
         performance,
         "_execute_prepared",
-        lambda *, case, backend, embedder: (
-            calls.append(("prepared", embedder is not None, backend))
+        lambda *, case, backend, config, embedder: (
+            calls.append(("prepared", embedder is not None, backend, config.top_k))
             or [{"case_id": case.case_id}]
         ),
     )
 
     scenarios = performance._smoke_scenarios()
+    config = performance.CitationConfig.strict()
     for scenario in scenarios:
-        performance._execute_smoke_scenario(scenario)
+        performance._execute_smoke_scenario(scenario, config=config)
 
     expected = {
-        (scenario.execution_path, scenario.embeddings == "on", scenario.backend)
+        (
+            scenario.execution_path,
+            scenario.embeddings == "on",
+            scenario.backend,
+            config.top_k,
+        )
         for scenario in scenarios
     }
     assert set(calls) == expected
-    assert ("one-shot", False, "python") in calls
-    assert ("prepared", True, "python") in calls
+    assert ("one-shot", False, "python", config.top_k) in calls
+    assert ("prepared", True, "python", config.top_k) in calls
     if performance._rust_backend_supported():
-        assert any(backend == "rust" for _, _, backend in calls)
+        assert any(backend == "rust" for _, _, backend, _ in calls)
     else:
-        assert all(backend == "python" for _, _, backend in calls)
+        assert all(backend == "python" for _, _, backend, _ in calls)
+
+
+def test_selected_smoke_workload_hash_matches_candidate_measurement_subset() -> None:
+    performance = _performance_module_or_skip()
+    assert performance.SMOKE_TRIAL_COUNT >= 40
+
+    expected = performance.selected_smoke_workload_hash(
+        backend="python",
+        embeddings="off",
+    )
+    measured = performance.measure_candidate_smoke(
+        backend="python",
+        embeddings="off",
+        config=performance.CitationConfig.strict(),
+    )
+
+    assert measured["workload_hash"] == expected
+    raw_samples = measured["raw_end_to_end_samples_ns"]
+    assert isinstance(raw_samples, dict)
+    assert raw_samples
+    assert all(
+        len(samples) == performance.SMOKE_TRIAL_COUNT
+        for samples in raw_samples.values()
+    )
 
 
 def test_smoke_trial_replaces_import_paths_strips_holdout_keys_and_sets_timeout(
@@ -1034,6 +1068,8 @@ def _smoke_artifact_payload(
     return {
         "backends": [backend],
         "dataset_hash": "d" * 64,
+        "config": {"top_k": 2},
+        "config_sha256": "a" * 64,
         "correctness_hash": correctness_hash,
         "protocol_hash": protocol_hash,
         "workload_hash": workload_hash,
