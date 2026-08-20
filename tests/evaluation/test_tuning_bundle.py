@@ -87,7 +87,9 @@ def test_build_tuning_bundle_rejects_existing_output_unknown_dataset_entries_and
 
     alias_path = tmp_path / "holdout-alias"
     alias_path.symlink_to(restricted_dir, target_is_directory=True)
-    with pytest.raises(ValueError, match="must not be a symlink|holdout or review directories"):
+    with pytest.raises(
+        ValueError, match="must not be a symlink|holdout or review directories"
+    ):
         build_tuning_bundle(dataset_dir, alias_path / "bundle")
 
 
@@ -109,8 +111,12 @@ def test_build_tuning_bundle_rejects_symlink_nonregular_noncanonical_duplicate_a
     with pytest.raises(ValueError, match="must be a regular file"):
         build_tuning_bundle(nonregular_dataset, tmp_path / "nonregular-bundle")
 
-    noncanonical_dataset, _ = _write_dataset_fixture(tmp_path / "noncanonical", monkeypatch)
-    dev_payload = json.loads((noncanonical_dataset / "dev.json").read_text(encoding="utf-8"))
+    noncanonical_dataset, _ = _write_dataset_fixture(
+        tmp_path / "noncanonical", monkeypatch
+    )
+    dev_payload = json.loads(
+        (noncanonical_dataset / "dev.json").read_text(encoding="utf-8")
+    )
     (noncanonical_dataset / "dev.json").write_text(
         json.dumps(dev_payload, indent=2, ensure_ascii=False),
         encoding="utf-8",
@@ -119,14 +125,20 @@ def test_build_tuning_bundle_rejects_symlink_nonregular_noncanonical_duplicate_a
         build_tuning_bundle(noncanonical_dataset, tmp_path / "noncanonical-bundle")
 
     duplicate_dataset, _ = _write_dataset_fixture(tmp_path / "duplicate", monkeypatch)
-    duplicate_dev = json.loads((duplicate_dataset / "dev.json").read_text(encoding="utf-8"))
+    duplicate_dev = json.loads(
+        (duplicate_dataset / "dev.json").read_text(encoding="utf-8")
+    )
     duplicate_dev[0]["case_id"] = "case-train"
     (duplicate_dataset / "dev.json").write_bytes(canonical_json_bytes(duplicate_dev))
     with pytest.raises(ValueError, match="duplicate case id"):
         build_tuning_bundle(duplicate_dataset, tmp_path / "duplicate-bundle")
 
-    wrong_split_dataset, _ = _write_dataset_fixture(tmp_path / "wrong-split", monkeypatch)
-    wrong_train = json.loads((wrong_split_dataset / "train.json").read_text(encoding="utf-8"))
+    wrong_split_dataset, _ = _write_dataset_fixture(
+        tmp_path / "wrong-split", monkeypatch
+    )
+    wrong_train = json.loads(
+        (wrong_split_dataset / "train.json").read_text(encoding="utf-8")
+    )
     wrong_train[0]["split"] = "holdout"
     (wrong_split_dataset / "train.json").write_bytes(canonical_json_bytes(wrong_train))
     with pytest.raises(ValueError, match="must contain only train cases"):
@@ -141,7 +153,9 @@ def test_load_tuning_bundle_rejects_hash_tamper_unknown_entries_symlinks_duplica
 
     tampered_bundle = tmp_path / "tampered"
     build_tuning_bundle(dataset_dir, tampered_bundle)
-    train_payload = json.loads((tampered_bundle / "train.json").read_text(encoding="utf-8"))
+    train_payload = json.loads(
+        (tampered_bundle / "train.json").read_text(encoding="utf-8")
+    )
     train_payload[0]["answer"] += " tampered"
     (tampered_bundle / "train.json").write_bytes(canonical_json_bytes(train_payload))
     with pytest.raises(ValueError, match="hash mismatch"):
@@ -164,19 +178,27 @@ def test_load_tuning_bundle_rejects_hash_tamper_unknown_entries_symlinks_duplica
 
     duplicate_bundle = tmp_path / "duplicate-bundle"
     build_tuning_bundle(dataset_dir, duplicate_bundle)
-    duplicate_dev = json.loads((duplicate_bundle / "dev.json").read_text(encoding="utf-8"))
+    duplicate_dev = json.loads(
+        (duplicate_bundle / "dev.json").read_text(encoding="utf-8")
+    )
     duplicate_dev[0]["case_id"] = "case-train"
     duplicate_dev_bytes = canonical_json_bytes(duplicate_dev)
     (duplicate_bundle / "dev.json").write_bytes(duplicate_dev_bytes)
-    duplicate_manifest = json.loads((duplicate_bundle / "manifest.json").read_text(encoding="utf-8"))
+    duplicate_manifest = json.loads(
+        (duplicate_bundle / "manifest.json").read_text(encoding="utf-8")
+    )
     duplicate_manifest["dev_sha256"] = sha256_hex(duplicate_dev_bytes)
-    (duplicate_bundle / "manifest.json").write_bytes(canonical_json_bytes(duplicate_manifest))
+    (duplicate_bundle / "manifest.json").write_bytes(
+        canonical_json_bytes(duplicate_manifest)
+    )
     with pytest.raises(ValueError, match="duplicate case id"):
         load_tuning_bundle(duplicate_bundle)
 
     wrong_split_bundle = tmp_path / "wrong-split-bundle"
     build_tuning_bundle(dataset_dir, wrong_split_bundle)
-    wrong_dev = json.loads((wrong_split_bundle / "dev.json").read_text(encoding="utf-8"))
+    wrong_dev = json.loads(
+        (wrong_split_bundle / "dev.json").read_text(encoding="utf-8")
+    )
     wrong_dev[0]["split"] = "holdout"
     wrong_dev_bytes = canonical_json_bytes(wrong_dev)
     (wrong_split_bundle / "dev.json").write_bytes(wrong_dev_bytes)
@@ -192,7 +214,9 @@ def test_load_tuning_bundle_rejects_hash_tamper_unknown_entries_symlinks_duplica
 
     review_bundle = tmp_path / "review-bundle"
     build_tuning_bundle(dataset_dir, review_bundle)
-    review_train = json.loads((review_bundle / "train.json").read_text(encoding="utf-8"))
+    review_train = json.loads(
+        (review_bundle / "train.json").read_text(encoding="utf-8")
+    )
     review_train[0]["review"] = {
         "state": "approved",
         "reviewer": "leaky-reviewer",
@@ -201,7 +225,9 @@ def test_load_tuning_bundle_rejects_hash_tamper_unknown_entries_symlinks_duplica
     }
     review_train_bytes = canonical_json_bytes(review_train)
     (review_bundle / "train.json").write_bytes(review_train_bytes)
-    review_manifest = json.loads((review_bundle / "manifest.json").read_text(encoding="utf-8"))
+    review_manifest = json.loads(
+        (review_bundle / "manifest.json").read_text(encoding="utf-8")
+    )
     review_manifest["train_sha256"] = sha256_hex(review_train_bytes)
     (review_bundle / "manifest.json").write_bytes(canonical_json_bytes(review_manifest))
     with pytest.raises(ValueError, match="must not include review metadata"):
@@ -209,7 +235,9 @@ def test_load_tuning_bundle_rejects_hash_tamper_unknown_entries_symlinks_duplica
 
     leaky_bundle = tmp_path / "leaky-bundle"
     build_tuning_bundle(dataset_dir, leaky_bundle)
-    leaky_manifest = json.loads((leaky_bundle / "manifest.json").read_text(encoding="utf-8"))
+    leaky_manifest = json.loads(
+        (leaky_bundle / "manifest.json").read_text(encoding="utf-8")
+    )
     leaky_manifest["dataset_root"] = str(dataset_dir)
     (leaky_bundle / "manifest.json").write_bytes(canonical_json_bytes(leaky_manifest))
     with pytest.raises(ValueError, match="manifest.json is invalid"):
@@ -255,7 +283,9 @@ def test_load_tuning_bundle_returns_immutable_train_dev_only_object(
         bundle.__setattr__("root_dir", tmp_path)
 
 
-def test_worker_launch_spec_scrubs_sensitive_environment_variables(tmp_path: Path) -> None:
+def test_worker_launch_spec_scrubs_sensitive_environment_variables(
+    tmp_path: Path,
+) -> None:
     bundle_dir = tmp_path / "bundle"
     bundle_dir.mkdir()
     (bundle_dir / "manifest.json").write_text("{}", encoding="utf-8")
@@ -368,9 +398,15 @@ def _write_dataset_fixture(
     train_case = _build_case(case_id="case-train", split="train")
     dev_case = _build_case(case_id="case-dev", split="dev")
     holdout_case = _build_case(case_id="case-holdout", split="holdout")
-    (dataset_dir / "train.json").write_bytes(_canonical_json_bytes([_case_payload(train_case)]))
-    (dataset_dir / "dev.json").write_bytes(_canonical_json_bytes([_case_payload(dev_case)]))
-    (dataset_dir / "holdout.json").write_bytes(_canonical_json_bytes([_case_payload(holdout_case)]))
+    (dataset_dir / "train.json").write_bytes(
+        _canonical_json_bytes([_case_payload(train_case)])
+    )
+    (dataset_dir / "dev.json").write_bytes(
+        _canonical_json_bytes([_case_payload(dev_case)])
+    )
+    (dataset_dir / "holdout.json").write_bytes(
+        _canonical_json_bytes([_case_payload(holdout_case)])
+    )
     (dataset_dir / "manifest.json").write_bytes(
         canonical_json_bytes(
             build_private_manifest(
@@ -413,7 +449,9 @@ def _write_dataset_fixture(
             ),
         ),
     )
-    (dataset_dir / "holdout_reviews.json").write_bytes(canonical_json_bytes(holdout_ledger))
+    (dataset_dir / "holdout_reviews.json").write_bytes(
+        canonical_json_bytes(holdout_ledger)
+    )
     seal_holdout(
         (holdout_case,),
         ledger=holdout_ledger,
@@ -467,7 +505,9 @@ def _build_case(*, case_id: str, split: str) -> EvaluationCase:
                                     "alternatives": (
                                         {
                                             "source_id": "source-1",
-                                            "spans": ({"start": 0, "end": len(answer)},),
+                                            "spans": (
+                                                {"start": 0, "end": len(answer)},
+                                            ),
                                         },
                                     ),
                                 },

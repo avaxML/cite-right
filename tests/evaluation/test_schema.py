@@ -30,7 +30,8 @@ def test_entailed_claim_requires_citation_requirement() -> None:
     case_data["evaluation_units"][0]["claims"][0]["citation_requirements"] = ()
 
     with pytest.raises(
-        ValidationError, match="entailed claims must define at least one citation requirement"
+        ValidationError,
+        match="entailed claims must define at least one citation requirement",
     ):
         EvaluationCase.model_validate(case_data)
 
@@ -115,9 +116,9 @@ def test_review_record_requires_audit_fields_for_completed_decisions(
 
 def test_target_spans_are_ordered_non_overlapping_and_in_bounds() -> None:
     case_data = _make_valid_case_data()
-    alternatives = case_data["evaluation_units"][0]["claims"][0]["citation_requirements"][0][
-        "alternatives"
-    ]
+    alternatives = case_data["evaluation_units"][0]["claims"][0][
+        "citation_requirements"
+    ][0]["alternatives"]
 
     invalid_alternatives = (
         (

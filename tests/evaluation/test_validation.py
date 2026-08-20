@@ -52,7 +52,9 @@ _PUBLIC_DOMAIN_BUCKETS = (
 )
 
 
-def test_validate_dataset_reports_raw_schema_failures_and_preserves_denominator() -> None:
+def test_validate_dataset_reports_raw_schema_failures_and_preserves_denominator() -> (
+    None
+):
     valid_case = _build_case(
         family_id="family-valid",
         transformation_id="positive",
@@ -62,9 +64,9 @@ def test_validate_dataset_reports_raw_schema_failures_and_preserves_denominator(
     invalid_answer_slice["evaluation_units"][0]["text"] = "incorrect slice"
 
     invalid_target_slice = _make_valid_case_mapping(case_id="case-bad-target")
-    invalid_target_slice["evaluation_units"][0]["claims"][0]["citation_requirements"][0][
-        "alternatives"
-    ] = (
+    invalid_target_slice["evaluation_units"][0]["claims"][0]["citation_requirements"][
+        0
+    ]["alternatives"] = (
         {
             "source_id": "source-1",
             "spans": ({"start": 0, "end": 999},),
@@ -72,7 +74,9 @@ def test_validate_dataset_reports_raw_schema_failures_and_preserves_denominator(
     )
 
     report = validate_dataset(
-        DatasetBundle(case_records=(valid_case, invalid_answer_slice, invalid_target_slice))
+        DatasetBundle(
+            case_records=(valid_case, invalid_answer_slice, invalid_target_slice)
+        )
     )
 
     assert report.total_case_records == 3
@@ -96,9 +100,13 @@ def test_validate_dataset_reports_raw_schema_failures_and_preserves_denominator(
 
 def test_validate_dataset_reports_claim_contract_and_unit_overlap_errors() -> None:
     missing_requirement = _make_valid_case_mapping(case_id="case-missing-requirement")
-    missing_requirement["evaluation_units"][0]["claims"][0]["citation_requirements"] = ()
+    missing_requirement["evaluation_units"][0]["claims"][0][
+        "citation_requirements"
+    ] = ()
 
-    forbidden_negative_requirement = _make_valid_case_mapping(case_id="case-forbidden-negative")
+    forbidden_negative_requirement = _make_valid_case_mapping(
+        case_id="case-forbidden-negative"
+    )
     forbidden_negative_requirement["evaluation_units"][0]["claims"][0]["label"] = (
         "contradicted"
     )
@@ -179,13 +187,19 @@ def test_validate_dataset_reports_duplicates_at_all_supported_scopes() -> None:
         deepcopy(duplicate_claim["evaluation_units"][0]["claims"][0]),
     )
 
-    duplicate_requirement = _make_valid_case_mapping(case_id="case-duplicate-requirement")
-    duplicate_requirement["evaluation_units"][0]["claims"][0]["citation_requirements"] = (
-        duplicate_requirement["evaluation_units"][0]["claims"][0]["citation_requirements"][0],
+    duplicate_requirement = _make_valid_case_mapping(
+        case_id="case-duplicate-requirement"
+    )
+    duplicate_requirement["evaluation_units"][0]["claims"][0][
+        "citation_requirements"
+    ] = (
+        duplicate_requirement["evaluation_units"][0]["claims"][0][
+            "citation_requirements"
+        ][0],
         deepcopy(
-            duplicate_requirement["evaluation_units"][0]["claims"][0]["citation_requirements"][
-                0
-            ]
+            duplicate_requirement["evaluation_units"][0]["claims"][0][
+                "citation_requirements"
+            ][0]
         ),
     )
 
@@ -205,9 +219,17 @@ def test_validate_dataset_reports_duplicates_at_all_supported_scopes() -> None:
     assert report.total_case_records == 6
     assert report.valid_case_records == 0
     assert report.invalid_case_records == 6
-    assert Counter(finding.code for finding in report.findings)["schema_validation_error"] == 4
-    assert Counter(finding.code for finding in report.findings)["duplicate_case_id"] == 1
-    assert any("source ids must be unique within a case" in finding.message for finding in report.findings)
+    assert (
+        Counter(finding.code for finding in report.findings)["schema_validation_error"]
+        == 4
+    )
+    assert (
+        Counter(finding.code for finding in report.findings)["duplicate_case_id"] == 1
+    )
+    assert any(
+        "source ids must be unique within a case" in finding.message
+        for finding in report.findings
+    )
     assert any(
         "evaluation unit ids must be unique within a case" in finding.message
         for finding in report.findings
@@ -267,8 +289,15 @@ def test_validate_dataset_requires_complete_real_and_permissive_provenance() -> 
     assert report.total_case_records == 2
     assert report.valid_case_records == 0
     assert report.invalid_case_records == 2
-    assert Counter(finding.code for finding in report.findings)["provenance_incomplete"] == 2
-    assert {finding.case_id for finding in report.findings if finding.code == "provenance_incomplete"} == {
+    assert (
+        Counter(finding.code for finding in report.findings)["provenance_incomplete"]
+        == 2
+    )
+    assert {
+        finding.case_id
+        for finding in report.findings
+        if finding.code == "provenance_incomplete"
+    } == {
         real_missing_snapshot.case_id,
         permissive_missing_origin.case_id,
     }
@@ -321,11 +350,17 @@ def test_validate_dataset_requires_reviews_for_dev_and_holdout_only() -> None:
         dev_missing.case_id,
         holdout_pending.case_id,
     }
-    assert train_case.case_id not in {finding.case_id for finding in review_gap_findings}
-    assert dev_approved.case_id not in {finding.case_id for finding in review_gap_findings}
+    assert train_case.case_id not in {
+        finding.case_id for finding in review_gap_findings
+    }
+    assert dev_approved.case_id not in {
+        finding.case_id for finding in review_gap_findings
+    }
 
 
-def test_validate_dataset_converts_leakage_findings_and_retains_shingle_warnings() -> None:
+def test_validate_dataset_converts_leakage_findings_and_retains_shingle_warnings() -> (
+    None
+):
     duplicate_train = _build_case(
         family_id="family-exact-a",
         transformation_id="exact-a",
@@ -393,16 +428,24 @@ def test_validate_dataset_converts_leakage_findings_and_retains_shingle_warnings
 
 
 def test_validate_dataset_reports_non_canonical_ordering() -> None:
-    alpha = _build_case(family_id="family-alpha", transformation_id="ordered", split="train")
-    beta = _build_case(family_id="family-beta", transformation_id="ordered", split="train")
-    gamma = _build_case(family_id="family-gamma", transformation_id="ordered", split="train")
+    alpha = _build_case(
+        family_id="family-alpha", transformation_id="ordered", split="train"
+    )
+    beta = _build_case(
+        family_id="family-beta", transformation_id="ordered", split="train"
+    )
+    gamma = _build_case(
+        family_id="family-gamma", transformation_id="ordered", split="train"
+    )
     ordered = tuple(sorted((alpha, beta, gamma), key=lambda case: case.case_id))
     reversed_cases = tuple(reversed(ordered))
 
     report = validate_dataset(DatasetBundle(case_records=reversed_cases))
 
     ordering_findings = tuple(
-        finding for finding in report.findings if finding.code == "case_order_not_canonical"
+        finding
+        for finding in report.findings
+        if finding.code == "case_order_not_canonical"
     )
     assert len(ordering_findings) == 1
     assert report.valid_case_records == 3
@@ -454,10 +497,15 @@ def test_build_private_manifest_is_deterministic_and_order_invariant() -> None:
 
     cases = (dev_case, holdout_case, train_case)
     manifest = build_private_manifest(cases, generated_at="2026-07-17")
-    reversed_manifest = build_private_manifest(tuple(reversed(cases)), generated_at="2026-07-17")
+    reversed_manifest = build_private_manifest(
+        tuple(reversed(cases)), generated_at="2026-07-17"
+    )
 
     ordered_cases = tuple(
-        sorted(cases, key=lambda case: (case.split, case.case_id, canonical_json_bytes(case)))
+        sorted(
+            cases,
+            key=lambda case: (case.split, case.case_id, canonical_json_bytes(case)),
+        )
     )
     overall_payload = {
         "dataset_version": "1.0.0",
@@ -467,7 +515,9 @@ def test_build_private_manifest_is_deterministic_and_order_invariant() -> None:
     train_payload = {
         "split": "train",
         "cases": tuple(
-            case.model_dump(mode="json") for case in ordered_cases if case.split == "train"
+            case.model_dump(mode="json")
+            for case in ordered_cases
+            if case.split == "train"
         ),
     }
 
@@ -475,7 +525,9 @@ def test_build_private_manifest_is_deterministic_and_order_invariant() -> None:
     assert manifest.total_case_count == 3
     assert manifest.split_case_counts == {"train": 1, "dev": 1, "holdout": 1}
     assert manifest.overall_sha256 == sha256_hex(canonical_json_bytes(overall_payload))
-    assert manifest.split_sha256["train"] == sha256_hex(canonical_json_bytes(train_payload))
+    assert manifest.split_sha256["train"] == sha256_hex(
+        canonical_json_bytes(train_payload)
+    )
     assert manifest.distributions["overall"]["expected_status"] == {
         "supported": 3,
         "partial": 0,
@@ -511,7 +563,9 @@ def test_build_public_holdout_manifest_redacts_case_level_data() -> None:
             notes="Approved for publication.",
         ),
     )
-    private_manifest = build_private_manifest((holdout_case,), generated_at="2026-07-17")
+    private_manifest = build_private_manifest(
+        (holdout_case,), generated_at="2026-07-17"
+    )
 
     public_manifest = build_public_holdout_manifest(
         private_manifest,
@@ -530,7 +584,11 @@ def test_build_public_holdout_manifest_redacts_case_level_data() -> None:
     assert "overall_sha256" not in payload
     assert "split_sha256" not in payload
     assert "review_state_counts" not in payload
-    assert set(payload["distributions"]) == {"domain", "expected_status", "provenance_kind"}
+    assert set(payload["distributions"]) == {
+        "domain",
+        "expected_status",
+        "provenance_kind",
+    }
     assert set(payload["distributions"]["domain"]) == set(_PUBLIC_DOMAIN_BUCKETS)
     assert set(payload["distributions"]["expected_status"]) == {
         "supported",
@@ -627,14 +685,18 @@ def test_verify_private_manifest_expectations_reports_every_mutated_leaf() -> No
     )
 
 
-def test_verify_private_manifest_expectations_reports_missing_and_unexpected_mapping_keys() -> None:
+def test_verify_private_manifest_expectations_reports_missing_and_unexpected_mapping_keys() -> (
+    None
+):
     manifest, assigned_cases = _manifest_fixture()
     del assigned_cases
     missing_payload = deepcopy(manifest.model_dump(mode="json"))
     del missing_payload["distributions"]["overall"]["domain"]["science"]
     missing_expected = DatasetManifest.model_validate(missing_payload)
 
-    missing_mismatches = verify_private_manifest_expectations(manifest, missing_expected)
+    missing_mismatches = verify_private_manifest_expectations(
+        manifest, missing_expected
+    )
 
     assert tuple(mismatch.path for mismatch in missing_mismatches) == (
         "/manifest/distributions/overall/domain/science",
@@ -659,7 +721,9 @@ def test_verify_private_manifest_expectations_reports_missing_and_unexpected_map
     )
 
 
-def test_validate_dataset_emits_manifest_mismatch_findings_for_every_manifest_difference() -> None:
+def test_validate_dataset_emits_manifest_mismatch_findings_for_every_manifest_difference() -> (
+    None
+):
     manifest, assigned_cases = _manifest_fixture()
     original_science = manifest.distributions["overall"]["domain"]["science"]
     original_train_supported = manifest.distributions["train"]["expected_status"][
@@ -713,7 +777,9 @@ def test_validate_dataset_emits_manifest_mismatch_findings_for_every_manifest_di
     )
 
 
-def test_validate_dataset_reports_manifest_unverifiable_for_duplicate_case_ids() -> None:
+def test_validate_dataset_reports_manifest_unverifiable_for_duplicate_case_ids() -> (
+    None
+):
     base_case = _build_case(
         family_id="family-dup-a",
         transformation_id="manifest-dup",
@@ -742,7 +808,9 @@ def test_validate_dataset_reports_manifest_unverifiable_for_duplicate_case_ids()
     )
 
 
-def test_validate_dataset_reports_mixed_dataset_versions_and_manifest_unverifiable() -> None:
+def test_validate_dataset_reports_mixed_dataset_versions_and_manifest_unverifiable() -> (
+    None
+):
     first = _build_case(
         family_id="family-version-a",
         transformation_id="version",
@@ -762,7 +830,11 @@ def test_validate_dataset_reports_mixed_dataset_versions_and_manifest_unverifiab
         )
     )
 
-    mixed_findings = [finding for finding in report.findings if finding.code == "mixed_dataset_version"]
+    mixed_findings = [
+        finding
+        for finding in report.findings
+        if finding.code == "mixed_dataset_version"
+    ]
     assert len(mixed_findings) == 1
     assert mixed_findings[0].path == "/dataset_version"
     assert report.invalid_case_records == 2
@@ -773,7 +845,9 @@ def test_validate_dataset_reports_mixed_dataset_versions_and_manifest_unverifiab
     )
 
 
-def test_validate_dataset_reports_manifest_unverifiable_for_schema_invalid_records() -> None:
+def test_validate_dataset_reports_manifest_unverifiable_for_schema_invalid_records() -> (
+    None
+):
     valid_case = _build_case(
         family_id="family-valid-manifest",
         transformation_id="schema-manifest",
@@ -803,9 +877,21 @@ def test_validate_dataset_reports_manifest_unverifiable_for_schema_invalid_recor
 @pytest.mark.parametrize(
     ("field_name", "value", "message"),
     (
-        ("ciphertext_sha256", "ABCDEF" * 10 + "abcd", "ciphertext_sha256 must be 64 lowercase hexadecimal characters"),
-        ("public_key_fingerprint", "zz" * 32, "public_key_fingerprint must be 64 lowercase hexadecimal characters"),
-        ("signature", base64.b64encode(bytes(range(63))).decode("ascii"), "signature must be canonical base64 for exactly 64 bytes"),
+        (
+            "ciphertext_sha256",
+            "ABCDEF" * 10 + "abcd",
+            "ciphertext_sha256 must be 64 lowercase hexadecimal characters",
+        ),
+        (
+            "public_key_fingerprint",
+            "zz" * 32,
+            "public_key_fingerprint must be 64 lowercase hexadecimal characters",
+        ),
+        (
+            "signature",
+            base64.b64encode(bytes(range(63))).decode("ascii"),
+            "signature must be canonical base64 for exactly 64 bytes",
+        ),
     ),
 )
 def test_build_public_holdout_manifest_rejects_invalid_integrity_fields(
@@ -821,7 +907,9 @@ def test_build_public_holdout_manifest_rejects_invalid_integrity_fields(
         build_public_holdout_manifest(manifest, **kwargs)
 
 
-def test_build_public_holdout_manifest_allowlists_buckets_and_redacts_unknown_private_keys() -> None:
+def test_build_public_holdout_manifest_allowlists_buckets_and_redacts_unknown_private_keys() -> (
+    None
+):
     manifest, _ = _manifest_fixture()
     mutated = manifest.model_copy(
         update={
@@ -846,11 +934,17 @@ def test_build_public_holdout_manifest_allowlists_buckets_and_redacts_unknown_pr
         }
     )
 
-    public_manifest = build_public_holdout_manifest(mutated, **_valid_public_manifest_kwargs())
+    public_manifest = build_public_holdout_manifest(
+        mutated, **_valid_public_manifest_kwargs()
+    )
     payload = public_manifest.model_dump(mode="json")
     payload_json = json.dumps(payload, sort_keys=True)
 
-    assert set(payload["distributions"]) == {"domain", "expected_status", "provenance_kind"}
+    assert set(payload["distributions"]) == {
+        "domain",
+        "expected_status",
+        "provenance_kind",
+    }
     assert set(payload["distributions"]["domain"]) == set(_PUBLIC_DOMAIN_BUCKETS)
     assert payload["distributions"]["domain"]["other"] >= 9
     for forbidden in (
@@ -863,7 +957,9 @@ def test_build_public_holdout_manifest_allowlists_buckets_and_redacts_unknown_pr
         assert forbidden not in payload_json
 
 
-def test_verify_private_manifest_expectations_uses_json_pointer_escaping_and_type_strict_scalars() -> None:
+def test_verify_private_manifest_expectations_uses_json_pointer_escaping_and_type_strict_scalars() -> (
+    None
+):
     manifest, _ = _manifest_fixture()
     actual = manifest.model_copy(
         update={
@@ -949,14 +1045,18 @@ def test_dataset_bundle_rejects_non_string_mapping_keys() -> None:
         DatasetBundle(case_records=(cast(Any, {1: "value"}),))
 
 
-def test_current_corpus_manifest_is_deterministic_and_validation_only_flags_reviews() -> None:
+def test_current_corpus_manifest_is_deterministic_and_validation_only_flags_reviews() -> (
+    None
+):
     corpus = generate_all_authored_cases(seed=31) + generate_real_cases()
     assignment_report = assign_splits(corpus, seed=20260717)
     assigned = apply_split_assignments(corpus, assignment_report.assignment_by_case_id)
     reversed_assigned = tuple(reversed(assigned))
 
     manifest = build_private_manifest(assigned, generated_at="2026-07-17")
-    reversed_manifest = build_private_manifest(reversed_assigned, generated_at="2026-07-17")
+    reversed_manifest = build_private_manifest(
+        reversed_assigned, generated_at="2026-07-17"
+    )
     validation_report = validate_dataset(
         DatasetBundle(
             case_records=assigned,
@@ -984,7 +1084,9 @@ def test_current_corpus_manifest_is_deterministic_and_validation_only_flags_revi
     ]
     assert non_review_errors == []
     review_gap_findings = [
-        finding for finding in validation_report.findings if finding.code == "review_required"
+        finding
+        for finding in validation_report.findings
+        if finding.code == "review_required"
     ]
     assert len(review_gap_findings) == validation_report.invalid_case_records
     shingle_warnings = [
@@ -1030,7 +1132,9 @@ def _build_case(
                         alternatives=(
                             CitationTarget(
                                 source_id=primary_source.source_id,
-                                spans=(CharSpan(start=0, end=len(primary_source.text)),),
+                                spans=(
+                                    CharSpan(start=0, end=len(primary_source.text)),
+                                ),
                             ),
                         ),
                     ),
@@ -1105,7 +1209,9 @@ def _assert_private_manifest_is_deeply_immutable(manifest: DatasetManifest) -> N
     )
 
 
-def _assert_public_manifest_is_deeply_immutable(manifest: PublicHoldoutManifest) -> None:
+def _assert_public_manifest_is_deeply_immutable(
+    manifest: PublicHoldoutManifest,
+) -> None:
     _assert_frozen_mapping_contract(manifest.distributions, sample_key="domain")
     _assert_frozen_mapping_contract(
         manifest.distributions["domain"],

@@ -121,7 +121,9 @@ class SearchSpace(BaseModel):
                     backend=candidate.backend,
                     embeddings=candidate.embeddings,
                     environment=environment,
-                    config=CitationConfig.model_validate(candidate.config).model_dump(mode="json"),
+                    config=CitationConfig.model_validate(candidate.config).model_dump(
+                        mode="json"
+                    ),
                     train_metrics=candidate.synthetic_result.train_metrics,
                     dev_metrics=candidate.synthetic_result.dev_metrics,
                     resource_metrics=candidate.synthetic_result.resource_metrics,
@@ -133,7 +135,9 @@ class SearchSpace(BaseModel):
 
 def load_search_space(path: Path, *, allow_synthetic: bool = False) -> SearchSpace:
     if _forbidden_optimizer_path(path):
-        raise ValueError("search space must not reference holdout or release-gate inputs")
+        raise ValueError(
+            "search space must not reference holdout or release-gate inputs"
+        )
     payload = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
         raise ValueError("search space must be a JSON object")
@@ -157,7 +161,9 @@ def run_tuning(
     code_snapshot_sha = current_code_snapshot_sha256()
     for path in (tuning_bundle, search_space_path, output_path):
         if _forbidden_optimizer_path(path):
-            raise ValueError("holdout and release-gate paths are forbidden optimizer inputs")
+            raise ValueError(
+                "holdout and release-gate paths are forbidden optimizer inputs"
+            )
 
     search_space = load_search_space(search_space_path, allow_synthetic=False)
     raw_search_space = json.loads(search_space_path.read_text(encoding="utf-8"))
@@ -165,7 +171,9 @@ def run_tuning(
     bundle = load_tuning_bundle(tuning_bundle)
 
     if search_space.baseline is not None:
-        raise ValueError("public tune search spaces must not override the frozen baseline")
+        raise ValueError(
+            "public tune search spaces must not override the frozen baseline"
+        )
     frozen_baseline = _load_frozen_baseline_report()
     baseline_hash, gates = _baseline_hash_and_gates_from_payload(frozen_baseline)
     baseline_dataset_hash = frozen_baseline.get("dataset_hash")
@@ -179,12 +187,18 @@ def run_tuning(
             for key in ("python", "platform", "machine", "cpu_count")
         }
         if comparable != expected_environment:
-            raise ValueError("frozen baseline environment does not match current environment")
+            raise ValueError(
+                "frozen baseline environment does not match current environment"
+            )
     required_performance_environment_hash = gates.get("performance_environment_hash")
     if required_performance_environment_hash is None:
         raise ValueError("frozen baseline is missing performance_environment_hash")
-    if smoke_environment_compatibility_hash() != str(required_performance_environment_hash):
-        raise ValueError("frozen performance environment does not match current environment")
+    if smoke_environment_compatibility_hash() != str(
+        required_performance_environment_hash
+    ):
+        raise ValueError(
+            "frozen performance environment does not match current environment"
+        )
     search_space_hash = canonical_search_space_hash(raw_search_space)
     environment = current_environment()
 
@@ -211,7 +225,9 @@ def run_tuning(
         _record_identity(record) for record in existing_records
     }
     evaluated = 0
-    for candidate in sorted(search_space.candidates, key=lambda item: item.candidate_id):
+    for candidate in sorted(
+        search_space.candidates, key=lambda item: item.candidate_id
+    ):
         _validate_real_candidate(candidate)
         candidate_identity = _candidate_identity(candidate)
         if candidate_identity in seen_candidate_identities:
@@ -294,7 +310,9 @@ def select_best_record(records: Sequence[ExperimentRecord]) -> ExperimentRecord 
     best_candidate_id = select_best_candidate_id(records)
     if best_candidate_id is None:
         return None
-    return next(record for record in records if record.candidate_id == best_candidate_id)
+    return next(
+        record for record in records if record.candidate_id == best_candidate_id
+    )
 
 
 def evaluate_gate_decision(
@@ -344,7 +362,9 @@ def evaluate_gate_decision(
             passes_resource = False
         elif resource_metrics.workload_hash != str(required_workload_hash):
             passes_resource = False
-        elif resource_metrics.environment_hash != str(gates.get("performance_environment_hash")):
+        elif resource_metrics.environment_hash != str(
+            gates.get("performance_environment_hash")
+        ):
             passes_resource = False
 
     if passes_resource and resource_metrics is not None and p95_budget is not None:
@@ -378,7 +398,9 @@ def evaluate_gate_decision(
     )
 
 
-def baseline_context(baseline: Mapping[str, object] | None) -> tuple[str, Mapping[str, object]]:
+def baseline_context(
+    baseline: Mapping[str, object] | None,
+) -> tuple[str, Mapping[str, object]]:
     if baseline is not None:
         baseline_hash = str(baseline["hash"])
         gates = baseline.get("gates")
@@ -390,7 +412,13 @@ def baseline_context(baseline: Mapping[str, object] | None) -> tuple[str, Mappin
 
 
 def _load_frozen_baseline_report() -> dict[str, object]:
-    baseline_path = Path(__file__).resolve().parents[1] / "evaluation" / "reports" / "v1" / "baseline.json"
+    baseline_path = (
+        Path(__file__).resolve().parents[1]
+        / "evaluation"
+        / "reports"
+        / "v1"
+        / "baseline.json"
+    )
     payload = json.loads(baseline_path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
         raise ValueError("baseline report must be a JSON object")
@@ -403,9 +431,15 @@ def _baseline_hash_and_gates_from_payload(
     gates = payload.get("gates")
     if not isinstance(gates, Mapping):
         raise ValueError("baseline report must contain gates")
-    for required_key in ("performance_protocol_hash", "selected_workload_hash", "performance_environment_hash"):
+    for required_key in (
+        "performance_protocol_hash",
+        "selected_workload_hash",
+        "performance_environment_hash",
+    ):
         if required_key not in gates:
-            raise ValueError(f"baseline report is missing required gate metadata: {required_key}")
+            raise ValueError(
+                f"baseline report is missing required gate metadata: {required_key}"
+            )
     return sha256_hex(canonical_json_bytes(payload)), gates
 
 
@@ -474,9 +508,7 @@ def _evaluate_candidate(
     resource_metrics = ResourceMetrics(
         median_duration_ns=smoke["median_duration_ns"],
         p95_duration_ns=(
-            None
-            if smoke["p95_duration_ns"] is None
-            else int(smoke["p95_duration_ns"])
+            None if smoke["p95_duration_ns"] is None else int(smoke["p95_duration_ns"])
         ),
         peak_memory_bytes=(
             None

@@ -205,9 +205,7 @@ def assign_splits(
         for index, split_name in enumerate(_SPLIT_NAMES)
     }
     global_metrics = _aggregate_metrics(profiles.values())
-    split_case_counts: dict[Split, int] = {
-        split_name: 0 for split_name in _SPLIT_NAMES
-    }
+    split_case_counts: dict[Split, int] = {split_name: 0 for split_name in _SPLIT_NAMES}
     split_metrics: dict[Split, dict[str, Counter[str]]] = {
         split_name: _empty_metrics_like(global_metrics) for split_name in _SPLIT_NAMES
     }
@@ -280,8 +278,7 @@ def assign_splits(
     )
     deviation_by_split: dict[Split, float] = {
         split_name: (
-            split_case_counts[split_name] / total_case_count
-            - validated_ratios[index]
+            split_case_counts[split_name] / total_case_count - validated_ratios[index]
         )
         for index, split_name in enumerate(_SPLIT_NAMES)
     }
@@ -290,7 +287,9 @@ def assign_splits(
         assignments=tuple(assignments),
         components=components,
         assignment_by_case_id=MappingProxyType(dict(assignments_by_case_id)),
-        split_case_counts=cast(Mapping[Split, int], MappingProxyType(dict(split_case_counts))),
+        split_case_counts=cast(
+            Mapping[Split, int], MappingProxyType(dict(split_case_counts))
+        ),
         target_case_counts=cast(
             Mapping[Split, float], MappingProxyType(dict(target_case_counts))
         ),
@@ -366,7 +365,9 @@ def _validate_explicit_lineage(
                 f"duplicate lineage metadata for case id {lineage.case_id!r}"
             )
         if len(set(lineage.template_lineage_ids)) != len(lineage.template_lineage_ids):
-            raise ValueError("duplicate template lineage id in explicit lineage metadata")
+            raise ValueError(
+                "duplicate template lineage id in explicit lineage metadata"
+            )
         if len(set(lineage.transformation_lineage_ids)) != len(
             lineage.transformation_lineage_ids
         ):
@@ -529,9 +530,7 @@ def _eligible_domain_component_counts(
     for component in ordered_components:
         counts.update(_profile_domains(profiles[component.component_id]))
     return {
-        domain: count
-        for domain, count in counts.items()
-        if count >= len(_SPLIT_NAMES)
+        domain: count for domain, count in counts.items() if count >= len(_SPLIT_NAMES)
     }
 
 
@@ -555,7 +554,8 @@ def _domain_seed_sort_key(
     uncovered_domain_count = sum(
         1
         for domain in _profile_domains(profile)
-        if domain in eligible_domain_counts and split_metrics[split_name]["domain"][domain] == 0
+        if domain in eligible_domain_counts
+        and split_metrics[split_name]["domain"][domain] == 0
     )
     assignment_key = _assignment_sort_key(
         split_name=split_name,
@@ -638,8 +638,8 @@ def _assignment_sort_key(
         for label, increment in profile.metrics[group_name].items():
             new_value = current_counts[label] + increment
             target_value = global_counts[label] * ratio
-            distribution_penalty += weight * abs(new_value - target_value) / max(
-                global_counts[label], 1
+            distribution_penalty += (
+                weight * abs(new_value - target_value) / max(global_counts[label], 1)
             )
     return (
         overshoot_ratio,
@@ -659,7 +659,9 @@ def _freeze_distributions(
         for group_name, counts in groups.items():
             frozen_groups[group_name] = MappingProxyType(dict(sorted(counts.items())))
         frozen[split_name] = MappingProxyType(frozen_groups)
-    return cast(Mapping[Split, Mapping[str, Mapping[str, int]]], MappingProxyType(frozen))
+    return cast(
+        Mapping[Split, Mapping[str, Mapping[str, int]]], MappingProxyType(frozen)
+    )
 
 
 def _case_domain(case: EvaluationCase) -> str:

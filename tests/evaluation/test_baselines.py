@@ -283,7 +283,9 @@ def test_build_baseline_freezes_selected_resource_gates_from_selected_policy_onl
     )
     assert isinstance(gates, Mapping)
     selected_matrix = next(
-        item for item in matrix if isinstance(item, Mapping) and item["id"] == "strict/python/off"
+        item
+        for item in matrix
+        if isinstance(item, Mapping) and item["id"] == "strict/python/off"
     )
     assert selected_matrix["config"]["require_all_answer_tokens_in_evidence"] is False
     assert gates["performance_config_sha256"] == sha256_hex(
@@ -394,9 +396,11 @@ def test_compare_baselines_accepts_large_non_negative_declared_noise_margins() -
 
 
 def test_build_baseline_rejects_mismatched_performance_trial_metadata() -> None:
-    selected_config = CitationConfig.strict().model_copy(
-        update={"require_all_answer_tokens_in_evidence": False}
-    ).model_dump(mode="json")
+    selected_config = (
+        CitationConfig.strict()
+        .model_copy(update={"require_all_answer_tokens_in_evidence": False})
+        .model_dump(mode="json")
+    )
     expected_hash = sha256_hex(canonical_json_bytes(selected_config))
     artifact = _performance_artifact(
         python_off_median=100,

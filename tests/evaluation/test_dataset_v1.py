@@ -48,7 +48,9 @@ def test_dataset_v1_contains_only_the_required_public_and_tuning_artifacts() -> 
     assert required.issubset(present)
     assert "holdout.json" not in present
     assert "holdout_reviews.json" not in present
-    assert not any("private" in path.casefold() or path.endswith(".key") for path in present)
+    assert not any(
+        "private" in path.casefold() or path.endswith(".key") for path in present
+    )
 
 
 def test_dataset_v1_has_target_size_grouped_split_balance_and_coverage() -> None:
@@ -70,7 +72,14 @@ def test_dataset_v1_has_target_size_grouped_split_balance_and_coverage() -> None
 
     cases = train + dev
     domains = {case.document_family_id.split("-", 1)[0] for case in cases}
-    assert {"science", "finance", "policy", "technology", "health", "history"} <= domains
+    assert {
+        "science",
+        "finance",
+        "policy",
+        "technology",
+        "health",
+        "history",
+    } <= domains
     assert len({case.document_family_id for case in cases}) >= 40
     assert {case.provenance.kind for case in cases} >= {"authored", "public_domain"}
     assert len({case.transformation_family_id for case in cases}) >= 12
@@ -109,16 +118,19 @@ def test_dataset_v1_regenerates_canonical_splits_without_cross_split_leakage() -
         (DATASET_ROOT / "manifest.json").read_bytes()
     )
 
-    assert canonical_json_bytes([_case_payload(case) for case in train]) == (
-        DATASET_ROOT / "train.json"
-    ).read_bytes()
-    assert canonical_json_bytes([_case_payload(case) for case in dev]) == (
-        DATASET_ROOT / "dev.json"
-    ).read_bytes()
+    assert (
+        canonical_json_bytes([_case_payload(case) for case in train])
+        == (DATASET_ROOT / "train.json").read_bytes()
+    )
+    assert (
+        canonical_json_bytes([_case_payload(case) for case in dev])
+        == (DATASET_ROOT / "dev.json").read_bytes()
+    )
     assert actual_manifest == expected_manifest
-    assert canonical_json_bytes(expected_manifest) == (
-        DATASET_ROOT / "manifest.json"
-    ).read_bytes()
+    assert (
+        canonical_json_bytes(expected_manifest)
+        == (DATASET_ROOT / "manifest.json").read_bytes()
+    )
     leakage = detect_leakage(regenerated)
     assert leakage.error_count == 0
 
@@ -128,12 +140,15 @@ def test_dataset_v1_authored_snapshot_and_tuning_bundle_are_reproducible() -> No
         template.model_dump(mode="json")
         for template in sorted(AUTHORED_FACT_TEMPLATES, key=lambda item: item.family_id)
     )
-    assert canonical_json_bytes(authored_payload) == (
-        DATASET_ROOT / "sources" / "authored.json"
-    ).read_bytes()
+    assert (
+        canonical_json_bytes(authored_payload)
+        == (DATASET_ROOT / "sources" / "authored.json").read_bytes()
+    )
 
     tuning = load_tuning_bundle(DATASET_ROOT / "tuning")
-    assert all(case.split == "train" and case.review is None for case in tuning.train_cases)
+    assert all(
+        case.split == "train" and case.review is None for case in tuning.train_cases
+    )
     assert all(case.split == "dev" and case.review is None for case in tuning.dev_cases)
     assert {case.case_id for case in tuning.train_cases}.isdisjoint(
         case.case_id for case in tuning.dev_cases
@@ -150,7 +165,8 @@ def _load_cases(path: Path) -> tuple[EvaluationCase, ...]:
     payload = json.loads(path.read_bytes())
     assert isinstance(payload, list)
     return tuple(
-        EvaluationCase.model_validate_json(canonical_json_bytes(item)) for item in payload
+        EvaluationCase.model_validate_json(canonical_json_bytes(item))
+        for item in payload
     )
 
 

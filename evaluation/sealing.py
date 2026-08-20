@@ -72,9 +72,7 @@ class SealedHoldoutEnvelope(BaseModel):
     @classmethod
     def _validate_format_version(cls, value: str) -> str:
         if value != SEALING_FORMAT_VERSION:
-            raise ValueError(
-                f"format_version must be {SEALING_FORMAT_VERSION!r}"
-            )
+            raise ValueError(f"format_version must be {SEALING_FORMAT_VERSION!r}")
         return value
 
     @field_validator("algorithm")
@@ -208,7 +206,9 @@ def unseal_holdout(ciphertext_path: str | Path) -> tuple[EvaluationCase, ...]:
                 aad,
             )
         except Exception as exc:
-            raise ValueError("failed authentication while unsealing holdout dataset") from exc
+            raise ValueError(
+                "failed authentication while unsealing holdout dataset"
+            ) from exc
     finally:
         _zero_bytes(holdout_key)
 
@@ -240,9 +240,7 @@ def verify_public_manifest(
     raw_bytes = manifest_file.read_bytes()
     manifest = _load_canonical_public_manifest(manifest_file, raw_bytes)
     if manifest.schema_version != SCHEMA_VERSION:
-        raise ValueError(
-            f"public manifest schema_version must be {SCHEMA_VERSION!r}"
-        )
+        raise ValueError(f"public manifest schema_version must be {SCHEMA_VERSION!r}")
     if manifest.reviewed_claim_count != manifest.total_claim_count:
         raise ValueError(
             "public manifest reviewed_claim_count must equal total_claim_count"
@@ -296,7 +294,9 @@ def load_attestation_private_key_from_env(
 ) -> Ed25519PrivateKey:
     key_bytes = _read_protected_file_bytes(env_var)
     try:
-        private_key = serialization.load_pem_private_key(bytes(key_bytes), password=None)
+        private_key = serialization.load_pem_private_key(
+            bytes(key_bytes), password=None
+        )
     except ValueError as exc:
         raise ValueError("attestation private key must be a valid Ed25519 PEM") from exc
     finally:
@@ -358,7 +358,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     return 2
 
 
-def _validated_holdout_cases(cases: Iterable[EvaluationCase]) -> tuple[EvaluationCase, ...]:
+def _validated_holdout_cases(
+    cases: Iterable[EvaluationCase],
+) -> tuple[EvaluationCase, ...]:
     ordered_cases = tuple(cases)
     if not ordered_cases:
         raise ValueError("cases must not be empty")
@@ -481,7 +483,9 @@ def _write_artifacts_atomically(
     parents = {ciphertext_path.parent, public_manifest_path.parent}
     for parent in parents:
         if not parent.exists():
-            raise FileNotFoundError(f"artifact parent directory does not exist: {parent}")
+            raise FileNotFoundError(
+                f"artifact parent directory does not exist: {parent}"
+            )
     try:
         ciphertext_temp = _write_temp_file(
             ciphertext_path.parent,
@@ -538,9 +542,7 @@ def _write_artifacts_atomically(
             cleanup_backups = True
         except Exception as rollback_exc:
             recoverable_backup_paths = tuple(
-                str(path)
-                for path in backup_paths
-                if path.exists()
+                str(path) for path in backup_paths if path.exists()
             )
             raise ArtifactPublicationRollbackError(
                 original_error=original_exc,
@@ -565,7 +567,9 @@ def _write_artifacts_atomically(
 def _backup_existing_path(path: Path) -> Path | None:
     if not path.exists():
         return None
-    backup_fd, backup_name = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.bak.")
+    backup_fd, backup_name = tempfile.mkstemp(
+        dir=path.parent, prefix=f".{path.name}.bak."
+    )
     os.close(backup_fd)
     os.replace(path, backup_name)
     return Path(backup_name)
@@ -590,11 +594,15 @@ def _load_canonical_envelope(path: Path, raw_bytes: bytes) -> SealedHoldoutEnvel
     except ValidationError as exc:
         raise ValueError(f"sealed holdout envelope {path} is invalid: {exc}") from exc
     if raw_bytes != canonical_json_bytes(envelope):
-        raise ValueError(f"sealed holdout envelope {path} must use canonical JSON ordering")
+        raise ValueError(
+            f"sealed holdout envelope {path} must use canonical JSON ordering"
+        )
     return envelope
 
 
-def _load_canonical_public_manifest(path: Path, raw_bytes: bytes) -> PublicHoldoutManifest:
+def _load_canonical_public_manifest(
+    path: Path, raw_bytes: bytes
+) -> PublicHoldoutManifest:
     try:
         payload = json.loads(raw_bytes)
     except json.JSONDecodeError as exc:

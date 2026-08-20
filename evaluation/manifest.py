@@ -113,10 +113,7 @@ class FrozenMapping(Mapping[str, _ValueT], Generic[_ValueT]):
         return cls(cast(Mapping[str, object], value))
 
     def to_dict(self) -> dict[str, object]:
-        return {
-            key: _materialize_json_like(value)
-            for key, value in self._items
-        }
+        return {key: _materialize_json_like(value) for key, value in self._items}
 
 
 class DatasetManifest(BaseModel):
@@ -158,7 +155,9 @@ class DatasetManifest(BaseModel):
     ) -> FrozenMapping[FrozenMapping[int]]:
         return _freeze_two_level_int_mapping(value)
 
-    @field_serializer("split_sha256", "split_case_counts", "distributions", "review_state_counts")
+    @field_serializer(
+        "split_sha256", "split_case_counts", "distributions", "review_state_counts"
+    )
     def _serialize_frozen_mapping(self, value: object) -> dict[str, object]:
         materialized = _materialize_json_like(value)
         if not isinstance(materialized, dict):
@@ -227,22 +226,36 @@ class PublicHoldoutManifest(BaseModel):
     def _serialize_distributions(self, value: object) -> dict[str, object]:
         materialized = _materialize_json_like(value)
         if not isinstance(materialized, dict):
-            raise TypeError("public manifest distributions must serialize to dictionaries")
+            raise TypeError(
+                "public manifest distributions must serialize to dictionaries"
+            )
         return materialized
 
     @model_validator(mode="after")
     def _validate_distribution_allowlist(self) -> PublicHoldoutManifest:
-        if tuple(sorted(self.distributions)) != tuple(sorted(("domain", "expected_status", "provenance_kind"))):
+        if tuple(sorted(self.distributions)) != tuple(
+            sorted(("domain", "expected_status", "provenance_kind"))
+        ):
             raise ValueError(
                 "public holdout distributions must expose only domain, expected_status, and provenance_kind"
             )
         domain_keys = tuple(sorted(self.distributions["domain"]))
         if domain_keys != tuple(sorted(PUBLIC_DOMAIN_BUCKETS)):
-            raise ValueError("public holdout domain distributions must use the public allowlist buckets")
-        if tuple(sorted(self.distributions["expected_status"])) != tuple(sorted(EXPECTED_STATUSES)):
-            raise ValueError("public holdout expected_status distributions must use the fixed buckets")
-        if tuple(sorted(self.distributions["provenance_kind"])) != tuple(sorted(PROVENANCE_KINDS)):
-            raise ValueError("public holdout provenance_kind distributions must use the fixed buckets")
+            raise ValueError(
+                "public holdout domain distributions must use the public allowlist buckets"
+            )
+        if tuple(sorted(self.distributions["expected_status"])) != tuple(
+            sorted(EXPECTED_STATUSES)
+        ):
+            raise ValueError(
+                "public holdout expected_status distributions must use the fixed buckets"
+            )
+        if tuple(sorted(self.distributions["provenance_kind"])) != tuple(
+            sorted(PROVENANCE_KINDS)
+        ):
+            raise ValueError(
+                "public holdout provenance_kind distributions must use the fixed buckets"
+            )
         if self.total_claim_count < 0:
             raise ValueError("public holdout total_claim_count must be non-negative")
         if self.reviewed_claim_count < 0:
@@ -317,7 +330,9 @@ def build_private_manifest(
         overall_sha256=sha256_hex(canonical_json_bytes(overall_payload)),
         split_sha256=cast(FrozenMapping[str], _freeze_string_mapping(split_sha256)),
         total_case_count=len(ordered_cases),
-        split_case_counts=cast(FrozenMapping[int], _freeze_int_mapping(split_case_counts)),
+        split_case_counts=cast(
+            FrozenMapping[int], _freeze_int_mapping(split_case_counts)
+        ),
         distributions=cast(
             FrozenMapping[FrozenMapping[FrozenMapping[int]]],
             _freeze_three_level_int_mapping(distributions),
@@ -342,7 +357,10 @@ def build_public_holdout_manifest(
     resolved_total_claim_count = (
         total_claim_count
         if total_claim_count is not None
-        else sum(_int_value(count) for count in holdout_distributions["expected_status"].values())
+        else sum(
+            _int_value(count)
+            for count in holdout_distributions["expected_status"].values()
+        )
     )
     resolved_reviewed_claim_count = (
         reviewed_claim_count
@@ -366,7 +384,9 @@ def build_public_holdout_manifest(
                         )
                         for status in EXPECTED_STATUSES
                     },
-                    "domain": _public_domain_distribution(holdout_distributions["domain"]),
+                    "domain": _public_domain_distribution(
+                        holdout_distributions["domain"]
+                    ),
                     "provenance_kind": {
                         kind: _int_value(
                             holdout_distributions["provenance_kind"].get(kind, 0)
@@ -393,7 +413,9 @@ def verify_private_manifest_expectations(
         actual=actual.model_dump(mode="json"),
         expected=expected.model_dump(mode="json"),
     )
-    return tuple(sorted(mismatches, key=lambda mismatch: (mismatch.path, mismatch.message)))
+    return tuple(
+        sorted(mismatches, key=lambda mismatch: (mismatch.path, mismatch.message))
+    )
 
 
 def _validated_cases(cases: Iterable[EvaluationCase]) -> tuple[EvaluationCase, ...]:

@@ -65,7 +65,9 @@ class ClaimAnnotation(BaseModel):
     answer_span: CharSpan
     text: str
     label: SupportLabel
-    citation_requirements: tuple[CitationRequirement, ...] = Field(default_factory=tuple)
+    citation_requirements: tuple[CitationRequirement, ...] = Field(
+        default_factory=tuple
+    )
     acceptable_retrieval_source_ids: tuple[str, ...] = Field(default_factory=tuple)
     requires_non_contiguous_evidence: bool = False
 
@@ -168,9 +170,7 @@ class ReviewRecord(BaseModel):
                 "completed review records require reviewer and reviewed_at"
             )
         if not self.reviewer.strip():
-            raise ValueError(
-                "completed review records require a non-empty reviewer"
-            )
+            raise ValueError("completed review records require a non-empty reviewer")
         return self
 
 
@@ -195,7 +195,9 @@ class EvaluationCase(BaseModel):
         if not self.sources:
             raise ValueError("evaluation cases must define at least one source")
         if not self.evaluation_units:
-            raise ValueError("evaluation cases must define at least one evaluation unit")
+            raise ValueError(
+                "evaluation cases must define at least one evaluation unit"
+            )
 
         source_ids = _ensure_unique(
             [source.source_id for source in self.sources],
@@ -218,9 +220,7 @@ class EvaluationCase(BaseModel):
                 text_message="evaluation unit text must equal the referenced answer slice",
             )
             if unit.answer_span.start < previous_unit_end:
-                raise ValueError(
-                    "evaluation units must be ordered and non-overlapping"
-                )
+                raise ValueError("evaluation units must be ordered and non-overlapping")
             previous_unit_end = unit.answer_span.end
 
             _ensure_unique(

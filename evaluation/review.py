@@ -79,7 +79,9 @@ class ClaimReviewRecord(BaseModel):
                 "reviewed_at must be an ISO date or timezone-qualified ISO datetime"
             )
         if not _HEX_64_RE.fullmatch(self.binding_sha256):
-            raise ValueError("binding_sha256 must be a 64-character lowercase hex SHA-256")
+            raise ValueError(
+                "binding_sha256 must be a 64-character lowercase hex SHA-256"
+            )
         return self
 
 
@@ -204,7 +206,9 @@ def claim_review_binding(case: EvaluationCase, claim: ClaimAnnotation) -> str:
             "answer_span": claim.answer_span.model_dump(mode="json"),
             "text": claim.text,
             "label": claim.label,
-            "acceptable_retrieval_source_ids": tuple(claim.acceptable_retrieval_source_ids),
+            "acceptable_retrieval_source_ids": tuple(
+                claim.acceptable_retrieval_source_ids
+            ),
             "citation_requirements": tuple(
                 requirement.model_dump(mode="json")
                 for requirement in claim.citation_requirements
@@ -261,9 +265,13 @@ def build_review_queue(
         raise ValueError("ledger dataset_version does not match the provided cases")
     selected_splits = _normalize_splits(splits)
     split_filtered = tuple(
-        case for case in ordered_cases if selected_splits is None or case.split in selected_splits
+        case
+        for case in ordered_cases
+        if selected_splits is None or case.split in selected_splits
     )
-    sharded_cases = _shard_cases(split_filtered, shard_index=shard_index, shard_count=shard_count)
+    sharded_cases = _shard_cases(
+        split_filtered, shard_index=shard_index, shard_count=shard_count
+    )
     items = _queue_items(sharded_cases, review_ledger)
     counts = _queue_counts(items)
     return ReviewQueue(
@@ -286,9 +294,9 @@ def build_review_queue(
 def render_review_queue_html(queue: ReviewQueue) -> str:
     lines = [
         "<!doctype html>",
-        "<html lang=\"en\">",
+        '<html lang="en">',
         "<head>",
-        "<meta charset=\"utf-8\">",
+        '<meta charset="utf-8">',
         "<title>Cite Right Manual Review Queue</title>",
         "<style>",
         "body{font-family:ui-sans-serif,system-ui,sans-serif;margin:0;background:#f5f1e8;color:#1c1917;}",
@@ -310,7 +318,7 @@ def render_review_queue_html(queue: ReviewQueue) -> str:
         "<main>",
         "<h1>Manual Review Queue</h1>",
         f"<p>Dataset version {escape(queue.dataset_version)} | shard {queue.shard_index + 1} of {queue.shard_count}</p>",
-        "<section class=\"summary\">",
+        '<section class="summary">',
     ]
     for label, value in (
         ("Total claims", queue.total_claims),
@@ -324,8 +332,8 @@ def render_review_queue_html(queue: ReviewQueue) -> str:
     ):
         lines.extend(
             (
-                "<div class=\"card\">",
-                f"<div class=\"label\">{escape(label)}</div>",
+                '<div class="card">',
+                f'<div class="label">{escape(label)}</div>',
                 f"<div>{value}</div>",
                 "</div>",
             )
@@ -461,7 +469,9 @@ def load_review_ledger(path: str | Path) -> ReviewLedger:
     except ValidationError as exc:
         raise ValueError(f"review ledger {ledger_path} is invalid") from exc
     if raw_bytes != canonical_json_bytes(ledger):
-        raise ValueError(f"review ledger {ledger_path} must use canonical JSON ordering")
+        raise ValueError(
+            f"review ledger {ledger_path} must use canonical JSON ordering"
+        )
     return ledger
 
 
@@ -469,7 +479,9 @@ def write_review_ledger(path: str | Path, ledger: ReviewLedger) -> None:
     ledger_path = Path(path)
     parent = ledger_path.parent
     if not parent.exists():
-        raise FileNotFoundError(f"review ledger parent directory does not exist: {parent}")
+        raise FileNotFoundError(
+            f"review ledger parent directory does not exist: {parent}"
+        )
     canonical_bytes = canonical_json_bytes(ledger)
     temp_fd, temp_name = tempfile.mkstemp(
         dir=parent,
@@ -568,7 +580,7 @@ def _fixture_provenance() -> Provenance:
         kind="authored",
         title='Fixture "Title" <unsafe>',
         origin='https://example.com/query?a=1&b="two"',
-        publisher='Fixture & Co.',
+        publisher="Fixture & Co.",
         license="CC-BY-4.0",
         retrieval_date=date(2026, 7, 17),
         snapshot_hash="fixture-snapshot",
@@ -577,7 +589,7 @@ def _fixture_provenance() -> Provenance:
 
 def _fixture_generation() -> GenerationRecipe:
     return GenerationRecipe(
-        recipe_id='recipe<fixture>',
+        recipe_id="recipe<fixture>",
         generator_name='generator "fixture"',
         prompt_version="v<1>",
         seed=17,
@@ -699,21 +711,21 @@ def _queue_counts(items: Sequence[ReviewQueueItem]) -> dict[str, int]:
 def _render_item(item: ReviewQueueItem) -> list[str]:
     case = item.case
     review_badges = [
-        f"<span class=\"pill\">split {escape(case.split)}</span>",
-        f"<span class=\"pill\">review {escape(item.review_state)}</span>",
+        f'<span class="pill">split {escape(case.split)}</span>',
+        f'<span class="pill">review {escape(item.review_state)}</span>',
     ]
     if item.review is not None:
         review_badges.append(
-            f"<span class=\"pill\">decision {escape(item.review.decision)}</span>"
+            f'<span class="pill">decision {escape(item.review.decision)}</span>'
         )
     lines = [
         (
-            f"<section class=\"item\" data-case-id=\"{escape(case.case_id)}\" "
-            f"data-family-id=\"{escape(case.document_family_id)}\">"
+            f'<section class="item" data-case-id="{escape(case.case_id)}" '
+            f'data-family-id="{escape(case.document_family_id)}">'
         ),
         f"<h2>{escape(case.case_id)}</h2>",
         "<div>" + "".join(review_badges) + "</div>",
-        "<div class=\"meta\">",
+        '<div class="meta">',
         _meta_row("Family", case.document_family_id),
         _meta_row("Transformation", case.transformation_family_id),
         _meta_row("Provenance kind", case.provenance.kind),
@@ -723,7 +735,9 @@ def _render_item(item: ReviewQueueItem) -> list[str]:
         _meta_row("License", case.provenance.license),
         _meta_row(
             "Retrieval date",
-            None if case.provenance.retrieval_date is None else str(case.provenance.retrieval_date),
+            None
+            if case.provenance.retrieval_date is None
+            else str(case.provenance.retrieval_date),
         ),
         _meta_row("Snapshot hash", case.provenance.snapshot_hash),
         _meta_row("Generation", _generation_summary(case.generation)),
@@ -746,14 +760,14 @@ def _render_unit(unit: EvaluationUnit, claim: ClaimAnnotation) -> str:
     )
     return "\n".join(
         (
-            "<section class=\"unit\">",
+            '<section class="unit">',
             f"<h3>Unit {escape(unit.unit_id)}</h3>",
             f"<pre>{escape(unit.text)}</pre>",
-            "<section class=\"claim\">",
-            f"<div class=\"label\">Claim {escape(claim.claim_id)}</div>",
+            '<section class="claim">',
+            f'<div class="label">Claim {escape(claim.claim_id)}</div>',
             f"<pre>{escape(claim.text)}</pre>",
-            f"<div><span class=\"pill\">label {escape(claim.label)}</span>"
-            f"<span class=\"pill\">retrieval {escape(retrieval)}</span></div>",
+            f'<div><span class="pill">label {escape(claim.label)}</span>'
+            f'<span class="pill">retrieval {escape(retrieval)}</span></div>',
             "</section>",
             "</section>",
         )
@@ -762,11 +776,11 @@ def _render_unit(unit: EvaluationUnit, claim: ClaimAnnotation) -> str:
 
 def _render_source_blocks(source: Source, claim: ClaimAnnotation) -> list[str]:
     lines = [
-        "<section class=\"source-block\">",
-        "<div class=\"source-title\">",
+        '<section class="source-block">',
+        '<div class="source-title">',
         f"<strong>Source {escape(source.source_id)}</strong>",
         "</div>",
-        "<div class=\"meta\">",
+        '<div class="meta">',
         _meta_row("Chunk ID", source.chunk_id),
         _meta_row("Chunk start", source.chunk_char_start),
         _meta_row("Chunk end", source.chunk_char_end),
@@ -775,14 +789,16 @@ def _render_source_blocks(source: Source, claim: ClaimAnnotation) -> list[str]:
     ]
     if claim.citation_requirements:
         for requirement in claim.citation_requirements:
-            for alternative_index, alternative in enumerate(requirement.alternatives, start=1):
+            for alternative_index, alternative in enumerate(
+                requirement.alternatives, start=1
+            ):
                 if alternative.source_id != source.source_id:
                     continue
                 lines.extend(
                     (
                         (
-                            "<div class=\"source-block\">"
-                            f"<div class=\"label\">Requirement {escape(requirement.requirement_id)}"
+                            '<div class="source-block">'
+                            f'<div class="label">Requirement {escape(requirement.requirement_id)}'
                             f" | Alternative {alternative_index} | Source {escape(source.source_id)}</div>"
                         ),
                         "<pre>"
@@ -819,11 +835,11 @@ def _highlight_source_text(
         parts.append(escape(text[cursor:start]))
         parts.append(
             (
-                f"<mark class=\"target-span\" data-span-index=\"{index}\" "
-                f"data-span-start=\"{start}\" data-span-end=\"{end}\" "
-                f"data-source-id=\"{escape(source_id)}\" "
-                f"data-requirement-id=\"{escape(requirement_id)}\" "
-                f"data-alternative-index=\"{alternative_index}\">{escape(text[start:end])}</mark>"
+                f'<mark class="target-span" data-span-index="{index}" '
+                f'data-span-start="{start}" data-span-end="{end}" '
+                f'data-source-id="{escape(source_id)}" '
+                f'data-requirement-id="{escape(requirement_id)}" '
+                f'data-alternative-index="{alternative_index}">{escape(text[start:end])}</mark>'
             )
         )
         cursor = end
@@ -841,15 +857,17 @@ def _validate_renderable_spans(spans: Sequence[tuple[int, int]]) -> None:
 
 def _meta_row(label: str, value: object) -> str:
     rendered = "" if value is None else escape(str(value))
-    return (
-        f"<div><div class=\"label\">{escape(label)}</div><div>{rendered}</div></div>"
-    )
+    return f'<div><div class="label">{escape(label)}</div><div>{rendered}</div></div>'
 
 
 def _generation_summary(generation: GenerationRecipe | None) -> str:
     if generation is None:
         return "None"
-    pieces = [generation.recipe_id, generation.generator_name, generation.prompt_version]
+    pieces = [
+        generation.recipe_id,
+        generation.generator_name,
+        generation.prompt_version,
+    ]
     if generation.seed is not None:
         pieces.append(f"seed={generation.seed}")
     if generation.notes is not None:
@@ -859,7 +877,9 @@ def _generation_summary(generation: GenerationRecipe | None) -> str:
 
 def _unit_for_claim(case: EvaluationCase, claim_id: str) -> EvaluationUnit:
     matching_units = [
-        unit for unit in case.evaluation_units if any(claim.claim_id == claim_id for claim in unit.claims)
+        unit
+        for unit in case.evaluation_units
+        if any(claim.claim_id == claim_id for claim in unit.claims)
     ]
     if len(matching_units) != 1:
         raise ValueError(
@@ -880,7 +900,9 @@ def _fsync_directory(path: Path) -> None:
 
 
 def _completion_finding_rank(
-    code: Literal["missing_review", "stale_review", "correct_review", "rejected_review"]
+    code: Literal[
+        "missing_review", "stale_review", "correct_review", "rejected_review"
+    ],
 ) -> int:
     order = {
         "stale_review": 0,

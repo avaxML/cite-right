@@ -174,9 +174,13 @@ def build_baseline(*, tuning_bundle: Path, output_path: Path) -> dict[str, objec
                 raise RuntimeError("performance smoke artifact must be a JSON object")
             environment = artifact.get("environment")
             if not isinstance(environment, Mapping):
-                raise RuntimeError("performance smoke artifact must include environment metadata")
+                raise RuntimeError(
+                    "performance smoke artifact must include environment metadata"
+                )
             if environment.get("git_revision") != captured_git_revision:
-                raise RuntimeError("performance smoke artifact git_revision does not match captured revision")
+                raise RuntimeError(
+                    "performance smoke artifact git_revision does not match captured revision"
+                )
             _assert_code_provenance_unchanged(
                 expected_git_revision=captured_git_revision,
                 expected_code_snapshot_sha256=captured_code_snapshot_sha256,
@@ -635,16 +639,22 @@ def _validated_performance_metadata(
     for trial in performance_trials:
         protocol_hash = trial.get("protocol_hash")
         config_sha256 = trial.get("config_sha256")
-        if not isinstance(protocol_hash, str) or len(protocol_hash) != 64 or any(
-            ch not in "0123456789abcdef" for ch in protocol_hash
+        if (
+            not isinstance(protocol_hash, str)
+            or len(protocol_hash) != 64
+            or any(ch not in "0123456789abcdef" for ch in protocol_hash)
         ):
             raise ValueError("performance trials are missing a valid protocol_hash")
-        if not isinstance(config_sha256, str) or len(config_sha256) != 64 or any(
-            ch not in "0123456789abcdef" for ch in config_sha256
+        if (
+            not isinstance(config_sha256, str)
+            or len(config_sha256) != 64
+            or any(ch not in "0123456789abcdef" for ch in config_sha256)
         ):
             raise ValueError("performance trials are missing a valid config_sha256")
         if config_sha256 != expected_config_sha256:
-            raise ValueError("performance trial config hash does not match selected baseline config")
+            raise ValueError(
+                "performance trial config hash does not match selected baseline config"
+            )
         protocol_hashes.add(protocol_hash)
         config_hashes.add(config_sha256)
     if len(protocol_hashes) != 1:

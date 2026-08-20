@@ -239,11 +239,7 @@ def _best_edge_for_requirement(
                 best_alternative = alternative
                 best_canonical_spans = alternative_canonical_spans
 
-    if (
-        best_alternative is None
-        or best_canonical_spans is None
-        or best_score is None
-    ):
+    if best_alternative is None or best_canonical_spans is None or best_score is None:
         return None
 
     return _MatchEdge(
@@ -328,14 +324,11 @@ def _choose_assignment(
     candidate_edges: tuple[tuple[_MatchEdge, ...], ...],
 ) -> tuple[_MatchEdge, ...]:
     all_emission_indices = sorted(
-        {
-            edge.emission_input_index
-            for row in candidate_edges
-            for edge in row
-        }
+        {edge.emission_input_index for row in candidate_edges for edge in row}
     )
     emission_positions = {
-        input_index: position for position, input_index in enumerate(all_emission_indices)
+        input_index: position
+        for position, input_index in enumerate(all_emission_indices)
     }
 
     @lru_cache(maxsize=None)
@@ -375,7 +368,7 @@ def _assignment_score(assignment: tuple[_MatchEdge, ...]) -> Fraction:
 
 
 def _assignment_signature(
-    assignment: tuple[_MatchEdge, ...]
+    assignment: tuple[_MatchEdge, ...],
 ) -> tuple[
     tuple[
         str,
@@ -401,7 +394,11 @@ def _requirement_key(
 ) -> tuple[str, tuple[tuple[str, tuple[tuple[int, int], ...]], ...]]:
     return (
         requirement.requirement_id,
-        tuple(sorted((_target_key(alternative) for alternative in requirement.alternatives))),
+        tuple(
+            sorted(
+                (_target_key(alternative) for alternative in requirement.alternatives)
+            )
+        ),
     )
 
 

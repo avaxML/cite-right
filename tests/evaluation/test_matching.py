@@ -130,7 +130,9 @@ def test_match_citations_rejects_wrong_source_even_for_exact_spans() -> None:
     assert result.errors == ()
 
 
-def test_malformed_offsets_are_rejected_by_model_or_reported_as_evaluator_errors() -> None:
+def test_malformed_offsets_are_rejected_by_model_or_reported_as_evaluator_errors() -> (
+    None
+):
     invalid_payload = {
         "source_id": "source-a",
         "spans": (
@@ -177,7 +179,9 @@ def test_match_citations_accepts_any_alternative_target() -> None:
     assert result.errors == ()
 
 
-def test_match_citations_uses_union_iou_for_multi_span_targets_without_double_counting() -> None:
+def test_match_citations_uses_union_iou_for_multi_span_targets_without_double_counting() -> (
+    None
+):
     result = match_citations(
         emissions=(_emission("source-a", (0, 4), (10, 13)),),
         requirements=(_requirement("req-1", _target("source-a", (0, 4), (10, 14))),),
@@ -193,7 +197,9 @@ def test_match_citations_uses_union_iou_for_multi_span_targets_without_double_co
     assert result.unmatched_requirement_ids == ()
 
 
-def test_match_citations_requires_each_conjunctive_requirement_to_be_satisfied() -> None:
+def test_match_citations_requires_each_conjunctive_requirement_to_be_satisfied() -> (
+    None
+):
     result = match_citations(
         emissions=(_emission("source-a", (0, 5)),),
         requirements=(
@@ -225,7 +231,9 @@ def test_match_citations_enforces_one_to_one_matching_for_duplicate_emissions() 
     assert result.errors == ()
 
 
-def test_match_citations_uses_maximum_matching_when_greedy_choice_loses_a_match() -> None:
+def test_match_citations_uses_maximum_matching_when_greedy_choice_loses_a_match() -> (
+    None
+):
     result = match_citations(
         emissions=(
             _emission("source-a", (3, 13)),
@@ -344,9 +352,14 @@ def _stable_view(
                     (
                         match.requirement_id,
                         emissions[match.emission_index].source_id,
-                        tuple((span.start, span.end) for span in emissions[match.emission_index].spans),
+                        tuple(
+                            (span.start, span.end)
+                            for span in emissions[match.emission_index].spans
+                        ),
                         match.alternative.source_id,
-                        tuple((span.start, span.end) for span in match.alternative.spans),
+                        tuple(
+                            (span.start, span.end) for span in match.alternative.spans
+                        ),
                         match.score,
                     )
                     for match in result.matches

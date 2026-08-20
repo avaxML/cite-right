@@ -27,7 +27,9 @@ def test_canonical_json_bytes_ignores_dictionary_insertion_order() -> None:
 
 @pytest.mark.parametrize("value", [math.nan, math.inf, -math.inf])
 def test_canonical_json_bytes_rejects_non_finite_floats(value: float) -> None:
-    with pytest.raises(ValueError, match="Out of range float values are not JSON compliant"):
+    with pytest.raises(
+        ValueError, match="Out of range float values are not JSON compliant"
+    ):
         canonical_json_bytes({"value": value})
 
 
@@ -69,15 +71,21 @@ def test_canonical_json_bytes_normalizes_nested_lists_and_tuples_recursively() -
     )
 
 
-def test_canonical_json_bytes_rejects_nested_non_finite_floats_after_normalization() -> None:
+def test_canonical_json_bytes_rejects_nested_non_finite_floats_after_normalization() -> (
+    None
+):
     payload = MappingProxyType({"outer": UserDict({"value": math.inf})})
 
-    with pytest.raises(ValueError, match="Out of range float values are not JSON compliant"):
+    with pytest.raises(
+        ValueError, match="Out of range float values are not JSON compliant"
+    ):
         canonical_json_bytes(payload)
 
 
 @pytest.mark.parametrize("value", ["text", b"bytes"])
-def test_canonical_json_bytes_rejects_top_level_string_and_bytes_inputs(value: object) -> None:
+def test_canonical_json_bytes_rejects_top_level_string_and_bytes_inputs(
+    value: object,
+) -> None:
     with pytest.raises(
         TypeError,
         match="canonical_json_bytes accepts BaseModel, mapping, list, or tuple inputs",
@@ -88,7 +96,9 @@ def test_canonical_json_bytes_rejects_top_level_string_and_bytes_inputs(value: o
 def test_canonical_json_bytes_rejects_nested_non_list_tuple_sequences() -> None:
     payload = {"items": range(3)}
 
-    with pytest.raises(TypeError, match="canonical JSON arrays must be list or tuple instances"):
+    with pytest.raises(
+        TypeError, match="canonical JSON arrays must be list or tuple instances"
+    ):
         canonical_json_bytes(payload)
 
 
@@ -231,7 +241,9 @@ def _make_case_data() -> dict[str, Any]:
                                 "alternatives": (
                                     {
                                         "source_id": "source-paris",
-                                        "spans": ({"start": 0, "end": len(source_text)},),
+                                        "spans": (
+                                            {"start": 0, "end": len(source_text)},
+                                        ),
                                     },
                                 ),
                             },

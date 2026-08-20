@@ -37,11 +37,11 @@ _POSITIVE_TRANSFORMATIONS = frozenset(
 
 class Transformation(Protocol):
     @property
-    def name(self) -> str:
-        ...
+    def name(self) -> str: ...
 
-    def generate(self, template: FactTemplate, seed: int) -> tuple[EvaluationCase, ...]:
-        ...
+    def generate(
+        self, template: FactTemplate, seed: int
+    ) -> tuple[EvaluationCase, ...]: ...
 
 
 @dataclass(frozen=True)
@@ -295,7 +295,9 @@ def _citation_requirements_for_transformation(
         return ()
     if transformation_name == "multi_span":
         config = _variant_config(fact, transformation_name)
-        primary_source_text = _variant_string(fact, transformation_name, "primary_source_text")
+        primary_source_text = _variant_string(
+            fact, transformation_name, "primary_source_text"
+        )
         citation_texts = _string_tuple(config, "citation_texts")
         return (
             CitationRequirement(
@@ -390,14 +392,18 @@ def _sources_for_transformation(
         sources.append(
             Source(
                 source_id="source-distractor",
-                text=_variant_string(fact, transformation_name, "distractor_source_text"),
+                text=_variant_string(
+                    fact, transformation_name, "distractor_source_text"
+                ),
             )
         )
     elif transformation_name == "multi_source":
         sources.append(
             Source(
                 source_id="source-secondary",
-                text=_variant_string(fact, transformation_name, "secondary_source_text"),
+                text=_variant_string(
+                    fact, transformation_name, "secondary_source_text"
+                ),
             )
         )
     return tuple(sources)
@@ -406,9 +412,13 @@ def _sources_for_transformation(
 def _answer_for_transformation(fact: Fact, transformation_name: str) -> str:
     config = _variant_config(fact, transformation_name)
     if "answer_text" in config:
-        return _require_string(config["answer_text"], "answer_text").format(**dict(fact.slots))
+        return _require_string(config["answer_text"], "answer_text").format(
+            **dict(fact.slots)
+        )
     if transformation_name == "unsupported_clause":
-        return _claim_text(fact, transformation_name, use_variant=False) + _variant_string(
+        return _claim_text(
+            fact, transformation_name, use_variant=False
+        ) + _variant_string(
             fact,
             transformation_name,
             "unsupported_suffix",
@@ -470,7 +480,9 @@ def _primary_source_text_for_transformation(
             **dict(fact.slots)
         )
     if template_source_text is None:
-        raise ValueError("template_source_text is required when primary_source_text is not set")
+        raise ValueError(
+            "template_source_text is required when primary_source_text is not set"
+        )
     return template_source_text
 
 

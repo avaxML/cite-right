@@ -46,9 +46,7 @@ def test_experiment_store_persists_required_fields_and_deterministic_order(
             median_duration_ns=100,
             p95_duration_ns=120,
             peak_memory_bytes=1024,
-            config_sha256=_resolved_config_hash(
-                {"top_k": 2, "min_final_score": 0.3}
-            ),
+            config_sha256=_resolved_config_hash({"top_k": 2, "min_final_score": 0.3}),
             raw_end_to_end_samples_ns=_raw_samples(median=100, p95=120),
             protocol_hash="1" * 64,
             workload_hash="2" * 64,
@@ -73,9 +71,7 @@ def test_experiment_store_persists_required_fields_and_deterministic_order(
             median_duration_ns=95,
             p95_duration_ns=118,
             peak_memory_bytes=1000,
-            config_sha256=_resolved_config_hash(
-                {"min_final_score": 0.35, "top_k": 3}
-            ),
+            config_sha256=_resolved_config_hash({"min_final_score": 0.35, "top_k": 3}),
             raw_end_to_end_samples_ns=_raw_samples(median=95, p95=118),
             protocol_hash="1" * 64,
             workload_hash="2" * 64,
@@ -98,7 +94,9 @@ def test_experiment_store_persists_required_fields_and_deterministic_order(
 
     assert target == tmp_path / "runs" / "experiments.json"
     assert resolve_output_path(tmp_path / "runs") == target
-    assert json.loads(target.read_text(encoding="utf-8")) == store.model_dump(mode="json")
+    assert json.loads(target.read_text(encoding="utf-8")) == store.model_dump(
+        mode="json"
+    )
     loaded = load_experiment_store(tmp_path / "runs")
     assert loaded == store
     assert isinstance(loaded.records[0].config.payload, tuple)
@@ -108,7 +106,10 @@ def test_experiment_store_persists_required_fields_and_deterministic_order(
 
 def test_experiment_records_reject_holdout_fields_and_paths() -> None:
     assert contains_forbidden_holdout_data({"split": "holdout"}) is True
-    assert contains_forbidden_holdout_data({"path": Path("release/holdout.aesgcm")}) is True
+    assert (
+        contains_forbidden_holdout_data({"path": Path("release/holdout.aesgcm")})
+        is True
+    )
 
     with pytest.raises(ValueError, match="holdout"):
         build_experiment_record(

@@ -141,7 +141,9 @@ def detect_leakage(
     ordered_findings = tuple(sorted(findings, key=_finding_sort_key))
     return LeakageReport(
         findings=ordered_findings,
-        error_count=sum(1 for finding in ordered_findings if finding.severity == "error"),
+        error_count=sum(
+            1 for finding in ordered_findings if finding.severity == "error"
+        ),
         warning_count=sum(
             1 for finding in ordered_findings if finding.severity == "warning"
         ),
@@ -196,7 +198,12 @@ def _lineage_findings(
                 split_names=split_names,
                 shared_fingerprint=f"lineage:{sha256_hex('|'.join(ordered_case_ids).encode('utf-8'))[:20]}",
                 evidence=", ".join(
-                    sorted({cases_by_id[case_id].document_family_id for case_id in ordered_case_ids})
+                    sorted(
+                        {
+                            cases_by_id[case_id].document_family_id
+                            for case_id in ordered_case_ids
+                        }
+                    )
                 ),
             )
         )
@@ -276,15 +283,22 @@ def _duplicate_findings(
     for bucket_key, groups in buckets.items():
         if len(groups) < 1:
             continue
-        if require_distinct_group_values and len({group.exact_text for group in groups}) < 2:
+        if (
+            require_distinct_group_values
+            and len({group.exact_text for group in groups}) < 2
+        ):
             continue
         case_pairs = _cross_split_case_pairs(groups)
-        uncovered_pairs = sorted(pair for pair in case_pairs if pair not in covered_case_pairs)
+        uncovered_pairs = sorted(
+            pair for pair in case_pairs if pair not in covered_case_pairs
+        )
         if not uncovered_pairs:
             continue
         for pair in uncovered_pairs:
             covered_case_pairs.add(pair)
-        case_ids = tuple(sorted({case_id for pair in uncovered_pairs for case_id in pair}))
+        case_ids = tuple(
+            sorted({case_id for pair in uncovered_pairs for case_id in pair})
+        )
         split_names = cast(
             tuple[Split, ...],
             tuple(
@@ -299,7 +313,8 @@ def _duplicate_findings(
             ),
         )
         sample_texts = " || ".join(
-            _excerpt(text) for text in sorted({group.exact_text for group in groups})[:2]
+            _excerpt(text)
+            for text in sorted({group.exact_text for group in groups})[:2]
         )
         findings.append(
             LeakageFinding(
@@ -339,15 +354,23 @@ def _shingle_findings(
         if left_group.normalized_text == right_group.normalized_text:
             continue
         case_pairs = _cross_split_case_pairs((left_group, right_group))
-        uncovered_pairs = sorted(pair for pair in case_pairs if pair not in covered_case_pairs)
+        uncovered_pairs = sorted(
+            pair for pair in case_pairs if pair not in covered_case_pairs
+        )
         if not uncovered_pairs:
             continue
         similarity = _jaccard_similarity(left_group.shingles, right_group.shingles)
         if similarity < SHINGLE_WARNING_THRESHOLD:
             continue
         severity = "error" if similarity >= SHINGLE_ERROR_THRESHOLD else "warning"
-        code = "shingle_overlap_error" if severity == "error" else "shingle_overlap_warning"
-        case_ids = tuple(sorted({case_id for pair in uncovered_pairs for case_id in pair}))
+        code = (
+            "shingle_overlap_error"
+            if severity == "error"
+            else "shingle_overlap_warning"
+        )
+        case_ids = tuple(
+            sorted({case_id for pair in uncovered_pairs for case_id in pair})
+        )
         split_names = cast(
             tuple[Split, ...],
             tuple(
@@ -396,7 +419,10 @@ def _cross_split_case_pairs(groups: Iterable[_TextGroup]) -> set[tuple[str, str]
     for left_group, right_group in combinations(group_list, 2):
         for left_case_id in left_group.case_ids:
             for right_case_id in right_group.case_ids:
-                if left_group.case_splits[left_case_id] == right_group.case_splits[right_case_id]:
+                if (
+                    left_group.case_splits[left_case_id]
+                    == right_group.case_splits[right_case_id]
+                ):
                     continue
                 ordered_pair = (
                     (left_case_id, right_case_id)

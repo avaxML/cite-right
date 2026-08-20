@@ -51,6 +51,8 @@ class CandidateScenarioMetrics(TypedDict):
     p95_duration_ns: int
     peak_memory_bytes: int | None
     raw_end_to_end_samples_ns: list[int]
+
+
 PrepareCorpusFn: TypeAlias = Callable[[EvaluationCase], object]
 AnswerCaseFn: TypeAlias = Callable[[EvaluationCase, object], object]
 MAX_EXCEPTION_MESSAGE_CODEPOINTS = 256
@@ -852,7 +854,9 @@ def measure_candidate_smoke(
         "p95_duration_ns": max(p95_values),
         "peak_memory_bytes": None if not peak_values else max(peak_values),
         "raw_end_to_end_samples_ns": raw_samples,
-        "config_sha256": sha256_hex(canonical_json_bytes(config.model_dump(mode="json"))),
+        "config_sha256": sha256_hex(
+            canonical_json_bytes(config.model_dump(mode="json"))
+        ),
         "protocol_hash": _smoke_protocol_hash(),
         "workload_hash": workload_hash,
         "environment_hash": smoke_environment_compatibility_hash(),
@@ -1036,11 +1040,11 @@ def _measure_smoke_scenario(
     else:
         prepared_started = time.perf_counter_ns()
         for _ in range(SMOKE_MEASUREMENT_ITERATIONS):
-                corpus = PreparedCitationCorpus.from_sources(
-                    _citation_sources(scenario.case),
-                    config=config,
-                    embedder=embedder,
-                )
+            corpus = PreparedCitationCorpus.from_sources(
+                _citation_sources(scenario.case),
+                config=config,
+                embedder=embedder,
+            )
         prepared_ns = _average_iteration_duration(
             _clamp_duration(time.perf_counter_ns() - prepared_started)
         )
@@ -1349,7 +1353,9 @@ def _git_revision() -> str:
         or len(revision) != 40
         or any(character not in "0123456789abcdef" for character in revision)
     ):
-        raise RuntimeError("cannot resolve an exact Git commit for performance provenance")
+        raise RuntimeError(
+            "cannot resolve an exact Git commit for performance provenance"
+        )
     return revision
 
 

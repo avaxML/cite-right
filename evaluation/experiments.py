@@ -99,14 +99,14 @@ class ResourceMetrics(BaseModel):
         if value is not None and (
             len(value) != 64 or any(ch not in "0123456789abcdef" for ch in value)
         ):
-            raise ValueError("protocol/workload hashes must be 64-character lowercase hex digests")
+            raise ValueError(
+                "protocol/workload hashes must be 64-character lowercase hex digests"
+            )
         return value
 
     @field_validator("raw_end_to_end_samples_ns")
     @classmethod
-    def _validate_raw_samples(
-        cls, value: dict[str, list[int]]
-    ) -> dict[str, list[int]]:
+    def _validate_raw_samples(cls, value: dict[str, list[int]]) -> dict[str, list[int]]:
         if any(not scenario_id for scenario_id in value):
             raise ValueError("resource sample scenario IDs must be non-empty")
         if any(not samples for samples in value.values()):
@@ -246,7 +246,10 @@ class ExperimentRecord(BaseModel):
         if self.gate_decision.gate_pass and not self.gate_decision.evaluated_dev:
             raise ValueError("gate_pass requires a dev-evaluated record")
         if self.resource_metrics is not None:
-            if self.git_revision != "synthetic" and self.resource_metrics.config_sha256 is None:
+            if (
+                self.git_revision != "synthetic"
+                and self.resource_metrics.config_sha256 is None
+            ):
                 raise ValueError("non-synthetic resource metrics require config_sha256")
             if (
                 self.resource_metrics.config_sha256 is not None
@@ -338,7 +341,9 @@ class ExperimentStore(BaseModel):
                     "record baseline_hash must match the store baseline_hash"
                 )
             if record.git_revision != self.git_revision:
-                raise ValueError("record git_revision must match the store git_revision")
+                raise ValueError(
+                    "record git_revision must match the store git_revision"
+                )
             if record.code_snapshot_sha256 != self.code_snapshot_sha256:
                 raise ValueError(
                     "record code_snapshot_sha256 must match the store code_snapshot_sha256"
@@ -449,7 +454,9 @@ def git_revision() -> str:
         or len(revision) != 40
         or any(character not in "0123456789abcdef" for character in revision)
     ):
-        raise RuntimeError("cannot resolve an exact Git commit for experiment provenance")
+        raise RuntimeError(
+            "cannot resolve an exact Git commit for experiment provenance"
+        )
     return revision
 
 
@@ -496,11 +503,11 @@ def current_code_snapshot_sha256() -> str:
     return sha256_hex(bytes(payload))
 
 
-def _expected_resource_scenario_ids(
-    *, backend: str, embeddings: str
-) -> set[str]:
+def _expected_resource_scenario_ids(*, backend: str, embeddings: str) -> set[str]:
     if backend not in {"python", "rust"} or embeddings not in {"off", "on"}:
-        raise ValueError("resource metrics use an unsupported backend or embeddings mode")
+        raise ValueError(
+            "resource metrics use an unsupported backend or embeddings mode"
+        )
     return set(
         selected_smoke_scenario_ids(
             backend=backend,  # type: ignore[arg-type]

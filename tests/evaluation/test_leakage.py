@@ -94,9 +94,7 @@ def test_detect_leakage_reports_cross_split_duplicates_and_lineage_only():
     shingle_error_dev = _build_case(
         family_id="family-shingle-error-b",
         transformation_id="shingle-error-b",
-        source_texts=(
-            "alpha beta gamma delta epsilon zeta eta theta iota kappa mu",
-        ),
+        source_texts=("alpha beta gamma delta epsilon zeta eta theta iota kappa mu",),
         answer="alpha beta gamma delta epsilon zeta eta theta iota kappa mu",
         split="dev",
     )
@@ -150,7 +148,9 @@ def test_detect_leakage_reports_cross_split_duplicates_and_lineage_only():
         shingle_warning_train,
     )
     lineage = (
-        CaseLineage(case_id=lineage_train.case_id, template_lineage_ids=("template-x",)),
+        CaseLineage(
+            case_id=lineage_train.case_id, template_lineage_ids=("template-x",)
+        ),
         CaseLineage(case_id=lineage_dev.case_id, template_lineage_ids=("template-x",)),
     )
 
@@ -253,7 +253,9 @@ def _build_case(
                         alternatives=(
                             CitationTarget(
                                 source_id=primary_source.source_id,
-                                spans=(CharSpan(start=0, end=len(primary_source.text)),),
+                                spans=(
+                                    CharSpan(start=0, end=len(primary_source.text)),
+                                ),
                             ),
                         ),
                     ),

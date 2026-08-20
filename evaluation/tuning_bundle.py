@@ -23,7 +23,9 @@ from evaluation.schema import EvaluationCase
 STRICT_MODEL_CONFIG = ConfigDict(frozen=True, extra="forbid", strict=True)
 TUNING_BUNDLE_VERSION = "1.0.0"
 _REQUIRED_FILES = frozenset({"dev.json", "manifest.json", "train.json"})
-_ALLOWED_DATASET_DIRECTORIES = frozenset({".", "holdout", "review", "reviews", "sources"})
+_ALLOWED_DATASET_DIRECTORIES = frozenset(
+    {".", "holdout", "review", "reviews", "sources"}
+)
 _ALLOWED_DATASET_FILES = frozenset(
     {
         "dev.json",
@@ -85,8 +87,12 @@ class TuningBundleManifest(BaseModel):
     )
     @classmethod
     def _validate_sha256(cls, value: str) -> str:
-        if len(value) != 64 or any(character not in "0123456789abcdef" for character in value):
-            raise ValueError("hash fields must be lowercase 64-character SHA-256 hex digests")
+        if len(value) != 64 or any(
+            character not in "0123456789abcdef" for character in value
+        ):
+            raise ValueError(
+                "hash fields must be lowercase 64-character SHA-256 hex digests"
+            )
         return value
 
     @field_validator("bundle_version")
@@ -159,7 +165,9 @@ def build_tuning_bundle(
 
     dataset_version = _shared_dataset_version(all_cases)
     if dev_ledger.dataset_version != dataset_version:
-        raise ValueError("dev review incomplete: dev review ledger dataset_version mismatch")
+        raise ValueError(
+            "dev review incomplete: dev review ledger dataset_version mismatch"
+        )
 
     train_bytes = _canonical_cases_bytes(redacted_train_cases)
     dev_bytes = _canonical_cases_bytes(redacted_dev_cases)
@@ -209,7 +217,9 @@ def load_tuning_bundle(bundle_dir: str | Path) -> TuningBundle:
     bundle_root = _require_directory(Path(bundle_dir), label="tuning bundle")
     entries = _list_directory_entries(bundle_root)
     names = {path.name for path in entries}
-    unexpected = sorted(path.name for path in entries if path.name not in _REQUIRED_FILES)
+    unexpected = sorted(
+        path.name for path in entries if path.name not in _REQUIRED_FILES
+    )
     if unexpected:
         raise ValueError(f"unexpected files in tuning bundle: {', '.join(unexpected)}")
     if names != _REQUIRED_FILES:
@@ -387,10 +397,13 @@ def _reject_unsafe_output_location(dataset_root: Path, output_path: Path) -> Non
     _assert_existing_ancestors_are_not_symlinks(output_path)
     resolved_output = output_path.resolve(strict=False)
     forbidden_roots = tuple(
-        (dataset_root / name).resolve(strict=False) for name in ("holdout", "review", "reviews")
+        (dataset_root / name).resolve(strict=False)
+        for name in ("holdout", "review", "reviews")
     )
     for forbidden_root in forbidden_roots:
-        if resolved_output == forbidden_root or _is_relative_to(resolved_output, forbidden_root):
+        if resolved_output == forbidden_root or _is_relative_to(
+            resolved_output, forbidden_root
+        ):
             raise ValueError(
                 "tuning bundle output must not be nested inside dataset holdout or review directories"
             )

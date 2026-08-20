@@ -128,7 +128,9 @@ class Fact(PydanticBaseModel):
     @field_validator("fact_id", "claim_template")
     @classmethod
     def _validate_non_empty_fields(cls, value: str) -> str:
-        return _require_non_empty(value, "fact identifiers and templates must be non-empty")
+        return _require_non_empty(
+            value, "fact identifiers and templates must be non-empty"
+        )
 
     @field_validator("slots", mode="before")
     @classmethod
@@ -145,7 +147,9 @@ class Fact(PydanticBaseModel):
     def _validate_answer_slots(cls, value: tuple[str, ...]) -> tuple[str, ...]:
         if not value:
             raise ValueError("facts must define at least one answer slot")
-        cleaned = tuple(_require_non_empty(slot, "answer slots must be non-empty") for slot in value)
+        cleaned = tuple(
+            _require_non_empty(slot, "answer slots must be non-empty") for slot in value
+        )
         if len(set(cleaned)) != len(cleaned):
             raise ValueError("answer slots must be unique")
         return cleaned
@@ -167,10 +171,7 @@ class Fact(PydanticBaseModel):
         self,
         value: FrozenMapping[object],
     ) -> dict[str, dict[str, object]]:
-        return {
-            key: _materialize_json_like(config)
-            for key, config in value.items()
-        }
+        return {key: _materialize_json_like(config) for key, config in value.items()}
 
     @model_validator(mode="after")
     def _validate_fact(self) -> Fact:
@@ -252,7 +253,10 @@ class FactTemplate(PydanticBaseModel):
                     raise ValueError(
                         "evidence spans must stay within the source text bounds"
                     )
-                if self.source_text[evidence.span.start : evidence.span.end] != evidence.text:
+                if (
+                    self.source_text[evidence.span.start : evidence.span.end]
+                    != evidence.text
+                ):
                     raise ValueError(
                         "evidence text must equal the referenced source slice"
                     )
@@ -537,82 +541,684 @@ _DOMAIN_SPECS: Mapping[Domain, _DomainSpec] = MappingProxyType(
 _DOMAIN_FAMILY_SEEDS: Mapping[Domain, tuple[_FamilySeed, ...]] = MappingProxyType(
     {
         "science": (
-            _FamilySeed("01-mercury-archive", "Mercury", "Venus", "helios launch", "orbital probe", "118", "1977", "2035", "café-safe"),
-            _FamilySeed("02-europa-circular", "Europa", "Io", "europa survey", "ice mapper", "121", "1980", "2036", "naïve-lock"),
-            _FamilySeed("03-ceres-docket", "Ceres", "Vesta", "ceres relay", "mineral scanner", "124", "1983", "2037", "façade-ready"),
-            _FamilySeed("04-titan-notice", "Titan", "Rhea", "titan ingress", "methane array", "127", "1986", "2038", "jalapeño-mode"),
-            _FamilySeed("05-ganymede-log", "Ganymede", "Callisto", "ganymede survey", "magnetics suite", "131", "1989", "2040", "résumé-check"),
-            _FamilySeed("06-enceladus-file", "Enceladus", "Dione", "enceladus drift", "plume sampler", "134", "1992", "2043", "piñata-guard"),
-            _FamilySeed("07-vesta-ledger", "Vesta", "Pallas", "vesta scan", "regolith beacon", "137", "1995", "2044", "coöperate-path"),
-            _FamilySeed("08-ariel-register", "Ariel", "Umbriel", "ariel trace", "polar mapper", "142", "1998", "2045", "touché-state"),
-            _FamilySeed("09-triton-brief", "Triton", "Nereid", "triton relay", "thermal lattice", "146", "2001", "2046", "protégé-flag"),
-            _FamilySeed("10-oberon-ledger", "Oberon", "Titania", "oberon survey", "shadow monitor", "149", "2004", "2047", "élan-mark"),
+            _FamilySeed(
+                "01-mercury-archive",
+                "Mercury",
+                "Venus",
+                "helios launch",
+                "orbital probe",
+                "118",
+                "1977",
+                "2035",
+                "café-safe",
+            ),
+            _FamilySeed(
+                "02-europa-circular",
+                "Europa",
+                "Io",
+                "europa survey",
+                "ice mapper",
+                "121",
+                "1980",
+                "2036",
+                "naïve-lock",
+            ),
+            _FamilySeed(
+                "03-ceres-docket",
+                "Ceres",
+                "Vesta",
+                "ceres relay",
+                "mineral scanner",
+                "124",
+                "1983",
+                "2037",
+                "façade-ready",
+            ),
+            _FamilySeed(
+                "04-titan-notice",
+                "Titan",
+                "Rhea",
+                "titan ingress",
+                "methane array",
+                "127",
+                "1986",
+                "2038",
+                "jalapeño-mode",
+            ),
+            _FamilySeed(
+                "05-ganymede-log",
+                "Ganymede",
+                "Callisto",
+                "ganymede survey",
+                "magnetics suite",
+                "131",
+                "1989",
+                "2040",
+                "résumé-check",
+            ),
+            _FamilySeed(
+                "06-enceladus-file",
+                "Enceladus",
+                "Dione",
+                "enceladus drift",
+                "plume sampler",
+                "134",
+                "1992",
+                "2043",
+                "piñata-guard",
+            ),
+            _FamilySeed(
+                "07-vesta-ledger",
+                "Vesta",
+                "Pallas",
+                "vesta scan",
+                "regolith beacon",
+                "137",
+                "1995",
+                "2044",
+                "coöperate-path",
+            ),
+            _FamilySeed(
+                "08-ariel-register",
+                "Ariel",
+                "Umbriel",
+                "ariel trace",
+                "polar mapper",
+                "142",
+                "1998",
+                "2045",
+                "touché-state",
+            ),
+            _FamilySeed(
+                "09-triton-brief",
+                "Triton",
+                "Nereid",
+                "triton relay",
+                "thermal lattice",
+                "146",
+                "2001",
+                "2046",
+                "protégé-flag",
+            ),
+            _FamilySeed(
+                "10-oberon-ledger",
+                "Oberon",
+                "Titania",
+                "oberon survey",
+                "shadow monitor",
+                "149",
+                "2004",
+                "2047",
+                "élan-mark",
+            ),
         ),
         "finance": (
-            _FamilySeed("01-harbor-fund", "Harbor Growth Fund", "Beacon Income Fund", "harbor growth", "liquidity sleeve", "154", "2007", "2033", "café-stable"),
-            _FamilySeed("02-cedar-fund", "Cedar Yield Fund", "Maple Credit Fund", "cedar yield", "hedge overlay", "157", "2010", "2034", "naïve-check"),
-            _FamilySeed("03-river-fund", "River Macro Fund", "Summit Macro Fund", "river macro", "risk corridor", "161", "2011", "2039", "façade-lock"),
-            _FamilySeed("04-orbit-fund", "Orbit Value Fund", "Atlas Value Fund", "orbit value", "carry sleeve", "164", "2012", "2041", "jalapeño-note"),
-            _FamilySeed("05-meridian-fund", "Meridian Index Fund", "Vertex Index Fund", "meridian index", "rebalance window", "167", "2013", "2042", "résumé-guard"),
-            _FamilySeed("06-bright-fund", "Bright Alpha Fund", "North Alpha Fund", "bright alpha", "settlement rail", "171", "2014", "2048", "piñata-screen"),
-            _FamilySeed("07-lattice-fund", "Lattice Credit Fund", "Signal Credit Fund", "lattice credit", "treasury buffer", "174", "2015", "2049", "coöperate-loop"),
-            _FamilySeed("08-prairie-fund", "Prairie Blend Fund", "Sierra Blend Fund", "prairie blend", "coupon ladder", "178", "2016", "2050", "touché-mark"),
-            _FamilySeed("09-anchor-fund", "Anchor Reserve Fund", "Harbor Reserve Fund", "anchor reserve", "compliance rail", "181", "2017", "2051", "protégé-step"),
-            _FamilySeed("10-pivot-fund", "Pivot Income Fund", "Summit Income Fund", "pivot income", "capital sleeve", "184", "2018", "2052", "élan-switch"),
+            _FamilySeed(
+                "01-harbor-fund",
+                "Harbor Growth Fund",
+                "Beacon Income Fund",
+                "harbor growth",
+                "liquidity sleeve",
+                "154",
+                "2007",
+                "2033",
+                "café-stable",
+            ),
+            _FamilySeed(
+                "02-cedar-fund",
+                "Cedar Yield Fund",
+                "Maple Credit Fund",
+                "cedar yield",
+                "hedge overlay",
+                "157",
+                "2010",
+                "2034",
+                "naïve-check",
+            ),
+            _FamilySeed(
+                "03-river-fund",
+                "River Macro Fund",
+                "Summit Macro Fund",
+                "river macro",
+                "risk corridor",
+                "161",
+                "2011",
+                "2039",
+                "façade-lock",
+            ),
+            _FamilySeed(
+                "04-orbit-fund",
+                "Orbit Value Fund",
+                "Atlas Value Fund",
+                "orbit value",
+                "carry sleeve",
+                "164",
+                "2012",
+                "2041",
+                "jalapeño-note",
+            ),
+            _FamilySeed(
+                "05-meridian-fund",
+                "Meridian Index Fund",
+                "Vertex Index Fund",
+                "meridian index",
+                "rebalance window",
+                "167",
+                "2013",
+                "2042",
+                "résumé-guard",
+            ),
+            _FamilySeed(
+                "06-bright-fund",
+                "Bright Alpha Fund",
+                "North Alpha Fund",
+                "bright alpha",
+                "settlement rail",
+                "171",
+                "2014",
+                "2048",
+                "piñata-screen",
+            ),
+            _FamilySeed(
+                "07-lattice-fund",
+                "Lattice Credit Fund",
+                "Signal Credit Fund",
+                "lattice credit",
+                "treasury buffer",
+                "174",
+                "2015",
+                "2049",
+                "coöperate-loop",
+            ),
+            _FamilySeed(
+                "08-prairie-fund",
+                "Prairie Blend Fund",
+                "Sierra Blend Fund",
+                "prairie blend",
+                "coupon ladder",
+                "178",
+                "2016",
+                "2050",
+                "touché-mark",
+            ),
+            _FamilySeed(
+                "09-anchor-fund",
+                "Anchor Reserve Fund",
+                "Harbor Reserve Fund",
+                "anchor reserve",
+                "compliance rail",
+                "181",
+                "2017",
+                "2051",
+                "protégé-step",
+            ),
+            _FamilySeed(
+                "10-pivot-fund",
+                "Pivot Income Fund",
+                "Summit Income Fund",
+                "pivot income",
+                "capital sleeve",
+                "184",
+                "2018",
+                "2052",
+                "élan-switch",
+            ),
         ),
         "policy": (
-            _FamilySeed("01-air-review", "Air Quality Board", "Water Quality Board", "clean air", "review docket", "186", "1999", "2032", "café-verified"),
-            _FamilySeed("02-housing-review", "Housing Appeals Panel", "Transit Appeals Panel", "housing access", "compliance roster", "188", "2000", "2036", "naïve-marker"),
-            _FamilySeed("03-water-review", "Water Standards Office", "Energy Standards Office", "river safety", "permit ledger", "191", "2002", "2037", "façade-signoff"),
-            _FamilySeed("04-ethics-review", "Ethics Review Unit", "Audits Review Unit", "ethics reform", "appeals register", "194", "2003", "2038", "jalapeño-check"),
-            _FamilySeed("05-zoning-review", "Zoning Review Council", "Budget Review Council", "downtown zoning", "variance program", "197", "2005", "2039", "résumé-lock"),
-            _FamilySeed("06-transit-review", "Transit Licensing Desk", "Aviation Licensing Desk", "transit route", "waiver notice", "202", "2006", "2040", "piñata-path"),
-            _FamilySeed("07-energy-review", "Energy Permits Office", "Climate Permits Office", "grid resilience", "monitoring charter", "206", "2008", "2043", "coöperate-flag"),
-            _FamilySeed("08-coastal-review", "Coastal Claims Panel", "River Claims Panel", "coastal access", "appeals bureau", "209", "2009", "2044", "touché-proof"),
-            _FamilySeed("09-labor-review", "Labor Standards Unit", "Benefits Standards Unit", "shift safety", "inspection circle", "212", "2011", "2045", "protégé-note"),
-            _FamilySeed("10-civic-review", "Civic Records Office", "Parks Records Office", "civic records", "renewal archive", "214", "2012", "2046", "élan-audit"),
+            _FamilySeed(
+                "01-air-review",
+                "Air Quality Board",
+                "Water Quality Board",
+                "clean air",
+                "review docket",
+                "186",
+                "1999",
+                "2032",
+                "café-verified",
+            ),
+            _FamilySeed(
+                "02-housing-review",
+                "Housing Appeals Panel",
+                "Transit Appeals Panel",
+                "housing access",
+                "compliance roster",
+                "188",
+                "2000",
+                "2036",
+                "naïve-marker",
+            ),
+            _FamilySeed(
+                "03-water-review",
+                "Water Standards Office",
+                "Energy Standards Office",
+                "river safety",
+                "permit ledger",
+                "191",
+                "2002",
+                "2037",
+                "façade-signoff",
+            ),
+            _FamilySeed(
+                "04-ethics-review",
+                "Ethics Review Unit",
+                "Audits Review Unit",
+                "ethics reform",
+                "appeals register",
+                "194",
+                "2003",
+                "2038",
+                "jalapeño-check",
+            ),
+            _FamilySeed(
+                "05-zoning-review",
+                "Zoning Review Council",
+                "Budget Review Council",
+                "downtown zoning",
+                "variance program",
+                "197",
+                "2005",
+                "2039",
+                "résumé-lock",
+            ),
+            _FamilySeed(
+                "06-transit-review",
+                "Transit Licensing Desk",
+                "Aviation Licensing Desk",
+                "transit route",
+                "waiver notice",
+                "202",
+                "2006",
+                "2040",
+                "piñata-path",
+            ),
+            _FamilySeed(
+                "07-energy-review",
+                "Energy Permits Office",
+                "Climate Permits Office",
+                "grid resilience",
+                "monitoring charter",
+                "206",
+                "2008",
+                "2043",
+                "coöperate-flag",
+            ),
+            _FamilySeed(
+                "08-coastal-review",
+                "Coastal Claims Panel",
+                "River Claims Panel",
+                "coastal access",
+                "appeals bureau",
+                "209",
+                "2009",
+                "2044",
+                "touché-proof",
+            ),
+            _FamilySeed(
+                "09-labor-review",
+                "Labor Standards Unit",
+                "Benefits Standards Unit",
+                "shift safety",
+                "inspection circle",
+                "212",
+                "2011",
+                "2045",
+                "protégé-note",
+            ),
+            _FamilySeed(
+                "10-civic-review",
+                "Civic Records Office",
+                "Parks Records Office",
+                "civic records",
+                "renewal archive",
+                "214",
+                "2012",
+                "2046",
+                "élan-audit",
+            ),
         ),
         "technology": (
-            _FamilySeed("01-orbit-platform", "Orbit Backup Cluster", "Atlas Backup Cluster", "orbit backup", "telemetry daemon", "216", "2013", "2031", "café-buffer"),
-            _FamilySeed("02-signal-platform", "Signal Archive Grid", "Beacon Archive Grid", "signal archive", "storage relay", "219", "2014", "2035", "naïve-fallback"),
-            _FamilySeed("03-cedar-platform", "Cedar Recovery Mesh", "Maple Recovery Mesh", "cedar recovery", "retention agent", "223", "2015", "2036", "façade-cache"),
-            _FamilySeed("04-nimbus-platform", "Nimbus Snapshot Farm", "Cirrus Snapshot Farm", "nimbus snapshot", "routing kernel", "226", "2016", "2037", "jalapeño-guard"),
-            _FamilySeed("05-matrix-platform", "Matrix Logging Ring", "Vector Logging Ring", "matrix logging", "control plane", "229", "2017", "2038", "résumé-flip"),
-            _FamilySeed("06-polar-platform", "Polar Sync Cluster", "Aurora Sync Cluster", "polar sync", "observer loop", "232", "2018", "2039", "piñata-cache"),
-            _FamilySeed("07-rivet-platform", "Rivet Build Array", "Forge Build Array", "rivet build", "deployment lane", "236", "2019", "2040", "coöperate-signal"),
-            _FamilySeed("08-lantern-platform", "Lantern Patch Service", "Beacon Patch Service", "lantern patch", "repair runner", "239", "2020", "2041", "touché-gate"),
-            _FamilySeed("09-harbor-platform", "Harbor Mirror Queue", "Anchor Mirror Queue", "harbor mirror", "audit reactor", "242", "2021", "2042", "protégé-shield"),
-            _FamilySeed("10-summit-platform", "Summit Restore Hub", "Vertex Restore Hub", "summit restore", "fallback switch", "244", "2022", "2043", "élan-latch"),
+            _FamilySeed(
+                "01-orbit-platform",
+                "Orbit Backup Cluster",
+                "Atlas Backup Cluster",
+                "orbit backup",
+                "telemetry daemon",
+                "216",
+                "2013",
+                "2031",
+                "café-buffer",
+            ),
+            _FamilySeed(
+                "02-signal-platform",
+                "Signal Archive Grid",
+                "Beacon Archive Grid",
+                "signal archive",
+                "storage relay",
+                "219",
+                "2014",
+                "2035",
+                "naïve-fallback",
+            ),
+            _FamilySeed(
+                "03-cedar-platform",
+                "Cedar Recovery Mesh",
+                "Maple Recovery Mesh",
+                "cedar recovery",
+                "retention agent",
+                "223",
+                "2015",
+                "2036",
+                "façade-cache",
+            ),
+            _FamilySeed(
+                "04-nimbus-platform",
+                "Nimbus Snapshot Farm",
+                "Cirrus Snapshot Farm",
+                "nimbus snapshot",
+                "routing kernel",
+                "226",
+                "2016",
+                "2037",
+                "jalapeño-guard",
+            ),
+            _FamilySeed(
+                "05-matrix-platform",
+                "Matrix Logging Ring",
+                "Vector Logging Ring",
+                "matrix logging",
+                "control plane",
+                "229",
+                "2017",
+                "2038",
+                "résumé-flip",
+            ),
+            _FamilySeed(
+                "06-polar-platform",
+                "Polar Sync Cluster",
+                "Aurora Sync Cluster",
+                "polar sync",
+                "observer loop",
+                "232",
+                "2018",
+                "2039",
+                "piñata-cache",
+            ),
+            _FamilySeed(
+                "07-rivet-platform",
+                "Rivet Build Array",
+                "Forge Build Array",
+                "rivet build",
+                "deployment lane",
+                "236",
+                "2019",
+                "2040",
+                "coöperate-signal",
+            ),
+            _FamilySeed(
+                "08-lantern-platform",
+                "Lantern Patch Service",
+                "Beacon Patch Service",
+                "lantern patch",
+                "repair runner",
+                "239",
+                "2020",
+                "2041",
+                "touché-gate",
+            ),
+            _FamilySeed(
+                "09-harbor-platform",
+                "Harbor Mirror Queue",
+                "Anchor Mirror Queue",
+                "harbor mirror",
+                "audit reactor",
+                "242",
+                "2021",
+                "2042",
+                "protégé-shield",
+            ),
+            _FamilySeed(
+                "10-summit-platform",
+                "Summit Restore Hub",
+                "Vertex Restore Hub",
+                "summit restore",
+                "fallback switch",
+                "244",
+                "2022",
+                "2043",
+                "élan-latch",
+            ),
         ),
         "health": (
-            _FamilySeed("01-aurora-clinic", "Aurora Screening Team", "Beacon Screening Team", "aurora care", "immunization roster", "246", "2004", "2033", "café-clear"),
-            _FamilySeed("02-cedar-clinic", "Cedar Cardio Unit", "Maple Cardio Unit", "cedar cardiology", "followup tracker", "248", "2005", "2034", "naïve-checkin"),
-            _FamilySeed("03-harbor-clinic", "Harbor Wellness Group", "Anchor Wellness Group", "harbor wellness", "triage ladder", "251", "2007", "2035", "façade-note"),
-            _FamilySeed("04-lumen-clinic", "Lumen Vision Team", "Prism Vision Team", "lumen vision", "intake relay", "253", "2008", "2036", "jalapeño-screen"),
-            _FamilySeed("05-prairie-clinic", "Prairie Nutrition Desk", "Sierra Nutrition Desk", "prairie nutrition", "care corridor", "256", "2010", "2037", "résumé-stage"),
-            _FamilySeed("06-signal-clinic", "Signal Rehab Office", "Beacon Rehab Office", "signal rehab", "mobility route", "259", "2011", "2038", "piñata-guard"),
-            _FamilySeed("07-river-clinic", "River Oncology Team", "Summit Oncology Team", "river oncology", "support charter", "262", "2013", "2039", "coöperate-note"),
-            _FamilySeed("08-summit-clinic", "Summit Pediatric Desk", "Vertex Pediatric Desk", "summit pediatrics", "growth register", "264", "2014", "2040", "touché-frame"),
-            _FamilySeed("09-lattice-clinic", "Lattice Pulmonary Unit", "Signal Pulmonary Unit", "lattice pulmonary", "monitoring lane", "267", "2016", "2041", "protégé-loop"),
-            _FamilySeed("10-meridian-clinic", "Meridian Care Circle", "North Care Circle", "meridian care", "handoff archive", "269", "2017", "2042", "élan-screen"),
+            _FamilySeed(
+                "01-aurora-clinic",
+                "Aurora Screening Team",
+                "Beacon Screening Team",
+                "aurora care",
+                "immunization roster",
+                "246",
+                "2004",
+                "2033",
+                "café-clear",
+            ),
+            _FamilySeed(
+                "02-cedar-clinic",
+                "Cedar Cardio Unit",
+                "Maple Cardio Unit",
+                "cedar cardiology",
+                "followup tracker",
+                "248",
+                "2005",
+                "2034",
+                "naïve-checkin",
+            ),
+            _FamilySeed(
+                "03-harbor-clinic",
+                "Harbor Wellness Group",
+                "Anchor Wellness Group",
+                "harbor wellness",
+                "triage ladder",
+                "251",
+                "2007",
+                "2035",
+                "façade-note",
+            ),
+            _FamilySeed(
+                "04-lumen-clinic",
+                "Lumen Vision Team",
+                "Prism Vision Team",
+                "lumen vision",
+                "intake relay",
+                "253",
+                "2008",
+                "2036",
+                "jalapeño-screen",
+            ),
+            _FamilySeed(
+                "05-prairie-clinic",
+                "Prairie Nutrition Desk",
+                "Sierra Nutrition Desk",
+                "prairie nutrition",
+                "care corridor",
+                "256",
+                "2010",
+                "2037",
+                "résumé-stage",
+            ),
+            _FamilySeed(
+                "06-signal-clinic",
+                "Signal Rehab Office",
+                "Beacon Rehab Office",
+                "signal rehab",
+                "mobility route",
+                "259",
+                "2011",
+                "2038",
+                "piñata-guard",
+            ),
+            _FamilySeed(
+                "07-river-clinic",
+                "River Oncology Team",
+                "Summit Oncology Team",
+                "river oncology",
+                "support charter",
+                "262",
+                "2013",
+                "2039",
+                "coöperate-note",
+            ),
+            _FamilySeed(
+                "08-summit-clinic",
+                "Summit Pediatric Desk",
+                "Vertex Pediatric Desk",
+                "summit pediatrics",
+                "growth register",
+                "264",
+                "2014",
+                "2040",
+                "touché-frame",
+            ),
+            _FamilySeed(
+                "09-lattice-clinic",
+                "Lattice Pulmonary Unit",
+                "Signal Pulmonary Unit",
+                "lattice pulmonary",
+                "monitoring lane",
+                "267",
+                "2016",
+                "2041",
+                "protégé-loop",
+            ),
+            _FamilySeed(
+                "10-meridian-clinic",
+                "Meridian Care Circle",
+                "North Care Circle",
+                "meridian care",
+                "handoff archive",
+                "269",
+                "2017",
+                "2042",
+                "élan-screen",
+            ),
         ),
         "history": (
-            _FamilySeed("01-river-exhibit", "River Trade Exhibit", "Harbor Trade Exhibit", "river trade", "gallery program", "271", "1984", "2031", "café-ledger"),
-            _FamilySeed("02-mosaic-exhibit", "Mosaic Letters Exhibit", "Archive Letters Exhibit", "mosaic letters", "catalog program", "274", "1985", "2032", "naïve-catalog"),
-            _FamilySeed("03-foundry-exhibit", "Foundry Tools Exhibit", "Workshop Tools Exhibit", "foundry tools", "rotation ledger", "277", "1987", "2034", "façade-ribbon"),
-            _FamilySeed("04-marble-exhibit", "Marble Maps Exhibit", "Granite Maps Exhibit", "marble maps", "preservation file", "281", "1988", "2035", "jalapeño-index"),
-            _FamilySeed("05-lantern-exhibit", "Lantern Posters Exhibit", "Beacon Posters Exhibit", "lantern posters", "docent program", "284", "1990", "2036", "résumé-stamp"),
-            _FamilySeed("06-harvest-exhibit", "Harvest Songs Exhibit", "Prairie Songs Exhibit", "harvest songs", "rotation memo", "287", "1991", "2037", "piñata-signal"),
-            _FamilySeed("07-copper-exhibit", "Copper Coins Exhibit", "Silver Coins Exhibit", "copper coins", "catalog relay", "289", "1993", "2038", "coöperate-label"),
-            _FamilySeed("08-orbit-exhibit", "Orbit Instruments Exhibit", "Signal Instruments Exhibit", "orbit instruments", "exhibit charter", "293", "1994", "2039", "touché-tally"),
-            _FamilySeed("09-cedar-exhibit", "Cedar Journals Exhibit", "Maple Journals Exhibit", "cedar journals", "archive program", "296", "1996", "2040", "protégé-plaque"),
-            _FamilySeed("10-meridian-exhibit", "Meridian Textile Exhibit", "Vertex Textile Exhibit", "meridian textiles", "gallery docket", "299", "1997", "2041", "élan-marker"),
+            _FamilySeed(
+                "01-river-exhibit",
+                "River Trade Exhibit",
+                "Harbor Trade Exhibit",
+                "river trade",
+                "gallery program",
+                "271",
+                "1984",
+                "2031",
+                "café-ledger",
+            ),
+            _FamilySeed(
+                "02-mosaic-exhibit",
+                "Mosaic Letters Exhibit",
+                "Archive Letters Exhibit",
+                "mosaic letters",
+                "catalog program",
+                "274",
+                "1985",
+                "2032",
+                "naïve-catalog",
+            ),
+            _FamilySeed(
+                "03-foundry-exhibit",
+                "Foundry Tools Exhibit",
+                "Workshop Tools Exhibit",
+                "foundry tools",
+                "rotation ledger",
+                "277",
+                "1987",
+                "2034",
+                "façade-ribbon",
+            ),
+            _FamilySeed(
+                "04-marble-exhibit",
+                "Marble Maps Exhibit",
+                "Granite Maps Exhibit",
+                "marble maps",
+                "preservation file",
+                "281",
+                "1988",
+                "2035",
+                "jalapeño-index",
+            ),
+            _FamilySeed(
+                "05-lantern-exhibit",
+                "Lantern Posters Exhibit",
+                "Beacon Posters Exhibit",
+                "lantern posters",
+                "docent program",
+                "284",
+                "1990",
+                "2036",
+                "résumé-stamp",
+            ),
+            _FamilySeed(
+                "06-harvest-exhibit",
+                "Harvest Songs Exhibit",
+                "Prairie Songs Exhibit",
+                "harvest songs",
+                "rotation memo",
+                "287",
+                "1991",
+                "2037",
+                "piñata-signal",
+            ),
+            _FamilySeed(
+                "07-copper-exhibit",
+                "Copper Coins Exhibit",
+                "Silver Coins Exhibit",
+                "copper coins",
+                "catalog relay",
+                "289",
+                "1993",
+                "2038",
+                "coöperate-label",
+            ),
+            _FamilySeed(
+                "08-orbit-exhibit",
+                "Orbit Instruments Exhibit",
+                "Signal Instruments Exhibit",
+                "orbit instruments",
+                "exhibit charter",
+                "293",
+                "1994",
+                "2039",
+                "touché-tally",
+            ),
+            _FamilySeed(
+                "09-cedar-exhibit",
+                "Cedar Journals Exhibit",
+                "Maple Journals Exhibit",
+                "cedar journals",
+                "archive program",
+                "296",
+                "1996",
+                "2040",
+                "protégé-plaque",
+            ),
+            _FamilySeed(
+                "10-meridian-exhibit",
+                "Meridian Textile Exhibit",
+                "Vertex Textile Exhibit",
+                "meridian textiles",
+                "gallery docket",
+                "299",
+                "1997",
+                "2041",
+                "élan-marker",
+            ),
         ),
     }
 )
 
 
-def _build_template(*, domain: Domain, spec: _DomainSpec, seed: _FamilySeed) -> FactTemplate:
+def _build_template(
+    *, domain: Domain, spec: _DomainSpec, seed: _FamilySeed
+) -> FactTemplate:
     slots = {
         "subject": seed.subject,
         "period": seed.period,
@@ -696,7 +1302,7 @@ def _build_template(*, domain: Domain, spec: _DomainSpec, seed: _FamilySeed) -> 
                             "secondary_source_text": spec.secondary_source_template.format(
                                 event_label=seed.event_label,
                                 year=seed.year,
-                            )
+                            ),
                         }
                     }
                 ),
@@ -756,9 +1362,7 @@ def _build_template(*, domain: Domain, spec: _DomainSpec, seed: _FamilySeed) -> 
                     value_message="slot text must be non-empty",
                 ),
                 answer_slots=("year",),
-                evidence=(
-                    _evidence(source_text, "year", seed.year),
-                ),
+                evidence=(_evidence(source_text, "year", seed.year),),
                 adversarial_variants=_freeze_variant_mapping(
                     {
                         "date": {"slots": {"year": str(int(seed.year) + 1)}},
@@ -784,14 +1388,10 @@ def _build_template(*, domain: Domain, spec: _DomainSpec, seed: _FamilySeed) -> 
                     value_message="slot text must be non-empty",
                 ),
                 answer_slots=("end_year",),
-                evidence=(
-                    _evidence(source_text, "end_year", seed.end_year),
-                ),
+                evidence=(_evidence(source_text, "end_year", seed.end_year),),
                 adversarial_variants=_freeze_variant_mapping(
                     {
-                        "modality": {
-                            "claim_template": spec.modality_variant_template
-                        },
+                        "modality": {"claim_template": spec.modality_variant_template},
                         "unsupported_clause": {
                             "unsupported_suffix": spec.unsupported_suffix
                         },
@@ -811,12 +1411,14 @@ def _build_template(*, domain: Domain, spec: _DomainSpec, seed: _FamilySeed) -> 
                 ),
                 answer_slots=("mode_name",),
                 evidence=(
-                    _evidence(source_text, "mode_name", normalize("NFD", seed.unicode_term_nfc)),
+                    _evidence(
+                        source_text,
+                        "mode_name",
+                        normalize("NFD", seed.unicode_term_nfc),
+                    ),
                 ),
                 adversarial_variants=_freeze_variant_mapping(
-                    {
-                        "unicode": {"slots": {"mode_name": seed.unicode_term_nfc}}
-                    }
+                    {"unicode": {"slots": {"mode_name": seed.unicode_term_nfc}}}
                 ),
             ),
         ),
@@ -829,12 +1431,16 @@ def _build_template(*, domain: Domain, spec: _DomainSpec, seed: _FamilySeed) -> 
 
 
 def _evidence(source_text: str, slot_id: str, text: str) -> Evidence:
-    return Evidence(slot_id=slot_id, text=text, span=_find_unique_span(source_text, text))
+    return Evidence(
+        slot_id=slot_id, text=text, span=_find_unique_span(source_text, text)
+    )
 
 
 def _find_unique_span(source_text: str, fragment: str) -> CharSpan:
     if source_text.count(fragment) != 1:
-        raise ValueError("authored evidence fragments must appear exactly once in source text")
+        raise ValueError(
+            "authored evidence fragments must appear exactly once in source text"
+        )
     start = source_text.index(fragment)
     return CharSpan(start=start, end=start + len(fragment))
 
@@ -870,7 +1476,9 @@ def _freeze_variant_mapping(value: object) -> FrozenMapping[object]:
     for raw_name, raw_config in value.items():
         if not isinstance(raw_name, str):
             raise ValueError("adversarial variant names must be non-empty")
-        name = _require_non_empty(raw_name, "adversarial variant names must be non-empty")
+        name = _require_non_empty(
+            raw_name, "adversarial variant names must be non-empty"
+        )
         if not isinstance(raw_config, Mapping) or not raw_config:
             raise ValueError("adversarial variants must define non-empty configuration")
         frozen_variants[name] = _deep_freeze_mapping(raw_config)
@@ -881,9 +1489,7 @@ def _deep_freeze_mapping(value: Mapping[object, object]) -> FrozenMapping[object
     frozen: dict[str, object] = {}
     for raw_key, raw_value in value.items():
         if not isinstance(raw_key, str):
-            raise ValueError(
-                "adversarial variant configuration keys must be non-empty"
-            )
+            raise ValueError("adversarial variant configuration keys must be non-empty")
         key = _require_non_empty(
             raw_key, "adversarial variant configuration keys must be non-empty"
         )
@@ -920,6 +1526,8 @@ def _require_non_empty(value: str, message: str) -> str:
     if not value.strip():
         raise ValueError(message)
     return value
+
+
 AUTHORED_FACT_TEMPLATES: tuple[FactTemplate, ...] = tuple(
     sorted(
         (

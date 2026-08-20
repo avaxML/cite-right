@@ -89,7 +89,9 @@ def test_unseal_holdout_rejects_ciphertext_tampering_wrong_key_and_aad_version_t
     )
 
     tampered_payload = json.loads(ciphertext_path.read_text(encoding="utf-8"))
-    tampered_payload["ciphertext_b64"] = tampered_payload["ciphertext_b64"][:-4] + "AAAA"
+    tampered_payload["ciphertext_b64"] = (
+        tampered_payload["ciphertext_b64"][:-4] + "AAAA"
+    )
     ciphertext_path.write_bytes(canonical_json_bytes(tampered_payload))
     with pytest.raises(ValueError, match="failed authentication"):
         unseal_holdout(ciphertext_path)
@@ -140,7 +142,9 @@ def test_verify_public_manifest_rejects_noncanonical_hash_signature_count_schema
     )
 
     payload = json.loads(manifest_path.read_text(encoding="utf-8"))
-    manifest_path.write_text(json.dumps(payload, indent=2, sort_keys=False), encoding="utf-8")
+    manifest_path.write_text(
+        json.dumps(payload, indent=2, sort_keys=False), encoding="utf-8"
+    )
     with pytest.raises(ValueError, match="canonical JSON"):
         verify_public_manifest(
             manifest_path,
@@ -222,8 +226,12 @@ def test_verify_public_manifest_rejects_malformed_and_noncanonical_envelopes(
 
     ciphertext_path.write_text("[]", encoding="utf-8")
     malformed_manifest_payload = json.loads(manifest_path.read_text(encoding="utf-8"))
-    malformed_manifest_payload["ciphertext_sha256"] = sha256_hex(ciphertext_path.read_bytes())
-    _resign_manifest_payload(tmp_path / "attestation-private.pem", malformed_manifest_payload)
+    malformed_manifest_payload["ciphertext_sha256"] = sha256_hex(
+        ciphertext_path.read_bytes()
+    )
+    _resign_manifest_payload(
+        tmp_path / "attestation-private.pem", malformed_manifest_payload
+    )
     manifest_path.write_bytes(canonical_json_bytes(malformed_manifest_payload))
 
     with pytest.raises(ValueError, match="sealed holdout envelope"):
@@ -246,9 +254,15 @@ def test_verify_public_manifest_rejects_malformed_and_noncanonical_envelopes(
         json.dumps(envelope_payload, indent=2, sort_keys=False),
         encoding="utf-8",
     )
-    noncanonical_manifest_payload = json.loads(manifest_path.read_text(encoding="utf-8"))
-    noncanonical_manifest_payload["ciphertext_sha256"] = sha256_hex(ciphertext_path.read_bytes())
-    _resign_manifest_payload(tmp_path / "attestation-private.pem", noncanonical_manifest_payload)
+    noncanonical_manifest_payload = json.loads(
+        manifest_path.read_text(encoding="utf-8")
+    )
+    noncanonical_manifest_payload["ciphertext_sha256"] = sha256_hex(
+        ciphertext_path.read_bytes()
+    )
+    _resign_manifest_payload(
+        tmp_path / "attestation-private.pem", noncanonical_manifest_payload
+    )
     manifest_path.write_bytes(canonical_json_bytes(noncanonical_manifest_payload))
 
     with pytest.raises(ValueError, match="canonical JSON"):
@@ -422,7 +436,9 @@ def test_seal_holdout_rejects_incomplete_stale_correct_reject_non_holdout_and_em
     with pytest.raises(ValueError, match="cases must not be empty"):
         seal_holdout(
             (),
-            ledger=ReviewLedger(dataset_version="1.0.0", schema_version="1.0.0", entries=()),
+            ledger=ReviewLedger(
+                dataset_version="1.0.0", schema_version="1.0.0", entries=()
+            ),
             ciphertext_path=tmp_path / "empty.sealed.json",
             public_manifest_path=tmp_path / "empty.public.json",
             public_key_path=public_key_path,
@@ -432,7 +448,9 @@ def test_seal_holdout_rejects_incomplete_stale_correct_reject_non_holdout_and_em
     with pytest.raises(ValueError, match="holdout review incomplete"):
         seal_holdout(
             holdout_cases,
-            ledger=ReviewLedger(dataset_version="1.0.0", schema_version="1.0.0", entries=()),
+            ledger=ReviewLedger(
+                dataset_version="1.0.0", schema_version="1.0.0", entries=()
+            ),
             ciphertext_path=tmp_path / "missing.sealed.json",
             public_manifest_path=tmp_path / "missing.public.json",
             public_key_path=public_key_path,
@@ -443,7 +461,9 @@ def test_seal_holdout_rejects_incomplete_stale_correct_reject_non_holdout_and_em
         holdout_cases[0].model_copy(
             update={
                 "sources": (
-                    holdout_cases[0].sources[0].model_copy(
+                    holdout_cases[0]
+                    .sources[0]
+                    .model_copy(
                         update={"text": holdout_cases[0].sources[0].text + " changed"}
                     ),
                 )
@@ -606,7 +626,9 @@ def test_seal_holdout_rolls_back_if_public_manifest_replace_fails_and_fsyncs_rol
     fsync_calls: list[Path] = []
     original_fsync_directory = sealing._fsync_directory
 
-    def failing_replace(src: str | os.PathLike[str], dst: str | os.PathLike[str]) -> None:
+    def failing_replace(
+        src: str | os.PathLike[str], dst: str | os.PathLike[str]
+    ) -> None:
         call_count["value"] += 1
         if call_count["value"] == 4:
             raise RuntimeError("simulated manifest replace failure")
@@ -670,7 +692,9 @@ def test_seal_holdout_preserves_backups_if_rollback_restore_fails(
     original_replace = os.replace
     call_count = {"value": 0}
 
-    def failing_replace(src: str | os.PathLike[str], dst: str | os.PathLike[str]) -> None:
+    def failing_replace(
+        src: str | os.PathLike[str], dst: str | os.PathLike[str]
+    ) -> None:
         call_count["value"] += 1
         if call_count["value"] == 4:
             raise RuntimeError("simulated manifest replace failure")
@@ -792,8 +816,12 @@ def test_repo_commits_only_the_public_holdout_pem() -> None:
 
 def _build_holdout_cases() -> tuple[EvaluationCase, ...]:
     return (
-        _build_case(case_id="case-holdout-a", family_id="family-holdout-a", split="holdout"),
-        _build_case(case_id="case-holdout-b", family_id="family-holdout-b", split="holdout"),
+        _build_case(
+            case_id="case-holdout-a", family_id="family-holdout-a", split="holdout"
+        ),
+        _build_case(
+            case_id="case-holdout-b", family_id="family-holdout-b", split="holdout"
+        ),
     )
 
 
@@ -843,7 +871,9 @@ def _build_case(
                                     "alternatives": (
                                         {
                                             "source_id": "source-1",
-                                            "spans": ({"start": 0, "end": len(answer)},),
+                                            "spans": (
+                                                {"start": 0, "end": len(answer)},
+                                            ),
                                         },
                                     ),
                                 },
@@ -938,13 +968,17 @@ def _install_signing_keys(
     monkeypatch.setenv("CITE_RIGHT_ATTESTATION_KEY_FILE", str(private_key_path))
 
 
-def _resign_manifest_payload(private_key_path: Path, manifest_payload: dict[str, object]) -> None:
+def _resign_manifest_payload(
+    private_key_path: Path, manifest_payload: dict[str, object]
+) -> None:
     private_key = serialization.load_pem_private_key(
         private_key_path.read_bytes(),
         password=None,
     )
     assert isinstance(private_key, Ed25519PrivateKey)
-    unsigned_payload = {key: value for key, value in manifest_payload.items() if key != "signature"}
+    unsigned_payload = {
+        key: value for key, value in manifest_payload.items() if key != "signature"
+    }
     manifest_payload["signature"] = base64.b64encode(
         private_key.sign(canonical_json_bytes(unsigned_payload))
     ).decode("ascii")

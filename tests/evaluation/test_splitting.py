@@ -189,7 +189,9 @@ def test_assign_splits_rejects_invalid_inputs_and_apply_preserves_authoritative_
     with pytest.raises(ValueError, match="seed must be an integer"):
         assign_splits((case,), seed=cast(int, True))
 
-    with pytest.raises(ValueError, match="ratios must define exactly three positive values"):
+    with pytest.raises(
+        ValueError, match="ratios must define exactly three positive values"
+    ):
         assign_splits((case,), ratios=cast(tuple[float, float, float], (0.6, 0.4)))
 
     with pytest.raises(ValueError, match="ratios must sum to 1.0"):
@@ -204,10 +206,14 @@ def test_assign_splits_rejects_invalid_inputs_and_apply_preserves_authoritative_
             ),
         )
 
-    with pytest.raises(ValueError, match="unknown case id in explicit lineage metadata"):
+    with pytest.raises(
+        ValueError, match="unknown case id in explicit lineage metadata"
+    ):
         assign_splits(
             (case,),
-            explicit_lineage=(CaseLineage(case_id="case-missing", template_lineage_ids=("x",)),),
+            explicit_lineage=(
+                CaseLineage(case_id="case-missing", template_lineage_ids=("x",)),
+            ),
         )
 
     with pytest.raises(
@@ -280,7 +286,9 @@ def test_assign_splits_current_corpus_is_deterministic_component_safe_and_balanc
     assert all(authoritative_case_id(case) == case.case_id for case in applied)
 
     provenance_by_split = {
-        split_name: {case.provenance.kind for case in applied if case.split == split_name}
+        split_name: {
+            case.provenance.kind for case in applied if case.split == split_name
+        }
         for split_name in ("train", "dev", "holdout")
     }
     assert all("authored" in kinds for kinds in provenance_by_split.values())
@@ -290,7 +298,9 @@ def test_assign_splits_current_corpus_is_deterministic_component_safe_and_balanc
     for domain, component_count in component_count_by_domain.items():
         if component_count >= 3:
             assert {
-                case.split for case in applied if case.difficulty_tags and case.difficulty_tags[0] == domain
+                case.split
+                for case in applied
+                if case.difficulty_tags and case.difficulty_tags[0] == domain
             } == {"train", "dev", "holdout"}
     assert {
         case.split
@@ -373,7 +383,9 @@ def _build_case(
                         alternatives=(
                             CitationTarget(
                                 source_id=primary_source.source_id,
-                                spans=(CharSpan(start=0, end=len(primary_source.text)),),
+                                spans=(
+                                    CharSpan(start=0, end=len(primary_source.text)),
+                                ),
                             ),
                         ),
                     ),

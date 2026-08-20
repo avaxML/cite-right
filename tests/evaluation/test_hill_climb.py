@@ -104,9 +104,10 @@ def test_run_tuning_executes_real_fixture_search_and_resumes(tmp_path: Path) -> 
         "strict-guard-on",
         "strict-top-k-3",
     ]
-    assert payload["records"][0]["config"]["sha256"] == canonicalize_config(
-        _strict_control_payload()
-    ).sha256
+    assert (
+        payload["records"][0]["config"]["sha256"]
+        == canonicalize_config(_strict_control_payload()).sha256
+    )
 
 
 def test_run_tuning_rejects_code_drift_before_persisting_candidate(
@@ -125,7 +126,9 @@ def test_run_tuning_rejects_code_drift_before_persisting_candidate(
         "_load_frozen_baseline_report",
         lambda: json.loads(baseline_path.read_text(encoding="utf-8")),
     )
-    monkeypatch.setattr(module, "current_code_snapshot_sha256", lambda: state["snapshot"])
+    monkeypatch.setattr(
+        module, "current_code_snapshot_sha256", lambda: state["snapshot"]
+    )
 
     def drifting_evaluate(*args: object, **kwargs: object):
         record = original_evaluate(*args, **kwargs)
@@ -145,7 +148,9 @@ def test_run_tuning_rejects_code_drift_before_persisting_candidate(
     assert not output_path.exists()
 
 
-def test_run_tuning_rejects_holdout_release_and_synthetic_inputs(tmp_path: Path) -> None:
+def test_run_tuning_rejects_holdout_release_and_synthetic_inputs(
+    tmp_path: Path,
+) -> None:
     synthetic_path = tmp_path / "synthetic.json"
     synthetic_path.write_text(json.dumps(_synthetic_search_space()), encoding="utf-8")
     holdout_path = tmp_path / "holdout-tuning"
@@ -194,7 +199,9 @@ def test_run_tuning_rejects_holdout_release_and_synthetic_inputs(tmp_path: Path)
         with pytest.raises(ValueError, match="release-gate|holdout"):
             run_tuning(
                 tuning_bundle=Path("tests/evaluation/fixtures/tuning"),
-                search_space_path=Path("tests/evaluation/fixtures/three-candidates.json"),
+                search_space_path=Path(
+                    "tests/evaluation/fixtures/three-candidates.json"
+                ),
                 output_path=tmp_path / suffix,
             )
 
@@ -234,7 +241,9 @@ def test_run_tuning_rejects_resume_with_changed_search_space(tmp_path: Path) -> 
         module._load_frozen_baseline_report = original_loader
 
 
-def test_candidate_identity_suppresses_aliases_with_equivalent_resolved_configs() -> None:
+def test_candidate_identity_suppresses_aliases_with_equivalent_resolved_configs() -> (
+    None
+):
     from evaluation import hill_climb as module
 
     full_config = _strict_control_payload()
@@ -346,9 +355,10 @@ def test_checked_in_search_space_is_bounded_one_coordinate_neighborhood() -> Non
     baseline = json.loads(
         Path("evaluation/reports/v1/baseline.json").read_text(encoding="utf-8")
     )
-    assert canonicalize_config(candidates[0]["config"]).sha256 == baseline["gates"][
-        "performance_config_sha256"
-    ]
+    assert (
+        canonicalize_config(candidates[0]["config"]).sha256
+        == baseline["gates"]["performance_config_sha256"]
+    )
 
     changed_paths: set[str] = set()
     identities: set[str] = set()
@@ -378,7 +388,9 @@ def test_checked_in_search_space_is_bounded_one_coordinate_neighborhood() -> Non
     } <= changed_paths
 
 
-def test_run_tuning_rejects_frozen_baseline_dataset_hash_mismatch(tmp_path: Path) -> None:
+def test_run_tuning_rejects_frozen_baseline_dataset_hash_mismatch(
+    tmp_path: Path,
+) -> None:
     fixture_path = Path("tests/evaluation/fixtures/three-candidates.json")
     frozen_baseline_path = tmp_path / "baseline.json"
     payload = _frozen_baseline_report()
@@ -621,9 +633,7 @@ def _metrics(
 def _flatten_json(value: object, prefix: str = "") -> dict[str, object]:
     if isinstance(value, tuple):
         if all(
-            isinstance(item, tuple)
-            and len(item) == 2
-            and isinstance(item[0], str)
+            isinstance(item, tuple) and len(item) == 2 and isinstance(item[0], str)
             for item in value
         ):
             flattened: dict[str, object] = {}
@@ -669,9 +679,11 @@ def _frozen_baseline_report() -> dict[str, object]:
 def _strict_control_payload() -> dict[str, object]:
     from cite_right import CitationConfig
 
-    return CitationConfig.strict().model_copy(
-        update={"require_all_answer_tokens_in_evidence": False}
-    ).model_dump(mode="json")
+    return (
+        CitationConfig.strict()
+        .model_copy(update={"require_all_answer_tokens_in_evidence": False})
+        .model_dump(mode="json")
+    )
 
 
 def _tiebreak_status_search_space() -> dict[str, object]:

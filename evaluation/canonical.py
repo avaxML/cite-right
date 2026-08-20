@@ -12,7 +12,9 @@ from pydantic import BaseModel
 from evaluation.schema import EvaluationCase
 
 
-def canonical_json_bytes(value: BaseModel | Mapping[str, object] | list[object] | tuple[object, ...]) -> bytes:
+def canonical_json_bytes(
+    value: BaseModel | Mapping[str, object] | list[object] | tuple[object, ...],
+) -> bytes:
     if isinstance(value, BaseModel):
         payload = _normalize_json_value(value.model_dump(mode="json"))
     elif isinstance(value, Mapping):
@@ -20,7 +22,9 @@ def canonical_json_bytes(value: BaseModel | Mapping[str, object] | list[object] 
     elif isinstance(value, (list, tuple)):
         payload = [_normalize_json_value(item) for item in value]
     else:
-        raise TypeError("canonical_json_bytes accepts BaseModel, mapping, list, or tuple inputs")
+        raise TypeError(
+            "canonical_json_bytes accepts BaseModel, mapping, list, or tuple inputs"
+        )
     return json.dumps(
         payload,
         ensure_ascii=False,
@@ -52,9 +56,9 @@ def authoritative_case_payload(
             "authoritative_case_id accepts EvaluationCase or Mapping[str, object] inputs"
         )
     else:
-        payload = EvaluationCase.model_validate(case_or_authoritative_mapping).model_dump(
-            mode="json"
-        )
+        payload = EvaluationCase.model_validate(
+            case_or_authoritative_mapping
+        ).model_dump(mode="json")
     payload.pop("case_id", None)
     payload.pop("split", None)
     payload.pop("review", None)

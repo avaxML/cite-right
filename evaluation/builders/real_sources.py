@@ -176,13 +176,18 @@ class RealSourceChallenge(BaseModel):
         if value is None:
             return None
         if not value.strip():
-            raise ValueError("optional challenge fields must be non-empty when provided")
+            raise ValueError(
+                "optional challenge fields must be non-empty when provided"
+            )
         return value
 
     @model_validator(mode="after")
     def _validate_kind_specific_fields(self) -> RealSourceChallenge:
         if self.kind == "contradicted":
-            if self.distractor_family_id is not None or self.unsupported_suffix is not None:
+            if (
+                self.distractor_family_id is not None
+                or self.unsupported_suffix is not None
+            ):
                 raise ValueError(
                     "contradicted challenges must not define distractor_family_id or unsupported_suffix"
                 )
@@ -191,7 +196,9 @@ class RealSourceChallenge(BaseModel):
             if self.unsupported_suffix is None:
                 raise ValueError("partial challenges must define unsupported_suffix")
             if self.distractor_family_id is not None:
-                raise ValueError("partial challenges must not define distractor_family_id")
+                raise ValueError(
+                    "partial challenges must not define distractor_family_id"
+                )
             return self
         if self.distractor_family_id is None:
             raise ValueError("distractor challenges must define distractor_family_id")
@@ -256,7 +263,9 @@ class RealSourceFamily(BaseModel):
                 )
         elif self.challenge.kind == "distractor":
             if self.challenge.answer != self.supported_answer:
-                raise ValueError("distractor challenge answer must equal supported_answer")
+                raise ValueError(
+                    "distractor challenge answer must equal supported_answer"
+                )
         return self
 
 
@@ -277,8 +286,7 @@ def load_real_source_families() -> tuple[RealSourceFamily, ...]:
         artifact_name="real.json",
     )
     provenance_by_id = {
-        record.family_id: record
-        for record in load_real_source_provenance()
+        record.family_id: record for record in load_real_source_provenance()
     }
     families: list[RealSourceFamily] = []
     seen_family_ids: set[str] = set()
@@ -303,9 +311,7 @@ def load_real_source_families() -> tuple[RealSourceFamily, ...]:
         )
         seen_family_ids.add(family_id)
     missing_family_ids = tuple(
-        family_id
-        for family_id in provenance_by_id
-        if family_id not in seen_family_ids
+        family_id for family_id in provenance_by_id if family_id not in seen_family_ids
     )
     if missing_family_ids:
         raise ValueError(
@@ -358,7 +364,9 @@ def _build_positive_case(family: RealSourceFamily) -> EvaluationCase:
                 answer_span=CharSpan(start=0, end=len(family.supported_answer)),
                 text=family.supported_answer,
                 label="entailed",
-                citation_requirements=_whole_source_requirements("source-primary", source.text),
+                citation_requirements=_whole_source_requirements(
+                    "source-primary", source.text
+                ),
                 acceptable_retrieval_source_ids=("source-primary",),
             ),
         ),
@@ -419,7 +427,9 @@ def _build_challenge_case(
                     answer_span=CharSpan(start=0, end=supported_end),
                     text=family.source_text,
                     label="entailed",
-                    citation_requirements=_whole_source_requirements("source-primary", source.text),
+                    citation_requirements=_whole_source_requirements(
+                        "source-primary", source.text
+                    ),
                     acceptable_retrieval_source_ids=("source-primary",),
                 ),
                 ClaimAnnotation(
@@ -466,7 +476,9 @@ def _build_challenge_case(
                 answer_span=CharSpan(start=0, end=len(challenge.answer)),
                 text=challenge.answer,
                 label="entailed",
-                citation_requirements=_whole_source_requirements("source-primary", source.text),
+                citation_requirements=_whole_source_requirements(
+                    "source-primary", source.text
+                ),
                 acceptable_retrieval_source_ids=("source-primary",),
             ),
         ),
@@ -517,7 +529,9 @@ def _finalize_case(
     case = temporary_case.model_copy(
         update={"case_id": authoritative_case_id(temporary_case)}
     )
-    return EvaluationCase.model_validate(case.model_dump(mode="python", round_trip=True))
+    return EvaluationCase.model_validate(
+        case.model_dump(mode="python", round_trip=True)
+    )
 
 
 def _whole_source_requirements(

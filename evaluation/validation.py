@@ -128,7 +128,9 @@ def validate_dataset(bundle: DatasetBundle) -> ValidationReport:
 
     ordered_valid_cases = tuple(case for _, case in validated_cases)
     case_index_by_id = {case.case_id: index for index, case in validated_cases}
-    dataset_versions = tuple(sorted({case.dataset_version for case in ordered_valid_cases}))
+    dataset_versions = tuple(
+        sorted({case.dataset_version for case in ordered_valid_cases})
+    )
     if len(dataset_versions) > 1:
         error_record_indexes.update(index for index, _ in validated_cases)
         findings.append(
@@ -153,11 +155,11 @@ def validate_dataset(bundle: DatasetBundle) -> ValidationReport:
                     code="provenance_incomplete",
                     case_id=case.case_id,
                     path="provenance",
-                message=(
-                    f"{case.provenance.kind} provenance requires "
-                    f"{', '.join(provenance_missing)}"
-                ),
-            )
+                    message=(
+                        f"{case.provenance.kind} provenance requires "
+                        f"{', '.join(provenance_missing)}"
+                    ),
+                )
             )
         if bundle.require_reviews and case.split in {"dev", "holdout"}:
             if case.review is None or case.review.state != "approved":
@@ -314,7 +316,9 @@ def _deep_freeze_jsonish(value: object, *, active_ids: set[int]) -> object:
 
 def _thaw_record(record: RecordInput) -> dict[str, object]:
     if isinstance(record, EvaluationCase):
-        return cast(dict[str, object], record.model_dump(mode="python", round_trip=True))
+        return cast(
+            dict[str, object], record.model_dump(mode="python", round_trip=True)
+        )
     return cast(dict[str, object], _deep_thaw_jsonish(record))
 
 
@@ -412,7 +416,9 @@ def _infer_path_from_message(
         for indexes, target in _target_paths(evaluation_units):
             source_id = target.get("source_id")
             spans = target.get("spans")
-            source_text = source_map.get(source_id) if isinstance(source_id, str) else None
+            source_text = (
+                source_map.get(source_id) if isinstance(source_id, str) else None
+            )
             if source_text is None or not isinstance(spans, tuple):
                 continue
             for span_index, span in enumerate(spans):
@@ -521,7 +527,12 @@ def _target_paths(
                     if isinstance(target, Mapping):
                         targets.append(
                             (
-                                (unit_index, claim_index, requirement_index, alternative_index),
+                                (
+                                    unit_index,
+                                    claim_index,
+                                    requirement_index,
+                                    alternative_index,
+                                ),
                                 target,
                             )
                         )
@@ -623,7 +634,10 @@ def _case_order_finding(cases: tuple[EvaluationCase, ...]) -> ValidationFinding 
     canonical_order = tuple(
         sorted(
             cases,
-            key=lambda case: (case.case_id, canonical_json_bytes(case.model_dump(mode="json"))),
+            key=lambda case: (
+                case.case_id,
+                canonical_json_bytes(case.model_dump(mode="json")),
+            ),
         )
     )
     if cases == canonical_order:
@@ -645,9 +659,7 @@ def _case_order_finding(cases: tuple[EvaluationCase, ...]) -> ValidationFinding 
 
 def _convert_leakage_finding(finding: LeakageFinding) -> ValidationFinding:
     similarity_suffix = (
-        f"; similarity={finding.similarity}"
-        if finding.similarity is not None
-        else ""
+        f"; similarity={finding.similarity}" if finding.similarity is not None else ""
     )
     return ValidationFinding(
         severity=cast(Literal["error", "warning"], finding.severity),

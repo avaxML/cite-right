@@ -20,12 +20,18 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
     if args:
         print("usage: python -m evaluation.worker", file=sys.stderr)
-        print("evaluation.worker accepts no positional or option arguments", file=sys.stderr)
+        print(
+            "evaluation.worker accepts no positional or option arguments",
+            file=sys.stderr,
+        )
         return 2
 
     leaked = [name for name in _SCRUBBED_ENVIRONMENT_VARIABLES if name in os.environ]
     if leaked:
-        print("sensitive holdout environment variables were exposed to the tuning worker", file=sys.stderr)
+        print(
+            "sensitive holdout environment variables were exposed to the tuning worker",
+            file=sys.stderr,
+        )
         return 1
 
     bundle = load_tuning_bundle(Path.cwd())

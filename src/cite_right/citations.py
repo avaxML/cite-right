@@ -244,9 +244,7 @@ def _process_answer_span(
         selected_candidates = [
             candidates[candidate_index] for candidate_index, _, _ in selected
         ]
-        candidate_token_ids = [
-            candidate.token_ids for candidate in selected_candidates
-        ]
+        candidate_token_ids = [candidate.token_ids for candidate in selected_candidates]
         align_batch = getattr(aligner, "align_batch", None)
         if align_batch is None:
             alignments = [
@@ -325,12 +323,8 @@ def _build_exact_citation(
     final_score = _compute_final_score(metrics, lexical_score, embed_score, cfg)
     if not _should_use_alignment(alignment, metrics, cfg):
         return None
-    if (
-        cfg.require_all_answer_tokens_in_evidence
-        and not (
-            trusted_alignment_match_counts
-            and alignment.matches == len(answer_tokens)
-        )
+    if cfg.require_all_answer_tokens_in_evidence and not (
+        trusted_alignment_match_counts and alignment.matches == len(answer_tokens)
     ):
         if not _answer_tokens_match_evidence(
             answer_tokens=answer_tokens,

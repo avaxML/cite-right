@@ -193,12 +193,17 @@ def test_authored_catalog_is_balanced_and_structurally_valid() -> None:
             assert set(fact.answer_slots).issubset(fact.slots)
             assert fact.evidence
             for evidence in fact.evidence:
-                assert template.source_text[evidence.span.start : evidence.span.end] == evidence.text
+                assert (
+                    template.source_text[evidence.span.start : evidence.span.end]
+                    == evidence.text
+                )
 
 
 def test_transformations_cover_all_required_families_by_stable_name() -> None:
     transformations = _transformations_module()
-    names = tuple(transformation.name for transformation in transformations.TRANSFORMATIONS)
+    names = tuple(
+        transformation.name for transformation in transformations.TRANSFORMATIONS
+    )
 
     assert names == ALL_TRANSFORMATION_NAMES
     assert len(set(names)) == len(ALL_TRANSFORMATION_NAMES)
@@ -249,7 +254,9 @@ def test_transformation_family_semantics_and_lineage(
     assert case.case_id
     assert case.case_id != ""
     assert case.answer == expected.expected_answer
-    assert case.answer == _expected_answer_for_transformation(template, transformation_name)
+    assert case.answer == _expected_answer_for_transformation(
+        template, transformation_name
+    )
 
     assert tuple(source.source_id for source in case.sources[:1]) == ("source-primary",)
     assert case.dataset_version == "1.0.0"
@@ -292,7 +299,10 @@ def test_transformation_family_semantics_and_lineage(
 
     if transformation_name == "duplicate_distractor":
         assert case.sources[1].source_id == "source-distractor"
-        assert _positive_claim(case).citation_requirements[0].alternatives[0].source_id == "source-primary"
+        assert (
+            _positive_claim(case).citation_requirements[0].alternatives[0].source_id
+            == "source-primary"
+        )
     elif transformation_name == "multi_span":
         positive_claim = _positive_claim(case)
         target = positive_claim.citation_requirements[0].alternatives[0]
@@ -316,7 +326,9 @@ def test_transformation_family_semantics_and_lineage(
         ) == ("source-primary", "source-secondary")
 
 
-def test_authored_entity_and_relation_variants_are_not_in_sources_across_catalog() -> None:
+def test_authored_entity_and_relation_variants_are_not_in_sources_across_catalog() -> (
+    None
+):
     authored_sources = _authored_sources_module()
 
     for template in authored_sources.AUTHORED_FACT_TEMPLATES:
@@ -354,9 +366,15 @@ def test_authored_entailed_targets_are_minimal_propositions_not_bare_slots() -> 
             fact = _fact_for_transformation(template, transformation_name)
 
             assert target_texts
-            assert all(text != evidence.text for text in target_texts for evidence in fact.evidence)
+            assert all(
+                text != evidence.text
+                for text in target_texts
+                for evidence in fact.evidence
+            )
             assert all(len(text.split()) >= 3 for text in target_texts)
-            assert all(any(character.isalpha() for character in text) for text in target_texts)
+            assert all(
+                any(character.isalpha() for character in text) for text in target_texts
+            )
 
 
 @pytest.mark.parametrize("transformation_name", ALL_TRANSFORMATION_NAMES)
@@ -375,12 +393,21 @@ def test_second_template_transformations_derive_from_template_not_fixture_consta
         template=template,
         transformation_name=transformation_name,
     )
-    assert case.answer != EXPECTED_BEHAVIOR_BY_TRANSFORMATION[transformation_name].expected_answer
+    assert (
+        case.answer
+        != EXPECTED_BEHAVIOR_BY_TRANSFORMATION[transformation_name].expected_answer
+    )
 
 
 @pytest.mark.parametrize(
     "transformation_name",
-    ("unicode", "duplicate_distractor", "multi_span", "multi_source", "unsupported_clause"),
+    (
+        "unicode",
+        "duplicate_distractor",
+        "multi_span",
+        "multi_source",
+        "unsupported_clause",
+    ),
 )
 def test_exact_target_spans_match_authored_evidence_for_fixture_template(
     transformation_name: str,
@@ -481,14 +508,24 @@ def test_every_catalog_family_produces_positive_and_adversarial_siblings() -> No
     cases_module = _cases_module()
     for template in authored_sources.AUTHORED_FACT_TEMPLATES:
         cases = cases_module.generate_cases_for_template(template=template, seed=11)
-        labels = {claim.label for case in cases for unit in case.evaluation_units for claim in unit.claims}
+        labels = {
+            claim.label
+            for case in cases
+            for unit in case.evaluation_units
+            for claim in unit.claims
+        }
 
         assert "entailed" in labels
         assert "contradicted" in labels or "not_in_sources" in labels
-        assert tuple(case.transformation_family_id for case in cases) == ALL_TRANSFORMATION_NAMES
+        assert (
+            tuple(case.transformation_family_id for case in cases)
+            == ALL_TRANSFORMATION_NAMES
+        )
 
 
-def test_generate_cases_for_template_rejects_transformations_that_emit_no_cases() -> None:
+def test_generate_cases_for_template_rejects_transformations_that_emit_no_cases() -> (
+    None
+):
     cases_module = _cases_module()
 
     with pytest.raises(
@@ -502,7 +539,9 @@ def test_generate_cases_for_template_rejects_transformations_that_emit_no_cases(
         )
 
 
-def test_generate_cases_for_template_rejects_transformations_that_emit_two_cases() -> None:
+def test_generate_cases_for_template_rejects_transformations_that_emit_two_cases() -> (
+    None
+):
     cases_module = _cases_module()
 
     with pytest.raises(
@@ -526,17 +565,22 @@ def test_generate_cases_for_template_accepts_generator_transformations() -> None
         template=_fixture_template(),
         seed=23,
         transformations=(
-            transformation for transformation in _transformations_module().TRANSFORMATIONS
+            transformation
+            for transformation in _transformations_module().TRANSFORMATIONS
         ),
     )
 
     assert tuple(case.case_id for case in generator_cases) == tuple(
         case.case_id for case in tuple_cases
     )
-    assert _canonical_case_digest(generator_cases) == _canonical_case_digest(tuple_cases)
+    assert _canonical_case_digest(generator_cases) == _canonical_case_digest(
+        tuple_cases
+    )
 
 
-def test_generate_all_authored_cases_accepts_generator_templates_and_transformations() -> None:
+def test_generate_all_authored_cases_accepts_generator_templates_and_transformations() -> (
+    None
+):
     authored_sources = _authored_sources_module()
     cases_module = _cases_module()
     tuple_cases = cases_module.generate_all_authored_cases(seed=31)
@@ -544,12 +588,17 @@ def test_generate_all_authored_cases_accepts_generator_templates_and_transformat
         seed=31,
         templates=(template for template in authored_sources.AUTHORED_FACT_TEMPLATES),
         transformations=(
-            transformation for transformation in _transformations_module().TRANSFORMATIONS
+            transformation
+            for transformation in _transformations_module().TRANSFORMATIONS
         ),
     )
 
-    assert [case.case_id for case in generator_cases] == [case.case_id for case in tuple_cases]
-    assert _canonical_case_digest(generator_cases) == _canonical_case_digest(tuple_cases)
+    assert [case.case_id for case in generator_cases] == [
+        case.case_id for case in tuple_cases
+    ]
+    assert _canonical_case_digest(generator_cases) == _canonical_case_digest(
+        tuple_cases
+    )
 
 
 def test_generate_cases_for_template_rejects_duplicate_transformation_names() -> None:
@@ -702,10 +751,15 @@ def test_catalog_generation_is_order_independent_after_stable_sorting() -> None:
     assert [case.case_id for case in forward] == [case.case_id for case in reverse]
     assert _canonical_case_digest(forward) == _canonical_case_digest(repeat)
     assert _canonical_case_digest(forward) == _canonical_case_digest(reverse)
-    assert _canonical_case_digest(forward) == "4867b0fde638dcf2da7a3e3e8e52080d1c955ae1cfa2b64b924d2c7f37dcb139"
+    assert (
+        _canonical_case_digest(forward)
+        == "4867b0fde638dcf2da7a3e3e8e52080d1c955ae1cfa2b64b924d2c7f37dcb139"
+    )
 
 
-def test_case_ids_are_authoritative_and_labels_do_not_depend_on_runtime_outputs() -> None:
+def test_case_ids_are_authoritative_and_labels_do_not_depend_on_runtime_outputs() -> (
+    None
+):
     case = _generate_case(
         template=_fixture_template(),
         transformation_name="multi_source",
@@ -714,7 +768,10 @@ def test_case_ids_are_authoritative_and_labels_do_not_depend_on_runtime_outputs(
 
     assert case.case_id.startswith("case-")
     assert case.case_id == _authoritative_case_id(case)
-    assert case.answer == "Mercury completes one orbit every 88 days. The mission launched in 1977."
+    assert (
+        case.answer
+        == "Mercury completes one orbit every 88 days. The mission launched in 1977."
+    )
 
 
 def test_fact_validation_rejects_unresolved_answer_slots() -> None:
@@ -745,7 +802,9 @@ def test_fact_validation_rejects_claim_template_with_missing_slot_reference() ->
     authored_sources = _authored_sources_module()
     source_text = "Mercury completes one orbit every 88 days."
 
-    with pytest.raises(ValueError, match="claim templates must resolve using defined slots"):
+    with pytest.raises(
+        ValueError, match="claim templates must resolve using defined slots"
+    ):
         authored_sources.Fact(
             fact_id="fact-orbit",
             claim_template="{planet} completes one orbit every {duration} days.",
@@ -970,7 +1029,9 @@ def _fixture_template():
                 ),
                 adversarial_variants={
                     "date": {"slots": {"launch_year": "1978"}},
-                    "duplicate_distractor": {"distractor_source_text": "The mission launched in 1978."},
+                    "duplicate_distractor": {
+                        "distractor_source_text": "The mission launched in 1978."
+                    },
                 },
             ),
             authored_sources.Fact(
@@ -1017,11 +1078,17 @@ def _fixture_template():
                     },
                 ),
                 adversarial_variants={
-                    "negation": {"claim_template": "{planet} does not complete one orbit every {days} days."},
+                    "negation": {
+                        "claim_template": "{planet} does not complete one orbit every {days} days."
+                    },
                     "number": {"slots": {"days": "89"}},
-                    "unit": {"claim_template": "{planet} completes one orbit every {days} weeks."},
+                    "unit": {
+                        "claim_template": "{planet} completes one orbit every {days} weeks."
+                    },
                     "entity": {"slots": {"planet": "Venus"}},
-                    "relation": {"claim_template": "{planet} documents one orbit every {days} days."},
+                    "relation": {
+                        "claim_template": "{planet} documents one orbit every {days} days."
+                    },
                     "multi_span": {
                         "citation_texts": (
                             "Mercury completes one orbit.",
@@ -1104,7 +1171,10 @@ def _assert_positive_source_targets_slice_exact_text(
                 expected.texts,
                 strict=True,
             ):
-                assert source_text_by_id[alternative.source_id][span.start : span.end] == expected_text
+                assert (
+                    source_text_by_id[alternative.source_id][span.start : span.end]
+                    == expected_text
+                )
 
 
 def _assert_answer_targets_are_authored(
@@ -1113,11 +1183,16 @@ def _assert_answer_targets_are_authored(
     template,
     transformation_name: str,
 ) -> None:
-    assert case.answer == _expected_answer_for_transformation(template, transformation_name)
+    assert case.answer == _expected_answer_for_transformation(
+        template, transformation_name
+    )
     for unit in case.evaluation_units:
         assert case.answer[unit.answer_span.start : unit.answer_span.end] == unit.text
         for claim in unit.claims:
-            assert case.answer[claim.answer_span.start : claim.answer_span.end] == claim.text
+            assert (
+                case.answer[claim.answer_span.start : claim.answer_span.end]
+                == claim.text
+            )
             assert claim.text in case.answer
             assert all(source.text != case.answer for source in case.sources)
 
@@ -1129,7 +1204,9 @@ def _assert_case_derives_from_template(
     transformation_name: str,
 ) -> None:
     assert case.document_family_id == template.family_id
-    assert case.answer == _expected_answer_for_transformation(template, transformation_name)
+    assert case.answer == _expected_answer_for_transformation(
+        template, transformation_name
+    )
     _assert_answer_targets_are_authored(
         case,
         template=template,
@@ -1175,16 +1252,18 @@ def _transformation_by_name(transformation_name: str):
 
 def _fact_for_transformation(template, transformation_name: str):
     matches = [
-        fact for fact in template.facts if transformation_name in fact.adversarial_variants
+        fact
+        for fact in template.facts
+        if transformation_name in fact.adversarial_variants
     ]
     assert len(matches) == 1
     return matches[0]
 
 
 def _variant_config(template, transformation_name: str) -> Mapping[str, object]:
-    config = _fact_for_transformation(template, transformation_name).adversarial_variants[
-        transformation_name
-    ]
+    config = _fact_for_transformation(
+        template, transformation_name
+    ).adversarial_variants[transformation_name]
     assert isinstance(config, Mapping)
     return config
 
@@ -1215,8 +1294,12 @@ def _expected_answer_for_transformation(template, transformation_name: str) -> s
     if transformation_name == "multi_source":
         return _formatted_variant_text(template, transformation_name, "answer_text")
     if transformation_name == "unsupported_clause":
-        suffix = str(_variant_config(template, transformation_name)["unsupported_suffix"])
-        return _formatted_claim_text(template, transformation_name, variant=False) + suffix
+        suffix = str(
+            _variant_config(template, transformation_name)["unsupported_suffix"]
+        )
+        return (
+            _formatted_claim_text(template, transformation_name, variant=False) + suffix
+        )
     return _formatted_claim_text(template, transformation_name, variant=True)
 
 
@@ -1240,39 +1323,80 @@ def _expected_positive_requirements(
             (
                 ExpectedRequirement(
                     source_id="source-primary",
-                    spans=(CharSpan(start=0, end=len(_formatted_variant_text(template, transformation_name, "primary_source_text"))),),
-                    texts=(_formatted_variant_text(template, transformation_name, "primary_source_text"),),
+                    spans=(
+                        CharSpan(
+                            start=0,
+                            end=len(
+                                _formatted_variant_text(
+                                    template, transformation_name, "primary_source_text"
+                                )
+                            ),
+                        ),
+                    ),
+                    texts=(
+                        _formatted_variant_text(
+                            template, transformation_name, "primary_source_text"
+                        ),
+                    ),
                 ),
             ),
             (
                 ExpectedRequirement(
                     source_id="source-secondary",
-                    spans=(CharSpan(start=0, end=len(_formatted_variant_text(template, transformation_name, "secondary_source_text"))),),
-                    texts=(_formatted_variant_text(template, transformation_name, "secondary_source_text"),),
+                    spans=(
+                        CharSpan(
+                            start=0,
+                            end=len(
+                                _formatted_variant_text(
+                                    template,
+                                    transformation_name,
+                                    "secondary_source_text",
+                                )
+                            ),
+                        ),
+                    ),
+                    texts=(
+                        _formatted_variant_text(
+                            template, transformation_name, "secondary_source_text"
+                        ),
+                    ),
                 ),
             ),
         )
 
     if transformation_name == "multi_span":
-        primary_source_text = _formatted_variant_text(template, transformation_name, "primary_source_text")
-        citation_texts = _string_tuple(_variant_config(template, transformation_name), "citation_texts")
+        primary_source_text = _formatted_variant_text(
+            template, transformation_name, "primary_source_text"
+        )
+        citation_texts = _string_tuple(
+            _variant_config(template, transformation_name), "citation_texts"
+        )
         return (
             (
                 ExpectedRequirement(
                     source_id="source-primary",
-                    spans=tuple(CharSpan.model_validate(_span(primary_source_text, text)) for text in citation_texts),
+                    spans=tuple(
+                        CharSpan.model_validate(_span(primary_source_text, text))
+                        for text in citation_texts
+                    ),
                     texts=citation_texts,
                 ),
             ),
         )
 
-    proposition_text = _formatted_claim_text(template, transformation_name, variant=False)
+    proposition_text = _formatted_claim_text(
+        template, transformation_name, variant=False
+    )
 
     return (
         (
             ExpectedRequirement(
                 source_id="source-primary",
-                spans=(CharSpan.model_validate(_span(template.source_text, proposition_text)),),
+                spans=(
+                    CharSpan.model_validate(
+                        _span(template.source_text, proposition_text)
+                    ),
+                ),
                 texts=(proposition_text,),
             ),
         ),
@@ -1317,7 +1441,9 @@ def _authoritative_case_id(case: EvaluationCase) -> str:
     return authoritative_case_id(case)
 
 
-def _case_dump_without_identity_and_generation(case: EvaluationCase) -> dict[str, object]:
+def _case_dump_without_identity_and_generation(
+    case: EvaluationCase,
+) -> dict[str, object]:
     return case.model_copy(
         update={
             "case_id": "case-seed-agnostic",
@@ -1362,7 +1488,9 @@ REAL_CASE_DOMAINS = (
 )
 
 
-def test_real_source_catalog_has_complete_local_provenance_and_balanced_domains() -> None:
+def test_real_source_catalog_has_complete_local_provenance_and_balanced_domains() -> (
+    None
+):
     real_sources = _real_sources_module()
     families = real_sources.load_real_source_families()
     provenance = real_sources.load_real_source_provenance()
@@ -1405,16 +1533,20 @@ def test_real_source_catalog_has_complete_local_provenance_and_balanced_domains(
         assert item.snapshot_hash == sha256_hex(item.source_text.encode("utf-8"))
 
 
-def test_real_source_catalog_keeps_fdic_snapshot_byte_exact_with_unicode_apostrophe() -> None:
+def test_real_source_catalog_keeps_fdic_snapshot_byte_exact_with_unicode_apostrophe() -> (
+    None
+):
     real_sources = _real_sources_module()
     families = {
-        family.family_id: family
-        for family in real_sources.load_real_source_families()
+        family.family_id: family for family in real_sources.load_real_source_families()
     }
 
     fdic_text = families["finance-fdic-what-we-do"].source_text
 
-    assert fdic_text == "maintain stability and public confidence in the nation’s financial system"
+    assert (
+        fdic_text
+        == "maintain stability and public confidence in the nation’s financial system"
+    )
     assert "nation’s" in fdic_text
     assert "nation's" not in fdic_text
     assert fdic_text.encode("utf-8") == (
@@ -1424,7 +1556,9 @@ def test_real_source_catalog_keeps_fdic_snapshot_byte_exact_with_unicode_apostro
     )
 
 
-def test_real_source_models_reject_missing_metadata_local_text_hash_mismatch_and_third_party_credit() -> None:
+def test_real_source_models_reject_missing_metadata_local_text_hash_mismatch_and_third_party_credit() -> (
+    None
+):
     real_sources = _real_sources_module()
     source_text = "A black hole is a region in space where gravity is strong."
 
@@ -1469,7 +1603,9 @@ def test_real_source_models_reject_missing_metadata_local_text_hash_mismatch_and
             }
         )
 
-    with pytest.raises(ValueError, match="snapshot_hash must equal sha256 of source_text"):
+    with pytest.raises(
+        ValueError, match="snapshot_hash must equal sha256 of source_text"
+    ):
         real_sources.RealSourceProvenance.model_validate(
             {
                 **base,
@@ -1485,7 +1621,9 @@ def test_real_source_models_reject_missing_metadata_local_text_hash_mismatch_and
             }
         )
 
-    with pytest.raises(ValueError, match="origin_url must use https:// and point to an official source"):
+    with pytest.raises(
+        ValueError, match="origin_url must use https:// and point to an official source"
+    ):
         real_sources.RealSourceProvenance.model_validate(
             {
                 **base,
@@ -1493,7 +1631,9 @@ def test_real_source_models_reject_missing_metadata_local_text_hash_mismatch_and
             }
         )
 
-    with pytest.raises(ValueError, match="origin_url must use https:// and point to an official source"):
+    with pytest.raises(
+        ValueError, match="origin_url must use https:// and point to an official source"
+    ):
         real_sources.RealSourceProvenance.model_validate(
             {
                 **base,
@@ -1501,7 +1641,9 @@ def test_real_source_models_reject_missing_metadata_local_text_hash_mismatch_and
             }
         )
 
-    with pytest.raises(ValueError, match="policy_url must use https:// and point to an official source"):
+    with pytest.raises(
+        ValueError, match="policy_url must use https:// and point to an official source"
+    ):
         real_sources.RealSourceProvenance.model_validate(
             {
                 **base,
@@ -1509,7 +1651,9 @@ def test_real_source_models_reject_missing_metadata_local_text_hash_mismatch_and
             }
         )
 
-    with pytest.raises(ValueError, match="policy_url must use https:// and point to an official source"):
+    with pytest.raises(
+        ValueError, match="policy_url must use https:// and point to an official source"
+    ):
         real_sources.RealSourceProvenance.model_validate(
             {
                 **base,
@@ -1517,7 +1661,10 @@ def test_real_source_models_reject_missing_metadata_local_text_hash_mismatch_and
             }
         )
 
-    with pytest.raises(ValueError, match="statutory_url must use https:// and point to an official source"):
+    with pytest.raises(
+        ValueError,
+        match="statutory_url must use https:// and point to an official source",
+    ):
         real_sources.RealSourceProvenance.model_validate(
             {
                 **base,
@@ -1525,7 +1672,10 @@ def test_real_source_models_reject_missing_metadata_local_text_hash_mismatch_and
             }
         )
 
-    with pytest.raises(ValueError, match="statutory_url must use https:// and point to an official source"):
+    with pytest.raises(
+        ValueError,
+        match="statutory_url must use https:// and point to an official source",
+    ):
         real_sources.RealSourceProvenance.model_validate(
             {
                 **base,
@@ -1533,7 +1683,9 @@ def test_real_source_models_reject_missing_metadata_local_text_hash_mismatch_and
             }
         )
 
-    with pytest.raises(ValueError, match="policy_url must use https:// and point to an official source"):
+    with pytest.raises(
+        ValueError, match="policy_url must use https:// and point to an official source"
+    ):
         real_sources.RealSourceProvenance.model_validate(
             {
                 **base,
@@ -1543,14 +1695,13 @@ def test_real_source_models_reject_missing_metadata_local_text_hash_mismatch_and
 
     with pytest.raises(Exception, match="Field required"):
         real_sources.RealSourceProvenance.model_validate(
-            {
-                key: value
-                for key, value in base.items()
-                if key != "policy_url"
-            }
+            {key: value for key, value in base.items() if key != "policy_url"}
         )
 
-    with pytest.raises(ValueError, match="statutory_url must use https:// and point to an official source"):
+    with pytest.raises(
+        ValueError,
+        match="statutory_url must use https:// and point to an official source",
+    ):
         real_sources.RealSourceProvenance.model_validate(
             {
                 **base,
@@ -1560,11 +1711,7 @@ def test_real_source_models_reject_missing_metadata_local_text_hash_mismatch_and
 
     with pytest.raises(Exception, match="Field required"):
         real_sources.RealSourceProvenance.model_validate(
-            {
-                key: value
-                for key, value in base.items()
-                if key != "statutory_url"
-            }
+            {key: value for key, value in base.items() if key != "statutory_url"}
         )
 
     with pytest.raises(ValueError, match="page_title must be non-empty"):
@@ -1577,11 +1724,7 @@ def test_real_source_models_reject_missing_metadata_local_text_hash_mismatch_and
 
     with pytest.raises(Exception, match="Field required"):
         real_sources.RealSourceProvenance.model_validate(
-            {
-                key: value
-                for key, value in base.items()
-                if key != "page_title"
-            }
+            {key: value for key, value in base.items() if key != "page_title"}
         )
 
     with pytest.raises(ValueError, match="publisher must be non-empty"):
@@ -1594,11 +1737,7 @@ def test_real_source_models_reject_missing_metadata_local_text_hash_mismatch_and
 
     with pytest.raises(Exception, match="Field required"):
         real_sources.RealSourceProvenance.model_validate(
-            {
-                key: value
-                for key, value in base.items()
-                if key != "publisher"
-            }
+            {key: value for key, value in base.items() if key != "publisher"}
         )
 
 
@@ -1626,7 +1765,10 @@ def test_real_source_models_reject_missing_metadata_local_text_hash_mismatch_and
         ("statutory_url", "https://.gov/view.xhtml?edition=2023"),
         ("statutory_url", "https://gov/view.xhtml?edition=2023"),
         ("statutory_url", "https://uscode.house.gov:443/view.xhtml?edition=2023"),
-        ("statutory_url", "https://uscode.house.gov.evil.example/view.xhtml?edition=2023"),
+        (
+            "statutory_url",
+            "https://uscode.house.gov.evil.example/view.xhtml?edition=2023",
+        ),
         ("statutory_url", "https://-bad.gov/view.xhtml?edition=2023"),
         ("statutory_url", "https://bad-.gov/view.xhtml?edition=2023"),
     ),
@@ -1701,7 +1843,9 @@ def test_real_source_loaders_fail_closed_for_duplicate_records_and_join_gaps(
     )
     monkeypatch.setattr(real_sources, "REAL_SOURCES_PATH", duplicate_sources_path)
     monkeypatch.setattr(real_sources, "PROVENANCE_PATH", duplicate_provenance_path)
-    with pytest.raises(ValueError, match=r"duplicate family_id 'environment-doe-solar'"):
+    with pytest.raises(
+        ValueError, match=r"duplicate family_id 'environment-doe-solar'"
+    ):
         real_sources.load_real_source_families()
 
     unique_sources_path = tmp_path / "unique-real.json"
@@ -1716,7 +1860,9 @@ def test_real_source_loaders_fail_closed_for_duplicate_records_and_join_gaps(
         encoding="utf-8",
     )
     monkeypatch.setattr(real_sources, "REAL_SOURCES_PATH", unique_sources_path)
-    monkeypatch.setattr(real_sources, "PROVENANCE_PATH", duplicate_unique_provenance_path)
+    monkeypatch.setattr(
+        real_sources, "PROVENANCE_PATH", duplicate_unique_provenance_path
+    )
     with pytest.raises(
         ValueError,
         match=r"duplicate family_id 'environment-doe-solar' in provenance records",
@@ -1809,17 +1955,29 @@ def test_real_case_generation_is_offline_deterministic_and_balanced(
 
     assert len(first) == 30
     assert len({case.case_id for case in first}) == 30
-    assert tuple(case.case_id for case in first) == tuple(case.case_id for case in second)
+    assert tuple(case.case_id for case in first) == tuple(
+        case.case_id for case in second
+    )
     assert _canonical_case_digest(first) == _canonical_case_digest(second)
     assert _canonical_case_digest(first) == real_sources.REAL_CASES_CANONICAL_DIGEST
-    assert _canonical_case_digest(first) == "7d5bc92d9020a35ff730c720bae70b632d87d74d1d21b788e0f024a03b851637"
+    assert (
+        _canonical_case_digest(first)
+        == "7d5bc92d9020a35ff730c720bae70b632d87d74d1d21b788e0f024a03b851637"
+    )
 
     assert len(combined) == 750
     assert len({case.case_id for case in combined}) == 750
     assert _canonical_case_digest(combined) == real_sources.ALL_CASES_CANONICAL_DIGEST
-    assert _canonical_case_digest(combined) == "5b0ce437462ad3ecc1e8334dac614018420c492543c39df9d7e59ca41abba031"
+    assert (
+        _canonical_case_digest(combined)
+        == "5b0ce437462ad3ecc1e8334dac614018420c492543c39df9d7e59ca41abba031"
+    )
 
-    challenge_counts = Counter(case.transformation_family_id for case in first if case.transformation_family_id != "real-positive")
+    challenge_counts = Counter(
+        case.transformation_family_id
+        for case in first
+        if case.transformation_family_id != "real-positive"
+    )
     assert challenge_counts == {
         "real-contradicted": 5,
         "real-partial": 5,
@@ -1830,8 +1988,7 @@ def test_real_case_generation_is_offline_deterministic_and_balanced(
 def test_real_cases_slice_exact_local_snapshots_and_match_expected_semantics() -> None:
     real_sources = _real_sources_module()
     families = {
-        family.family_id: family
-        for family in real_sources.load_real_source_families()
+        family.family_id: family for family in real_sources.load_real_source_families()
     }
     cases = real_sources.generate_real_cases()
 
@@ -1915,7 +2072,9 @@ def _real_sources_module():
     return import_module("evaluation.builders.real_sources")
 
 
-def _read_real_source_payloads() -> tuple[list[dict[str, object]], list[dict[str, object]]]:
+def _read_real_source_payloads() -> tuple[
+    list[dict[str, object]], list[dict[str, object]]
+]:
     family_payload = json.loads(
         Path("evaluation/data/v1/sources/real.json").read_text(encoding="utf-8")
     )
@@ -1968,7 +2127,9 @@ class _CardinalityOverrideTransformation:
         if self.cardinality == "missing":
             return ()
         if self.cardinality == "duplicated":
-            second_cases = _transformation_by_name(self.name).generate(template, seed + 1)
+            second_cases = _transformation_by_name(self.name).generate(
+                template, seed + 1
+            )
             assert len(second_cases) == 1
             return (real_cases[0], second_cases[0])
         raise AssertionError(f"unexpected cardinality override {self.cardinality!r}")

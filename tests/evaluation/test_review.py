@@ -46,7 +46,9 @@ from evaluation.schema import (
 from evaluation.splitting import apply_split_assignments, assign_splits
 
 
-def test_claim_review_binding_tracks_review_relevant_fields_and_ignores_split_and_case_review() -> None:
+def test_claim_review_binding_tracks_review_relevant_fields_and_ignores_split_and_case_review() -> (
+    None
+):
     base_case = _build_case(
         family_id="family-binding",
         transformation_id="binding",
@@ -77,9 +79,12 @@ def test_claim_review_binding_tracks_review_relevant_fields_and_ignores_split_an
             ),
         ),
     )
-    assert claim_review_binding(
-        changed_answer, changed_answer.evaluation_units[0].claims[0]
-    ) != baseline
+    assert (
+        claim_review_binding(
+            changed_answer, changed_answer.evaluation_units[0].claims[0]
+        )
+        != baseline
+    )
 
     changed_source = _copy_case(
         base_case,
@@ -88,9 +93,12 @@ def test_claim_review_binding_tracks_review_relevant_fields_and_ignores_split_an
             base_case.sources[1],
         ),
     )
-    assert claim_review_binding(
-        changed_source, changed_source.evaluation_units[0].claims[0]
-    ) != baseline
+    assert (
+        claim_review_binding(
+            changed_source, changed_source.evaluation_units[0].claims[0]
+        )
+        != baseline
+    )
 
     changed_label = _copy_case(
         base_case,
@@ -108,9 +116,10 @@ def test_claim_review_binding_tracks_review_relevant_fields_and_ignores_split_an
             ),
         ),
     )
-    assert claim_review_binding(
-        changed_label, changed_label.evaluation_units[0].claims[0]
-    ) != baseline
+    assert (
+        claim_review_binding(changed_label, changed_label.evaluation_units[0].claims[0])
+        != baseline
+    )
 
     changed_target = _copy_case(
         base_case,
@@ -132,9 +141,12 @@ def test_claim_review_binding_tracks_review_relevant_fields_and_ignores_split_an
             ),
         ),
     )
-    assert claim_review_binding(
-        changed_target, changed_target.evaluation_units[0].claims[0]
-    ) != baseline
+    assert (
+        claim_review_binding(
+            changed_target, changed_target.evaluation_units[0].claims[0]
+        )
+        != baseline
+    )
 
     changed_retrieval = _copy_case(
         base_case,
@@ -156,14 +168,18 @@ def test_claim_review_binding_tracks_review_relevant_fields_and_ignores_split_an
             ),
         ),
     )
-    assert claim_review_binding(
-        changed_retrieval, changed_retrieval.evaluation_units[0].claims[0]
-    ) != baseline
+    assert (
+        claim_review_binding(
+            changed_retrieval, changed_retrieval.evaluation_units[0].claims[0]
+        )
+        != baseline
+    )
 
     changed_split = _copy_case(base_case, split="holdout")
-    assert claim_review_binding(
-        changed_split, changed_split.evaluation_units[0].claims[0]
-    ) == baseline
+    assert (
+        claim_review_binding(changed_split, changed_split.evaluation_units[0].claims[0])
+        == baseline
+    )
 
     changed_review_metadata = _copy_case(
         base_case,
@@ -174,9 +190,13 @@ def test_claim_review_binding_tracks_review_relevant_fields_and_ignores_split_an
             notes="Operational metadata only.",
         ),
     )
-    assert claim_review_binding(
-        changed_review_metadata, changed_review_metadata.evaluation_units[0].claims[0]
-    ) == baseline
+    assert (
+        claim_review_binding(
+            changed_review_metadata,
+            changed_review_metadata.evaluation_units[0].claims[0],
+        )
+        == baseline
+    )
 
 
 def test_make_review_record_and_ledger_validation_contracts() -> None:
@@ -326,10 +346,14 @@ def test_build_review_queue_is_order_invariant_and_family_aware_across_shards() 
     with pytest.raises(ValueError):
         build_review_queue(cases, shard_count=2, shard_index=2)
     with pytest.raises(ValueError):
-        build_review_queue((family_a_first, family_a_first), shard_count=1, shard_index=0)
+        build_review_queue(
+            (family_a_first, family_a_first), shard_count=1, shard_index=0
+        )
 
 
-def test_render_review_queue_html_escapes_all_data_and_avoids_script_injection() -> None:
+def test_render_review_queue_html_escapes_all_data_and_avoids_script_injection() -> (
+    None
+):
     hostile_case = _build_case(
         family_id='family<danger>&"x"',
         transformation_id="render",
@@ -340,7 +364,7 @@ def test_render_review_queue_html_escapes_all_data_and_avoids_script_injection()
         provenance_origin='https://example.com/query?a=1&b="two"',
         publisher='ACME & "Partners"',
         generation=GenerationRecipe(
-            recipe_id='recipe<1>',
+            recipe_id="recipe<1>",
             generator_name='generator "unsafe"',
             prompt_version="v<2>",
             seed=7,
@@ -376,7 +400,9 @@ def test_render_review_queue_html_escapes_all_data_and_avoids_script_injection()
     assert 'data-family-id="family&lt;danger&gt;&amp;&quot;x&quot;"' in html
 
 
-def test_render_review_queue_html_highlights_exact_targets_without_losing_source_text() -> None:
+def test_render_review_queue_html_highlights_exact_targets_without_losing_source_text() -> (
+    None
+):
     case = _build_case(
         family_id="family-highlight",
         transformation_id="highlight",
@@ -401,7 +427,7 @@ def test_render_review_queue_html_highlights_exact_targets_without_losing_source
     assert 'Alpha <tag> and "Beta" & Gamma.' in normalized
     assert "Requirement req-1" in normalized
     assert "Alternative 1" in normalized
-    assert 'Alpha &lt;tag&gt; and &quot;Beta&quot; &amp; Gamma.' in html
+    assert "Alpha &lt;tag&gt; and &quot;Beta&quot; &amp; Gamma." in html
     assert html.count('class="target-span"') == 3
     assert "</mark><mark" in html
     assert 'data-span-start="0"' in html
@@ -412,7 +438,9 @@ def test_render_review_queue_html_highlights_exact_targets_without_losing_source
     assert 'data-span-end="21"' in html
 
 
-def test_render_review_queue_html_keeps_overlapping_alternatives_independently_auditable() -> None:
+def test_render_review_queue_html_keeps_overlapping_alternatives_independently_auditable() -> (
+    None
+):
     case = _build_case(
         family_id="family-overlap",
         transformation_id="overlap",
@@ -463,7 +491,9 @@ def test_render_review_queue_html_keeps_overlapping_alternatives_independently_a
     assert 'data-span-end="21"' in html
 
 
-def test_review_completion_counts_and_gate_rules_distinguish_current_stale_and_incomplete_states() -> None:
+def test_review_completion_counts_and_gate_rules_distinguish_current_stale_and_incomplete_states() -> (
+    None
+):
     train_case = _build_case(
         family_id="family-train",
         transformation_id="train",
@@ -542,10 +572,15 @@ def test_review_completion_counts_and_gate_rules_distinguish_current_stale_and_i
     )
 
     report = review_completion(
-        (train_case, dev_approved, dev_corrected, mutated_holdout, holdout_missing)
-    , ledger)
-    dev_report = review_completion((train_case, dev_approved, dev_corrected), ledger, splits=("dev",))
-    holdout_report = review_completion((mutated_holdout, holdout_missing), ledger, splits=("holdout",))
+        (train_case, dev_approved, dev_corrected, mutated_holdout, holdout_missing),
+        ledger,
+    )
+    dev_report = review_completion(
+        (train_case, dev_approved, dev_corrected), ledger, splits=("dev",)
+    )
+    holdout_report = review_completion(
+        (mutated_holdout, holdout_missing), ledger, splits=("holdout",)
+    )
 
     assert report.total_claims == 5
     assert report.reviewed_claims == 4
@@ -569,7 +604,9 @@ def test_review_completion_counts_and_gate_rules_distinguish_current_stale_and_i
             split="dev",
         )
     with pytest.raises(ValueError):
-        assert_review_complete((mutated_holdout, holdout_missing), ledger, split="holdout")
+        assert_review_complete(
+            (mutated_holdout, holdout_missing), ledger, split="holdout"
+        )
 
     dev_clean_ledger = ReviewLedger(
         dataset_version="1.0.0",
@@ -767,7 +804,9 @@ def test_checked_in_dev_ledger_is_canonical_complete_and_excludes_holdout() -> N
 
     dev_cases = tuple(case for case in assigned if case.split == "dev")
     holdout_cases = tuple(case for case in assigned if case.split == "holdout")
-    dev_claim_count = sum(len(unit.claims) for case in dev_cases for unit in case.evaluation_units)
+    dev_claim_count = sum(
+        len(unit.claims) for case in dev_cases for unit in case.evaluation_units
+    )
     holdout_claim_count = sum(
         len(unit.claims) for case in holdout_cases for unit in case.evaluation_units
     )
@@ -791,7 +830,9 @@ def test_checked_in_dev_ledger_is_canonical_complete_and_excludes_holdout() -> N
         assert_review_complete(assigned, ledger, split="holdout")
 
 
-def test_render_fixture_cli_output_is_deterministic_and_inspectable(tmp_path: Path) -> None:
+def test_render_fixture_cli_output_is_deterministic_and_inspectable(
+    tmp_path: Path,
+) -> None:
     first = tmp_path / "fixture-first.html"
     second = tmp_path / "fixture-second.html"
 
