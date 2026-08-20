@@ -27,7 +27,11 @@ from evaluation.metrics import (
     StatusLabel,
     aggregate_metrics,
 )
-from evaluation.performance import run_performance_smoke
+from evaluation.performance import (
+    run_performance_smoke,
+    selected_smoke_workload_hash,
+    smoke_environment_compatibility_hash,
+)
 from evaluation.runner import Backend, CaseRun, execute_case
 from evaluation.schema import CharSpan, EvaluationCase, EvaluationUnit
 from evaluation.tuning_bundle import load_tuning_bundle
@@ -58,9 +62,16 @@ class AccuracyReport(BaseModel):
 
 
 def baseline_configurations() -> tuple[BaselineConfiguration, ...]:
+    strict_control = CitationConfig.strict().model_copy(
+        update={"require_all_answer_tokens_in_evidence": False}
+    )
     return (
         _configuration("default", CitationConfig()),
-        _configuration("strict", CitationConfig.strict(), selected_for_gates=True),
+        _configuration(
+            "strict",
+            strict_control,
+            selected_for_gates=True,
+        ),
         _configuration("permissive", CitationConfig.permissive()),
     )
 
@@ -103,6 +114,8 @@ def accuracy_report(
 
 def build_baseline(*, tuning_bundle: Path, output_path: Path) -> dict[str, object]:
     bundle = load_tuning_bundle(tuning_bundle)
+    captured_git_revision = _git_revision()
+    captured_code_snapshot_sha256 = _code_snapshot_sha256()
     backends: tuple[Backend, ...] = (
         ("python", "rust") if _rust_backend_supported() else ("python",)
     )
@@ -141,15 +154,33 @@ def build_baseline(*, tuning_bundle: Path, output_path: Path) -> dict[str, objec
                     )
 
     first_reports = _execute_accuracy_inputs(execution_inputs)
+    selected_configuration = next(
+        configuration
+        for configuration in baseline_configurations()
+        if configuration.selected_for_gates
+    )
+    selected_smoke_config = CitationConfig.model_validate(selected_configuration.config)
     with tempfile.TemporaryDirectory(prefix="cite-right-baseline-") as temporary:
         temp_root = Path(temporary)
         performance_trials = []
         for index in (1, 2):
             artifact_path = temp_root / f"performance-{index}.json"
-            run_performance_smoke(output_path=artifact_path)
+            run_performance_smoke(
+                output_path=artifact_path,
+                config=selected_smoke_config,
+            )
             artifact = json.loads(artifact_path.read_text(encoding="utf-8"))
             if not isinstance(artifact, dict):
                 raise RuntimeError("performance smoke artifact must be a JSON object")
+            environment = artifact.get("environment")
+            if not isinstance(environment, Mapping):
+                raise RuntimeError("performance smoke artifact must include environment metadata")
+            if environment.get("git_revision") != captured_git_revision:
+                raise RuntimeError("performance smoke artifact git_revision does not match captured revision")
+            _assert_code_provenance_unchanged(
+                expected_git_revision=captured_git_revision,
+                expected_code_snapshot_sha256=captured_code_snapshot_sha256,
+            )
             performance_trials.append(artifact)
     second_reports = _execute_accuracy_inputs(execution_inputs)
     if _accuracy_hashes(first_reports) != _accuracy_hashes(second_reports):
@@ -186,12 +217,20 @@ def build_baseline(*, tuning_bundle: Path, output_path: Path) -> dict[str, objec
                 )
 
     selected = next(item for item in matrix if item["selected_for_gates"])
+    selected_config = selected.get("config")
+    if not isinstance(selected_config, Mapping):
+        raise ValueError("selected baseline config must be a JSON object")
+    selected_config_sha256 = sha256_hex(canonical_json_bytes(selected_config))
+    protocol_hash, performance_config_sha256 = _validated_performance_metadata(
+        performance_trials=performance_trials,
+        expected_config_sha256=selected_config_sha256,
+    )
     report: dict[str, object] = {
         "schema_version": SCHEMA_VERSION,
         "dataset_version": bundle.manifest.dataset_version,
         "dataset_hash": bundle.manifest.dataset_manifest_sha256,
-        "git_revision": _git_revision(),
-        "code_snapshot_sha256": _code_snapshot_sha256(),
+        "git_revision": captured_git_revision,
+        "code_snapshot_sha256": captured_code_snapshot_sha256,
         "worktree_dirty": _worktree_dirty(),
         "environment": _environment(),
         "optional_coverage": {
@@ -203,11 +242,18 @@ def build_baseline(*, tuning_bundle: Path, output_path: Path) -> dict[str, objec
         "performance_trials": performance_trials,
         "selected_baseline_id": selected["id"],
         "gates": _freeze_gates(
-            selected=selected, performance_trials=performance_trials
+            selected=selected,
+            performance_trials=performance_trials,
+            performance_protocol_hash=protocol_hash,
+            performance_config_sha256=performance_config_sha256,
         ),
     }
     if report_contains_holdout_data(report):
         raise RuntimeError("baseline report contains forbidden holdout data")
+    _assert_code_provenance_unchanged(
+        expected_git_revision=captured_git_revision,
+        expected_code_snapshot_sha256=captured_code_snapshot_sha256,
+    )
     _write_atomic(output_path, canonical_json_bytes(report))
     return report
 
@@ -489,6 +535,8 @@ def _freeze_gates(
     *,
     selected: Mapping[str, object],
     performance_trials: Sequence[Mapping[str, object]],
+    performance_protocol_hash: str,
+    performance_config_sha256: str,
 ) -> dict[str, object]:
     dev = selected["dev"]
     assert isinstance(dev, Mapping)
@@ -532,6 +580,16 @@ def _freeze_gates(
         if value is not None
     ]
     lower = precision.get("lower")
+    selected_backend = str(selected.get("backend"))
+    selected_embeddings = str(selected.get("embeddings"))
+    if selected_backend not in {"python", "rust"}:
+        raise ValueError("selected baseline backend is invalid")
+    if selected_embeddings not in {"off", "on"}:
+        raise ValueError("selected baseline embeddings mode is invalid")
+    selected_workload_hash = selected_smoke_workload_hash(
+        backend=cast(Literal["python", "rust"], selected_backend),
+        embeddings=cast(Literal["off", "on"], selected_embeddings),
+    )
     return {
         "policy": "strict/python/off selected before the sealed release evaluation",
         "offset_invalid_tolerance": 0,
@@ -548,6 +606,10 @@ def _freeze_gates(
         else int(max(peak_values) * (1.0 + peak_margin)),
         "p95_noise_margin": p95_margin,
         "peak_memory_noise_margin": peak_margin,
+        "performance_protocol_hash": performance_protocol_hash,
+        "performance_config_sha256": performance_config_sha256,
+        "selected_workload_hash": selected_workload_hash,
+        "performance_environment_hash": smoke_environment_compatibility_hash(),
         "all_scenario_p95_noise_margin": _scenario_metric_margin(
             _scenario_index(performance_trials),
             lambda scenario: _duration_metric(scenario, "p95_duration_ns"),
@@ -561,6 +623,35 @@ def _freeze_gates(
             lambda scenario: _duration_metric(scenario, "median_duration_ns"),
         ),
     }
+
+
+def _validated_performance_metadata(
+    *,
+    performance_trials: Sequence[Mapping[str, object]],
+    expected_config_sha256: str,
+) -> tuple[str, str]:
+    protocol_hashes: set[str] = set()
+    config_hashes: set[str] = set()
+    for trial in performance_trials:
+        protocol_hash = trial.get("protocol_hash")
+        config_sha256 = trial.get("config_sha256")
+        if not isinstance(protocol_hash, str) or len(protocol_hash) != 64 or any(
+            ch not in "0123456789abcdef" for ch in protocol_hash
+        ):
+            raise ValueError("performance trials are missing a valid protocol_hash")
+        if not isinstance(config_sha256, str) or len(config_sha256) != 64 or any(
+            ch not in "0123456789abcdef" for ch in config_sha256
+        ):
+            raise ValueError("performance trials are missing a valid config_sha256")
+        if config_sha256 != expected_config_sha256:
+            raise ValueError("performance trial config hash does not match selected baseline config")
+        protocol_hashes.add(protocol_hash)
+        config_hashes.add(config_sha256)
+    if len(protocol_hashes) != 1:
+        raise ValueError("performance trial protocol hashes do not match")
+    if len(config_hashes) != 1:
+        raise ValueError("performance trial config hashes do not match")
+    return next(iter(protocol_hashes)), next(iter(config_hashes))
 
 
 def _accuracy_hashes(reports: Sequence[tuple[str, AccuracyReport]]) -> dict[str, str]:
@@ -760,6 +851,12 @@ def _load_pinned_embedder() -> tuple[Embedder | None, str]:
         )
 
 
+def load_pinned_embedder() -> tuple[Embedder | None, str]:
+    """Return the pinned offline embedder used for exact evaluation."""
+
+    return _load_pinned_embedder()
+
+
 def _rust_backend_supported() -> bool:
     try:
         from cite_right import _core
@@ -780,19 +877,35 @@ def _environment() -> dict[str, object]:
 
 
 def _git_revision() -> str:
+    repo_root = Path(__file__).resolve().parents[1]
     result = subprocess.run(
-        ["git", "rev-parse", "HEAD"], capture_output=True, check=False, text=True
-    )
-    return result.stdout.strip() if result.returncode == 0 else "unknown"
-
-
-def _worktree_dirty() -> bool:
-    result = subprocess.run(
-        ["git", "status", "--porcelain", "--untracked-files=no"],
+        ["git", "rev-parse", "--verify", "HEAD^{commit}"],
+        cwd=repo_root,
         capture_output=True,
         check=False,
         text=True,
     )
+    revision = result.stdout.strip()
+    if (
+        result.returncode != 0
+        or len(revision) != 40
+        or any(character not in "0123456789abcdef" for character in revision)
+    ):
+        raise RuntimeError("cannot resolve an exact Git commit for baseline provenance")
+    return revision
+
+
+def _worktree_dirty() -> bool:
+    repo_root = Path(__file__).resolve().parents[1]
+    result = subprocess.run(
+        ["git", "status", "--porcelain", "--untracked-files=no"],
+        cwd=repo_root,
+        capture_output=True,
+        check=False,
+        text=True,
+    )
+    if result.returncode != 0:
+        raise RuntimeError("cannot inspect worktree state for baseline provenance")
     return bool(result.stdout.strip())
 
 
@@ -811,6 +924,17 @@ def _code_snapshot_sha256() -> str:
         payload.extend(path.read_bytes())
         payload.extend(b"\0")
     return sha256_hex(bytes(payload))
+
+
+def _assert_code_provenance_unchanged(
+    *,
+    expected_git_revision: str,
+    expected_code_snapshot_sha256: str,
+) -> None:
+    if _git_revision() != expected_git_revision:
+        raise RuntimeError("Git revision changed during baseline evaluation")
+    if _code_snapshot_sha256() != expected_code_snapshot_sha256:
+        raise RuntimeError("code snapshot changed during baseline evaluation")
 
 
 def _write_atomic(path: Path, payload: bytes) -> None:

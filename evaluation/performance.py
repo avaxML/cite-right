@@ -15,7 +15,7 @@ from collections.abc import Callable, Mapping, Sequence
 from importlib import metadata as importlib_metadata
 from math import ceil
 from pathlib import Path
-from typing import Literal, TypeAlias
+from typing import Literal, TypeAlias, TypedDict, cast
 
 from pydantic import BaseModel, ConfigDict, ValidationError, model_validator
 
@@ -33,12 +33,30 @@ PeakMemoryReader: TypeAlias = Callable[[], int | None]
 CacheSnapshotReader: TypeAlias = Callable[
     [Literal["before", "after"], EvaluationCase, object | None], "CacheSnapshot | None"
 ]
+
+
+class CandidateSmokeMetrics(TypedDict):
+    median_duration_ns: float
+    p95_duration_ns: int
+    peak_memory_bytes: int | None
+    raw_end_to_end_samples_ns: dict[str, list[int]]
+    config_sha256: str
+    protocol_hash: str
+    workload_hash: str
+    environment_hash: str
+
+
+class CandidateScenarioMetrics(TypedDict):
+    median_duration_ns: float
+    p95_duration_ns: int
+    peak_memory_bytes: int | None
+    raw_end_to_end_samples_ns: list[int]
 PrepareCorpusFn: TypeAlias = Callable[[EvaluationCase], object]
 AnswerCaseFn: TypeAlias = Callable[[EvaluationCase, object], object]
 MAX_EXCEPTION_MESSAGE_CODEPOINTS = 256
 TRUNCATION_MARKER = "... [truncated]"
 SMOKE_PROTOCOL_VERSION = "evaluation.performance.smoke.v1"
-SMOKE_TRIAL_COUNT = 20
+SMOKE_TRIAL_COUNT = 40
 SMOKE_WARMUP_COUNT = 1
 SMOKE_MEASUREMENT_ITERATIONS = 25
 SMOKE_WORKER_TIMEOUT_SECONDS = 20
@@ -334,6 +352,8 @@ class SmokeScenarioReport(_FrozenModel):
 class SmokeArtifact(_FrozenModel):
     backends: list[Backend]
     dataset_hash: str
+    config: dict[str, object]
+    config_sha256: str
     correctness_hash: str
     protocol_hash: str
     workload_hash: str
@@ -348,7 +368,12 @@ class SmokeArtifact(_FrozenModel):
 
     @model_validator(mode="after")
     def _validate_artifact(self) -> SmokeArtifact:
-        for field_name in ("correctness_hash", "protocol_hash", "workload_hash"):
+        for field_name in (
+            "config_sha256",
+            "correctness_hash",
+            "protocol_hash",
+            "workload_hash",
+        ):
             value = getattr(self, field_name)
             if len(value) != 64 or not value.isalnum() or value != value.lower():
                 raise ValueError(
@@ -394,6 +419,7 @@ class SmokeWorkerRequest(_FrozenModel):
     backend: Backend
     warmup_count: int
     cases: list[dict[str, object]]
+    config: dict[str, object]
     scenario: dict[str, object] | None = None
 
     @model_validator(mode="after")
@@ -659,13 +685,19 @@ def run_benchmark(
     )
 
 
-def run_performance_smoke(*, output_path: Path) -> dict[str, object]:
+def run_performance_smoke(
+    *,
+    output_path: Path,
+    config: CitationConfig | None = None,
+) -> dict[str, object]:
     parent = output_path.parent
     if not parent.exists():
         raise ValueError(f"output parent directory does not exist: {parent}")
     if not parent.is_dir():
         raise ValueError(f"output parent directory must be a directory: {parent}")
 
+    resolved_config = config or CitationConfig()
+    config_payload = resolved_config.model_dump(mode="json")
     scenarios = _smoke_scenarios()
     cases = tuple(scenario.case for scenario in scenarios)
     workload = SmokeWorkload(
@@ -685,6 +717,7 @@ def run_performance_smoke(*, output_path: Path) -> dict[str, object]:
             backend=scenario.backend,
             warmup_count=SMOKE_WARMUP_COUNT,
             cases=[scenario.case.model_dump(mode="json", exclude_computed_fields=True)],
+            config=config_payload,
             scenario=scenario.model_dump(mode="json", exclude_computed_fields=True),
         )
         responses = tuple(_run_smoke_trial(request) for _ in range(SMOKE_TRIAL_COUNT))
@@ -749,6 +782,8 @@ def run_performance_smoke(*, output_path: Path) -> dict[str, object]:
     artifact = SmokeArtifact(
         backends=list(workload.selected_backend_ids),
         dataset_hash=dataset_hash,
+        config=config_payload,
+        config_sha256=sha256_hex(canonical_json_bytes(config_payload)),
         correctness_hash=correctness_hash,
         protocol_hash=_smoke_protocol_hash(),
         workload_hash=sha256_hex(
@@ -773,6 +808,54 @@ def run_performance_smoke(*, output_path: Path) -> dict[str, object]:
         "protocol_hash": artifact.protocol_hash,
         "raw_samples_ns": list(artifact.raw_samples_ns),
         "workload_hash": artifact.workload_hash,
+    }
+
+
+def measure_candidate_smoke(
+    *,
+    backend: Backend,
+    embeddings: Literal["off", "on"],
+    config: CitationConfig,
+) -> CandidateSmokeMetrics:
+    """Measure a candidate on the baseline-comparable smoke scenarios."""
+
+    matching = tuple(
+        scenario
+        for scenario in _smoke_scenarios()
+        if scenario.backend == backend and scenario.embeddings == embeddings
+    )
+    if not matching:
+        raise ValueError(
+            f"no smoke scenarios are available for backend={backend!r} embeddings={embeddings!r}"
+        )
+    workload_hash = selected_smoke_workload_hash(
+        backend=backend,
+        embeddings=embeddings,
+    )
+    reports = tuple(
+        _measure_candidate_smoke_scenario(scenario=scenario, config=config)
+        for scenario in matching
+    )
+    peak_values = [
+        report["peak_memory_bytes"]
+        for report in reports
+        if report["peak_memory_bytes"] is not None
+    ]
+    median_values = [report["median_duration_ns"] for report in reports]
+    p95_values = [cast(int, report["p95_duration_ns"]) for report in reports]
+    raw_samples = {
+        scenario.scenario_id: cast(list[int], report["raw_end_to_end_samples_ns"])
+        for scenario, report in zip(matching, reports, strict=True)
+    }
+    return {
+        "median_duration_ns": max(median_values),
+        "p95_duration_ns": max(p95_values),
+        "peak_memory_bytes": None if not peak_values else max(peak_values),
+        "raw_end_to_end_samples_ns": raw_samples,
+        "config_sha256": sha256_hex(canonical_json_bytes(config.model_dump(mode="json"))),
+        "protocol_hash": _smoke_protocol_hash(),
+        "workload_hash": workload_hash,
+        "environment_hash": smoke_environment_compatibility_hash(),
     }
 
 
@@ -803,11 +886,13 @@ def _run_smoke_worker() -> int:
             )
             if scenario.backend != request.backend:
                 raise ValueError("scenario backend must equal request backend")
+            resolved_config = CitationConfig.model_validate(request.config)
             if request.cases != [expected_case_payload]:
                 raise ValueError("scenario case must equal the sole requested case")
             response = _measure_smoke_scenario(
                 scenario,
                 warmup_count=request.warmup_count,
+                config=resolved_config,
             )
             _write_stdout_json(response)
             return 0
@@ -818,7 +903,7 @@ def _run_smoke_worker() -> int:
         report = run_benchmark(
             cases=cases,
             backend=request.backend,
-            config={"mode": "smoke", "protocol_version": request.protocol_version},
+            config=request.config,
             seed=7,
             warmup_count=request.warmup_count,
         )
@@ -873,13 +958,14 @@ def _execute_one_shot(
     *,
     case: EvaluationCase,
     backend: Backend,
+    config: CitationConfig,
     embedder: _DeterministicEmbedder | None,
 ) -> list[object]:
     return list(
         align_citations(
             case.answer,
             _citation_sources(case),
-            config=CitationConfig(),
+            config=config,
             backend=backend,
             embedder=embedder,
         )
@@ -890,36 +976,46 @@ def _execute_prepared(
     *,
     case: EvaluationCase,
     backend: Backend,
+    config: CitationConfig,
     embedder: _DeterministicEmbedder | None,
 ) -> list[object]:
     corpus = PreparedCitationCorpus.from_sources(
         _citation_sources(case),
-        config=CitationConfig(),
+        config=config,
         embedder=embedder,
     )
     return list(corpus.align(case.answer, backend=backend))
 
 
-def _execute_smoke_scenario(scenario: SmokeScenario) -> list[object]:
+def _execute_smoke_scenario(
+    scenario: SmokeScenario,
+    *,
+    config: CitationConfig,
+) -> list[object]:
     embedder = _DeterministicEmbedder() if scenario.embeddings == "on" else None
     if scenario.execution_path == "one-shot":
         return _execute_one_shot(
             case=scenario.case,
             backend=scenario.backend,
+            config=config,
             embedder=embedder,
         )
     return _execute_prepared(
         case=scenario.case,
         backend=scenario.backend,
+        config=config,
         embedder=embedder,
     )
 
 
 def _measure_smoke_scenario(
-    scenario: SmokeScenario, *, warmup_count: int
+    scenario: SmokeScenario,
+    *,
+    warmup_count: int,
+    config: CitationConfig,
 ) -> SmokeWorkerSuccessResponse:
     for _ in range(warmup_count):
-        _execute_smoke_scenario(scenario)
+        _execute_smoke_scenario(scenario, config=config)
 
     embedder = _DeterministicEmbedder() if scenario.embeddings == "on" else None
     prepared_ns = 0
@@ -930,6 +1026,7 @@ def _measure_smoke_scenario(
             outputs = _execute_one_shot(
                 case=scenario.case,
                 backend=scenario.backend,
+                config=config,
                 embedder=embedder,
             )
             correctness_hashes.add(_output_correctness_hash(outputs))
@@ -939,11 +1036,11 @@ def _measure_smoke_scenario(
     else:
         prepared_started = time.perf_counter_ns()
         for _ in range(SMOKE_MEASUREMENT_ITERATIONS):
-            corpus = PreparedCitationCorpus.from_sources(
-                _citation_sources(scenario.case),
-                config=CitationConfig(),
-                embedder=embedder,
-            )
+                corpus = PreparedCitationCorpus.from_sources(
+                    _citation_sources(scenario.case),
+                    config=config,
+                    embedder=embedder,
+                )
         prepared_ns = _average_iteration_duration(
             _clamp_duration(time.perf_counter_ns() - prepared_started)
         )
@@ -970,6 +1067,43 @@ def _measure_smoke_scenario(
         correctness_hash=next(iter(correctness_hashes)),
         peak_memory_bytes=_default_peak_memory_reader(),
     )
+
+
+def _measure_candidate_smoke_scenario(
+    *,
+    scenario: SmokeScenario,
+    config: CitationConfig,
+) -> CandidateScenarioMetrics:
+    request = SmokeWorkerRequest(
+        protocol_version=SMOKE_PROTOCOL_VERSION,
+        backend=scenario.backend,
+        warmup_count=SMOKE_WARMUP_COUNT,
+        cases=[scenario.case.model_dump(mode="json", exclude_computed_fields=True)],
+        config=config.model_dump(mode="json"),
+        scenario=scenario.model_dump(mode="json", exclude_computed_fields=True),
+    )
+    responses = tuple(_run_smoke_trial(request) for _ in range(SMOKE_TRIAL_COUNT))
+    correctness_hashes = {response.correctness_hash for response in responses}
+    if len(correctness_hashes) != 1:
+        raise RuntimeError("candidate smoke trials changed correctness outputs")
+    prepared_samples = [response.prepared_total_ns for response in responses]
+    answer_samples = [response.answer_total_ns for response in responses]
+    peak_values = [
+        response.peak_memory_bytes
+        for response in responses
+        if response.peak_memory_bytes is not None
+    ]
+    end_to_end_samples = [
+        prepared + answer
+        for prepared, answer in zip(prepared_samples, answer_samples, strict=True)
+    ]
+    summary = _duration_summary(end_to_end_samples)
+    return {
+        "median_duration_ns": summary.median_duration_ns,
+        "p95_duration_ns": summary.p95_duration_ns,
+        "peak_memory_bytes": max(peak_values) if peak_values else None,
+        "raw_end_to_end_samples_ns": end_to_end_samples,
+    }
 
 
 def _duration_summary(durations: Sequence[int]) -> DurationSummary:
@@ -1203,16 +1337,20 @@ def _dependency_versions() -> dict[str, str]:
 def _git_revision() -> str:
     repo_root = Path(__file__).resolve().parents[1]
     result = subprocess.run(
-        ["git", "rev-parse", "HEAD"],
+        ["git", "rev-parse", "--verify", "HEAD^{commit}"],
         cwd=repo_root,
         check=False,
         capture_output=True,
         text=True,
     )
     revision = result.stdout.strip()
-    if result.returncode == 0 and revision:
-        return revision
-    return "unknown"
+    if (
+        result.returncode != 0
+        or len(revision) != 40
+        or any(character not in "0123456789abcdef" for character in revision)
+    ):
+        raise RuntimeError("cannot resolve an exact Git commit for performance provenance")
+    return revision
 
 
 def _load_smoke_artifact(path: Path) -> SmokeArtifact:
@@ -1390,6 +1528,7 @@ def _assert_matching_smoke_metadata(
     for field_name in (
         "backends",
         "dataset_hash",
+        "config_sha256",
         "correctness_hash",
         "protocol_hash",
         "workload_hash",
@@ -1657,6 +1796,38 @@ def _smoke_scenarios() -> tuple[SmokeScenario, ...]:
     return tuple(sorted(scenarios, key=lambda scenario: scenario.scenario_id))
 
 
+def selected_smoke_workload_hash(
+    *,
+    backend: Backend,
+    embeddings: Literal["off", "on"],
+) -> str:
+    selected_case_ids = sorted(
+        scenario.case.case_id
+        for scenario in _smoke_scenarios()
+        if scenario.backend == backend and scenario.embeddings == embeddings
+    )
+    workload = SmokeWorkload(
+        strata=list(SMOKE_STRATA),
+        selected_case_ids=selected_case_ids,
+        selected_backend_ids=[backend],
+    )
+    return sha256_hex(canonical_json_bytes(workload.model_dump(mode="python")))
+
+
+def smoke_environment_compatibility_payload() -> dict[str, object]:
+    environment = _build_smoke_environment()
+    return {
+        "python_version": environment.python_version,
+        "platform": environment.platform,
+        "cpu": environment.cpu,
+        "dependencies": environment.dependencies,
+    }
+
+
+def smoke_environment_compatibility_hash() -> str:
+    return sha256_hex(canonical_json_bytes(smoke_environment_compatibility_payload()))
+
+
 def _citation_sources(
     case: EvaluationCase,
 ) -> tuple[SourceDocument | SourceChunk, ...]:
@@ -1689,6 +1860,18 @@ def _smoke_correctness_hash(*, cases: Sequence[EvaluationCase]) -> str:
     return sha256_hex(canonical_json_bytes(payload))
 
 
+def selected_smoke_scenario_ids(
+    *, backend: Backend, embeddings: Literal["off", "on"]
+) -> frozenset[str]:
+    """Return the canonical scenario IDs measured for one candidate mode."""
+
+    return frozenset(
+        scenario.scenario_id
+        for scenario in _smoke_scenarios()
+        if scenario.backend == backend and scenario.embeddings == embeddings
+    )
+
+
 def _smoke_protocol_hash() -> str:
     payload = {
         "protocol_version": SMOKE_PROTOCOL_VERSION,
@@ -1710,6 +1893,7 @@ def _default_smoke_worker_request() -> SmokeWorkerRequest:
         protocol_version=SMOKE_PROTOCOL_VERSION,
         backend="python",
         warmup_count=SMOKE_WARMUP_COUNT,
+        config=CitationConfig().model_dump(mode="json"),
         cases=[
             case.model_dump(mode="json", exclude_computed_fields=True) for case in cases
         ],
