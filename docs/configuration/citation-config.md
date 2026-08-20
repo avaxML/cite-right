@@ -258,12 +258,11 @@ high_precision_config = CitationConfig(
 )
 
 results = align_citations(
-    answer, 
-    sources, 
+    answer,
+    sources,
     config=high_precision_config,
     embedder=SentenceTransformerEmbedder("sentence-transformers/paraphrase-MiniLM-L3-v2")
 )
 ```
 
 This configuration was derived using multi-dimensional grid optimization over a rich adversarial RAG dataset. By setting `min_final_score=2.6`, it successfully filters out near-miss false positives (e.g., when the assistant claims a negated fact or changes a percentage in an otherwise identical source paragraph) while retaining high recall ($71.4\%$) on valid, supported alignments.
-

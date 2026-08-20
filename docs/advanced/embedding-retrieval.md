@@ -101,6 +101,7 @@ config = CitationConfig(
 results = align_citations(answer, sources, embedder=embedder, config=config)
 ```
 
+
 ### Retrieval support vs citations
 
 Embeddings help candidate recall, not citation localization.
