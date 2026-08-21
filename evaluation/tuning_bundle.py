@@ -503,6 +503,8 @@ def _is_relative_to(path: Path, root: Path) -> bool:
 
 
 def _fsync_tree(root: Path) -> None:
+    if os.name != "posix":
+        return
     for path in root.iterdir():
         metadata = os.lstat(path)
         if stat.S_ISREG(metadata.st_mode):

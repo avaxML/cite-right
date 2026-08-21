@@ -694,6 +694,8 @@ def _atomic_replace_directory(source_dir: Path, destination_dir: Path) -> None:
 
 
 def _fsync_tree(root: Path) -> None:
+    if os.name != "posix":
+        return
     for path in root.rglob("*"):
         if path.is_file():
             with path.open("rb") as handle:
