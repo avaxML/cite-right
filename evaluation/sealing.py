@@ -441,7 +441,7 @@ def _read_file_bytes(path: Path, *, require_private_permissions: bool) -> bytear
     if require_private_permissions and os.name == "posix":
         if before_stat.st_mode & (stat.S_IRWXG | stat.S_IRWXO):
             raise PermissionError(f"{path} must not be group/world-readable")
-    flags = os.O_RDONLY
+    flags = os.O_RDONLY | getattr(os, "O_BINARY", 0)
     nofollow = getattr(os, "O_NOFOLLOW", 0)
     if nofollow:
         flags |= nofollow
