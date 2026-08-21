@@ -34,7 +34,8 @@ def test_build_tuning_bundle_redacts_holdout_tokens_review_metadata_and_dataset_
     bundle = load_tuning_bundle(output_dir)
 
     assert manifest == bundle.manifest
-    assert stat.S_IMODE(output_dir.stat().st_mode) == 0o700
+    if os.name == "posix":
+        assert stat.S_IMODE(output_dir.stat().st_mode) == 0o700
     assert {path.name for path in output_dir.iterdir()} == {
         "dev.json",
         "manifest.json",
