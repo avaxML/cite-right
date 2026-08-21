@@ -50,7 +50,10 @@ jobs:
       - name: Run tests with coverage
         run: uv run pytest --cov=cite_right --cov-report=term -q
       - name: Generate coverage badge
-        uses: tj-actions/coverage-badge-py@v2
+        # tj-actions/coverage-badge-py force-upgrades setuptools, which removed
+        # pkg_resources (required by coverage-badge) in newer releases. Pin it
+        # ourselves instead of relying on the action's unconstrained install.
+        run: uv run --with coverage-badge --with "setuptools<81" coverage-badge -o coverage.svg -f
       - name: Verify badge changed
         uses: tj-actions/verify-changed-files@v20
         id: verify-changed-files
