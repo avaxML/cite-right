@@ -291,7 +291,7 @@ fn rust_tokenize_and_prepare(
 /// Batch align answer tokens against selected candidates and return alignment results.
 /// Returns list of (candidate_index, score, token_start, token_end, query_start, query_end, matches)
 #[pyfunction(signature = (answer_tokens, candidate_indices, candidate_token_lists, match_score=2, mismatch_score=-1, gap_score=-1))]
-#[allow(clippy::too_many_arguments)]
+#[allow(clippy::too_many_arguments, clippy::type_complexity)]
 fn rust_align_batch_candidates(
     py: Python<'_>,
     answer_tokens: Vec<u32>,
