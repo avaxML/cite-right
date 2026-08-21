@@ -70,19 +70,21 @@ class TestTiktokenTokenizer:
             assert decoded == token_text, f"Token {i}: {decoded!r} != {token_text!r}"
 
     def test_unicode_text(self, tokenizer):
-        """Test tokenization of unicode text."""
-        text = "Hello 世界! 🎉 Café"
+        """Test tokenization of unicode text.
+
+        Uses accented Latin text whose cl100k_base tokens each align to
+        whole-character boundaries. CJK and emoji text can instead split a
+        single character's bytes across multiple tokens; that case is
+        covered by test_zero_width_unicode_span_raises.
+        """
+        text = "Hello Café naïve résumé"
         result = tokenizer.tokenize(text)
 
         assert result.text == text
         assert len(result.token_ids) > 0
-        # Verify spans are valid character indices
-        # Note: BPE tokens can split multi-byte UTF-8 characters, resulting in
-        # zero-length spans for tokens containing incomplete UTF-8 sequences
+        # Verify spans are valid, non-empty character ranges
         for start, end in result.token_spans:
-            assert 0 <= start <= len(text)
-            assert 0 <= end <= len(text)
-            assert start <= end
+            assert 0 <= start < end <= len(text)
 
     def test_zero_width_unicode_span_raises(self):
         """Test byte-split unicode spans are rejected for exact tracing."""
