@@ -413,7 +413,7 @@ def test_build_environment_metadata_captures_runtime_package_backend_and_hashes(
     assert metadata.python_implementation == platform.python_implementation()
     assert metadata.python_version == platform.python_version()
     assert metadata.platform == platform.platform()
-    assert metadata.package_version == "0.1.0"
+    assert metadata.package_version == performance._package_version()
     assert metadata.backend == "python"
     assert metadata.config_sha256 == sha256_hex(canonical_json_bytes(config))
     assert metadata.workload_sha256 == sha256_hex(
