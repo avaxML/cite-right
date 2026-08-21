@@ -91,8 +91,17 @@ fn iter_token_spans(text: &str) -> Vec<(usize, usize)> {
             idx += 1;
             while idx < chars.len() {
                 let ch = chars[idx].1;
-                if ch.is_numeric() || ch == '.' || ch == ',' {
+                if ch.is_numeric() {
                     idx += 1;
+                } else if (ch == '.' || ch == ',') && idx > 0 && idx + 1 < chars.len() {
+                    // Only include . or , if between digits
+                    let prev_is_digit = idx > 0 && chars[idx - 1].1.is_numeric();
+                    let next_is_digit = idx + 1 < chars.len() && chars[idx + 1].1.is_numeric();
+                    if prev_is_digit && next_is_digit {
+                        idx += 1;
+                    } else {
+                        break;
+                    }
                 } else {
                     break;
                 }
@@ -149,9 +158,8 @@ pub fn simple_segment(text: &str) -> Vec<(usize, usize)> {
             let next_is_space = i + 1 < chars.len() && chars[i + 1].1.is_whitespace();
             let is_end = i + 1 == chars.len();
             if next_is_space || is_end {
-                let end_byte = if next_is_space && i + 2 < chars.len() {
-                    chars[i + 2].0
-                } else if i + 1 < chars.len() {
+                // End at the punctuation, not after the space
+                let end_byte = if i + 1 < chars.len() {
                     chars[i + 1].0
                 } else {
                     text.len()
@@ -162,7 +170,12 @@ pub fn simple_segment(text: &str) -> Vec<(usize, usize)> {
                 let end_char = byte_to_char_index(text, end_byte);
                 segments.push((start_char, end_char));
                 
-                start_byte = end_byte;
+                // Start next segment after the space
+                start_byte = if next_is_space && i + 2 < chars.len() {
+                    chars[i + 2].0
+                } else {
+                    end_byte
+                };
                 i = if next_is_space { i + 2 } else { i + 1 };
                 continue;
             }
