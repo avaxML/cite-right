@@ -5,10 +5,6 @@ mod prepare;
 
 type MatchBlocks = Vec<(usize, usize)>;
 type AlignmentDetails = (i32, usize, usize, usize, usize, usize, usize);
-type PrepareResult = (
-    Vec<Vec<(usize, usize, Vec<u32>, Vec<(usize, usize)>)>>,
-    Vec<(u32, f64)>,
-);
 type AlignmentWithBlocks = (i32, usize, usize, usize, usize, usize, MatchBlocks);
 
 #[pyfunction(signature = (seq1, seq2, match_score=2, mismatch_score=-1, gap_score=-1))]

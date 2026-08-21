@@ -134,8 +134,10 @@ class PreparedCitationCorpus(BaseModel):
                 return cls._from_sources_rust(
                     normalized_sources, cfg, source_segmenter, tokenizer
                 )
-            except Exception:
+            except Exception as e:
                 # Fall back to Python if Rust path fails
+                import sys
+                print(f"Rust prepare path failed: {e}, falling back to Python", file=sys.stderr)
                 pass
         
         # Python fallback path
@@ -192,11 +194,14 @@ class PreparedCitationCorpus(BaseModel):
         ):
             passages: list[Passage] = []
             
-            for passage_start, passage_end, token_ids, token_spans in rust_source_candidates:
+            for passage_idx, (passage_start, passage_end, token_ids, token_spans) in enumerate(rust_source_candidates):
                 passage = Passage(
                     text=source.text[passage_start:passage_end],
                     doc_char_start=passage_start,
                     doc_char_end=passage_end,
+                    segment_start=passage_idx,  # Approximate - Rust doesn't track segment boundaries
+                    segment_end=passage_idx + 1,
+                    source_text=source.text,
                 )
                 passages.append(passage)
                 

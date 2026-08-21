@@ -2,8 +2,18 @@
 //!
 //! This module moves tokenization, passage generation, and candidate building to Rust
 //! while keeping Smith-Waterman alignment in Python for quality.
+//!
+//! IMPORTANT: All indices returned to Python are CHARACTER indices, not byte indices,
+//! because Python string slicing uses character offsets.
 
 use std::collections::HashMap;
+
+/// Convert byte index to character index in a UTF-8 string
+fn byte_to_char_index(text: &str, byte_index: usize) -> usize {
+    text.char_indices()
+        .take_while(|(i, _)| *i < byte_index)
+        .count()
+}
 
 #[derive(Clone)]
 pub struct RustTokenizedText {
@@ -28,8 +38,8 @@ impl SimpleTokenizer {
         let mut token_ids = Vec::new();
         let mut token_spans = Vec::new();
 
-        for (start, end) in iter_token_spans(text) {
-            let raw = &text[start..end];
+        for (start_byte, end_byte) in iter_token_spans(text) {
+            let raw = &text[start_byte..end_byte];
             let normalized = normalize_token_simple(raw);
             if normalized.is_empty() {
                 continue;
@@ -42,7 +52,10 @@ impl SimpleTokenizer {
             });
             
             token_ids.push(token_id);
-            token_spans.push((start, end));
+            // Convert byte indices to char indices for Python
+            let start_char = byte_to_char_index(text, start_byte);
+            let end_char = byte_to_char_index(text, end_byte);
+            token_spans.push((start_char, end_char));
         }
 
         RustTokenizedText {
@@ -53,44 +66,63 @@ impl SimpleTokenizer {
 }
 
 fn iter_token_spans(text: &str) -> Vec<(usize, usize)> {
-    // Simple whitespace + punctuation tokenization matching Python SimpleTokenizer
+    // Unicode-aware tokenization matching Python SimpleTokenizer
+    // Only yields spans for: numbers, words, and special symbols (%, $, €, £)
     let mut spans = Vec::new();
-    let bytes = text.as_bytes();
+    let chars: Vec<(usize, char)> = text.char_indices().collect();
     let mut idx = 0;
 
-    while idx < bytes.len() {
-        // Skip whitespace
-        while idx < bytes.len() && bytes[idx].is_ascii_whitespace() {
+    while idx < chars.len() {
+        let c = chars[idx].1;
+        
+        if c.is_whitespace() {
             idx += 1;
-        }
-        if idx >= bytes.len() {
-            break;
+            continue;
         }
 
-        let start = idx;
+        let start_byte = chars[idx].0;
         
-        // Consume token
-        if bytes[idx].is_ascii_digit() {
-            // Number token
-            while idx < bytes.len() && (bytes[idx].is_ascii_digit() || bytes[idx] == b'.' || bytes[idx] == b',') {
-                idx += 1;
-            }
-        } else if bytes[idx].is_ascii_alphanumeric() {
-            // Word token
-            while idx < bytes.len() {
-                let b = bytes[idx];
-                if b.is_ascii_alphanumeric() || b == b'\'' || b == b'-' || b == b'_' {
+        // Check if it's a number
+        if c.is_numeric() {
+            idx += 1;
+            while idx < chars.len() {
+                let ch = chars[idx].1;
+                if ch.is_numeric() || ch == '.' || ch == ',' {
                     idx += 1;
                 } else {
                     break;
                 }
             }
-        } else {
-            // Single character token (punctuation)
+        }
+        // Check if it's a special symbol (%, $, €, £) - after NFKC normalization
+        else if matches!(c, '%' | '$' | '€' | '£' | '％' | '＄') {
             idx += 1;
         }
+        // Check if it's a word character
+        else if c.is_alphanumeric() {
+            idx += 1;
+            while idx < chars.len() {
+                let ch = chars[idx].1;
+                if ch.is_alphanumeric() || ch == '\'' || ch == '-' || ch == '_' {
+                    idx += 1;
+                } else {
+                    break;
+                }
+            }
+        }
+        // Skip other punctuation
+        else {
+            idx += 1;
+            continue;
+        }
         
-        spans.push((start, idx));
+        let end_byte = if idx < chars.len() {
+            chars[idx].0
+        } else {
+            text.len()
+        };
+        
+        spans.push((start_byte, end_byte));
     }
 
     spans
@@ -103,31 +135,45 @@ fn normalize_token_simple(token: &str) -> String {
 
 pub fn simple_segment(text: &str) -> Vec<(usize, usize)> {
     let mut segments = Vec::new();
-    let bytes = text.as_bytes();
-    let mut start = 0;
+    let chars: Vec<(usize, char)> = text.char_indices().collect();
+    let mut start_byte = 0;
     let mut i = 0;
 
-    while i < bytes.len() {
-        if matches!(bytes[i], b'.' | b'!' | b'?') {
-            let next_is_space = i + 1 < bytes.len() && bytes[i + 1].is_ascii_whitespace();
-            let is_end = i + 1 == bytes.len();
+    while i < chars.len() {
+        let (_, c) = chars[i];
+        if matches!(c, '.' | '!' | '?') {
+            let next_is_space = i + 1 < chars.len() && chars[i + 1].1.is_whitespace();
+            let is_end = i + 1 == chars.len();
             if next_is_space || is_end {
-                let end = if next_is_space { i + 2 } else { i + 1 };
-                segments.push((start, end.min(bytes.len())));
-                start = end.min(bytes.len());
-                i = end;
+                let end_byte = if next_is_space && i + 2 < chars.len() {
+                    chars[i + 2].0
+                } else if i + 1 < chars.len() {
+                    chars[i + 1].0
+                } else {
+                    text.len()
+                };
+                
+                // Convert to char indices for Python
+                let start_char = byte_to_char_index(text, start_byte);
+                let end_char = byte_to_char_index(text, end_byte);
+                segments.push((start_char, end_char));
+                
+                start_byte = end_byte;
+                i = if next_is_space { i + 2 } else { i + 1 };
                 continue;
             }
         }
         i += 1;
     }
 
-    if start < bytes.len() {
-        segments.push((start, bytes.len()));
+    if start_byte < text.len() {
+        let start_char = byte_to_char_index(text, start_byte);
+        let end_char = text.chars().count();
+        segments.push((start_char, end_char));
     }
 
     if segments.is_empty() && !text.is_empty() {
-        segments.push((0, text.len()));
+        segments.push((0, text.chars().count()));
     }
 
     segments
