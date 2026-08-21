@@ -90,6 +90,25 @@ for answer, sources in workload:
 
 This eliminates repeated model loading and configuration parsing.
 
+When the same source set is reused across many answers, prepare the corpus once so source normalization, passage generation, tokenization, IDF construction, and optional embedding indexing are also reused.
+
+```python
+from cite_right import CitationConfig, PreparedCitationCorpus, SourceDocument
+
+sources = [
+    SourceDocument(id="report", text="Annual revenue increased by 20% during fiscal year 2024."),
+]
+corpus = PreparedCitationCorpus.from_sources(
+    sources,
+    config=CitationConfig(top_k=3),
+)
+
+for answer in workload:
+    results = corpus.align(answer)
+```
+
+This removes repeated source-side preprocessing from steady-state alignment cost.
+
 ### Parallel Processing
 
 For batch workloads, process multiple answers concurrently.

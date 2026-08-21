@@ -179,7 +179,8 @@ class TestCitationConfigPresets:
         """Permissive preset should have low thresholds."""
         config = CitationConfig.permissive()
         assert config.min_answer_coverage < 0.2
-        assert config.allow_embedding_only is True
+        assert config.min_embedding_similarity <= 0.25
+        assert config.max_retrieval_support >= 5
         assert config.top_k >= 3
 
     def test_fast_preset(self):

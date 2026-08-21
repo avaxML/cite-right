@@ -31,6 +31,8 @@ for result in results:
 
 Each span object has its own `char_start`, `char_end`, and `evidence` fields pointing to a distinct region in the source.
 
+For precise attribution, prefer `citation.evidence_spans` or `citation.exact_evidence`. The legacy `citation.evidence`, `citation.char_start`, and `citation.char_end` fields remain contiguous for backward compatibility.
+
 ## Backward Compatibility
 
 The single `evidence` field on citations remains available and always contains a contiguous span. When multi-span evidence is enabled, this field contains the enclosing span from the first matched token to the last matched token, including any gaps between matched regions.
@@ -39,14 +41,20 @@ The single `evidence` field on citations remains available and always contains a
 # evidence contains the full enclosing span
 full_evidence = citation.evidence
 
+# exact_evidence contains only directly matched text
+exact_evidence = citation.exact_evidence
+
 # evidence_spans contains the individual regions
 individual_spans = citation.evidence_spans
 
 # The full evidence encompasses all individual spans
 assert full_evidence.startswith(individual_spans[0].evidence)
+
+# exact_evidence makes omitted bridge text explicit
+assert exact_evidence == " ... ".join(span.evidence for span in individual_spans)
 ```
 
-Applications that do not need multi-span granularity can continue using the `evidence` field unchanged.
+Applications that do not need multi-span granularity can continue using the `evidence` field unchanged. Tracing, highlighting, and attribution-oriented consumers should prefer `exact_evidence` or `evidence_spans` so bridge text is not over-attributed.
 
 ## Gap Merging
 

@@ -162,6 +162,75 @@ fn align_topk_details(
     })
 }
 
+#[pyfunction(signature = (seq1, seqs, match_score=2, mismatch_score=-1, gap_score=-1))]
+fn align_batch_details(
+    py: Python<'_>,
+    seq1: Vec<u32>,
+    seqs: Vec<Vec<u32>>,
+    match_score: i32,
+    mismatch_score: i32,
+    gap_score: i32,
+) -> Vec<(i32, usize, usize, usize, usize, usize)> {
+    if seqs.is_empty() {
+        return Vec::new();
+    }
+    let params = smith_waterman::ScoreParams {
+        match_score,
+        mismatch_score,
+        gap_score,
+    };
+    py.detach(|| {
+        smith_waterman::align_batch(&seq1, &seqs, params)
+            .into_iter()
+            .map(|alignment| {
+                (
+                    alignment.score,
+                    alignment.token_start,
+                    alignment.token_end,
+                    alignment.query_start,
+                    alignment.query_end,
+                    alignment.matches,
+                )
+            })
+            .collect()
+    })
+}
+
+#[pyfunction(signature = (seq1, seqs, match_score=2, mismatch_score=-1, gap_score=-1))]
+fn align_batch_blocks_details(
+    py: Python<'_>,
+    seq1: Vec<u32>,
+    seqs: Vec<Vec<u32>>,
+    match_score: i32,
+    mismatch_score: i32,
+    gap_score: i32,
+) -> Vec<AlignmentWithBlocks> {
+    if seqs.is_empty() {
+        return Vec::new();
+    }
+    let params = smith_waterman::ScoreParams {
+        match_score,
+        mismatch_score,
+        gap_score,
+    };
+    py.detach(|| {
+        smith_waterman::align_batch_with_match_blocks(&seq1, &seqs, params)
+            .into_iter()
+            .map(|(alignment, match_blocks)| {
+                (
+                    alignment.score,
+                    alignment.token_start,
+                    alignment.token_end,
+                    alignment.query_start,
+                    alignment.query_end,
+                    alignment.matches,
+                    match_blocks,
+                )
+            })
+            .collect()
+    })
+}
+
 #[pymodule]
 fn _core(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(align_pair, module)?)?;
@@ -170,5 +239,7 @@ fn _core(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(align_best, module)?)?;
     module.add_function(wrap_pyfunction!(align_best_details, module)?)?;
     module.add_function(wrap_pyfunction!(align_topk_details, module)?)?;
+    module.add_function(wrap_pyfunction!(align_batch_details, module)?)?;
+    module.add_function(wrap_pyfunction!(align_batch_blocks_details, module)?)?;
     Ok(())
 }

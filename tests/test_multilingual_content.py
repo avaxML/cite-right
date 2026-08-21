@@ -945,9 +945,7 @@ class TestMultilingualSemanticEmbeddings:
             max_candidates_lexical=10,
             max_candidates_embedding=50,
             max_candidates_total=50,
-            allow_embedding_only=True,
             min_embedding_similarity=0.3,
-            supported_embedding_similarity=0.4,
             min_alignment_score=1,
             min_answer_coverage=0.1,
             weights=CitationWeights(
@@ -991,9 +989,7 @@ class TestMultilingualSemanticEmbeddings:
             max_candidates_lexical=10,
             max_candidates_embedding=50,
             max_candidates_total=50,
-            allow_embedding_only=True,
             min_embedding_similarity=0.3,
-            supported_embedding_similarity=0.4,
             min_alignment_score=1,
             min_answer_coverage=0.1,
             weights=CitationWeights(
@@ -1037,9 +1033,7 @@ class TestMultilingualSemanticEmbeddings:
             max_candidates_lexical=10,
             max_candidates_embedding=50,
             max_candidates_total=50,
-            allow_embedding_only=True,
             min_embedding_similarity=0.25,
-            supported_embedding_similarity=0.35,
             min_alignment_score=1,
             min_answer_coverage=0.1,
             weights=CitationWeights(
@@ -1084,9 +1078,7 @@ class TestMultilingualSemanticEmbeddings:
             max_candidates_lexical=20,
             max_candidates_embedding=50,
             max_candidates_total=50,
-            allow_embedding_only=True,
             min_embedding_similarity=0.3,
-            supported_embedding_similarity=0.4,
             min_alignment_score=1,
             min_answer_coverage=0.1,
             weights=CitationWeights(
@@ -1141,9 +1133,7 @@ class TestMultilingualSemanticEmbeddings:
             max_candidates_lexical=10,
             max_candidates_embedding=50,
             max_candidates_total=50,
-            allow_embedding_only=True,
             min_embedding_similarity=0.2,
-            supported_embedding_similarity=0.3,
             min_alignment_score=1,
             min_answer_coverage=0.1,
             weights=CitationWeights(
@@ -1191,9 +1181,7 @@ class TestMultilingualSemanticEmbeddings:
             max_candidates_lexical=10,
             max_candidates_embedding=50,
             max_candidates_total=50,
-            allow_embedding_only=True,
             min_embedding_similarity=0.3,
-            supported_embedding_similarity=0.4,
             min_alignment_score=1,
             min_answer_coverage=0.1,
             weights=CitationWeights(

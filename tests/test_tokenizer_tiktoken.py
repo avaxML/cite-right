@@ -7,6 +7,16 @@ tiktoken = pytest.importorskip("tiktoken")
 from cite_right.text.tokenizer_tiktoken import TiktokenTokenizer
 
 
+class _FakeEncoding:
+    name = "fake"
+
+    def encode(self, text: str, allowed_special: str = "all") -> list[int]:
+        return [1, 2]
+
+    def decode_single_token_bytes(self, token_id: int) -> bytes:
+        return b"\xf0" if token_id == 1 else b"\x9f\x8e\x89"
+
+
 def _get_encoding_or_skip(encoding_name: str = "cl100k_base"):
     """Helper to get tiktoken encoding, skipping test if unavailable."""
     try:
@@ -73,6 +83,13 @@ class TestTiktokenTokenizer:
             assert 0 <= start <= len(text)
             assert 0 <= end <= len(text)
             assert start <= end
+
+    def test_zero_width_unicode_span_raises(self):
+        """Test byte-split unicode spans are rejected for exact tracing."""
+        tokenizer = TiktokenTokenizer(encoding=_FakeEncoding())
+
+        with pytest.raises(ValueError, match="zero-width character span"):
+            tokenizer.tokenize("🎉")
 
     def test_different_encodings(self, encoding):
         """Test using different tiktoken encodings."""

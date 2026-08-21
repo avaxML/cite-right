@@ -47,11 +47,37 @@ def test_align_citations_multi_span_evidence_splits_disjoint_matches() -> None:
         "Citation evidence doesn't match source slice"
     )
     assert citation.evidence == "alpha beta X Y gamma delta"
+    assert citation.exact_evidence == "alpha beta ... gamma delta"
 
     for span in citation.evidence_spans:
         assert source[span.char_start : span.char_end] == span.evidence, (
             f"Span evidence mismatch: expected '{span.evidence}'"
         )
+
+
+def test_align_citations_multi_span_uses_best_equal_score_traceback() -> None:
+    """Verify citations use the optimal equal-score traceback for coverage."""
+    answer = "alpha beta alpha."
+    source = "alpha x beta beta alpha."
+
+    results = align_citations(
+        answer,
+        [source],
+        config=_multi_span_config(),
+        backend="python",
+    )
+    assert len(results) == 1
+    assert results[0].status == "supported"
+    assert results[0].citations
+
+    citation = results[0].citations[0]
+    assert citation.components["matches"] == 3.0
+    assert citation.components["answer_coverage"] == 1.0
+    assert [span.evidence for span in citation.evidence_spans] == [
+        "alpha",
+        "beta",
+        "alpha",
+    ]
 
 
 def test_align_citations_multi_span_evidence_respects_sourcechunk_offsets() -> None:
@@ -128,10 +154,11 @@ def test_align_citations_multi_span_merge_gap_chars_merges_spans() -> None:
     assert len(citation.evidence_spans) == 1, "Expected spans to be merged"
     assert citation.evidence_spans[0].evidence == citation.evidence
     assert citation.evidence == "alpha beta X gamma delta"
+    assert citation.exact_evidence == citation.evidence
 
 
-def test_align_citations_multi_span_max_spans_falls_back_to_contiguous() -> None:
-    """Verify max_spans limit triggers fallback to contiguous span."""
+def test_align_citations_multi_span_max_spans_falls_back_to_contiguous_span() -> None:
+    """Verify max_spans falls back to a single enclosing exact evidence span."""
     answer = "alpha beta gamma delta."
     source = "alpha X beta Y gamma Z delta."
 
@@ -155,13 +182,39 @@ def test_align_citations_multi_span_max_spans_falls_back_to_contiguous() -> None
         config=_multi_span_config(merge_gap_chars=0, max_spans=2),
         backend="python",
     )
-    citation_fallback = fallback[0].citations[0]
-    assert len(citation_fallback.evidence_spans) == 1, (
-        "Expected fallback to single span"
+    assert fallback[0].status == "supported"
+    assert fallback[0].retrieval_support == []
+    assert len(fallback[0].citations) == 1
+
+    citation = fallback[0].citations[0]
+    assert len(citation.evidence_spans) == 1
+    assert citation.evidence_spans[0].evidence == citation.evidence
+    assert citation.exact_evidence == citation.evidence
+    assert source[citation.char_start : citation.char_end] == citation.evidence
+    assert citation.evidence == "alpha X beta Y gamma Z delta"
+    assert citation.char_start == 0
+    assert citation.char_end == len(citation.evidence)
+
+
+def test_citation_exact_evidence_falls_back_to_legacy_evidence_when_spans_absent() -> (
+    None
+):
+    """Verify exact_evidence stays safe for defensive empty-span cases."""
+    answer = "alpha beta gamma."
+    source = "alpha beta gamma."
+
+    results = align_citations(
+        answer,
+        [source],
+        config=CitationConfig(top_k=1),
+        backend="python",
     )
-    assert citation_fallback.evidence_spans[0].evidence == citation_fallback.evidence
-    assert citation_fallback.evidence == "alpha X beta Y gamma Z delta"
-    assert citation_fallback.components.get("num_evidence_spans") == 1.0
+
+    assert len(results) == 1
+    assert results[0].citations
+
+    citation = results[0].citations[0].model_copy(update={"evidence_spans": []})
+    assert citation.exact_evidence == citation.evidence
 
 
 def test_align_citations_sourcechunk_without_document_text_slices_locally() -> None:

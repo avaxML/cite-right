@@ -139,6 +139,12 @@ class TiktokenTokenizer:
             char_start = byte_to_char[byte_start]
             char_end = byte_to_char[byte_end]
 
+            if char_start == char_end:
+                raise ValueError(
+                    "tiktoken produced a zero-width character span for a token; "
+                    "exact span tracing is not reliable for this text/encoding combination"
+                )
+
             token_spans.append((char_start, char_end))
             byte_offset = byte_end
 

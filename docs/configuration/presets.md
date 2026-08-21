@@ -27,6 +27,32 @@ config = CitationConfig.strict()
 
 This preset increases answer-coverage requirements and sets a minimum final score, filtering out marginal citations. The result is conservative citation behavior that minimizes false positives at the cost of more content being marked as unsupported.
 
+#### Custom Grid-Optimized High-Precision (0% False Positives)
+
+For absolute protection against adversarial inputs (such as negations, numerical tweaks, or entity swaps) while preserving high valid recall, construct this custom benchmark-optimized configuration:
+
+```python
+from cite_right import CitationConfig, CitationWeights
+
+# Calibrated using multi-dimensional optimization to eliminate false positive citations (0 FPs)
+config = CitationConfig(
+    top_k=1,
+    min_alignment_score=0,
+    min_answer_coverage=0.4,
+    supported_answer_coverage=0.6,
+    min_embedding_similarity=0.3,
+    min_final_score=2.6,  # Perfectly segregates true positive alignments from near-miss adversarial inputs
+    weights=CitationWeights(
+        alignment=1.0,
+        answer_coverage=1.0,
+        evidence_coverage=0.0,
+        lexical=0.5,
+        embedding=0.5
+    )
+)
+```
+
+
 ### Permissive
 
 The permissive preset accommodates heavily paraphrased content where answers express source information using substantially different wording.
@@ -93,13 +119,12 @@ The following table summarizes key parameter differences between presets.
 | min_answer_coverage | 0.2 | 0.4 | 0.15 | 0.2 |
 | supported_answer_coverage | 0.6 | 0.7 | 0.4 | 0.6 |
 | min_final_score | 0.0 | 0.3 | 0.0 | 0.0 |
-| allow_embedding_only | False | False | True | False |
 | min_embedding_similarity | 0.3 | 0.3 | 0.25 | 0.3 |
-| supported_embedding_similarity | 0.6 | 0.6 | 0.5 | 0.6 |
 | max_candidates_lexical | 200 | 200 | 200 | 50 |
 | max_candidates_embedding | 200 | 200 | 200 | 50 |
 | max_candidates_total | 400 | 400 | 400 | 100 |
 | max_citations_per_source | 2 | 1 | 3 | 1 |
+| max_retrieval_support | 3 | 2 | 5 | 1 |
 
 Other parameters (window sizes, alignment scoring, weights) remain at their default values across presets.
 

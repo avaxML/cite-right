@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 if TYPE_CHECKING:
     pass
@@ -57,9 +57,7 @@ class CitationConfig(BaseModel):
     min_alignment_score: int = 0
     min_answer_coverage: float = 0.2
     supported_answer_coverage: float = 0.6
-    allow_embedding_only: bool = False
     min_embedding_similarity: float = 0.3
-    supported_embedding_similarity: float = 0.6
 
     window_size_sentences: int = 1
     window_stride_sentences: int = 1
@@ -69,6 +67,8 @@ class CitationConfig(BaseModel):
     max_candidates_total: int = 400
 
     max_citations_per_source: int = 2
+    max_retrieval_support: int = 3
+    require_all_answer_tokens_in_evidence: bool = False
 
     weights: CitationWeights = Field(default_factory=CitationWeights)
 
@@ -81,6 +81,20 @@ class CitationConfig(BaseModel):
     multi_span_evidence: bool = False
     multi_span_merge_gap_chars: int = 16
     multi_span_max_spans: int = 5
+
+    @model_validator(mode="before")
+    @classmethod
+    def _reject_removed_embedding_only_options(cls, data: object) -> object:
+        if isinstance(data, dict) and {
+            "allow_embedding_only",
+            "supported_embedding_similarity",
+        }.intersection(data):
+            raise ValueError(
+                "allow_embedding_only and supported_embedding_similarity were "
+                "removed; inspect SpanCitations.retrieval_support for semantic "
+                "retrieval signals"
+            )
+        return data
 
     @classmethod
     def strict(cls) -> "CitationConfig":
@@ -107,6 +121,8 @@ class CitationConfig(BaseModel):
             supported_answer_coverage=0.7,
             min_final_score=0.3,
             max_citations_per_source=1,
+            max_retrieval_support=2,
+            require_all_answer_tokens_in_evidence=True,
         )
 
     @classmethod
@@ -122,7 +138,7 @@ class CitationConfig(BaseModel):
             - Lower ``min_answer_coverage`` (0.15)
             - Lower ``supported_answer_coverage`` (0.4)
             - Higher ``top_k`` (5)
-            - Embedding-only citations allowed
+            - Lower embedding threshold for retrieval candidate expansion
 
         Example:
             >>> config = CitationConfig.permissive()
@@ -133,10 +149,9 @@ class CitationConfig(BaseModel):
             min_answer_coverage=0.15,
             supported_answer_coverage=0.4,
             min_final_score=0.0,
-            allow_embedding_only=True,
             min_embedding_similarity=0.25,
-            supported_embedding_similarity=0.5,
             max_citations_per_source=3,
+            max_retrieval_support=5,
         )
 
     @classmethod
@@ -163,6 +178,7 @@ class CitationConfig(BaseModel):
             max_candidates_embedding=50,
             max_candidates_total=100,
             max_citations_per_source=1,
+            max_retrieval_support=1,
         )
 
     @classmethod

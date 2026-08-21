@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 from cite_right.core.interfaces import Segmenter
 from cite_right.core.results import Segment
@@ -21,11 +21,16 @@ class Passage(BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    text: str
     doc_char_start: int
     doc_char_end: int
     segment_start: int
     segment_end: int
+    source_text: str = Field(repr=False, exclude=True)
+
+    @computed_field
+    @property
+    def text(self) -> str:
+        return self.source_text[self.doc_char_start : self.doc_char_end]
 
 
 def generate_passages(
@@ -84,9 +89,9 @@ def _window_from_segments(
     start = segments[start_idx].doc_char_start
     end = segments[end_idx - 1].doc_char_end
     return Passage(
-        text=text[start:end],
         doc_char_start=start,
         doc_char_end=end,
         segment_start=start_idx,
         segment_end=end_idx,
+        source_text=text,
     )

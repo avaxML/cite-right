@@ -1,9 +1,11 @@
 """Tests for error conditions and edge cases in cite-right."""
 
 import pytest
+from pydantic import ValidationError
 
-from cite_right import SourceDocument, align_citations
+from cite_right import SourceChunk, SourceDocument, align_citations
 from cite_right.core.citation_config import CitationConfig, CitationWeights
+from cite_right.core.results import TokenizedText
 from cite_right.text.segmenter_simple import SimpleSegmenter
 from cite_right.text.tokenizer import SimpleTokenizer
 
@@ -148,6 +150,10 @@ class TestAlignCitationsErrorConditions:
 class TestConfigValidation:
     """Test configuration parameter validation."""
 
+    def test_removed_embedding_only_options_raise_migration_error(self) -> None:
+        with pytest.raises(ValidationError, match="retrieval_support"):
+            CitationConfig.model_validate({"allow_embedding_only": True})
+
     def test_config_with_zero_top_k(self) -> None:
         """Verify top_k=0 is handled gracefully."""
         answer = "Test answer."
@@ -178,6 +184,44 @@ class TestConfigValidation:
         assert len(results) == 1
         # With such a high threshold, nothing should be supported
         assert results[0].status == "unsupported"
+
+
+class TestSourceChunkValidation:
+    """Test SourceChunk metadata invariants."""
+
+    def test_sourcechunk_document_text_must_match_chunk_text(self) -> None:
+        with pytest.raises(ValueError, match="document_text"):
+            SourceChunk(
+                source_id="doc",
+                text="Revenue grew 15%.",
+                doc_char_start=0,
+                doc_char_end=17,
+                document_text="Revenue shrank 15%.",
+            )
+
+
+class TestTokenizedTextValidation:
+    """Test TokenizedText span invariants."""
+
+    @pytest.mark.parametrize(
+        ("token_ids", "token_spans", "message"),
+        [
+            ([1, 2], [(0, 1)], "same length"),
+            ([1], [(1, 1)], "start < end"),
+            ([1], [(-1, 1)], "within text bounds"),
+            ([1], [(0, 5)], "within text bounds"),
+            ([1, 2], [(1, 2), (0, 1)], "monotonic"),
+            ([1, 2], [(0, 2), (1, 3)], "overlap"),
+        ],
+    )
+    def test_tokenized_text_rejects_invalid_token_spans(
+        self,
+        token_ids: list[int],
+        token_spans: list[tuple[int, int]],
+        message: str,
+    ) -> None:
+        with pytest.raises(ValidationError, match=message):
+            TokenizedText(text="abcd", token_ids=token_ids, token_spans=token_spans)
 
 
 class TestSimpleTokenizerEdgeCases:

@@ -317,7 +317,10 @@ def get_citation_summary(
 
     counts = _count_statuses(span_citations)
     source_ids = _collect_source_ids(span_citations)
-    return _format_summary(counts, len(span_citations), source_ids)
+    retrieval_only = sum(
+        1 for sc in span_citations if not sc.citations and sc.retrieval_support
+    )
+    return _format_summary(counts, len(span_citations), source_ids, retrieval_only)
 
 
 def _count_statuses(span_citations: Sequence[SpanCitations]) -> dict[str, int]:
@@ -337,7 +340,9 @@ def _collect_source_ids(span_citations: Sequence[SpanCitations]) -> set[str]:
     return source_ids
 
 
-def _format_summary(counts: dict[str, int], total: int, source_ids: set[str]) -> str:
+def _format_summary(
+    counts: dict[str, int], total: int, source_ids: set[str], retrieval_only: int
+) -> str:
     """Format the summary string."""
     lines = ["Citation Summary:"]
     lines.append(f"- {counts['supported']} of {total} spans fully supported")
@@ -345,6 +350,10 @@ def _format_summary(counts: dict[str, int], total: int, source_ids: set[str]) ->
         lines.append(f"- {counts['partial']} spans partially supported")
     if counts["unsupported"] > 0:
         lines.append(f"- {counts['unsupported']} spans unsupported")
+    if retrieval_only > 0:
+        lines.append(
+            f"- {retrieval_only} unsupported spans had retrieval-only support candidates"
+        )
     if source_ids:
         lines.append(f"- Sources cited: {', '.join(sorted(source_ids))}")
     return "\n".join(lines)

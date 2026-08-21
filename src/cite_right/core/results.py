@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Literal, Mapping
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
 
 class TokenizedText(BaseModel):
@@ -22,6 +22,27 @@ class TokenizedText(BaseModel):
     text: str
     token_ids: list[int]
     token_spans: list[tuple[int, int]]
+
+    @model_validator(mode="after")
+    def _validate_token_spans(self) -> "TokenizedText":
+        """Enforce the tokenizer contract used by downstream offset mapping."""
+        if len(self.token_ids) != len(self.token_spans):
+            raise ValueError("token_ids and token_spans must have the same length")
+
+        text_length = len(self.text)
+        previous_end = 0
+        for index, (start, end) in enumerate(self.token_spans):
+            if start < 0 or end > text_length:
+                raise ValueError("token_spans must stay within text bounds")
+            if start >= end:
+                raise ValueError("token_spans must satisfy start < end")
+            if index > 0 and start < previous_end:
+                if start < self.token_spans[index - 1][0]:
+                    raise ValueError("token_spans must be monotonic")
+                raise ValueError("token_spans must not overlap")
+            previous_end = end
+
+        return self
 
 
 class Segment(BaseModel):
@@ -99,8 +120,9 @@ class SourceChunk(BaseModel):
         doc_char_start: Offset where this chunk starts in the original document.
         doc_char_end: Offset where this chunk ends in the original document.
         metadata: Optional key-value metadata (not used by alignment).
-        document_text: Full original document text. If provided, enables
-            absolute offset computation in Citation results.
+        document_text: Full original document text. If provided, Citation and
+            EvidenceSpan evidence strings can be re-sliced directly from the
+            original document using absolute offsets.
         source_index: Index of this source in the sources list. If None,
             uses the position in the list passed to align_citations().
 
@@ -123,6 +145,21 @@ class SourceChunk(BaseModel):
     metadata: Mapping[str, Any] = Field(default_factory=dict)
     document_text: str | None = None
     source_index: int | None = None
+
+    @model_validator(mode="after")
+    def _validate_document_text_alignment(self) -> "SourceChunk":
+        """Ensure provided full-document metadata matches the chunk text."""
+        if self.document_text is None:
+            return self
+        if self.doc_char_start < 0 or self.doc_char_end < self.doc_char_start:
+            raise ValueError(
+                "document_text offsets must define a valid non-negative range"
+            )
+        if self.doc_char_end > len(self.document_text):
+            raise ValueError("document_text is shorter than doc_char_end")
+        if self.document_text[self.doc_char_start : self.doc_char_end] != self.text:
+            raise ValueError("document_text slice must exactly match SourceChunk.text")
+        return self
 
 
 class AnswerSpan(BaseModel):
@@ -159,7 +196,10 @@ class EvidenceSpan(BaseModel):
     Attributes:
         char_start: Absolute 0-based start offset (inclusive) in the source document.
         char_end: Absolute 0-based end offset (exclusive) in the source document.
-        evidence: Exact substring `source_text[char_start:char_end]`.
+        evidence: Exact substring for the absolute document range
+            `[char_start:char_end]`, re-sliced from the full document when
+            available or from chunk-local text after subtracting the chunk's
+            base offset.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -179,14 +219,23 @@ class Citation(BaseModel):
             or SourceChunk.source_id).
         source_index: 0-based index of this source in the input sources list.
         candidate_index: Internal index of the passage candidate (for debugging).
-        char_start: 0-based start offset (inclusive) of evidence in source.
-        char_end: 0-based end offset (exclusive) of evidence in source.
-        evidence: Extracted evidence text. Satisfies:
-            `source_text[char_start:char_end] == evidence`
+        char_start: 0-based start offset (inclusive) of the legacy contiguous
+            evidence view in the source.
+        char_end: 0-based end offset (exclusive) of the legacy contiguous
+            evidence view in the source.
+        evidence: Extracted legacy contiguous evidence text for the absolute
+            document range `[char_start:char_end]`. Satisfies the same rebased
+            slicing rule used internally by `_slice_source_text()`.
+            In multi-span mode, this enclosing span may include bridge text that
+            was not matched directly. Use ``exact_evidence`` or
+            ``evidence_spans`` for precise attribution.
         evidence_spans: List of EvidenceSpan for multi-span evidence. When
             multi_span_evidence is enabled in CitationConfig, may contain
             multiple non-contiguous spans. Otherwise, contains a single span
             matching char_start/char_end.
+        exact_evidence: Canonical exact evidence text derived from
+            ``evidence_spans``. Multi-span citations join exact matched spans
+            with ``" ... "`` so omitted bridge text is visible.
         components: Breakdown of score components. Keys include:
 
             - ``alignment_score``: Raw Smith-Waterman alignment score.
@@ -196,7 +245,6 @@ class Citation(BaseModel):
             - ``evidence_coverage``: Fraction of evidence tokens matched.
             - ``lexical_score``: IDF-weighted lexical overlap score (0.0-1.0).
             - ``embedding_score``: Cosine similarity from embeddings (-1.0-1.0).
-            - ``embedding_only``: 1.0 if citation is embedding-only, else 0.0.
             - ``num_evidence_spans``: Count of evidence spans.
             - ``evidence_chars_total``: Total characters across evidence spans.
             - ``passage_char_start``: Start offset of source passage window.
@@ -222,6 +270,34 @@ class Citation(BaseModel):
     evidence_spans: list[EvidenceSpan] = Field(default_factory=list)
     components: Mapping[str, float] = Field(default_factory=dict)
 
+    @computed_field(return_type=str)
+    @property
+    def exact_evidence(self) -> str:
+        """Return the canonical exact evidence text for precise attribution."""
+        if not self.evidence_spans:
+            return self.evidence
+
+        ordered_spans = sorted(
+            self.evidence_spans, key=lambda span: (span.char_start, span.char_end)
+        )
+        return " ... ".join(span.evidence for span in ordered_spans)
+
+
+class RetrievalSupport(BaseModel):
+    """A retrieval-only support signal without localized evidence spans."""
+
+    model_config = ConfigDict(frozen=True)
+
+    retrieval_score: float
+    source_id: str
+    source_index: int
+    candidate_index: int
+    passage_char_start: int
+    passage_char_end: int
+    passage_text: str
+    embedding_score: float
+    lexical_score: float
+
 
 class SpanCitations(BaseModel):
     """Citations for a single answer span.
@@ -232,9 +308,12 @@ class SpanCitations(BaseModel):
         answer_span: The answer segment these citations correspond to.
         citations: List of Citation objects, ranked by score (best first).
             May be empty if no citations met the minimum thresholds.
+        retrieval_support: List of retrieval-only support signals for passages
+            selected during lexical and/or embedding candidate search but not
+            localized into an exact citation.
         status: Overall citation status for this span:
 
-            - ``"supported"``: Best citation has answer_coverage >= threshold
+            - ``"supported"``: Top-ranked citation has answer_coverage >= threshold
               (default 0.6). The claim is well-grounded in sources.
             - ``"partial"``: Has citations but below supported threshold.
               Some evidence exists but coverage is incomplete.
@@ -254,4 +333,16 @@ class SpanCitations(BaseModel):
 
     answer_span: AnswerSpan
     citations: list[Citation]
+    retrieval_support: list[RetrievalSupport] = Field(default_factory=list)
     status: Literal["supported", "partial", "unsupported"]
+
+    @model_validator(mode="after")
+    def _validate_status_matches_exact_citations(self) -> "SpanCitations":
+        has_exact_citations = bool(self.citations)
+        if has_exact_citations and self.status == "unsupported":
+            raise ValueError("unsupported status requires citations to be empty")
+        if not has_exact_citations and self.status != "unsupported":
+            raise ValueError(
+                "supported or partial status requires at least one citation"
+            )
+        return self

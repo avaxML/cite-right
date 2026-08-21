@@ -101,17 +101,12 @@ config = CitationConfig(
 results = align_citations(answer, sources, embedder=embedder, config=config)
 ```
 
-### allow_embedding_only
 
-When alignment fails to find a good match but embedding similarity is high, this setting allows returning the passage as evidence.
+### Retrieval support vs citations
 
-```python
-config = CitationConfig(allow_embedding_only=True)
-```
+Embeddings help candidate recall, not citation localization.
 
-With this enabled, heavily paraphrased content receives citations based on semantic similarity even without token-level matching. The evidence will be the entire passage window rather than a precise span.
-
-Use this setting when recall is more important than precision and you accept coarser evidence regions.
+High-similarity passages can still be surfaced as retrieval support metadata, but Cite-Right only produces `Citation` objects after Smith-Waterman alignment localizes an exact span. This preserves the production contract that every citation has precise source offsets.
 
 ## Custom Embedders
 

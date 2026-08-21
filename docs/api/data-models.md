@@ -97,6 +97,7 @@ Contains citation results for a single answer span.
 class SpanCitations(BaseModel):
     answer_span: AnswerSpan
     citations: list[Citation]
+    retrieval_support: list[RetrievalSupport] = []
     status: Literal["supported", "partial", "unsupported"]
 ```
 
@@ -104,9 +105,11 @@ class SpanCitations(BaseModel):
 
 **answer_span** (`AnswerSpan`): The answer text segment being cited.
 
-**citations** (`list[Citation]`): Ranked list of citations, best match first.
+**citations** (`list[Citation]`): Ranked list of exact localized citations, best match first.
 
-**status** (`Literal["supported", "partial", "unsupported"]`): Overall support level based on answer coverage and optional embedding thresholds.
+**retrieval_support** (`list[RetrievalSupport]`): Retrieval-only support signals for passages selected during lexical and/or embedding candidate search that did not produce an exact localized citation.
+
+**status** (`Literal["supported", "partial", "unsupported"]`): Overall support level based on exact citation answer coverage. Retrieval support does not change status.
 
 ### AnswerSpan
 
@@ -154,6 +157,7 @@ class Citation(BaseModel):
     char_end: int
     evidence: str
     evidence_spans: list[EvidenceSpan] = []
+    exact_evidence: str
     components: Mapping[str, float] = {}
 ```
 
@@ -167,22 +171,81 @@ class Citation(BaseModel):
 
 **candidate_index** (`int`): Internal index of the passage candidate.
 
-**char_start** (`int`): Starting character position of evidence in the source.
+**char_start** (`int`): Starting character position of the legacy contiguous evidence view in the source.
 
-**char_end** (`int`): Ending character position of evidence in the source.
+**char_end** (`int`): Ending character position of the legacy contiguous evidence view in the source.
 
-**evidence** (`str`): The matched text from the source document.
+**evidence** (`str`): The legacy contiguous evidence text from the source document. In multi-span mode this is the enclosing source slice, so it may include bridge text that was not matched directly.
 
-**evidence_spans** (`list[EvidenceSpan]`): When multi-span evidence is enabled, contains individual evidence regions.
+**evidence_spans** (`list[EvidenceSpan]`): Exact matched evidence regions. This is the source of truth for precise offsets and highlighting.
+
+**exact_evidence** (`str`): Canonical exact evidence text derived from `evidence_spans`. Multi-span citations join exact matched spans with `" ... "` to make omitted bridge text explicit.
 
 **components** (`Mapping[str, float]`): Breakdown of score components. Typical keys include alignment_score, normalized_alignment, matches, answer_coverage, evidence_coverage, lexical_score, embedding_score, embedding_only, num_evidence_spans, evidence_chars_total, passage_char_start, and passage_char_end.
 
 **Verification:**
 
-The evidence text always equals the source document slice:
+The legacy contiguous evidence text always equals the rebased source-document slice:
 ```python
-assert source.text[citation.char_start:citation.char_end] == citation.evidence
+def slice_source_text(source, char_start, char_end):
+    if source.full_text is not None:
+        return source.full_text[char_start:char_end]
+    return source.text[
+        char_start - source.base_doc_offset : char_end - source.base_doc_offset
+    ]
+
+assert slice_source_text(source, citation.char_start, citation.char_end) == citation.evidence
 ```
+
+For `SourceChunk`, `citation.char_start` and `citation.char_end` remain absolute offsets in the original document even though `source.text` may hold only the chunk text.
+
+For precise attribution in multi-span mode, prefer:
+
+```python
+exact_text = citation.exact_evidence
+exact_spans = citation.evidence_spans
+```
+
+### RetrievalSupport
+
+Represents a retrieval-only support signal without localized evidence spans.
+
+**Location:** `src/cite_right/core/results.py`
+
+```python
+class RetrievalSupport(BaseModel):
+    retrieval_score: float
+    source_id: str
+    source_index: int
+    candidate_index: int
+    passage_char_start: int
+    passage_char_end: int
+    passage_text: str
+    embedding_score: float
+    lexical_score: float
+```
+
+**Fields:**
+
+**retrieval_score** (`float`): Combined retrieval score used for ranking support passages.
+
+**source_id** (`str`): Identifier of the source document.
+
+**source_index** (`int`): Index of the source in the original sources list.
+
+**candidate_index** (`int`): Internal index of the passage candidate.
+
+**passage_char_start** (`int`): Starting character position of the passage in the source.
+
+**passage_char_end** (`int`): Ending character position of the passage in the source.
+
+**passage_text** (`str`): Passage text from the source document.
+
+**embedding_score** (`float`): Embedding similarity score when an embedder is provided.
+
+**lexical_score** (`float`): Lexical overlap score from candidate selection.
+
+Retrieval support is returned when a passage is selected during candidate search but does not produce an exact localized citation. Use it for semantic recall and UI hints, not as proof of exact grounding.
 
 ### EvidenceSpan
 

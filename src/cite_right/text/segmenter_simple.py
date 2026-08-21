@@ -4,6 +4,10 @@ from __future__ import annotations
 
 from cite_right.core.results import Segment
 
+_COMMON_ABBREVIATIONS = frozenset(
+    {"dr", "mr", "mrs", "ms", "prof", "sr", "jr", "st", "vs", "etc", "e.g", "i.e"}
+)
+
 
 class SimpleSegmenter:
     """Simple rule-based sentence segmenter.
@@ -80,9 +84,25 @@ def _is_boundary(text: str, idx: int) -> bool:
     Returns:
         bool: True if the punctuation is at the end of the text or is followed by whitespace.
     """
+    if text[idx] == "." and _is_abbreviation_period(text, idx):
+        return False
     if idx + 1 >= len(text):
         return True
     return text[idx + 1].isspace()
+
+
+def _is_abbreviation_period(text: str, idx: int) -> bool:
+    token_start = idx
+    while token_start > 0 and (
+        text[token_start - 1].isalpha() or text[token_start - 1] == "."
+    ):
+        token_start -= 1
+    token = text[token_start : idx + 1]
+    normalized = token[:-1].casefold()
+    if normalized in _COMMON_ABBREVIATIONS:
+        return True
+    parts = [part for part in normalized.split(".") if part]
+    return len(parts) >= 2 and all(len(part) == 1 and part.isalpha() for part in parts)
 
 
 def _add_segment(text: str, start: int, end: int, segments: list[Segment]) -> None:

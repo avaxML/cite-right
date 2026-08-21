@@ -1,4 +1,8 @@
-from cite_right.citations import AlignmentMetrics, align_citations
+from cite_right.citations import (
+    AlignmentMetrics,
+    PreparedCitationCorpus,
+    align_citations,
+)
 from cite_right.claims import (
     Claim,
     ClaimDecomposer,
@@ -18,6 +22,7 @@ from cite_right.core.results import (
     AnswerSpan,
     Citation,
     EvidenceSpan,
+    RetrievalSupport,
     Segment,
     SourceChunk,
     SourceDocument,
@@ -102,11 +107,13 @@ __all__ = [
     "AlignmentMetrics",
     "AnswerSpan",
     "Citation",
+    "PreparedCitationCorpus",
     "Claim",
     "ClaimVerification",
     "EvidenceSpan",
     "FactVerificationMetrics",
     "HallucinationMetrics",
+    "RetrievalSupport",
     "Segment",
     "SourceChunk",
     "SourceDocument",

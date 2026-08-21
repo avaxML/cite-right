@@ -83,6 +83,86 @@ class TestComputeHallucinationMetricsSupported:
         assert metrics.span_confidences[0].is_grounded is True
         assert metrics.span_confidences[0].source_ids == ["doc1"]
 
+    def test_partial_span_requires_exact_citation_confidence(self) -> None:
+        span = AnswerSpan(
+            text="The firm posted robust earnings.",
+            char_start=0,
+            char_end=31,
+        )
+        citation = Citation(
+            score=0.82,
+            source_id="finance",
+            source_index=0,
+            candidate_index=0,
+            char_start=0,
+            char_end=35,
+            evidence="The company reported strong profits.",
+            components={
+                "answer_coverage": 0.0,
+                "embedding_score": 0.82,
+            },
+        )
+        span_citations = [
+            SpanCitations(
+                answer_span=span,
+                citations=[citation],
+                status="partial",
+            )
+        ]
+
+        metrics = compute_hallucination_metrics(span_citations)
+
+        assert metrics.groundedness_score == 0.0
+        assert metrics.hallucination_rate == 1.0
+        assert metrics.avg_confidence == 0.0
+        assert metrics.min_confidence == 0.0
+        assert metrics.num_partial == 1
+        assert metrics.num_weak_citations == 1
+        assert metrics.weakly_supported_spans == [span]
+        assert metrics.span_confidences[0].confidence == 0.0
+        assert metrics.span_confidences[0].is_grounded is True
+
+    def test_partial_span_ignores_embedding_bonus_when_measuring_confidence(
+        self,
+    ) -> None:
+        span = AnswerSpan(
+            text="The firm posted robust earnings.",
+            char_start=0,
+            char_end=31,
+        )
+        citation = Citation(
+            score=0.78,
+            source_id="finance",
+            source_index=0,
+            candidate_index=0,
+            char_start=0,
+            char_end=30,
+            evidence="The firm posted robust profits.",
+            components={
+                "answer_coverage": 0.2,
+                "embedding_score": 0.78,
+            },
+        )
+        span_citations = [
+            SpanCitations(
+                answer_span=span,
+                citations=[citation],
+                status="partial",
+            )
+        ]
+
+        metrics = compute_hallucination_metrics(span_citations)
+
+        assert metrics.groundedness_score == pytest.approx(0.2, rel=0.01)
+        assert metrics.hallucination_rate == pytest.approx(0.8, rel=0.01)
+        assert metrics.avg_confidence == pytest.approx(0.2, rel=0.01)
+        assert metrics.min_confidence == pytest.approx(0.2, rel=0.01)
+        assert metrics.num_partial == 1
+        assert metrics.num_weak_citations == 1
+        assert metrics.weakly_supported_spans == [span]
+        assert metrics.span_confidences[0].confidence == pytest.approx(0.2, rel=0.01)
+        assert metrics.span_confidences[0].is_grounded is True
+
 
 class TestComputeHallucinationMetricsUnsupported:
     """Tests for fully unsupported answers."""
@@ -363,6 +443,91 @@ class TestComputeHallucinationMetricsConfidenceStats:
 
         assert metrics.avg_confidence == pytest.approx(0.6, rel=0.01)
         assert metrics.min_confidence == pytest.approx(0.3, rel=0.01)
+
+    def test_confidence_uses_strongest_grounding_citation(self) -> None:
+        span = AnswerSpan(text="Grounded claim.", char_start=0, char_end=15)
+        span_citations = [
+            SpanCitations(
+                answer_span=span,
+                citations=[
+                    Citation(
+                        score=2.4,
+                        source_id="doc1",
+                        source_index=0,
+                        candidate_index=0,
+                        char_start=0,
+                        char_end=8,
+                        evidence="Grounded",
+                        components={
+                            "answer_coverage": 0.3,
+                            "normalized_alignment": 1.0,
+                            "lexical_score": 1.0,
+                        },
+                    ),
+                    Citation(
+                        score=1.7,
+                        source_id="doc2",
+                        source_index=1,
+                        candidate_index=0,
+                        char_start=0,
+                        char_end=15,
+                        evidence="Grounded claim.",
+                        components={
+                            "answer_coverage": 0.9,
+                            "normalized_alignment": 0.7,
+                            "lexical_score": 0.2,
+                        },
+                    ),
+                ],
+                status="partial",
+            )
+        ]
+
+        metrics = compute_hallucination_metrics(span_citations)
+
+        assert metrics.groundedness_score == pytest.approx(0.9, rel=0.01)
+        assert metrics.avg_confidence == pytest.approx(0.9, rel=0.01)
+        assert metrics.min_confidence == pytest.approx(0.9, rel=0.01)
+        assert metrics.num_partial == 1
+        assert metrics.num_weak_citations == 0
+        assert metrics.weakly_supported_spans == []
+        assert metrics.span_confidences[0].confidence == pytest.approx(0.9, rel=0.01)
+        assert metrics.span_confidences[0].best_citation_score == pytest.approx(
+            1.7, rel=0.01
+        )
+
+    def test_zero_coverage_partial_citation_does_not_raise_confidence(self) -> None:
+        span = AnswerSpan(text="Semantic match.", char_start=0, char_end=15)
+        span_citations = [
+            SpanCitations(
+                answer_span=span,
+                citations=[
+                    Citation(
+                        score=0.78,
+                        source_id="doc1",
+                        source_index=0,
+                        candidate_index=0,
+                        char_start=0,
+                        char_end=18,
+                        evidence="Paraphrased support",
+                        components={
+                            "answer_coverage": 0.0,
+                            "embedding_score": 0.78,
+                        },
+                    )
+                ],
+                status="partial",
+            )
+        ]
+
+        metrics = compute_hallucination_metrics(span_citations)
+
+        assert metrics.groundedness_score == 0.0
+        assert metrics.avg_confidence == 0.0
+        assert metrics.min_confidence == 0.0
+        assert metrics.num_weak_citations == 1
+        assert metrics.weakly_supported_spans == [span]
+        assert metrics.span_confidences[0].confidence == 0.0
 
 
 class TestComputeHallucinationMetricsMultipleSources:
