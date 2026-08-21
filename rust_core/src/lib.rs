@@ -1,9 +1,14 @@
 use pyo3::prelude::*;
 
 mod smith_waterman;
+mod prepare;
 
 type MatchBlocks = Vec<(usize, usize)>;
 type AlignmentDetails = (i32, usize, usize, usize, usize, usize, usize);
+type PrepareResult = (
+    Vec<Vec<(usize, usize, Vec<u32>, Vec<(usize, usize)>)>>,
+    Vec<(u32, f64)>,
+);
 type AlignmentWithBlocks = (i32, usize, usize, usize, usize, usize, MatchBlocks);
 
 #[pyfunction(signature = (seq1, seq2, match_score=2, mismatch_score=-1, gap_score=-1))]
@@ -231,6 +236,55 @@ fn align_batch_blocks_details(
     })
 }
 
+#[pyfunction]
+#[allow(clippy::type_complexity)]
+fn rust_tokenize_and_prepare(
+    py: Python<'_>,
+    source_texts: Vec<String>,
+    window_size: usize,
+    stride: usize,
+) -> PyResult<(Vec<Vec<(usize, usize, Vec<u32>, Vec<(usize, usize)>)>>, Vec<(u32, f64)>)> {
+    py.detach(|| {
+        let mut tokenizer = prepare::SimpleTokenizer::new();
+        let mut all_tokenized = Vec::new();
+        
+        // Tokenize all sources
+        for text in &source_texts {
+            all_tokenized.push(tokenizer.tokenize(text));
+        }
+        
+        // Build candidates per source
+        let mut source_candidates = Vec::new();
+        let mut all_candidate_tokens = Vec::new();
+        
+        for (text, tokenized) in source_texts.iter().zip(&all_tokenized) {
+            let segments = prepare::simple_segment(text);
+            let passages = prepare::generate_passages(&segments, window_size, stride);
+            let mut candidates = Vec::new();
+            
+            for (passage_start, passage_end) in passages {
+                let (token_ids, token_spans) = prepare::slice_tokenized_text(
+                    &tokenized.token_ids,
+                    &tokenized.token_spans,
+                    passage_start,
+                    passage_end,
+                );
+                
+                candidates.push((passage_start, passage_end, token_ids.clone(), token_spans));
+                all_candidate_tokens.push(token_ids);
+            }
+            
+            source_candidates.push(candidates);
+        }
+        
+        // Compute IDF
+        let idf = prepare::compute_idf(&all_candidate_tokens);
+        let idf_vec: Vec<(u32, f64)> = idf.into_iter().collect();
+        
+        Ok((source_candidates, idf_vec))
+    })
+}
+
 #[pymodule]
 fn _core(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(align_pair, module)?)?;
@@ -241,5 +295,6 @@ fn _core(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(align_topk_details, module)?)?;
     module.add_function(wrap_pyfunction!(align_batch_details, module)?)?;
     module.add_function(wrap_pyfunction!(align_batch_blocks_details, module)?)?;
+    module.add_function(wrap_pyfunction!(rust_tokenize_and_prepare, module)?)?;
     Ok(())
 }
