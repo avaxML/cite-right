@@ -245,14 +245,51 @@ def _process_answer_span(
             candidates[candidate_index] for candidate_index, _, _ in selected
         ]
         candidate_token_ids = [candidate.token_ids for candidate in selected_candidates]
-        align_batch = getattr(aligner, "align_batch", None)
-        if align_batch is None:
-            alignments = [
-                aligner.align(answer_tokens, token_ids)
-                for token_ids in candidate_token_ids
-            ]
-        else:
-            alignments = align_batch(answer_tokens, candidate_token_ids)
+        
+        # Try Rust fast path if available
+        use_rust_fast_path = (
+            type(aligner) == RustSmithWatermanAligner
+            and hasattr(aligner._core, 'rust_align_batch_candidates')
+        )
+        
+        if use_rust_fast_path:
+            try:
+                from cite_right._core import rust_align_batch_candidates
+                candidate_indices = [candidate_index for candidate_index, _, _ in selected]
+                alignments_with_indices = rust_align_batch_candidates(
+                    answer_tokens,
+                    candidate_indices,
+                    candidate_token_ids,
+                    aligner.match_score,
+                    aligner.mismatch_score,
+                    aligner.gap_score,
+                )
+                # Convert to Alignment objects
+                alignments = [
+                    Alignment(
+                        score=score,
+                        token_start=token_start,
+                        token_end=token_end,
+                        query_start=query_start,
+                        query_end=query_end,
+                        matches=matches,
+                    )
+                    for _, score, token_start, token_end, query_start, query_end, matches in alignments_with_indices
+                ]
+            except Exception:
+                # Fall back to standard path
+                use_rust_fast_path = False
+        
+        if not use_rust_fast_path:
+            align_batch = getattr(aligner, "align_batch", None)
+            if align_batch is None:
+                alignments = [
+                    aligner.align(answer_tokens, token_ids)
+                    for token_ids in candidate_token_ids
+                ]
+            else:
+                alignments = align_batch(answer_tokens, candidate_token_ids)
+        
         trusted_alignment_match_counts = type(aligner) in {
             SmithWatermanAligner,
             RustSmithWatermanAligner,

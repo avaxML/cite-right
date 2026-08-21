@@ -288,6 +288,47 @@ fn rust_tokenize_and_prepare(
     })
 }
 
+/// Batch align answer tokens against selected candidates and return alignment results.
+/// Returns list of (candidate_index, score, token_start, token_end, query_start, query_end, matches)
+#[pyfunction(signature = (answer_tokens, candidate_indices, candidate_token_lists, match_score=2, mismatch_score=-1, gap_score=-1))]
+#[allow(clippy::too_many_arguments)]
+fn rust_align_batch_candidates(
+    py: Python<'_>,
+    answer_tokens: Vec<u32>,
+    candidate_indices: Vec<usize>,
+    candidate_token_lists: Vec<Vec<u32>>,
+    match_score: i32,
+    mismatch_score: i32,
+    gap_score: i32,
+) -> PyResult<Vec<(usize, i32, usize, usize, usize, usize, usize)>> {
+    let params = smith_waterman::ScoreParams {
+        match_score,
+        mismatch_score,
+        gap_score,
+    };
+
+    py.detach(|| {
+        let alignments =
+            smith_waterman::align_batch(&answer_tokens, &candidate_token_lists, params);
+
+        Ok(candidate_indices
+            .into_iter()
+            .zip(alignments)
+            .map(|(idx, alignment)| {
+                (
+                    idx,
+                    alignment.score,
+                    alignment.token_start,
+                    alignment.token_end,
+                    alignment.query_start,
+                    alignment.query_end,
+                    alignment.matches,
+                )
+            })
+            .collect())
+    })
+}
+
 #[pymodule]
 fn _core(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(align_pair, module)?)?;
@@ -299,5 +340,6 @@ fn _core(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(align_batch_details, module)?)?;
     module.add_function(wrap_pyfunction!(align_batch_blocks_details, module)?)?;
     module.add_function(wrap_pyfunction!(rust_tokenize_and_prepare, module)?)?;
+    module.add_function(wrap_pyfunction!(rust_align_batch_candidates, module)?)?;
     Ok(())
 }
