@@ -13,7 +13,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.0.1
       - uses: dtolnay/rust-toolchain@stable
       - run: uv sync --frozen --no-install-project
       - run: uv run ruff check .
@@ -43,7 +43,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.0.1
       - uses: dtolnay/rust-toolchain@stable
       - run: uv sync --frozen --no-install-project
       - run: uv run maturin develop
@@ -72,7 +72,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.0.1
       - run: uv sync --frozen --extra spacy --no-install-project
       - name: Install pip and download spacy model
         run: |
@@ -87,7 +87,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.0.1
       - run: uv sync --frozen --extra embeddings --no-install-project
       - run: CITE_RIGHT_RUN_EMBEDDINGS_TESTS=1 PYTHONPATH=src uv run pytest -q -k embeddings
 
@@ -98,7 +98,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.0.1
       - run: uv sync --frozen --extra tiktoken --no-install-project
       - run: PYTHONPATH=src uv run pytest -q tests/test_tokenizer_tiktoken.py
 
@@ -109,7 +109,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.0.1
       - run: uv sync --frozen --extra huggingface --no-install-project
       - run: PYTHONPATH=src uv run pytest -q tests/test_tokenizer_huggingface.py
 
@@ -132,7 +132,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.0.1
       - run: uv sync --frozen --no-install-project
       - name: Run Bandit security scan
         run: uv run bandit -r src/cite_right -c pyproject.toml -f json -o bandit-report.json || true
