@@ -24,6 +24,12 @@ from cite_right.text.passage import Passage, generate_passages
 from cite_right.text.segmenter_simple import SimpleSegmenter
 from cite_right.text.tokenizer import SimpleTokenizer
 
+try:
+    from cite_right._core import rust_tokenize_and_prepare
+    RUST_PREPARE_AVAILABLE = True
+except ImportError:
+    RUST_PREPARE_AVAILABLE = False
+
 MetricsCallback = Callable[["AlignmentMetrics"], None]
 LexicalScores = dict[int, float]
 IdfWeights = dict[int, float]
@@ -108,12 +114,31 @@ class PreparedCitationCorpus(BaseModel):
         source_segmenter: Segmenter | None = None,
         tokenizer: Tokenizer | None = None,
         embedder: Embedder | None = None,
+        use_rust: bool = True,
     ) -> "PreparedCitationCorpus":
         cfg = config or CitationConfig()
         source_segmenter = source_segmenter or SimpleSegmenter()
         tokenizer = tokenizer or SimpleTokenizer()
 
         normalized_sources = normalize_sources(sources)
+        
+        # Try Rust fast path for prepare phase if available
+        if (
+            use_rust
+            and RUST_PREPARE_AVAILABLE
+            and embedder is None
+            and isinstance(tokenizer, SimpleTokenizer)
+            and isinstance(source_segmenter, SimpleSegmenter)
+        ):
+            try:
+                return cls._from_sources_rust(
+                    normalized_sources, cfg, source_segmenter, tokenizer
+                )
+            except Exception:
+                # Fall back to Python if Rust path fails
+                pass
+        
+        # Python fallback path
         source_passages = build_source_passages(
             normalized_sources, source_segmenter, cfg
         )
@@ -139,6 +164,70 @@ class PreparedCitationCorpus(BaseModel):
         )
         corpus._embedding_build_time_ms = embedding_build_time_ms
         return corpus
+
+    @classmethod
+    def _from_sources_rust(
+        cls,
+        normalized_sources: list[NormalizedSource],
+        cfg: CitationConfig,
+        source_segmenter: SimpleSegmenter,
+        tokenizer: SimpleTokenizer,
+    ) -> "PreparedCitationCorpus":
+        """Fast path using Rust for tokenization, passages, candidates, and IDF."""
+        # Call Rust to do all the heavy lifting
+        source_texts = [src.text for src in normalized_sources]
+        rust_candidates, rust_idf = rust_tokenize_and_prepare(
+            source_texts,
+            cfg.window_size_sentences,
+            cfg.window_stride_sentences,
+        )
+        
+        # Convert Rust results to Python objects
+        candidates: list[Candidate] = []
+        source_passages: list[tuple[NormalizedSource, list[Passage]]] = []
+        global_index = 0
+        
+        for source_idx, (source, rust_source_candidates) in enumerate(
+            zip(normalized_sources, rust_candidates, strict=False)
+        ):
+            passages: list[Passage] = []
+            
+            for passage_start, passage_end, token_ids, token_spans in rust_source_candidates:
+                passage = Passage(
+                    text=source.text[passage_start:passage_end],
+                    doc_char_start=passage_start,
+                    doc_char_end=passage_end,
+                )
+                passages.append(passage)
+                
+                candidates.append(
+                    Candidate(
+                        global_index=global_index,
+                        source=source,
+                        passage=passage,
+                        token_ids=token_ids,
+                        token_spans=token_spans,
+                        token_set=frozenset(token_ids),
+                    )
+                )
+                global_index += 1
+            
+            source_passages.append((source, passages))
+        
+        # Convert IDF from Rust [(u32, f64)] to Python dict[int, float]
+        idf: IdfWeights = {int(token_id): weight for token_id, weight in rust_idf}
+        
+        return cls(
+            config=cfg,
+            tokenizer=tokenizer,
+            source_segmenter=source_segmenter,
+            embedder=None,
+            normalized_sources=normalized_sources,
+            source_passages=source_passages,
+            candidates=candidates,
+            idf=idf,
+            embedding_index=None,
+        )
 
     def align(
         self,
