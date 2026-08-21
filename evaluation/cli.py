@@ -402,7 +402,7 @@ def _command_performance_smoke(*, output_path: Path) -> dict[str, object]:
 
 def _validate_promotion_staging(staging_root: Path) -> tuple[str, ...]:
     present_directories = {
-        str(path.relative_to(staging_root))
+        path.relative_to(staging_root).as_posix()
         for path in sorted(staging_root.rglob("*"))
         if path.is_dir()
     }
@@ -415,7 +415,7 @@ def _validate_promotion_staging(staging_root: Path) -> tuple[str, ...]:
         )
 
     present_files = {
-        str(path.relative_to(staging_root))
+        path.relative_to(staging_root).as_posix()
         for path in sorted(staging_root.rglob("*"))
         if path.is_file() or path.is_symlink()
     }
@@ -649,7 +649,7 @@ def _require_parent_directory(path: Path) -> Path:
 
 
 def _read_regular_file(path: Path) -> bytes:
-    flags = os.O_RDONLY
+    flags = os.O_RDONLY | getattr(os, "O_BINARY", 0)
     if hasattr(os, "O_NOFOLLOW"):
         flags |= os.O_NOFOLLOW
     file_descriptor = os.open(path, flags)
@@ -705,6 +705,8 @@ def _fsync_tree(root: Path) -> None:
 
 
 def _fsync_directory(path: Path) -> None:
+    if os.name != "posix":
+        return
     file_descriptor = os.open(path, os.O_RDONLY)
     try:
         os.fsync(file_descriptor)

@@ -40,7 +40,7 @@ def test_dataset_v1_contains_only_the_required_public_and_tuning_artifacts() -> 
         "tuning/train.json",
     }
     present = {
-        str(path.relative_to(DATASET_ROOT))
+        path.relative_to(DATASET_ROOT).as_posix()
         for path in DATASET_ROOT.rglob("*")
         if path.is_file()
     }

@@ -531,7 +531,7 @@ def test_promote_success_replaces_dataset_with_allowlisted_files_only(
     assert payload["command"] == "promote"
     assert not (dataset_dir / "sentinel.txt").exists()
     assert sorted(
-        str(path.relative_to(dataset_dir))
+        path.relative_to(dataset_dir).as_posix()
         for path in dataset_dir.rglob("*")
         if path.is_file()
     ) == [
