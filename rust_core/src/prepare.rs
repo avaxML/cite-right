@@ -48,13 +48,13 @@ impl SimpleTokenizer {
             if normalized.is_empty() {
                 continue;
             }
-            
+
             let token_id = *self.vocab.entry(normalized).or_insert_with(|| {
                 let id = self.next_id;
                 self.next_id += 1;
                 id
             });
-            
+
             token_ids.push(token_id);
             // Convert byte indices to char indices for Python
             let start_char = byte_to_char_index(text, start_byte);
@@ -78,14 +78,14 @@ fn iter_token_spans(text: &str) -> Vec<(usize, usize)> {
 
     while idx < chars.len() {
         let c = chars[idx].1;
-        
+
         if c.is_whitespace() {
             idx += 1;
             continue;
         }
 
         let start_byte = chars[idx].0;
-        
+
         // Check if it's a number
         if c.is_numeric() {
             idx += 1;
@@ -128,13 +128,13 @@ fn iter_token_spans(text: &str) -> Vec<(usize, usize)> {
             idx += 1;
             continue;
         }
-        
+
         let end_byte = if idx < chars.len() {
             chars[idx].0
         } else {
             text.len()
         };
-        
+
         spans.push((start_byte, end_byte));
     }
 
@@ -164,12 +164,12 @@ pub fn simple_segment(text: &str) -> Vec<(usize, usize)> {
                 } else {
                     text.len()
                 };
-                
+
                 // Convert to char indices for Python
                 let start_char = byte_to_char_index(text, start_byte);
                 let end_char = byte_to_char_index(text, end_byte);
                 segments.push((start_char, end_char));
-                
+
                 // Start next segment after the space
                 start_byte = if next_is_space && i + 2 < chars.len() {
                     chars[i + 2].0
@@ -240,10 +240,10 @@ pub fn slice_tokenized_text(
         if token_start >= end {
             break;
         }
-        
+
         let local_start = token_start.max(start) - start;
         let local_end = token_end.min(end) - start;
-        
+
         if local_start < local_end {
             result_ids.push(token_ids[i]);
             result_spans.push((local_start, local_end));
@@ -255,18 +255,16 @@ pub fn slice_tokenized_text(
 
 pub fn compute_idf(candidate_token_sets: &[Vec<u32>]) -> HashMap<u32, f64> {
     let mut df: HashMap<u32, usize> = HashMap::new();
-    
+
     for token_ids in candidate_token_sets {
         let unique: std::collections::HashSet<u32> = token_ids.iter().copied().collect();
         for token_id in unique {
             *df.entry(token_id).or_insert(0) += 1;
         }
     }
-    
+
     let n = candidate_token_sets.len();
     df.into_iter()
-        .map(|(token_id, count)| {
-            (token_id, ((n + 1) as f64 / (count + 1) as f64).ln() + 1.0)
-        })
+        .map(|(token_id, count)| (token_id, ((n + 1) as f64 / (count + 1) as f64).ln() + 1.0))
         .collect()
 }

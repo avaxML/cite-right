@@ -1,7 +1,7 @@
 use pyo3::prelude::*;
 
-mod smith_waterman;
 mod prepare;
+mod smith_waterman;
 
 type MatchBlocks = Vec<(usize, usize)>;
 type AlignmentDetails = (i32, usize, usize, usize, usize, usize, usize);
@@ -239,25 +239,29 @@ fn rust_tokenize_and_prepare(
     source_texts: Vec<String>,
     window_size: usize,
     stride: usize,
-) -> PyResult<(Vec<Vec<(usize, usize, Vec<u32>, Vec<(usize, usize)>)>>, Vec<(u32, f64)>, Vec<(String, u32)>)> {
+) -> PyResult<(
+    Vec<Vec<(usize, usize, Vec<u32>, Vec<(usize, usize)>)>>,
+    Vec<(u32, f64)>,
+    Vec<(String, u32)>,
+)> {
     py.detach(|| {
         let mut tokenizer = prepare::SimpleTokenizer::new();
         let mut all_tokenized = Vec::new();
-        
+
         // Tokenize all sources
         for text in &source_texts {
             all_tokenized.push(tokenizer.tokenize(text));
         }
-        
+
         // Build candidates per source
         let mut source_candidates = Vec::new();
         let mut all_candidate_tokens = Vec::new();
-        
+
         for (text, tokenized) in source_texts.iter().zip(&all_tokenized) {
             let segments = prepare::simple_segment(text);
             let passages = prepare::generate_passages(&segments, window_size, stride);
             let mut candidates = Vec::new();
-            
+
             for (passage_start, passage_end) in passages {
                 let (token_ids, token_spans) = prepare::slice_tokenized_text(
                     &tokenized.token_ids,
@@ -265,23 +269,21 @@ fn rust_tokenize_and_prepare(
                     passage_start,
                     passage_end,
                 );
-                
+
                 candidates.push((passage_start, passage_end, token_ids.clone(), token_spans));
                 all_candidate_tokens.push(token_ids);
             }
-            
+
             source_candidates.push(candidates);
         }
-        
+
         // Compute IDF
         let idf = prepare::compute_idf(&all_candidate_tokens);
         let idf_vec: Vec<(u32, f64)> = idf.into_iter().collect();
-        
+
         // Extract vocab
-        let vocab_vec: Vec<(String, u32)> = tokenizer.get_vocab()
-            .into_iter()
-            .collect();
-        
+        let vocab_vec: Vec<(String, u32)> = tokenizer.get_vocab().into_iter().collect();
+
         Ok((source_candidates, idf_vec, vocab_vec))
     })
 }
