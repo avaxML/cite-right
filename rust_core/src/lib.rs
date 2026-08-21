@@ -239,7 +239,7 @@ fn rust_tokenize_and_prepare(
     source_texts: Vec<String>,
     window_size: usize,
     stride: usize,
-) -> PyResult<(Vec<Vec<(usize, usize, Vec<u32>, Vec<(usize, usize)>)>>, Vec<(u32, f64)>)> {
+) -> PyResult<(Vec<Vec<(usize, usize, Vec<u32>, Vec<(usize, usize)>)>>, Vec<(u32, f64)>, Vec<(String, u32)>)> {
     py.detach(|| {
         let mut tokenizer = prepare::SimpleTokenizer::new();
         let mut all_tokenized = Vec::new();
@@ -277,7 +277,12 @@ fn rust_tokenize_and_prepare(
         let idf = prepare::compute_idf(&all_candidate_tokens);
         let idf_vec: Vec<(u32, f64)> = idf.into_iter().collect();
         
-        Ok((source_candidates, idf_vec))
+        // Extract vocab
+        let vocab_vec: Vec<(String, u32)> = tokenizer.get_vocab()
+            .into_iter()
+            .collect();
+        
+        Ok((source_candidates, idf_vec, vocab_vec))
     })
 }
 

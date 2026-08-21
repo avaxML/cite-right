@@ -34,6 +34,10 @@ impl SimpleTokenizer {
         }
     }
 
+    pub fn get_vocab(&self) -> HashMap<String, u32> {
+        self.vocab.clone()
+    }
+
     pub fn tokenize(&mut self, text: &str) -> RustTokenizedText {
         let mut token_ids = Vec::new();
         let mut token_spans = Vec::new();
