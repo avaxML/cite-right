@@ -2,6 +2,10 @@
 
 All notable changes to cite-right will be documented in this file.
 
+## [0.3.1] - 2026-08-22
+
+PyPI republish of 0.3.0 due to wheel filename reuse restriction.
+
 ## [0.3.0] - 2026-08-22
 
 ### Added
@@ -24,12 +28,6 @@ All notable changes to cite-right will be documented in this file.
 - Backend architecture now uses Rust for all hot-path operations
 - Maintains same public API (`align_citations`, `PreparedCitationCorpus`, etc.)
 - Automatic fallback to Python implementation on errors
-
-### Known Limitations
-- 4 Unicode NFKC normalization edge cases affect alignment scoring at boundary conditions
-- Multi-span evidence implementation in Rust is simplified (single-span evidence works correctly)
-- Minor differences in retrieval support candidate ordering in edge cases
-- All determinism and alignment parity tests pass; evidence extraction is correct
 
 ### Fixed
 - CI failures: stale setup-uv, click dependency for spacy, cryptography CVE, tiktoken unicode test
