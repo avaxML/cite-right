@@ -17,7 +17,7 @@ pub struct CitationResult {
     pub components: HashMap<String, f64>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EvidenceSpan {
     pub char_start: usize,
     pub char_end: usize,
@@ -49,6 +49,9 @@ pub struct Config {
     pub weight_evidence_coverage: f64,
     pub weight_lexical: f64,
     pub weight_embedding: f64,
+    pub multi_span_evidence: bool,
+    pub multi_span_merge_gap_chars: i32,
+    pub multi_span_max_spans: usize,
 }
 
 // Candidate metadata needed for citation building
@@ -70,6 +73,7 @@ pub struct Alignment {
     pub token_start: usize,
     pub token_end: usize,
     pub matches: usize,
+    pub match_blocks: Vec<(usize, usize)>,
 }
 
 // Build citations from alignments
@@ -189,27 +193,23 @@ fn process_alignment(
         }
     }
 
-    // Extract evidence
-    let (char_start, char_end) = token_span_to_char_span(
-        &candidate.token_spans,
-        alignment.token_start,
-        alignment.token_end,
-    )?;
+    // Extract evidence spans
+    let evidence_spans = extract_evidence_spans(candidate, alignment, cfg)?;
 
-    let abs_start = candidate.base_offset + candidate.passage_start + char_start;
-    let abs_end = candidate.base_offset + candidate.passage_start + char_end;
-
-    if abs_start >= abs_end {
+    if evidence_spans.is_empty() {
         return None;
     }
 
-    let evidence = slice_source(candidate, abs_start, abs_end);
+    // Calculate total evidence characters
+    let evidence_chars_total: usize = evidence_spans
+        .iter()
+        .map(|s| s.char_end - s.char_start)
+        .sum();
 
-    let evidence_span = EvidenceSpan {
-        char_start: abs_start,
-        char_end: abs_end,
-        evidence: evidence.clone(),
-    };
+    // Overall evidence range
+    let abs_start = evidence_spans[0].char_start;
+    let abs_end = evidence_spans[evidence_spans.len() - 1].char_end;
+    let evidence = slice_source(candidate, abs_start, abs_end);
 
     let mut components = HashMap::new();
     components.insert("alignment_score".to_string(), alignment.score as f64);
@@ -219,10 +219,13 @@ fn process_alignment(
     components.insert("evidence_coverage".to_string(), evidence_coverage);
     components.insert("lexical_score".to_string(), lexical_score);
     components.insert("embedding_score".to_string(), embed_score);
-    components.insert("num_evidence_spans".to_string(), 1.0);
+    components.insert(
+        "num_evidence_spans".to_string(),
+        evidence_spans.len() as f64,
+    );
     components.insert(
         "evidence_chars_total".to_string(),
-        (abs_end - abs_start) as f64,
+        evidence_chars_total as f64,
     );
     components.insert(
         "passage_char_start".to_string(),
@@ -241,9 +244,122 @@ fn process_alignment(
         char_start: abs_start,
         char_end: abs_end,
         evidence,
-        evidence_spans: vec![evidence_span],
+        evidence_spans,
         components,
     }))
+}
+
+fn extract_evidence_spans(
+    candidate: &Candidate,
+    alignment: &Alignment,
+    cfg: &Config,
+) -> Option<Vec<EvidenceSpan>> {
+    // Try multi-span extraction first if enabled and we have disjoint match blocks
+    if cfg.multi_span_evidence && alignment.match_blocks.len() > 1 {
+        if let Some(spans) = extract_multi_span_evidence(candidate, alignment, cfg) {
+            return Some(spans);
+        }
+    }
+
+    // Fall back to single span
+    extract_single_span_evidence(candidate, alignment)
+}
+
+fn extract_multi_span_evidence(
+    candidate: &Candidate,
+    alignment: &Alignment,
+    cfg: &Config,
+) -> Option<Vec<EvidenceSpan>> {
+    let mut spans = Vec::new();
+
+    for &(token_start, token_end) in &alignment.match_blocks {
+        if let Some(span) = create_evidence_span(candidate, token_start, token_end) {
+            spans.push(span);
+        }
+    }
+
+    if spans.is_empty() {
+        return None;
+    }
+
+    // Merge spans within merge_gap_chars
+    let merged = merge_evidence_spans(candidate, spans, cfg.multi_span_merge_gap_chars);
+
+    // Check max_spans limit
+    if cfg.multi_span_max_spans > 0 && merged.len() > cfg.multi_span_max_spans {
+        // Fall back to single contiguous span
+        return None;
+    }
+
+    Some(merged)
+}
+
+fn extract_single_span_evidence(
+    candidate: &Candidate,
+    alignment: &Alignment,
+) -> Option<Vec<EvidenceSpan>> {
+    let span = create_evidence_span(candidate, alignment.token_start, alignment.token_end)?;
+    Some(vec![span])
+}
+
+fn create_evidence_span(
+    candidate: &Candidate,
+    token_start: usize,
+    token_end: usize,
+) -> Option<EvidenceSpan> {
+    let (char_start, char_end) =
+        token_span_to_char_span(&candidate.token_spans, token_start, token_end)?;
+
+    let abs_start = candidate.base_offset + candidate.passage_start + char_start;
+    let abs_end = candidate.base_offset + candidate.passage_start + char_end;
+
+    if abs_start >= abs_end {
+        return None;
+    }
+
+    let evidence = slice_source(candidate, abs_start, abs_end);
+
+    Some(EvidenceSpan {
+        char_start: abs_start,
+        char_end: abs_end,
+        evidence,
+    })
+}
+
+fn merge_evidence_spans(
+    candidate: &Candidate,
+    mut spans: Vec<EvidenceSpan>,
+    merge_gap_chars: i32,
+) -> Vec<EvidenceSpan> {
+    if spans.is_empty() || merge_gap_chars <= 0 {
+        return spans;
+    }
+
+    // Sort by char_start
+    spans.sort_by_key(|s| (s.char_start, s.char_end));
+
+    let mut merged = vec![spans[0].clone()];
+
+    for span in spans.into_iter().skip(1) {
+        let prev = merged.last_mut().unwrap();
+        let gap = span.char_start as i32 - prev.char_end as i32;
+
+        if gap <= merge_gap_chars {
+            // Merge: extend previous span
+            let abs_start = prev.char_start;
+            let abs_end = span.char_end.max(prev.char_end);
+            let evidence = slice_source(candidate, abs_start, abs_end);
+            *prev = EvidenceSpan {
+                char_start: abs_start,
+                char_end: abs_end,
+                evidence,
+            };
+        } else {
+            merged.push(span);
+        }
+    }
+
+    merged
 }
 
 fn build_support(

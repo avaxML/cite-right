@@ -311,6 +311,12 @@ def _process_answer_span(
                     cfg.weights.embedding,
                 )
 
+                multi_span_config = (
+                    cfg.multi_span_evidence,
+                    cfg.multi_span_merge_gap_chars,
+                    cfg.multi_span_max_spans,
+                )
+
                 # Call Rust
                 result_json = _core.rust_build_citations_fast(  # type: ignore[attr-defined]
                     answer_tokens,
@@ -319,6 +325,7 @@ def _process_answer_span(
                     lexical_scores_list,
                     embed_scores,
                     config_tuple,
+                    multi_span_config,
                     aligner.match_score,  # type: ignore[attr-defined]
                     aligner.mismatch_score,  # type: ignore[attr-defined]
                     aligner.gap_score,  # type: ignore[attr-defined]

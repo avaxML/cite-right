@@ -338,6 +338,7 @@ fn rust_align_batch_candidates(
     lexical_scores,
     embed_scores,
     config_tuple,
+    multi_span_config,
     match_score=2,
     mismatch_score=-1,
     gap_score=-1
@@ -362,6 +363,7 @@ fn rust_build_citations_fast(
     lexical_scores: Vec<f64>,
     embed_scores: Vec<f64>,
     config_tuple: (i32, f64, f64, bool, i32, f64, f64, f64, f64, f64),
+    multi_span_config: (bool, i32, usize),
     match_score: i32,
     mismatch_score: i32,
     gap_score: i32,
@@ -411,9 +413,12 @@ fn rust_build_citations_fast(
             weight_evidence_coverage: config_tuple.7,
             weight_lexical: config_tuple.8,
             weight_embedding: config_tuple.9,
+            multi_span_evidence: multi_span_config.0,
+            multi_span_merge_gap_chars: multi_span_config.1,
+            multi_span_max_spans: multi_span_config.2,
         };
 
-        // Run SW alignments
+        // Run SW alignments (with or without match blocks)
         let candidate_token_lists: Vec<Vec<u32>> = candidate_indices
             .iter()
             .map(|&idx| {
@@ -431,19 +436,35 @@ fn rust_build_citations_fast(
             gap_score,
         };
 
-        let sw_alignments =
-            smith_waterman::align_batch(&answer_tokens, &candidate_token_lists, params);
-
-        // Convert to local alignment type
-        let alignments: Vec<citation_fast::Alignment> = sw_alignments
+        let alignments: Vec<citation_fast::Alignment> = if cfg.multi_span_evidence {
+            // Use align_batch_with_match_blocks for multi-span support
+            smith_waterman::align_batch_with_match_blocks(
+                &answer_tokens,
+                &candidate_token_lists,
+                params,
+            )
             .into_iter()
-            .map(|a| citation_fast::Alignment {
+            .map(|(a, match_blocks)| citation_fast::Alignment {
                 score: a.score,
                 token_start: a.token_start,
                 token_end: a.token_end,
                 matches: a.matches,
+                match_blocks,
             })
-            .collect();
+            .collect()
+        } else {
+            // Standard align_batch without match blocks
+            smith_waterman::align_batch(&answer_tokens, &candidate_token_lists, params)
+                .into_iter()
+                .map(|a| citation_fast::Alignment {
+                    score: a.score,
+                    token_start: a.token_start,
+                    token_end: a.token_end,
+                    matches: a.matches,
+                    match_blocks: Vec::new(),
+                })
+                .collect()
+        };
 
         // Build citations and return JSON
         Ok(citation_fast::build_citations_json(

@@ -7,6 +7,7 @@
 //! because Python string slicing uses character offsets.
 
 use std::collections::HashMap;
+use unicode_normalization::UnicodeNormalization;
 
 /// Convert byte index to character index in a UTF-8 string
 fn byte_to_char_index(text: &str, byte_index: usize) -> usize {
@@ -116,7 +117,13 @@ fn iter_token_spans(text: &str) -> Vec<(usize, usize)> {
             idx += 1;
             while idx < chars.len() {
                 let ch = chars[idx].1;
-                if ch.is_alphanumeric() || ch == '\'' || ch == '-' || ch == '_' {
+                // Include alphanumeric, apostrophes (all variants), hyphens (all variants), underscores, AND combining marks
+                if ch.is_alphanumeric()
+                    || is_apostrophe_variant(ch)
+                    || is_dash_variant(ch)
+                    || ch == '_'
+                    || is_combining_mark(ch)
+                {
                     idx += 1;
                 } else {
                     break;
@@ -142,8 +149,53 @@ fn iter_token_spans(text: &str) -> Vec<(usize, usize)> {
 }
 
 fn normalize_token_simple(token: &str) -> String {
-    // Simple lowercase normalization matching Python
-    token.to_lowercase()
+    // Apply NFKC normalization (fullwidth→halfwidth, etc.) + casefold
+    let normalized: String = token.nfkc().collect();
+    let casefolded = normalized
+        .chars()
+        .flat_map(|c| c.to_lowercase())
+        .collect::<String>();
+
+    // Normalize punctuation (quotes and dashes) to ASCII equivalents
+    let punct_normalized = normalize_punctuation(&casefolded);
+
+    // Normalize percent symbol (matching Python's normalize_percent)
+    if punct_normalized == "%" {
+        "percent".to_string()
+    } else {
+        punct_normalized
+    }
+}
+
+fn normalize_punctuation(text: &str) -> String {
+    // Map quote and dash variants that should not affect matching
+    // Matches Python's _normalize_punctuation function
+    text.chars()
+        .map(|c| match c {
+            '\u{2018}' | '\u{2019}' | '\u{02bc}' => '\'', // Curly quotes, modifier apostrophe → ASCII
+            '\u{2010}' | '\u{2011}' | '\u{2012}' | '\u{2013}' | '\u{2212}' => '-', // Various dashes → ASCII hyphen
+            _ => c,
+        })
+        .collect()
+}
+
+fn is_apostrophe_variant(ch: char) -> bool {
+    // ASCII apostrophe and Unicode variants
+    matches!(ch, '\'' | '\u{2018}' | '\u{2019}' | '\u{02bc}')
+}
+
+fn is_dash_variant(ch: char) -> bool {
+    // ASCII hyphen and Unicode variants
+    matches!(
+        ch,
+        '-' | '\u{2010}' | '\u{2011}' | '\u{2012}' | '\u{2013}' | '\u{2212}'
+    )
+}
+
+fn is_combining_mark(ch: char) -> bool {
+    // Unicode combining diacritical marks (category Mn, Me, Mc)
+    // Range U+0300 to U+036F is the main combining diacriticals block
+    matches!(ch, '\u{0300}'..='\u{036F}' | '\u{1AB0}'..='\u{1AFF}' | '\u{1DC0}'..='\u{1DFF}' | '\u{20D0}'..='\u{20FF}' | '\u{FE20}'..='\u{FE2F}')
 }
 
 pub fn simple_segment(text: &str) -> Vec<(usize, usize)> {
@@ -157,7 +209,17 @@ pub fn simple_segment(text: &str) -> Vec<(usize, usize)> {
         if matches!(c, '.' | '!' | '?') {
             let next_is_space = i + 1 < chars.len() && chars[i + 1].1.is_whitespace();
             let is_end = i + 1 == chars.len();
-            if next_is_space || is_end {
+
+            // Check if this is likely an abbreviation (e.g., U.S., Dr., etc.)
+            let is_abbreviation = if i > 0 && c == '.' {
+                let prev_char = chars[i - 1].1;
+                // Pattern: uppercase letter followed by period (U. in U.S.)
+                prev_char.is_uppercase()
+            } else {
+                false
+            };
+
+            if !is_abbreviation && (next_is_space || is_end) {
                 // End at the punctuation, not after the space
                 let end_byte = if i + 1 < chars.len() {
                     chars[i + 1].0
