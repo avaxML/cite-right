@@ -6,6 +6,13 @@ from typing import Iterable, Literal, Sequence, TypeAlias
 
 from pydantic import BaseModel, ConfigDict
 
+try:
+    from cite_right import _core
+    HAS_RUST_CORE = True
+except ImportError:
+    HAS_RUST_CORE = False
+    _core = None  # type: ignore[assignment]
+
 from cite_right.core.aligner_py import SmithWatermanAligner
 from cite_right.core.aligner_rust import RustSmithWatermanAligner
 from cite_right.core.citation_config import CitationConfig
@@ -246,37 +253,111 @@ def _process_answer_span(
         ]
         candidate_token_ids = [candidate.token_ids for candidate in selected_candidates]
         
-        # Try Rust fast path if available
+        # Try Rust fast path for full citation building
         use_rust_fast_path = (
-            type(aligner) == RustSmithWatermanAligner
-            and hasattr(aligner._core, 'rust_align_batch_candidates')
+            HAS_RUST_CORE
+            and type(aligner) == RustSmithWatermanAligner
+            and hasattr(_core, 'rust_build_citations_fast')
         )
         
         if use_rust_fast_path:
             try:
-                from cite_right._core import rust_align_batch_candidates
-                candidate_indices = [candidate_index for candidate_index, _, _ in selected]
-                alignments_with_indices = rust_align_batch_candidates(
+                import json
+                candidate_indices_orig = [candidate_index for candidate_index, _, _ in selected]
+                embed_scores = [embed_score for _, embed_score, _ in selected]
+                lexical_scores_list = [lexical_score for _, _, lexical_score in selected]
+                
+                # Build candidate data with NEW indices (0, 1, 2, ...)
+                # But store the original global_index in the first field
+                candidates_data = [
+                    (
+                        candidates[idx].global_index,  # Use original global index
+                        candidates[idx].source.source_id,
+                        candidates[idx].source.source_index,
+                        candidates[idx].source.text,
+                        candidates[idx].source.full_text,
+                        candidates[idx].source.base_doc_offset,
+                        candidates[idx].passage.doc_char_start,
+                        candidates[idx].passage.doc_char_end,
+                        candidates[idx].token_ids,
+                        candidates[idx].token_spans,
+                    )
+                    for idx in candidate_indices_orig
+                ]
+                
+                # Use sequential indices for alignment (matching candidates_data)
+                candidate_indices = list(range(len(candidates_data)))
+                
+                # Store mapping back to original for later
+                # (Not actually needed since we're using global_index directly)
+                
+                # Build config tuple
+                config_tuple = (
+                    cfg.min_alignment_score,
+                    cfg.min_answer_coverage,
+                    cfg.min_final_score,
+                    cfg.require_all_answer_tokens_in_evidence,
+                    cfg.match_score,
+                    cfg.weights.alignment,
+                    cfg.weights.answer_coverage,
+                    cfg.weights.evidence_coverage,
+                    cfg.weights.lexical,
+                    cfg.weights.embedding,
+                )
+                
+                # Call Rust
+                result_json = _core.rust_build_citations_fast(
                     answer_tokens,
+                    candidates_data,
                     candidate_indices,
-                    candidate_token_ids,
+                    lexical_scores_list,
+                    embed_scores,
+                    config_tuple,
                     aligner.match_score,
                     aligner.mismatch_score,
                     aligner.gap_score,
                 )
-                # Convert to Alignment objects
-                alignments = [
-                    Alignment(
-                        score=score,
-                        token_start=token_start,
-                        token_end=token_end,
-                        query_start=query_start,
-                        query_end=query_end,
-                        matches=matches,
-                    )
-                    for _, score, token_start, token_end, query_start, query_end, matches in alignments_with_indices
-                ]
-            except Exception:
+                
+                result = json.loads(result_json)
+                num_alignments = len(candidate_indices)
+                
+                # Convert to Pydantic models
+                for cit in result['citations']:
+                    citations.append(Citation(
+                        score=cit['score'],
+                        source_id=cit['source_id'],
+                        source_index=cit['source_index'],
+                        candidate_index=cit['candidate_index'],  # Already the global index from Rust
+                        char_start=cit['char_start'],
+                        char_end=cit['char_end'],
+                        evidence=cit['evidence'],
+                        evidence_spans=[
+                            EvidenceSpan(
+                                char_start=es['char_start'],
+                                char_end=es['char_end'],
+                                evidence=es['evidence'],
+                            )
+                            for es in cit['evidence_spans']
+                        ],
+                        components=cit['components'],
+                    ))
+                
+                for sup in result['supports']:
+                    retrieval_support.append(RetrievalSupport(
+                        retrieval_score=sup['retrieval_score'],
+                        source_id=sup['source_id'],
+                        source_index=sup['source_index'],
+                        candidate_index=sup['candidate_index'],
+                        passage_char_start=sup['passage_char_start'],
+                        passage_char_end=sup['passage_char_end'],
+                        passage_text=sup['passage_text'],
+                        embedding_score=sup['embedding_score'],
+                        lexical_score=sup['lexical_score'],
+                    ))
+                
+                alignment_time = (time.perf_counter() - align_start) * 1000
+                use_rust_fast_path = True
+            except Exception as e:
                 # Fall back to standard path
                 use_rust_fast_path = False
         
@@ -290,43 +371,43 @@ def _process_answer_span(
             else:
                 alignments = align_batch(answer_tokens, candidate_token_ids)
         
-        trusted_alignment_match_counts = type(aligner) in {
-            SmithWatermanAligner,
-            RustSmithWatermanAligner,
-        }
-        for (candidate_index, embed_score, lexical_score), candidate, alignment in zip(
-            selected,
-            selected_candidates,
-            alignments,
-            strict=True,
-        ):
-            candidate = candidates[candidate_index]
-            num_alignments += 1
+            trusted_alignment_match_counts = type(aligner) in {
+                SmithWatermanAligner,
+                RustSmithWatermanAligner,
+            }
+            for (candidate_index, embed_score, lexical_score), candidate, alignment in zip(
+                selected,
+                selected_candidates,
+                alignments,
+                strict=True,
+            ):
+                candidate = candidates[candidate_index]
+                num_alignments += 1
 
-            citation = _build_exact_citation(
-                candidate=candidate,
-                alignment=alignment,
-                answer_tokens=answer_tokens,
-                trusted_alignment_match_counts=trusted_alignment_match_counts,
-                embed_score=embed_score,
-                lexical_score=lexical_score,
-                cfg=cfg,
-            )
-            if citation is not None:
-                citations.append(citation)
-                continue
+                citation = _build_exact_citation(
+                    candidate=candidate,
+                    alignment=alignment,
+                    answer_tokens=answer_tokens,
+                    trusted_alignment_match_counts=trusted_alignment_match_counts,
+                    embed_score=embed_score,
+                    lexical_score=lexical_score,
+                    cfg=cfg,
+                )
+                if citation is not None:
+                    citations.append(citation)
+                    continue
 
-            support = _build_retrieval_support_for_candidate(
-                candidate=candidate,
-                alignment=alignment,
-                answer_tokens=answer_tokens,
-                embed_score=embed_score,
-                lexical_score=lexical_score,
-                cfg=cfg,
-            )
-            if support is not None:
-                retrieval_support.append(support)
-        alignment_time = (time.perf_counter() - align_start) * 1000
+                support = _build_retrieval_support_for_candidate(
+                    candidate=candidate,
+                    alignment=alignment,
+                    answer_tokens=answer_tokens,
+                    embed_score=embed_score,
+                    lexical_score=lexical_score,
+                    cfg=cfg,
+                )
+                if support is not None:
+                    retrieval_support.append(support)
+            alignment_time = (time.perf_counter() - align_start) * 1000
 
     citations = _rank_and_limit_citations(citations, cfg)
     status = _span_status(citations, cfg)
