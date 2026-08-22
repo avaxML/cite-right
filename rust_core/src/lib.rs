@@ -330,7 +330,7 @@ fn rust_align_batch_candidates(
     })
 }
 
-/// Fast citation building - returns JSON string  
+/// Fast citation building - returns JSON string
 #[pyfunction(signature = (
     answer_tokens,
     candidates_data,
@@ -342,7 +342,7 @@ fn rust_align_batch_candidates(
     mismatch_score=-1,
     gap_score=-1
 ))]
-#[allow(clippy::too_many_arguments)]
+#[allow(clippy::too_many_arguments, clippy::type_complexity)]
 fn rust_build_citations_fast(
     py: Python<'_>,
     answer_tokens: Vec<u32>,
@@ -441,8 +441,6 @@ fn rust_build_citations_fast(
                 score: a.score,
                 token_start: a.token_start,
                 token_end: a.token_end,
-                query_start: a.query_start,
-                query_end: a.query_end,
                 matches: a.matches,
             })
             .collect();

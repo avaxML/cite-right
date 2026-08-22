@@ -69,8 +69,6 @@ pub struct Alignment {
     pub score: i32,
     pub token_start: usize,
     pub token_end: usize,
-    pub query_start: usize,
-    pub query_end: usize,
     pub matches: usize,
 }
 
