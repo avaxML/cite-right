@@ -33,19 +33,36 @@ def _download_model_if_needed(model_path: Path, tokenizer_path: Path) -> None:
     model_path.parent.mkdir(parents=True, exist_ok=True)
 
     try:
-        import urllib.request
+        from huggingface_hub import (  # pyright: ignore[reportMissingImports]
+            hf_hub_download,
+        )
     except ImportError as exc:  # pragma: no cover
         raise RuntimeError(
-            "urllib.request is required to download ONNX models"
+            "huggingface-hub is required to download ONNX models. "
+            "Install with 'cite-right[onnx]'."
         ) from exc
 
+    import shutil
+
+    # Download from HuggingFace Hub using secure API
+    repo_id = "sentence-transformers/all-MiniLM-L6-v2"
+    revision = "main"  # Pin revision for security (Bandit B615)
+
     if not model_path.exists():
-        print(f"Downloading ONNX model to {model_path}...")
-        urllib.request.urlretrieve(_MODEL_URL, model_path)
+        downloaded = hf_hub_download(
+            repo_id=repo_id,
+            filename="onnx/model_quantized.onnx",
+            revision=revision,
+        )
+        shutil.copy2(downloaded, model_path)
 
     if not tokenizer_path.exists():
-        print(f"Downloading tokenizer to {tokenizer_path}...")
-        urllib.request.urlretrieve(_TOKENIZER_JSON_URL, tokenizer_path)
+        downloaded = hf_hub_download(
+            repo_id=repo_id,
+            filename="tokenizer.json",
+            revision=revision,
+        )
+        shutil.copy2(downloaded, tokenizer_path)
 
 
 class OnnxMiniLmEmbedder:

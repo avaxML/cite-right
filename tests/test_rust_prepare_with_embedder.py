@@ -99,6 +99,8 @@ def test_rust_prepare_embedder_candidate_count_matches_python(
     assert len(rust_corpus.candidates) == len(python_corpus.candidates)
 
     # Embedding index shapes should match
+    assert rust_corpus.embedding_index is not None
+    assert python_corpus.embedding_index is not None
     assert (
         rust_corpus.embedding_index.vectors.shape
         == python_corpus.embedding_index.vectors.shape

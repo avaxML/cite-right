@@ -12,7 +12,7 @@ dependencies = [
 [project.optional-dependencies]
 spacy = ["spacy>=3.7", "click>=8.0"]
 embeddings = ["sentence-transformers>=2.2"]
-onnx = ["onnxruntime>=1.16", "tokenizers>=0.15"]
+onnx = ["onnxruntime>=1.16", "tokenizers>=0.15", "huggingface-hub>=0.20"]
 tiktoken = ["tiktoken>=0.5"]
 huggingface = ["transformers>=4.30", "tokenizers>=0.15"]
 pysbd = ["pysbd>=0.3.4"]
