@@ -124,16 +124,17 @@ class PreparedCitationCorpus(BaseModel):
         normalized_sources = normalize_sources(sources)
 
         # Try Rust fast path for prepare phase if available
+        # Rust can now be used with embedders - it handles tokenize/passages/candidates/IDF,
+        # then we build the embedding index from the rust-produced passage texts
         if (
             use_rust
             and RUST_PREPARE_AVAILABLE
-            and embedder is None
             and isinstance(tokenizer, SimpleTokenizer)
             and isinstance(source_segmenter, SimpleSegmenter)
         ):
             try:
                 return cls._from_sources_rust(
-                    normalized_sources, cfg, source_segmenter, tokenizer
+                    normalized_sources, cfg, source_segmenter, tokenizer, embedder
                 )
             except Exception as e:
                 # Fall back to Python if Rust path fails
@@ -179,8 +180,13 @@ class PreparedCitationCorpus(BaseModel):
         cfg: CitationConfig,
         source_segmenter: SimpleSegmenter,
         tokenizer: SimpleTokenizer,
+        embedder: Embedder | None = None,
     ) -> "PreparedCitationCorpus":
-        """Fast path using Rust for tokenization, passages, candidates, and IDF."""
+        """Fast path using Rust for tokenization, passages, candidates, and IDF.
+
+        Now supports embedders - Rust handles the tokenize/passages/candidates/IDF,
+        then we build the embedding index from the rust-produced passage texts.
+        """
         # Call Rust to do all the heavy lifting
         source_texts = [src.text for src in normalized_sources]
         rust_candidates, rust_idf, rust_vocab = rust_tokenize_and_prepare(
@@ -239,17 +245,27 @@ class PreparedCitationCorpus(BaseModel):
         # Convert IDF from Rust [(u32, f64)] to Python dict[int, float]
         idf: IdfWeights = {int(token_id): weight for token_id, weight in rust_idf}
 
-        return cls(
+        # Build embedding index if embedder is provided
+        embedding_build_time_ms = 0.0
+        embedding_index = None
+        if embedder is not None:
+            embedding_start = time.perf_counter()
+            embedding_index = build_embedding_index(embedder, candidates)
+            embedding_build_time_ms = (time.perf_counter() - embedding_start) * 1000
+
+        corpus = cls(
             config=cfg,
             tokenizer=tokenizer,
             source_segmenter=source_segmenter,
-            embedder=None,
+            embedder=embedder,
             normalized_sources=normalized_sources,
             source_passages=source_passages,
             candidates=candidates,
             idf=idf,
-            embedding_index=None,
+            embedding_index=embedding_index,
         )
+        corpus._embedding_build_time_ms = embedding_build_time_ms
+        return corpus
 
     def align(
         self,
