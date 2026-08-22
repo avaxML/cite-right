@@ -78,8 +78,7 @@ class OnnxMiniLmEmbedder:
             import onnxruntime as ort  # pyright: ignore[reportMissingImports]
         except ImportError as exc:  # pragma: no cover
             raise RuntimeError(
-                "onnxruntime is not installed. "
-                "Install with 'cite-right[onnx]'."
+                "onnxruntime is not installed. Install with 'cite-right[onnx]'."
             ) from exc
 
         try:
@@ -88,7 +87,7 @@ class OnnxMiniLmEmbedder:
             )
         except ImportError as exc:  # pragma: no cover
             raise RuntimeError(
-                "tokenizers is not installed. " "Install with 'cite-right[onnx]'."
+                "tokenizers is not installed. Install with 'cite-right[onnx]'."
             ) from exc
 
         # Resolve model and tokenizer paths
@@ -177,7 +176,9 @@ class OnnxMiniLmEmbedder:
         return embeddings.tolist()
 
     def _mean_pool(
-        self, token_embeddings: npt.NDArray[np.float32], attention_mask: npt.NDArray[np.int64]
+        self,
+        token_embeddings: npt.NDArray[np.float32],
+        attention_mask: npt.NDArray[np.int64],
     ) -> npt.NDArray[np.float32]:
         """Apply mean pooling to token embeddings using attention mask."""
         # Expand attention mask to match embedding dimensions

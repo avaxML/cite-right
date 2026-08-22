@@ -233,7 +233,9 @@ def test_rust_prepare_fallback_with_custom_tokenizer() -> None:
                 end = start + len(word)
                 token_spans.append((start, end))
                 pos = end
-            return TokenizedText(text=text, token_ids=token_ids, token_spans=token_spans)
+            return TokenizedText(
+                text=text, token_ids=token_ids, token_spans=token_spans
+            )
 
     corpus = PreparedCitationCorpus.from_sources(
         ["First sentence. Second sentence. Third sentence."],
