@@ -58,8 +58,18 @@ from cite_right.integrations import (
     is_llamaindex_available,
     is_llamaindex_node,
 )
-from cite_right.models.sbert_embedder import SentenceTransformerEmbedder
 from cite_right.text.answer_segmenter_spacy import SpacyAnswerSegmenter
+
+# Optional embedders - import only if dependencies are available
+try:
+    from cite_right.models.sbert_embedder import SentenceTransformerEmbedder
+except ImportError:
+    SentenceTransformerEmbedder = None  # type: ignore
+
+try:
+    from cite_right.models.onnx_embedder import OnnxMiniLmEmbedder
+except ImportError:
+    OnnxMiniLmEmbedder = None  # type: ignore
 from cite_right.text.segmenter_pysbd import PySBDSegmenter
 from cite_right.text.segmenter_spacy import SpacySegmenter
 from cite_right.text.tokenizer import SimpleTokenizer, TokenizerConfig
@@ -134,4 +144,5 @@ __all__ = [
     "SpacyClaimDecomposer",
     # Embedders
     "SentenceTransformerEmbedder",
+    "OnnxMiniLmEmbedder",
 ]
