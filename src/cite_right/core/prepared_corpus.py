@@ -25,7 +25,8 @@ from cite_right.text.segmenter_simple import SimpleSegmenter
 from cite_right.text.tokenizer import SimpleTokenizer
 
 try:
-    from cite_right._core import rust_tokenize_and_prepare
+    from cite_right._core import rust_tokenize_and_prepare  # type: ignore[attr-defined]
+
     RUST_PREPARE_AVAILABLE = True
 except ImportError:
     RUST_PREPARE_AVAILABLE = False
@@ -121,7 +122,7 @@ class PreparedCitationCorpus(BaseModel):
         tokenizer = tokenizer or SimpleTokenizer()
 
         normalized_sources = normalize_sources(sources)
-        
+
         # Try Rust fast path for prepare phase if available
         if (
             use_rust
@@ -137,9 +138,13 @@ class PreparedCitationCorpus(BaseModel):
             except Exception as e:
                 # Fall back to Python if Rust path fails
                 import sys
-                print(f"Rust prepare path failed: {e}, falling back to Python", file=sys.stderr)
+
+                print(
+                    f"Rust prepare path failed: {e}, falling back to Python",
+                    file=sys.stderr,
+                )
                 pass
-        
+
         # Python fallback path
         source_passages = build_source_passages(
             normalized_sources, source_segmenter, cfg
@@ -183,24 +188,32 @@ class PreparedCitationCorpus(BaseModel):
             cfg.window_size_sentences,
             cfg.window_stride_sentences,
         )
-        
+
         # Populate the Python tokenizer's vocab from Rust
-        tokenizer._vocab = {normalized: int(token_id) for normalized, token_id in rust_vocab}
-        tokenizer._next_id = max(tokenizer._vocab.values()) + 1 if tokenizer._vocab else 1
-        
+        tokenizer._vocab = {
+            normalized: int(token_id) for normalized, token_id in rust_vocab
+        }
+        tokenizer._next_id = (
+            max(tokenizer._vocab.values()) + 1 if tokenizer._vocab else 1
+        )
+
         # Convert Rust results to Python objects
         candidates: list[Candidate] = []
         source_passages: list[tuple[NormalizedSource, list[Passage]]] = []
         global_index = 0
-        
-        for source_idx, (source, rust_source_candidates) in enumerate(
+
+        for _source_idx, (source, rust_source_candidates) in enumerate(
             zip(normalized_sources, rust_candidates, strict=False)
         ):
             passages: list[Passage] = []
-            
-            for passage_idx, (passage_start, passage_end, token_ids, token_spans) in enumerate(rust_source_candidates):
+
+            for passage_idx, (
+                passage_start,
+                passage_end,
+                token_ids,
+                token_spans,
+            ) in enumerate(rust_source_candidates):
                 passage = Passage(
-                    text=source.text[passage_start:passage_end],
                     doc_char_start=passage_start,
                     doc_char_end=passage_end,
                     segment_start=passage_idx,  # Approximate - Rust doesn't track segment boundaries
@@ -208,7 +221,7 @@ class PreparedCitationCorpus(BaseModel):
                     source_text=source.text,
                 )
                 passages.append(passage)
-                
+
                 candidates.append(
                     Candidate(
                         global_index=global_index,
@@ -220,12 +233,12 @@ class PreparedCitationCorpus(BaseModel):
                     )
                 )
                 global_index += 1
-            
+
             source_passages.append((source, passages))
-        
+
         # Convert IDF from Rust [(u32, f64)] to Python dict[int, float]
         idf: IdfWeights = {int(token_id): weight for token_id, weight in rust_idf}
-        
+
         return cls(
             config=cfg,
             tokenizer=tokenizer,
