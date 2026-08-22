@@ -15,8 +15,10 @@ _MAX_EMBEDDING_CACHE_SIZE = 10_000
 _EMBEDDING_CACHE: OrderedDict[tuple[str, str], list[float]] = OrderedDict()
 
 _DEFAULT_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
-_MODEL_URL = "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/onnx/model_quantized.onnx"
-_TOKENIZER_JSON_URL = "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/tokenizer.json"
+# Use the file that actually exists on HuggingFace Hub (not model_quantized.onnx which 404s)
+_MODEL_FILENAME = "onnx/model_quint8_avx2.onnx"
+_TOKENIZER_FILENAME = "tokenizer.json"
+_DEFAULT_BATCH_SIZE = 32  # Bounded batch size to avoid padding to global max
 
 
 def _default_model_dir() -> Path:
@@ -51,7 +53,7 @@ def _download_model_if_needed(model_path: Path, tokenizer_path: Path) -> None:
     if not model_path.exists():
         downloaded = hf_hub_download(
             repo_id=repo_id,
-            filename="onnx/model_quantized.onnx",
+            filename=_MODEL_FILENAME,
             revision=revision,
         )
         shutil.copy2(downloaded, model_path)
@@ -59,7 +61,7 @@ def _download_model_if_needed(model_path: Path, tokenizer_path: Path) -> None:
     if not tokenizer_path.exists():
         downloaded = hf_hub_download(
             repo_id=repo_id,
-            filename="tokenizer.json",
+            filename=_TOKENIZER_FILENAME,
             revision=revision,
         )
         shutil.copy2(downloaded, tokenizer_path)
@@ -119,11 +121,19 @@ class OnnxMiniLmEmbedder:
 
             _download_model_if_needed(Path(model_path), Path(tokenizer_path))
 
+        # Configure session options for reasonable performance
+        sess_options = ort.SessionOptions()
+        # Set intra_op_num_threads to a sensible default (don't oversubscribe)
+        sess_options.intra_op_num_threads = min(4, os.cpu_count() or 1)
+
         self._session = ort.InferenceSession(
-            str(model_path), providers=["CPUExecutionProvider"]
+            str(model_path),
+            sess_options=sess_options,
+            providers=["CPUExecutionProvider"],
         )
         self._tokenizer = Tokenizer.from_file(str(tokenizer_path))
         self.model_name = model_name
+        self._batch_size = _DEFAULT_BATCH_SIZE
 
     def encode(self, texts: Sequence[str]) -> list[list[float]]:
         """Encode a list of text strings into a list of float vectors.
@@ -161,36 +171,56 @@ class OnnxMiniLmEmbedder:
         return results  # type: ignore
 
     def _encode_batch(self, texts: list[str]) -> list[list[float]]:
-        """Encode a batch of texts using the ONNX model."""
-        # Tokenize
-        encodings = self._tokenizer.encode_batch(texts)
-        max_length = max(len(enc.ids) for enc in encodings)
+        """Encode a batch of texts using the ONNX model.
 
-        # Prepare padded inputs
-        input_ids = np.zeros((len(texts), max_length), dtype=np.int64)
-        attention_mask = np.zeros((len(texts), max_length), dtype=np.int64)
+        Uses bounded batching to avoid padding all texts to the global max length.
+        Processes in chunks and pads only to the max length within each chunk.
+        """
+        if not texts:
+            return []
 
-        for i, enc in enumerate(encodings):
-            input_ids[i, : len(enc.ids)] = enc.ids
-            attention_mask[i, : len(enc.attention_mask)] = enc.attention_mask
+        all_embeddings: list[list[float]] = []
 
-        # Run inference
-        onnx_inputs = {
-            "input_ids": input_ids,
-            "attention_mask": attention_mask,
-        }
-        outputs = self._session.run(None, onnx_inputs)
+        # Process in bounded batches to avoid padding to global max
+        for batch_start in range(0, len(texts), self._batch_size):
+            batch_end = min(batch_start + self._batch_size, len(texts))
+            batch_texts = texts[batch_start:batch_end]
 
-        # Mean pooling with attention mask
-        token_embeddings = np.array(outputs[0], dtype=np.float32)
-        embeddings = self._mean_pool(token_embeddings, attention_mask)
+            # Tokenize this batch only
+            encodings = self._tokenizer.encode_batch(batch_texts)
+            max_length = max(len(enc.ids) for enc in encodings)
 
-        # Normalize
-        embeddings = embeddings / np.linalg.norm(
-            embeddings, axis=1, keepdims=True
-        ).clip(min=1e-12)
+            # Prepare padded inputs for this batch
+            batch_size = len(batch_texts)
+            input_ids = np.zeros((batch_size, max_length), dtype=np.int64)
+            attention_mask = np.zeros((batch_size, max_length), dtype=np.int64)
+            token_type_ids = np.zeros((batch_size, max_length), dtype=np.int64)
 
-        return embeddings.tolist()
+            for i, enc in enumerate(encodings):
+                input_ids[i, : len(enc.ids)] = enc.ids
+                attention_mask[i, : len(enc.attention_mask)] = enc.attention_mask
+                # token_type_ids remain zeros (required by MiniLM ONNX graph)
+
+            # Run inference
+            onnx_inputs = {
+                "input_ids": input_ids,
+                "attention_mask": attention_mask,
+                "token_type_ids": token_type_ids,
+            }
+            outputs = self._session.run(None, onnx_inputs)
+
+            # Mean pooling with attention mask
+            token_embeddings = np.array(outputs[0], dtype=np.float32)
+            embeddings = self._mean_pool(token_embeddings, attention_mask)
+
+            # Normalize
+            embeddings = embeddings / np.linalg.norm(
+                embeddings, axis=1, keepdims=True
+            ).clip(min=1e-12)
+
+            all_embeddings.extend(embeddings.tolist())
+
+        return all_embeddings
 
     def _mean_pool(
         self,
