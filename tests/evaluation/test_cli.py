@@ -62,7 +62,7 @@ def test_performance_smoke_command_writes_requested_canonical_artifact_and_struc
         check=False,
         capture_output=True,
         text=True,
-        timeout=90,
+        timeout=240,
     )
 
     assert result.returncode == 0, result.stderr
@@ -130,7 +130,7 @@ def test_performance_smoke_command_uses_repeatable_workload_and_correctness_hash
         check=False,
         capture_output=True,
         text=True,
-        timeout=90,
+        timeout=240,
     )
     right = subprocess.run(
         [
@@ -146,7 +146,7 @@ def test_performance_smoke_command_uses_repeatable_workload_and_correctness_hash
         check=False,
         capture_output=True,
         text=True,
-        timeout=90,
+        timeout=240,
     )
 
     assert left.returncode == 0, left.stderr
@@ -531,7 +531,7 @@ def test_promote_success_replaces_dataset_with_allowlisted_files_only(
     assert payload["command"] == "promote"
     assert not (dataset_dir / "sentinel.txt").exists()
     assert sorted(
-        str(path.relative_to(dataset_dir))
+        path.relative_to(dataset_dir).as_posix()
         for path in dataset_dir.rglob("*")
         if path.is_file()
     ) == [

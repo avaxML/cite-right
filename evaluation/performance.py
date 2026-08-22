@@ -1949,6 +1949,8 @@ def _write_stdout_json(
 
 
 def _fsync_directory(path: Path) -> None:
+    if os.name != "posix":
+        return
     descriptor = os.open(path, os.O_RDONLY)
     try:
         os.fsync(descriptor)

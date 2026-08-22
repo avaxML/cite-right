@@ -449,7 +449,7 @@ def _read_regular_file(path: Path) -> bytes:
         raise ValueError(f"{path} must not be a symlink")
     if not stat.S_ISREG(metadata.st_mode):
         raise ValueError(f"{path} must be a regular file")
-    flags = os.O_RDONLY
+    flags = os.O_RDONLY | getattr(os, "O_BINARY", 0)
     no_follow = getattr(os, "O_NOFOLLOW", 0)
     if no_follow:
         flags |= no_follow
@@ -503,6 +503,8 @@ def _is_relative_to(path: Path, root: Path) -> bool:
 
 
 def _fsync_tree(root: Path) -> None:
+    if os.name != "posix":
+        return
     for path in root.iterdir():
         metadata = os.lstat(path)
         if stat.S_ISREG(metadata.st_mode):
@@ -512,6 +514,8 @@ def _fsync_tree(root: Path) -> None:
 
 
 def _fsync_directory(path: Path) -> None:
+    if os.name != "posix":
+        return
     file_descriptor = os.open(path, os.O_RDONLY)
     try:
         os.fsync(file_descriptor)
