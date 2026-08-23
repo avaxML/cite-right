@@ -118,17 +118,17 @@ impl InvertedIndex {
                 }
             }
 
-            // If intersection is not too small, use it
-            if intersected.len() >= 8 || existing_tokens.len() == 2 {
+            // Accept smaller intersections (≥4 instead of ≥8) for better recall
+            if intersected.len() >= 4 || existing_tokens.len() == 2 {
                 candidate_scores = intersected;
             }
             // Otherwise keep the rarest token candidates and OR-expand
         }
 
-        // If we have too few candidates and more tokens, expand with union
-        if candidate_scores.len() < 16 && existing_tokens.len() > 2 {
-            // Add candidates from additional rare tokens (weighted lower)
-            for &(token_id, _) in existing_tokens.iter().skip(2).take(3) {
+        // Expand with more tokens if we have too few candidates
+        if candidate_scores.len() < 24 && existing_tokens.len() > 2 {
+            // Add candidates from additional rare tokens (up to 4 more)
+            for &(token_id, _) in existing_tokens.iter().skip(2).take(4) {
                 for posting in self.get_postings(token_id) {
                     *candidate_scores.entry(posting.candidate_index).or_insert(0) += 1;
                 }

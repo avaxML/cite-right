@@ -257,10 +257,11 @@ fn rust_tokenize_and_prepare(
             all_tokenized.push(tokenizer.tokenize(text));
         }
 
-        // Build candidates per source
+        // Build candidates per source and index inline
         let mut source_candidates = Vec::new();
         let mut all_candidate_tokens = Vec::new();
-        let mut flat_candidates = Vec::new();
+        let mut index = inverted_index::InvertedIndex::new();
+        let mut global_candidate_index = 0;
 
         for (text, tokenized) in source_texts.iter().zip(&all_tokenized) {
             let segments = prepare::simple_segment(text);
@@ -275,14 +276,29 @@ fn rust_tokenize_and_prepare(
                     passage_end,
                 );
 
+                // Add to index inline (avoid extra clone)
+                for (token_pos, (&token_id, &(char_start, char_end))) in
+                    token_ids.iter().zip(token_spans.iter()).enumerate()
+                {
+                    index.add_posting(
+                        token_id,
+                        inverted_index::Posting {
+                            candidate_index: global_candidate_index,
+                            token_pos,
+                            char_start,
+                            char_end,
+                        },
+                    );
+                }
+
                 candidates.push((
                     passage_start,
                     passage_end,
                     token_ids.clone(),
                     token_spans.clone(),
                 ));
-                all_candidate_tokens.push(token_ids.clone());
-                flat_candidates.push((passage_start, passage_end, token_ids, token_spans));
+                all_candidate_tokens.push(token_ids);
+                global_candidate_index += 1;
             }
 
             source_candidates.push(candidates);
@@ -294,9 +310,6 @@ fn rust_tokenize_and_prepare(
 
         // Extract vocab
         let vocab_vec: Vec<(String, u32)> = tokenizer.get_vocab().into_iter().collect();
-
-        // Build inverted index and return it directly (kept in Rust)
-        let index = prepare::build_inverted_index(&flat_candidates);
 
         Ok((source_candidates, idf_vec, vocab_vec, index))
     })
