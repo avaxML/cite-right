@@ -87,60 +87,49 @@ impl InvertedIndex {
             .collect();
         token_counts.sort_by_key(|(_, count)| *count);
 
-        // Try intersection with rarest tokens first
-        let mut candidates = self.try_intersection(&token_counts, max_candidates);
-
-        // Fall back to union with rarest tokens if intersection is empty
-        if candidates.is_empty() {
-            candidates = self.fallback_union(&token_counts, max_candidates);
-        }
-
-        candidates
-    }
-
-    /// Try intersection of rarest tokens (AND query)
-    fn try_intersection(&self, token_counts: &[(u32, usize)], max_candidates: usize) -> Vec<usize> {
-        // Start with candidates from the rarest token
-        let rarest_token = token_counts[0].0;
-        let mut candidate_set: HashSet<usize> = self
-            .get_postings(rarest_token)
-            .iter()
-            .map(|p| p.candidate_index)
+        // Filter to tokens that exist in the index
+        let existing_tokens: Vec<(u32, usize)> = token_counts
+            .into_iter()
+            .filter(|(_, count)| *count > 0)
             .collect();
 
-        if candidate_set.is_empty() {
+        if existing_tokens.is_empty() {
             return Vec::new();
         }
 
-        // Intersect with next rarest tokens (up to 3 for performance)
-        for &(token_id, _) in token_counts.iter().skip(1).take(2) {
-            let token_candidates: HashSet<usize> = self
-                .get_postings(token_id)
+        // Start with rarest token candidates
+        let mut candidate_scores: HashMap<usize, usize> = HashMap::new();
+        for posting in self.get_postings(existing_tokens[0].0) {
+            candidate_scores.insert(posting.candidate_index, 1);
+        }
+
+        // Try intersecting with second rarest if we have multiple tokens
+        if existing_tokens.len() > 1 {
+            let mut intersected: HashMap<usize, usize> = HashMap::new();
+            let second_candidates: HashSet<usize> = self
+                .get_postings(existing_tokens[1].0)
                 .iter()
                 .map(|p| p.candidate_index)
                 .collect();
-            candidate_set.retain(|c| token_candidates.contains(c));
 
-            if candidate_set.is_empty() {
-                return Vec::new();
+            for (&cand_idx, &score) in &candidate_scores {
+                if second_candidates.contains(&cand_idx) {
+                    intersected.insert(cand_idx, score + 1);
+                }
             }
+
+            // If intersection is not too small, use it
+            if intersected.len() >= 8 || existing_tokens.len() == 2 {
+                candidate_scores = intersected;
+            }
+            // Otherwise keep the rarest token candidates and OR-expand
         }
 
-        // Convert to sorted vec
-        let mut result: Vec<usize> = candidate_set.into_iter().collect();
-        result.sort_unstable();
-        result.truncate(max_candidates);
-        result
-    }
-
-    /// Fall back to union of rarest tokens (OR query)
-    fn fallback_union(&self, token_counts: &[(u32, usize)], max_candidates: usize) -> Vec<usize> {
-        let mut candidate_scores: HashMap<usize, usize> = HashMap::new();
-
-        // Use only the 5 rarest tokens for union to keep it small
-        for &(token_id, _) in token_counts.iter().take(5.min(token_counts.len())) {
-            if let Some(postings) = self.index.get(&token_id) {
-                for posting in postings {
+        // If we have too few candidates and more tokens, expand with union
+        if candidate_scores.len() < 16 && existing_tokens.len() > 2 {
+            // Add candidates from additional rare tokens (weighted lower)
+            for &(token_id, _) in existing_tokens.iter().skip(2).take(3) {
+                for posting in self.get_postings(token_id) {
                     *candidate_scores.entry(posting.candidate_index).or_insert(0) += 1;
                 }
             }

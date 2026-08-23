@@ -1,8 +1,7 @@
 """Tests for contradiction detection in citations."""
 
-import pytest
 
-from cite_right import align_citations, CitationConfig
+from cite_right import CitationConfig, align_citations
 
 
 def test_negation_mismatch_marked_unsupported() -> None:

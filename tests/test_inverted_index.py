@@ -1,10 +1,7 @@
 """Tests for inverted index retrieval."""
 
-import pytest
 
-from cite_right import PreparedCitationCorpus, align_citations, CitationConfig
-from cite_right.text.tokenizer import SimpleTokenizer
-from cite_right.text.segmenter_simple import SimpleSegmenter
+from cite_right import CitationConfig, PreparedCitationCorpus, align_citations
 
 from .conftest import requires_rust
 
@@ -80,6 +77,34 @@ def test_inverted_index_improves_retrieval() -> None:
     assert len(results) == 1
     assert results[0].status == "supported"
     assert len(results[0].citations) > 0
+
+
+@requires_rust
+def test_inverted_index_never_returns_empty_when_tokens_exist() -> None:
+    """Verify that inverted index never returns empty seeds when tokens exist."""
+    sources = [
+        "Revenue grew 15% in Q4.",
+        "Costs decreased by 10%.",
+        "Profit margins improved significantly.",
+    ]
+    
+    corpus = PreparedCitationCorpus.from_sources(
+        sources,
+        config=CitationConfig(),
+        use_rust=True,
+    )
+    
+    # Query with tokens that exist in the corpus
+    answer = "Revenue grew in Q4."
+    tokenized = corpus.tokenizer.tokenize(answer)
+    
+    # Should never get empty seeds when tokens exist
+    seed_candidates = corpus.inverted_index.query(tokenized.token_ids, 100)
+    assert len(seed_candidates) > 0, "Should not return empty seeds when query tokens exist"
+    
+    # Should find the relevant candidate
+    revenue_candidates = [c.global_index for c in corpus.candidates if c.source.source_index == 0]
+    assert any(idx in seed_candidates for idx in revenue_candidates)
 
 
 @requires_rust
