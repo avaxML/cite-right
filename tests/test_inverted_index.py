@@ -24,20 +24,49 @@ def test_inverted_index_is_built_with_rust_prepare() -> None:
         use_rust=True,
     )
     
-    # Check that inverted index was created
+    # Check that inverted index was created (Rust object, opaque to Python)
     assert corpus.inverted_index is not None
-    assert len(corpus.inverted_index) > 0
     
-    # Check structure: should be dict[int, list[tuple[int, int, int, int]]]
-    for token_id, postings in corpus.inverted_index.items():
-        assert isinstance(token_id, int)
-        assert isinstance(postings, list)
-        if postings:
-            candidate_idx, token_pos, char_start, char_end = postings[0]
-            assert isinstance(candidate_idx, int)
-            assert isinstance(token_pos, int)
-            assert isinstance(char_start, int)
-            assert isinstance(char_end, int)
+    # Verify it's a Rust InvertedIndex object by checking it has a query method
+    assert hasattr(corpus.inverted_index, "query")
+    
+    # Test that we can query it successfully
+    test_tokens = [1, 2, 3]  # Some token IDs
+    result = corpus.inverted_index.query(test_tokens, 10)
+    assert isinstance(result, list)
+    # Result should be a list of candidate indices
+    for idx in result:
+        assert isinstance(idx, int)
+        assert 0 <= idx < len(corpus.candidates)
+
+
+@requires_rust
+def test_inverted_index_stays_in_rust() -> None:
+    """Verify that the inverted index is not rehydrated from Python on each query."""
+    sources = [
+        "Revenue grew 15% in Q4.",
+        "Costs decreased by 10%.",
+        "Profit margins improved significantly.",
+    ]
+    
+    corpus = PreparedCitationCorpus.from_sources(
+        sources,
+        config=CitationConfig(),
+        use_rust=True,
+    )
+    
+    # The index should be the same object across queries
+    index1 = corpus.inverted_index
+    index2 = corpus.inverted_index
+    assert index1 is index2  # Same Python object reference
+    
+    # Query multiple times - index stays in Rust
+    test_tokens = [1, 2, 3]
+    result1 = corpus.inverted_index.query(test_tokens, 10)
+    result2 = corpus.inverted_index.query(test_tokens, 10)
+    
+    # Results should be deterministic
+    assert result1 == result2
 
 
 @requires_rust
@@ -51,6 +80,41 @@ def test_inverted_index_improves_retrieval() -> None:
     assert len(results) == 1
     assert results[0].status == "supported"
     assert len(results[0].citations) > 0
+
+
+@requires_rust
+def test_inverted_index_uses_intersection() -> None:
+    """Verify that inverted index uses intersection with rare tokens."""
+    # Create sources where a unique token appears in only one passage
+    sources = [
+        "The company reported strong growth.",  # Common words
+        "Revenue increased significantly.",      # Common words
+        "Xylophone sales doubled.",             # Unique word "Xylophone"
+    ]
+    
+    corpus = PreparedCitationCorpus.from_sources(
+        sources,
+        config=CitationConfig(),
+        use_rust=True,
+    )
+    
+    # Tokenize a query with the unique word
+    answer = "Xylophone sales doubled."
+    tokenized = corpus.tokenizer.tokenize(answer)
+    
+    # Query the index
+    seed_candidates = corpus.inverted_index.query(tokenized.token_ids, 10)
+    
+    # Should only seed the passage containing "Xylophone" (or very few passages)
+    # With intersection, we should get much fewer than all candidates
+    assert len(seed_candidates) < len(corpus.candidates)
+    
+    # The passage with "Xylophone" should be in the seeds
+    # (candidate 2 corresponds to source index 2)
+    xylophone_candidates = [c.global_index for c in corpus.candidates if c.source.source_index == 2]
+    if xylophone_candidates:
+        # At least one xylophone candidate should be in seeds
+        assert any(idx in seed_candidates for idx in xylophone_candidates)
 
 
 def test_python_fallback_without_index() -> None:

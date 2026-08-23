@@ -185,7 +185,7 @@ def _process_answer_span_with_backend(
     idf: IdfWeights,
     embedding_cache: EmbeddingCache | None,
     embedding_index: EmbeddingIndex | None,
-    inverted_index: dict[int, list[tuple[int, int, int, int]]] | None,
+    inverted_index: object | None,  # Rust InvertedIndex object
     aligner: Aligner | None,
     cfg: CitationConfig,
     backend: str,
@@ -220,7 +220,7 @@ def _process_answer_span(
     idf: IdfWeights,
     embedding_cache: EmbeddingCache | None,
     embedding_index: EmbeddingIndex | None,
-    inverted_index: dict[int, list[tuple[int, int, int, int]]] | None,
+    inverted_index: object | None,  # Rust InvertedIndex object
     aligner: Aligner,
     cfg: CitationConfig,
 ) -> _SpanProcessingResult:
@@ -749,7 +749,7 @@ def _select_candidates(
     answer_tokens: list[int],
     lexical_scores: LexicalScores,
     embedding_index: EmbeddingIndex | None,
-    inverted_index: dict[int, list[tuple[int, int, int, int]]] | None,
+    inverted_index: object | None,  # Rust InvertedIndex object
     query_vector: list[float] | None,
     cfg: CitationConfig,
 ) -> CandidateSelection:
@@ -760,6 +760,9 @@ def _select_candidates(
         _add_index_candidates(
             selected, answer_tokens, inverted_index, lexical_scores, cfg
         )
+        # Fall back to lexical if index found nothing
+        if not selected:
+            _add_lexical_candidates(selected, candidates, lexical_scores, cfg)
     else:
         _add_lexical_candidates(selected, candidates, lexical_scores, cfg)
     
@@ -771,36 +774,27 @@ def _select_candidates(
 def _add_index_candidates(
     selected: dict[int, tuple[float, float]],
     answer_tokens: list[int],
-    inverted_index: dict[int, list[tuple[int, int, int, int]]],
+    inverted_index: object,  # Rust InvertedIndex object
     lexical_scores: LexicalScores,
     cfg: CitationConfig,
 ) -> None:
-    """Add candidates from inverted index lookup."""
+    """Add candidates from inverted index lookup using conjunctive query."""
     if cfg.max_candidates_lexical <= 0:
         return
     
-    # Convert index to format expected by Rust
-    index_data = [
-        (token_id, postings) for token_id, postings in inverted_index.items()
-    ]
-    
     try:
-        # Query index to get seed candidates
-        seed_candidates = _core.rust_query_inverted_index(  # type: ignore[attr-defined]
-            answer_tokens, index_data, cfg.max_candidates_lexical * 3
-        )
+        # Query index directly (stays in Rust, uses intersection)
+        # Request fewer candidates since we're using intersection
+        seed_candidates = inverted_index.query(answer_tokens, cfg.max_candidates_lexical)  # type: ignore[attr-defined]
         
         # Add seed candidates with their lexical scores
         for idx in seed_candidates:
             lexical_score = lexical_scores.get(idx, 0.0)
-            if lexical_score > 0.0 or len(selected) < cfg.max_candidates_lexical:
-                selected[idx] = (0.0, lexical_score)
-                if len(selected) >= cfg.max_candidates_lexical:
-                    break
+            selected[idx] = (0.0, lexical_score)
     except Exception as e:
-        # Fall back to empty selection; _add_lexical_candidates handles fallback
+        # Fall back to empty selection; caller can handle fallback
         import sys
-        print(f"Warning: inverted index query failed, falling back to lexical: {e}", file=sys.stderr)
+        print(f"Warning: inverted index query failed: {e}", file=sys.stderr)
 
 
 def _add_lexical_candidates(

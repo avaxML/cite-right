@@ -99,7 +99,7 @@ class PreparedCitationCorpus(BaseModel):
     candidates: list[Candidate]
     idf: IdfWeights
     embedding_index: EmbeddingIndex | None = None
-    inverted_index: dict[int, list[tuple[int, int, int, int]]] | None = None
+    inverted_index: object | None = None  # Rust InvertedIndex object (opaque)
     _embedding_build_time_ms: float = PrivateAttr(default=0.0)
 
     @property
@@ -185,7 +185,7 @@ class PreparedCitationCorpus(BaseModel):
         """Fast path using Rust for tokenization, passages, candidates, and IDF."""
         # Call Rust to do all the heavy lifting
         source_texts = [src.text for src in normalized_sources]
-        rust_candidates, rust_idf, rust_vocab, rust_index = rust_tokenize_and_prepare(
+        rust_candidates, rust_idf, rust_vocab, inverted_index = rust_tokenize_and_prepare(
             source_texts,
             cfg.window_size_sentences,
             cfg.window_stride_sentences,
@@ -241,11 +241,7 @@ class PreparedCitationCorpus(BaseModel):
         # Convert IDF from Rust [(u32, f64)] to Python dict[int, float]
         idf: IdfWeights = {int(token_id): weight for token_id, weight in rust_idf}
 
-        # Convert index from Rust to Python dict
-        inverted_index: dict[int, list[tuple[int, int, int, int]]] = {
-            int(token_id): [(int(c), int(p), int(cs), int(ce)) for c, p, cs, ce in postings]
-            for token_id, postings in rust_index
-        }
+        # inverted_index is kept as Rust object (opaque)
 
         return cls(
             config=cfg,

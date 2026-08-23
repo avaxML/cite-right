@@ -246,7 +246,7 @@ fn rust_tokenize_and_prepare(
     Vec<Vec<(usize, usize, Vec<u32>, Vec<(usize, usize)>)>>,
     Vec<(u32, f64)>,
     Vec<(String, u32)>,
-    Vec<(u32, Vec<(usize, usize, usize, usize)>)>,
+    inverted_index::InvertedIndex,
 )> {
     py.detach(|| {
         let mut tokenizer = prepare::SimpleTokenizer::new();
@@ -295,23 +295,10 @@ fn rust_tokenize_and_prepare(
         // Extract vocab
         let vocab_vec: Vec<(String, u32)> = tokenizer.get_vocab().into_iter().collect();
 
-        // Build inverted index
+        // Build inverted index and return it directly (kept in Rust)
         let index = prepare::build_inverted_index(&flat_candidates);
 
-        // Serialize index to Python format: Vec<(token_id, Vec<(candidate_idx, token_pos, char_start, char_end)>)>
-        let mut index_data: Vec<(u32, Vec<(usize, usize, usize, usize)>)> = Vec::new();
-        for token_id in 1..tokenizer.next_id {
-            let postings = index.get_postings(token_id);
-            if !postings.is_empty() {
-                let posting_list: Vec<(usize, usize, usize, usize)> = postings
-                    .iter()
-                    .map(|p| (p.candidate_index, p.token_pos, p.char_start, p.char_end))
-                    .collect();
-                index_data.push((token_id, posting_list));
-            }
-        }
-
-        Ok((source_candidates, idf_vec, vocab_vec, index_data))
+        Ok((source_candidates, idf_vec, vocab_vec, index))
     })
 }
 
@@ -354,35 +341,6 @@ fn rust_align_batch_candidates(
             })
             .collect())
     })
-}
-
-type IndexData = Vec<(u32, Vec<(usize, usize, usize, usize)>)>;
-
-/// Query inverted index to find seed candidates
-#[pyfunction]
-#[allow(clippy::type_complexity)]
-fn rust_query_inverted_index(
-    answer_tokens: Vec<u32>,
-    index_data: IndexData,
-    max_candidates: usize,
-) -> Vec<usize> {
-    // Rebuild index from Python data
-    let mut index = inverted_index::InvertedIndex::new();
-    for (token_id, postings) in index_data {
-        for (candidate_idx, token_pos, char_start, char_end) in postings {
-            index.add_posting(
-                token_id,
-                inverted_index::Posting {
-                    candidate_index: candidate_idx,
-                    token_pos,
-                    char_start,
-                    char_end,
-                },
-            );
-        }
-    }
-
-    index.find_seed_candidates(&answer_tokens, max_candidates)
 }
 
 /// Fast citation building - returns JSON string
@@ -545,8 +503,8 @@ fn _core(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(align_batch_details, module)?)?;
     module.add_function(wrap_pyfunction!(align_batch_blocks_details, module)?)?;
     module.add_function(wrap_pyfunction!(rust_tokenize_and_prepare, module)?)?;
-    module.add_function(wrap_pyfunction!(rust_query_inverted_index, module)?)?;
     module.add_function(wrap_pyfunction!(rust_align_batch_candidates, module)?)?;
     module.add_function(wrap_pyfunction!(rust_build_citations_fast, module)?)?;
+    module.add_class::<inverted_index::InvertedIndex>()?;
     Ok(())
 }
