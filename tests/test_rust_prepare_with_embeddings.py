@@ -97,9 +97,7 @@ def test_rust_prepare_citation_fixture_still_works() -> None:
     """Test that an existing citation fixture gets supported/partial/unsupported correctly."""
     answer = "The company reported strong profits."
     sources = [
-        SourceDocument(
-            id="finance", text="The company reported strong profits in Q4."
-        ),
+        SourceDocument(id="finance", text="The company reported strong profits in Q4."),
         SourceDocument(
             id="irrelevant", text="Weather report: storms are likely this weekend."
         ),
