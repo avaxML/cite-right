@@ -58,6 +58,7 @@ from cite_right.integrations import (
     is_llamaindex_available,
     is_llamaindex_node,
 )
+from cite_right.models.document_span_embedder import DocumentSpanEmbedder
 from cite_right.models.sbert_embedder import SentenceTransformerEmbedder
 from cite_right.text.answer_segmenter_spacy import SpacyAnswerSegmenter
 from cite_right.text.segmenter_pysbd import PySBDSegmenter
@@ -133,5 +134,6 @@ __all__ = [
     "SimpleClaimDecomposer",
     "SpacyClaimDecomposer",
     # Embedders
+    "DocumentSpanEmbedder",
     "SentenceTransformerEmbedder",
 ]
