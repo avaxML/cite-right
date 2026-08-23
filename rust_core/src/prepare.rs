@@ -335,4 +335,3 @@ pub fn compute_idf(candidate_token_sets: &[Vec<u32>]) -> HashMap<u32, f64> {
         .map(|(token_id, count)| (token_id, ((n + 1) as f64 / (count + 1) as f64).ln() + 1.0))
         .collect()
 }
-
