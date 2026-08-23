@@ -4,25 +4,25 @@ from typing import Sequence
 
 class InvertedIndex:
     """Inverted index for token-to-candidate mapping (Rust object)."""
-    
+
     def query(self, query_tokens: Sequence[int], max_candidates: int) -> list[int]:
         """Query the inverted index for candidate indices.
-        
+
         Args:
             query_tokens: Token IDs to search for
             max_candidates: Maximum number of candidates to return
-            
+
         Returns:
             List of candidate indices
         """
         ...
-    
+
     def get_posting_count(self, token_id: int) -> int:
         """Get the number of postings for a token.
-        
+
         Args:
             token_id: Token ID to query
-            
+
         Returns:
             Number of postings for this token
         """
@@ -39,12 +39,12 @@ def rust_tokenize_and_prepare(
     InvertedIndex,
 ]:
     """Tokenize and prepare sources with inverted index.
-    
+
     Args:
         source_texts: List of source text strings
         window_size: Window size in sentences
         stride: Stride size in sentences
-        
+
     Returns:
         Tuple of (source_candidates, idf_vec, vocab_vec, inverted_index)
     """
