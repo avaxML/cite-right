@@ -40,8 +40,10 @@ fn has_negation_mismatch(answer_text: &str, evidence_text: &str) -> bool {
 /// Check if text contains negation markers
 fn contains_negation(text: &str) -> bool {
     let lower = text.to_lowercase();
-    let negation_words = ["not", "never", "no ", "n't", "neither", "nor", "nobody", "nothing"];
-    
+    let negation_words = [
+        "not", "never", "no ", "n't", "neither", "nor", "nobody", "nothing",
+    ];
+
     negation_words.iter().any(|&word| lower.contains(word))
 }
 
@@ -51,11 +53,11 @@ fn has_number_mismatch(answer_tokens: &[u32], evidence_tokens: &[u32]) -> bool {
     // A more sophisticated version would extract and compare actual numbers
     let answer_set: HashSet<u32> = answer_tokens.iter().copied().collect();
     let evidence_set: HashSet<u32> = evidence_tokens.iter().copied().collect();
-    
+
     // If answer has tokens not in evidence, there might be a mismatch
     // But this is just a heuristic - we'd need actual number extraction for accuracy
     let unique_in_answer: Vec<_> = answer_set.difference(&evidence_set).collect();
-    
+
     // Only flag as mismatch if there are many unique tokens (conservative)
     unique_in_answer.len() > answer_tokens.len() / 2
 }

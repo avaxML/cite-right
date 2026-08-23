@@ -38,7 +38,10 @@ impl InvertedIndex {
 
     /// Get postings for a token
     pub fn get_postings(&self, token_id: u32) -> &[Posting] {
-        self.index.get(&token_id).map(|v| v.as_slice()).unwrap_or(&[])
+        self.index
+            .get(&token_id)
+            .map(|v| v.as_slice())
+            .unwrap_or(&[])
     }
 
     /// Find candidate indices that contain any of the query tokens
@@ -49,9 +52,7 @@ impl InvertedIndex {
         for &token_id in query_tokens {
             if let Some(postings) = self.index.get(&token_id) {
                 for posting in postings {
-                    *candidate_scores
-                        .entry(posting.candidate_index)
-                        .or_insert(0) += 1;
+                    *candidate_scores.entry(posting.candidate_index).or_insert(0) += 1;
                 }
             }
         }

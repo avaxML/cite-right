@@ -797,9 +797,10 @@ def _add_index_candidates(
                 selected[idx] = (0.0, lexical_score)
                 if len(selected) >= cfg.max_candidates_lexical:
                     break
-    except Exception:
-        # Fall back to lexical prefilter if index query fails
-        pass
+    except Exception as e:
+        # Fall back to empty selection; _add_lexical_candidates handles fallback
+        import sys
+        print(f"Warning: inverted index query failed, falling back to lexical: {e}", file=sys.stderr)
 
 
 def _add_lexical_candidates(
