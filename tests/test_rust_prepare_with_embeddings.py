@@ -120,7 +120,7 @@ def test_rust_prepare_citation_fixture_still_works() -> None:
 
     assert len(results) == 1
     # Should find a citation from the finance source
-    assert results[0].status in ["supported", "partially_supported"]
+    assert results[0].status in ["supported", "partial"]
     if results[0].citations:
         assert results[0].citations[0].source_id == "finance"
 
@@ -221,4 +221,4 @@ def test_rust_prepare_with_embedder_alignment() -> None:
     # Should produce results
     assert len(results) > 0
     # With good lexical overlap, should find citations
-    assert results[0].status in ["supported", "partially_supported"]
+    assert results[0].status in ["supported", "partial"]
