@@ -9,6 +9,8 @@
 use std::collections::HashMap;
 use unicode_normalization::UnicodeNormalization;
 
+use crate::inverted_index::{InvertedIndex, Posting};
+
 /// Convert byte index to character index in a UTF-8 string
 fn byte_to_char_index(text: &str, byte_index: usize) -> usize {
     text.char_indices()
@@ -24,7 +26,7 @@ pub struct RustTokenizedText {
 
 pub struct SimpleTokenizer {
     vocab: HashMap<String, u32>,
-    next_id: u32,
+    pub next_id: u32,
 }
 
 impl SimpleTokenizer {
@@ -37,6 +39,11 @@ impl SimpleTokenizer {
 
     pub fn get_vocab(&self) -> HashMap<String, u32> {
         self.vocab.clone()
+    }
+
+    #[allow(dead_code)]
+    pub fn get_next_id(&self) -> u32 {
+        self.next_id
     }
 
     pub fn tokenize(&mut self, text: &str) -> RustTokenizedText {
@@ -329,4 +336,32 @@ pub fn compute_idf(candidate_token_sets: &[Vec<u32>]) -> HashMap<u32, f64> {
     df.into_iter()
         .map(|(token_id, count)| (token_id, ((n + 1) as f64 / (count + 1) as f64).ln() + 1.0))
         .collect()
+}
+
+type CandidateData = (usize, usize, Vec<u32>, Vec<(usize, usize)>);
+
+/// Build inverted index from candidates
+#[allow(clippy::type_complexity)]
+pub fn build_inverted_index(candidates: &[CandidateData]) -> InvertedIndex {
+    let mut index = InvertedIndex::new();
+
+    for (global_candidate_index, candidate_tokens_spans) in candidates.iter().enumerate() {
+        let (_passage_start, _passage_end, token_ids, token_spans) = candidate_tokens_spans;
+
+        for (token_pos, (&token_id, &(char_start, char_end))) in
+            token_ids.iter().zip(token_spans.iter()).enumerate()
+        {
+            index.add_posting(
+                token_id,
+                Posting {
+                    candidate_index: global_candidate_index,
+                    token_pos,
+                    char_start,
+                    char_end,
+                },
+            );
+        }
+    }
+
+    index
 }

@@ -99,6 +99,7 @@ class PreparedCitationCorpus(BaseModel):
     candidates: list[Candidate]
     idf: IdfWeights
     embedding_index: EmbeddingIndex | None = None
+    inverted_index: dict[int, list[tuple[int, int, int, int]]] | None = None
     _embedding_build_time_ms: float = PrivateAttr(default=0.0)
 
     @property
@@ -168,6 +169,7 @@ class PreparedCitationCorpus(BaseModel):
             candidates=candidates,
             idf=idf,
             embedding_index=embedding_index,
+            inverted_index=None,
         )
         corpus._embedding_build_time_ms = embedding_build_time_ms
         return corpus
@@ -183,7 +185,7 @@ class PreparedCitationCorpus(BaseModel):
         """Fast path using Rust for tokenization, passages, candidates, and IDF."""
         # Call Rust to do all the heavy lifting
         source_texts = [src.text for src in normalized_sources]
-        rust_candidates, rust_idf, rust_vocab = rust_tokenize_and_prepare(
+        rust_candidates, rust_idf, rust_vocab, rust_index = rust_tokenize_and_prepare(
             source_texts,
             cfg.window_size_sentences,
             cfg.window_stride_sentences,
@@ -239,6 +241,12 @@ class PreparedCitationCorpus(BaseModel):
         # Convert IDF from Rust [(u32, f64)] to Python dict[int, float]
         idf: IdfWeights = {int(token_id): weight for token_id, weight in rust_idf}
 
+        # Convert index from Rust to Python dict
+        inverted_index: dict[int, list[tuple[int, int, int, int]]] = {
+            int(token_id): [(int(c), int(p), int(cs), int(ce)) for c, p, cs, ce in postings]
+            for token_id, postings in rust_index
+        }
+
         return cls(
             config=cfg,
             tokenizer=tokenizer,
@@ -249,6 +257,7 @@ class PreparedCitationCorpus(BaseModel):
             candidates=candidates,
             idf=idf,
             embedding_index=None,
+            inverted_index=inverted_index,
         )
 
     def align(
@@ -297,6 +306,7 @@ class PreparedCitationCorpus(BaseModel):
                     idf=self.idf,
                     embedding_cache=embedding_cache,
                     embedding_index=self.embedding_index,
+                    inverted_index=self.inverted_index,
                     aligner=resolved_aligner,
                     cfg=self.config,
                     backend=backend,

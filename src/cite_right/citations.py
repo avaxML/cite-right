@@ -14,6 +14,7 @@ except ImportError:
     HAS_RUST_CORE = False
     _core = None  # type: ignore[assignment]
 
+from cite_right.contradiction import check_contradiction
 from cite_right.core.aligner_py import SmithWatermanAligner
 from cite_right.core.aligner_rust import RustSmithWatermanAligner
 from cite_right.core.citation_config import CitationConfig
@@ -184,6 +185,7 @@ def _process_answer_span_with_backend(
     idf: IdfWeights,
     embedding_cache: EmbeddingCache | None,
     embedding_index: EmbeddingIndex | None,
+    inverted_index: dict[int, list[tuple[int, int, int, int]]] | None,
     aligner: Aligner | None,
     cfg: CitationConfig,
     backend: str,
@@ -197,6 +199,7 @@ def _process_answer_span_with_backend(
         idf=idf,
         embedding_cache=embedding_cache,
         embedding_index=embedding_index,
+        inverted_index=inverted_index,
         aligner=active_aligner,
         cfg=cfg,
     )
@@ -217,6 +220,7 @@ def _process_answer_span(
     idf: IdfWeights,
     embedding_cache: EmbeddingCache | None,
     embedding_index: EmbeddingIndex | None,
+    inverted_index: dict[int, list[tuple[int, int, int, int]]] | None,
     aligner: Aligner,
     cfg: CitationConfig,
 ) -> _SpanProcessingResult:
@@ -242,8 +246,10 @@ def _process_answer_span(
 
         selected = _select_candidates(
             candidates,
+            answer_tokens=answer_tokens,
             lexical_scores=lexical_scores,
             embedding_index=embedding_index,
+            inverted_index=inverted_index,
             query_vector=query_vector,
             cfg=cfg,
         )
@@ -433,7 +439,7 @@ def _process_answer_span(
             alignment_time = (time.perf_counter() - align_start) * 1000
 
     citations = _rank_and_limit_citations(citations, cfg)
-    status = _span_status(citations, cfg)
+    status = _span_status(citations, cfg, answer_span.text)
     retrieval_support = _rank_retrieval_support(retrieval_support, cfg)
 
     return _SpanProcessingResult(
@@ -740,17 +746,60 @@ def _lexical_prefilter(
 def _select_candidates(
     candidates: Sequence[Candidate],
     *,
+    answer_tokens: list[int],
     lexical_scores: LexicalScores,
     embedding_index: EmbeddingIndex | None,
+    inverted_index: dict[int, list[tuple[int, int, int, int]]] | None,
     query_vector: list[float] | None,
     cfg: CitationConfig,
 ) -> CandidateSelection:
     selected: dict[int, tuple[float, float]] = {}
 
-    _add_lexical_candidates(selected, candidates, lexical_scores, cfg)
+    # Use inverted index for seeding if available
+    if inverted_index is not None and HAS_RUST_CORE:
+        _add_index_candidates(
+            selected, answer_tokens, inverted_index, lexical_scores, cfg
+        )
+    else:
+        _add_lexical_candidates(selected, candidates, lexical_scores, cfg)
+    
     _add_embedding_candidates(selected, embedding_index, query_vector, cfg)
 
     return _rank_selected_candidates(selected, candidates, cfg)
+
+
+def _add_index_candidates(
+    selected: dict[int, tuple[float, float]],
+    answer_tokens: list[int],
+    inverted_index: dict[int, list[tuple[int, int, int, int]]],
+    lexical_scores: LexicalScores,
+    cfg: CitationConfig,
+) -> None:
+    """Add candidates from inverted index lookup."""
+    if cfg.max_candidates_lexical <= 0:
+        return
+    
+    # Convert index to format expected by Rust
+    index_data = [
+        (token_id, postings) for token_id, postings in inverted_index.items()
+    ]
+    
+    try:
+        # Query index to get seed candidates
+        seed_candidates = _core.rust_query_inverted_index(  # type: ignore[attr-defined]
+            answer_tokens, index_data, cfg.max_candidates_lexical * 3
+        )
+        
+        # Add seed candidates with their lexical scores
+        for idx in seed_candidates:
+            lexical_score = lexical_scores.get(idx, 0.0)
+            if lexical_score > 0.0 or len(selected) < cfg.max_candidates_lexical:
+                selected[idx] = (0.0, lexical_score)
+                if len(selected) >= cfg.max_candidates_lexical:
+                    break
+    except Exception:
+        # Fall back to lexical prefilter if index query fails
+        pass
 
 
 def _add_lexical_candidates(
@@ -1027,11 +1076,19 @@ def _citation_sort_key(
 def _span_status(
     citations: Sequence[Citation],
     cfg: CitationConfig,
+    answer_text: str | None = None,
 ) -> Literal["supported", "partial", "unsupported"]:
     if not citations:
         return "unsupported"
     best = citations[0]
     coverage = float(best.components.get("answer_coverage", 0.0))
+    
+    # Check for contradictions if answer text is provided
+    if answer_text is not None and check_contradiction(answer_text, best.evidence):
+        # Downgrade to partial (not unsupported) if contradiction detected
+        # because we have evidence, it just contradicts the claim
+        return "partial"
+    
     if coverage >= cfg.supported_answer_coverage:
         return "supported"
     return "partial"
