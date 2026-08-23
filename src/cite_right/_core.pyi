@@ -29,19 +29,24 @@ class InvertedIndex:
         ...
 
 def rust_tokenize_and_prepare(
-    sources: Sequence[tuple[str, str]],
-    window_tokens: int,
-    stride_tokens: int,
-) -> tuple[list[tuple[int, int, list[int], list[tuple[int, int]]]], InvertedIndex]:
+    source_texts: Sequence[str],
+    window_size: int,
+    stride: int,
+) -> tuple[
+    list[list[tuple[int, int, list[int], list[tuple[int, int]]]]],
+    list[tuple[int, float]],
+    list[tuple[str, int]],
+    InvertedIndex,
+]:
     """Tokenize and prepare sources with inverted index.
     
     Args:
-        sources: List of (source_id, source_text) tuples
-        window_tokens: Window size in tokens
-        stride_tokens: Stride size in tokens
+        source_texts: List of source text strings
+        window_size: Window size in sentences
+        stride: Stride size in sentences
         
     Returns:
-        Tuple of (candidate_data, inverted_index)
+        Tuple of (source_candidates, idf_vec, vocab_vec, inverted_index)
     """
     ...
 

@@ -4,7 +4,7 @@ import math
 import time
 from bisect import bisect_left, bisect_right
 from collections.abc import Sequence
-from typing import Callable
+from typing import TYPE_CHECKING, Callable
 
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
@@ -25,11 +25,16 @@ from cite_right.text.segmenter_simple import SimpleSegmenter
 from cite_right.text.tokenizer import SimpleTokenizer
 
 try:
-    from cite_right._core import rust_tokenize_and_prepare  # type: ignore[attr-defined]
+    from cite_right._core import (  # type: ignore[attr-defined]
+        InvertedIndex,
+        rust_tokenize_and_prepare,
+    )
 
     RUST_PREPARE_AVAILABLE = True
 except ImportError:
     RUST_PREPARE_AVAILABLE = False
+    if not TYPE_CHECKING:
+        InvertedIndex = object  # type: ignore[misc,assignment]
 
 MetricsCallback = Callable[["AlignmentMetrics"], None]
 LexicalScores = dict[int, float]
@@ -99,7 +104,7 @@ class PreparedCitationCorpus(BaseModel):
     candidates: list[Candidate]
     idf: IdfWeights
     embedding_index: EmbeddingIndex | None = None
-    inverted_index: object | None = None  # Rust InvertedIndex object (opaque)
+    inverted_index: InvertedIndex | None = None  # Rust InvertedIndex object
     _embedding_build_time_ms: float = PrivateAttr(default=0.0)
 
     @property

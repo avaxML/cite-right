@@ -2,17 +2,20 @@ from __future__ import annotations
 
 import time
 from collections import Counter
-from typing import Iterable, Literal, Sequence, TypeAlias
+from typing import TYPE_CHECKING, Iterable, Literal, Sequence, TypeAlias
 
 from pydantic import BaseModel, ConfigDict
 
 try:
     from cite_right import _core
+    from cite_right._core import InvertedIndex
 
     HAS_RUST_CORE = True
 except ImportError:
     HAS_RUST_CORE = False
     _core = None  # type: ignore[assignment]
+    if not TYPE_CHECKING:
+        InvertedIndex = object  # type: ignore[misc,assignment]
 
 from cite_right.contradiction import check_contradiction
 from cite_right.core.aligner_py import SmithWatermanAligner
@@ -185,7 +188,7 @@ def _process_answer_span_with_backend(
     idf: IdfWeights,
     embedding_cache: EmbeddingCache | None,
     embedding_index: EmbeddingIndex | None,
-    inverted_index: object | None,  # Rust InvertedIndex object
+    inverted_index: InvertedIndex | None,
     aligner: Aligner | None,
     cfg: CitationConfig,
     backend: str,
@@ -220,7 +223,7 @@ def _process_answer_span(
     idf: IdfWeights,
     embedding_cache: EmbeddingCache | None,
     embedding_index: EmbeddingIndex | None,
-    inverted_index: object | None,  # Rust InvertedIndex object
+    inverted_index: InvertedIndex | None,
     aligner: Aligner,
     cfg: CitationConfig,
 ) -> _SpanProcessingResult:
@@ -749,7 +752,7 @@ def _select_candidates(
     answer_tokens: list[int],
     lexical_scores: LexicalScores,
     embedding_index: EmbeddingIndex | None,
-    inverted_index: object | None,  # Rust InvertedIndex object
+    inverted_index: InvertedIndex | None,
     query_vector: list[float] | None,
     cfg: CitationConfig,
 ) -> CandidateSelection:
@@ -774,7 +777,7 @@ def _select_candidates(
 def _add_index_candidates(
     selected: dict[int, tuple[float, float]],
     answer_tokens: list[int],
-    inverted_index: object,  # Rust InvertedIndex object
+    inverted_index: InvertedIndex,
     lexical_scores: LexicalScores,
     cfg: CitationConfig,
 ) -> None:

@@ -58,6 +58,7 @@ def test_inverted_index_stays_in_rust() -> None:
 
     # Query multiple times - index stays in Rust
     test_tokens = [1, 2, 3]
+    assert corpus.inverted_index is not None
     result1 = corpus.inverted_index.query(test_tokens, 10)
     result2 = corpus.inverted_index.query(test_tokens, 10)
 
@@ -98,6 +99,7 @@ def test_inverted_index_never_returns_empty_when_tokens_exist() -> None:
     tokenized = corpus.tokenizer.tokenize(answer)
 
     # Should never get empty seeds when tokens exist
+    assert corpus.inverted_index is not None
     seed_candidates = corpus.inverted_index.query(tokenized.token_ids, 100)
     assert len(seed_candidates) > 0, (
         "Should not return empty seeds when query tokens exist"
@@ -131,6 +133,7 @@ def test_inverted_index_uses_intersection() -> None:
     tokenized = corpus.tokenizer.tokenize(answer)
 
     # Query the index
+    assert corpus.inverted_index is not None
     seed_candidates = corpus.inverted_index.query(tokenized.token_ids, 10)
 
     # Should only seed the passage containing "Xylophone" (or very few passages)
