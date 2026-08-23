@@ -765,7 +765,7 @@ def _select_candidates(
             _add_lexical_candidates(selected, candidates, lexical_scores, cfg)
     else:
         _add_lexical_candidates(selected, candidates, lexical_scores, cfg)
-    
+
     _add_embedding_candidates(selected, embedding_index, query_vector, cfg)
 
     return _rank_selected_candidates(selected, candidates, cfg)
@@ -781,12 +781,14 @@ def _add_index_candidates(
     """Add candidates from inverted index lookup using conjunctive query."""
     if cfg.max_candidates_lexical <= 0:
         return
-    
+
     try:
         # Query index directly (stays in Rust, uses intersection)
         # Request fewer candidates since we're using intersection
-        seed_candidates = inverted_index.query(answer_tokens, cfg.max_candidates_lexical)  # type: ignore[attr-defined]
-        
+        seed_candidates = inverted_index.query(
+            answer_tokens, cfg.max_candidates_lexical
+        )  # type: ignore[attr-defined]
+
         # Add seed candidates with their lexical scores
         for idx in seed_candidates:
             lexical_score = lexical_scores.get(idx, 0.0)
@@ -794,6 +796,7 @@ def _add_index_candidates(
     except Exception as e:
         # Fall back to empty selection; caller can handle fallback
         import sys
+
         print(f"Warning: inverted index query failed: {e}", file=sys.stderr)
 
 
@@ -1077,13 +1080,13 @@ def _span_status(
         return "unsupported"
     best = citations[0]
     coverage = float(best.components.get("answer_coverage", 0.0))
-    
+
     # Check for contradictions if answer text is provided
     if answer_text is not None and check_contradiction(answer_text, best.evidence):
         # Downgrade to partial (not unsupported) if contradiction detected
         # because we have evidence, it just contradicts the claim
         return "partial"
-    
+
     if coverage >= cfg.supported_answer_coverage:
         return "supported"
     return "partial"

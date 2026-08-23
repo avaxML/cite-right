@@ -185,10 +185,12 @@ class PreparedCitationCorpus(BaseModel):
         """Fast path using Rust for tokenization, passages, candidates, and IDF."""
         # Call Rust to do all the heavy lifting
         source_texts = [src.text for src in normalized_sources]
-        rust_candidates, rust_idf, rust_vocab, inverted_index = rust_tokenize_and_prepare(
-            source_texts,
-            cfg.window_size_sentences,
-            cfg.window_stride_sentences,
+        rust_candidates, rust_idf, rust_vocab, inverted_index = (
+            rust_tokenize_and_prepare(
+                source_texts,
+                cfg.window_size_sentences,
+                cfg.window_stride_sentences,
+            )
         )
 
         # Populate the Python tokenizer's vocab from Rust
