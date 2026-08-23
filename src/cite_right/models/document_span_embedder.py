@@ -80,65 +80,47 @@ class DocumentSpanEmbedder:
         if not passages:
             return []
 
-        # Get tokenizer from the model
-        tokenizer = self._model.tokenizer
-
-        # Get max sequence length (typically 256 for MiniLM)
+        # Estimate character length per chunk to avoid OOM
+        # max_seq_length is in tokens; approximate 4-5 chars per token
         max_seq_length = self._model.max_seq_length
+        if max_seq_length is None:
+            max_seq_length = 256  # Default for MiniLM
+        max_chars_per_chunk = max_seq_length * 4
 
-        # Tokenize the document with return_offsets_mapping
-        try:
-            tokenized = tokenizer(
-                document_text,
-                padding=False,
-                truncation=False,
-                return_offsets_mapping=True,
-                return_tensors="pt",
-            )
-        except Exception:
-            # Fallback: encode each passage independently
-            return self._fallback_encode_passages(passages)
+        # If document is short enough, encode as one chunk
+        if len(document_text) <= max_chars_per_chunk:
+            return self._encode_single_chunk(document_text, passages)
 
-        input_ids = tokenized["input_ids"][0]
-        token_offsets = tokenized["offset_mapping"][0]
-
-        # Check if document fits in one chunk
-        if len(input_ids) <= max_seq_length:
-            # Single chunk: encode and pool
-            return self._encode_single_chunk(
-                document_text, input_ids, token_offsets, passages
-            )
-        else:
-            # Multiple chunks needed
-            return self._encode_chunked(
-                document_text, input_ids, token_offsets, passages, max_seq_length
-            )
+        # For long documents, chunk at character level
+        return self._encode_chunked(document_text, passages, max_chars_per_chunk)
 
     def _encode_single_chunk(
         self,
         document_text: str,
-        input_ids: npt.NDArray[np.int_],  # pyright: ignore[reportMissingTypeArgument]
-        token_offsets: npt.NDArray[np.int_],  # pyright: ignore[reportMissingTypeArgument]
         passages: Sequence[DocumentPassageSpan],
     ) -> list[list[float]]:
         """Encode passages from a single document chunk."""
-        import torch  # pyright: ignore[reportMissingImports]
+        # Use the documented SentenceTransformer API for token embeddings
+        token_embeddings = self._model.encode(
+            [document_text],
+            output_value="token_embeddings",
+            convert_to_tensor=True,
+        )
 
-        # Convert to torch tensors
-        input_ids_tensor = torch.from_numpy(np.array(input_ids))
-        token_offsets_tensor = torch.from_numpy(np.array(token_offsets))
+        # Get character offsets via tokenizer
+        tokenizer = self._model.tokenizer
+        tokenized = tokenizer(
+            document_text,
+            padding=False,
+            truncation=True,
+            max_length=self._model.max_seq_length,
+            return_offsets_mapping=True,
+        )
+        token_offsets = tokenized["offset_mapping"]
 
-        # Encode to get token embeddings
-        with torch.no_grad():
-            output = self._model.forward(
-                {"input_ids": input_ids_tensor.unsqueeze(0)},
-                output_value="token_embeddings",
-            )
-            token_embeddings = output["token_embeddings"][0]  # (seq_len, hidden_dim)
-
-        # Convert to numpy for easier manipulation
-        token_embeddings_np = token_embeddings.cpu().numpy()
-        token_offsets_np = token_offsets_tensor.cpu().numpy()
+        # Convert to numpy
+        token_embeddings_np = token_embeddings[0].cpu().numpy()
+        token_offsets_np = np.array(token_offsets)
 
         # Pool embeddings for each passage
         passage_embeddings: list[list[float]] = []
@@ -148,7 +130,7 @@ class DocumentSpanEmbedder:
                 passage.doc_char_end,
                 token_embeddings_np,
                 token_offsets_np,
-                chunk_offset=0,
+                chunk_char_offset=0,
             )
             passage_embeddings.append(embedding)
 
@@ -157,43 +139,45 @@ class DocumentSpanEmbedder:
     def _encode_chunked(
         self,
         document_text: str,
-        input_ids: npt.NDArray[np.int_],  # pyright: ignore[reportMissingTypeArgument]
-        token_offsets: npt.NDArray[np.int_],  # pyright: ignore[reportMissingTypeArgument]
         passages: Sequence[DocumentPassageSpan],
-        max_seq_length: int,
+        max_chars_per_chunk: int,
     ) -> list[list[float]]:
         """Encode passages from a document that requires multiple chunks."""
-        import torch  # pyright: ignore[reportMissingImports]
+        # Split document into character-level chunks to avoid OOM
+        text_chunks = []
+        chunk_char_offsets = []
+        pos = 0
 
-        # Split into non-overlapping chunks
-        chunks = []
-        chunk_start_token = 0
-        while chunk_start_token < len(input_ids):
-            chunk_end_token = min(chunk_start_token + max_seq_length, len(input_ids))
-            chunks.append((chunk_start_token, chunk_end_token))
-            chunk_start_token = chunk_end_token
+        while pos < len(document_text):
+            end_pos = min(pos + max_chars_per_chunk, len(document_text))
+            text_chunks.append(document_text[pos:end_pos])
+            chunk_char_offsets.append(pos)
+            pos = end_pos
 
-        # Encode all chunks
-        all_token_embeddings = []
+        # Encode all text chunks using the proper API
+        # This gives us proper CLS/SEP tokens and attention masks
+        token_embeddings_list = self._model.encode(
+            text_chunks,
+            output_value="token_embeddings",
+            convert_to_tensor=True,
+        )
+
+        # Get character offsets for each chunk
+        tokenizer = self._model.tokenizer
         all_token_offsets = []
 
-        for chunk_start, chunk_end in chunks:
-            chunk_input_ids = input_ids[chunk_start:chunk_end]
-            chunk_offsets = token_offsets[chunk_start:chunk_end]
+        for text_chunk in text_chunks:
+            tokenized = tokenizer(
+                text_chunk,
+                padding=False,
+                truncation=True,
+                max_length=self._model.max_seq_length,
+                return_offsets_mapping=True,
+            )
+            all_token_offsets.append(np.array(tokenized["offset_mapping"]))
 
-            # Convert to torch tensors
-            chunk_input_ids_tensor = torch.from_numpy(np.array(chunk_input_ids))
-            chunk_offsets_tensor = torch.from_numpy(np.array(chunk_offsets))
-
-            with torch.no_grad():
-                output = self._model.forward(
-                    {"input_ids": chunk_input_ids_tensor.unsqueeze(0)},
-                    output_value="token_embeddings",
-                )
-                chunk_embeddings = output["token_embeddings"][0]
-
-            all_token_embeddings.append(chunk_embeddings.cpu().numpy())
-            all_token_offsets.append(chunk_offsets_tensor.cpu().numpy())
+        # Convert embeddings to numpy
+        all_token_embeddings = [emb.cpu().numpy() for emb in token_embeddings_list]
 
         # Pool embeddings for each passage
         passage_embeddings: list[list[float]] = []
@@ -203,6 +187,7 @@ class DocumentSpanEmbedder:
                 passage.doc_char_end,
                 all_token_embeddings,
                 all_token_offsets,
+                chunk_char_offsets,
             )
             passage_embeddings.append(embedding)
 
@@ -214,22 +199,22 @@ class DocumentSpanEmbedder:
         passage_end: int,
         token_embeddings: npt.NDArray[np.float32],
         token_offsets: npt.NDArray[np.int_],
-        chunk_offset: int,
+        chunk_char_offset: int,
     ) -> list[float]:
         """Pool token embeddings for a passage span."""
         # Find tokens that overlap with the passage
         tokens_in_passage = []
         for i, (start_offset, end_offset) in enumerate(token_offsets):
-            # Adjust offsets if this is from a chunk
-            actual_start = start_offset + chunk_offset
-            actual_end = end_offset + chunk_offset
+            # Adjust offsets relative to the document
+            actual_start = start_offset + chunk_char_offset
+            actual_end = end_offset + chunk_char_offset
 
-            # Check if token overlaps with passage
+            # Check if token overlaps with passage (any overlap counts)
             if actual_end > passage_start and actual_start < passage_end:
                 tokens_in_passage.append(i)
 
         if not tokens_in_passage:
-            # Fallback: return zero vector
+            # Return zero vector only if no tokens found
             embedding_dim = token_embeddings.shape[1]
             return [0.0] * embedding_dim
 
@@ -244,24 +229,31 @@ class DocumentSpanEmbedder:
         passage_end: int,
         all_token_embeddings: list[npt.NDArray[np.float32]],
         all_token_offsets: list[npt.NDArray[np.int_]],
+        chunk_char_offsets: list[int],
     ) -> list[float]:
         """Pool token embeddings for a passage that may span multiple chunks."""
         all_passage_embeddings = []
 
-        for token_embeddings, token_offsets in zip(
-            all_token_embeddings, all_token_offsets, strict=False
+        for chunk_idx, (token_embeddings, token_offsets) in enumerate(
+            zip(all_token_embeddings, all_token_offsets, strict=False)
         ):
+            chunk_char_offset = chunk_char_offsets[chunk_idx]
+
             for i, (start_offset, end_offset) in enumerate(token_offsets):
-                # Check if token overlaps with passage
-                if end_offset > passage_start and start_offset < passage_end:
+                # Adjust offsets relative to the full document
+                actual_start = start_offset + chunk_char_offset
+                actual_end = end_offset + chunk_char_offset
+
+                # Check if token overlaps with passage (any overlap counts)
+                if actual_end > passage_start and actual_start < passage_end:
                     all_passage_embeddings.append(token_embeddings[i])
 
         if not all_passage_embeddings:
-            # Fallback: return zero vector
+            # Return zero vector only if truly no tokens found
             embedding_dim = all_token_embeddings[0].shape[1]
             return [0.0] * embedding_dim
 
-        # Mean pool all token embeddings
+        # Mean pool all token embeddings from all chunks
         mean_embedding = np.mean(np.array(all_passage_embeddings), axis=0)
         return mean_embedding.tolist()
 
@@ -276,10 +268,12 @@ class DocumentSpanEmbedder:
             if isinstance(passage, Passage):
                 texts.append(passage.text)
             elif hasattr(passage, "source_text"):
-                source_text = passage.source_text
-                if isinstance(source_text, str):
+                source_text_attr = getattr(passage, "source_text", None)
+                if isinstance(source_text_attr, str):
                     texts.append(
-                        source_text[passage.doc_char_start : passage.doc_char_end]
+                        source_text_attr[
+                            passage.doc_char_start : passage.doc_char_end
+                        ]
                     )
                 else:
                     texts.append("")
