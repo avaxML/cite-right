@@ -71,6 +71,12 @@ class PreparedCorpus:
         """Get all candidates for a specific source (global_idx, passage_start, passage_end)."""
         ...
 
+    def get_all_candidate_info(
+        self,
+    ) -> list[tuple[int, int, int, int]]:
+        """Get minimal info for all candidates (global_idx, source_idx, passage_start, passage_end)."""
+        ...
+
 def rust_tokenize_and_prepare(
     source_texts: Sequence[str], window_size: int, stride: int
 ) -> PreparedCorpus:

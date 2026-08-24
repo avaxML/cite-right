@@ -5,6 +5,9 @@ use std::collections::HashMap;
 
 use crate::inverted_index::InvertedIndex;
 
+/// Type alias for candidate metadata tuple
+type CandidateMetadata = (usize, usize, usize, Vec<(usize, usize)>);
+
 /// A single candidate passage
 #[derive(Clone)]
 pub struct Candidate {
@@ -52,7 +55,7 @@ impl PreparedCorpus {
         &self,
         py: Python<'_>,
         candidate_indices: Vec<usize>,
-    ) -> Vec<(usize, usize, usize, Vec<(usize, usize)>)> {
+    ) -> Vec<CandidateMetadata> {
         py.detach(|| {
             candidate_indices
                 .iter()
@@ -107,6 +110,16 @@ impl PreparedCorpus {
                     None
                 }
             })
+            .collect()
+    }
+
+    /// Get minimal candidate info for all candidates (without token data)
+    /// Returns list of (global_idx, source_idx, passage_start, passage_end)
+    pub fn get_all_candidate_info(&self) -> Vec<(usize, usize, usize, usize)> {
+        self.candidates
+            .iter()
+            .enumerate()
+            .map(|(idx, c)| (idx, c.source_index, c.passage_start, c.passage_end))
             .collect()
     }
 }

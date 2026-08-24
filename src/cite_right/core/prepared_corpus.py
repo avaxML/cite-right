@@ -27,8 +27,10 @@ from cite_right.text.tokenizer import SimpleTokenizer
 try:
     from cite_right._core import (  # type: ignore[attr-defined]
         InvertedIndex,
-        PreparedCorpus as RustPreparedCorpus,
         rust_tokenize_and_prepare,
+    )
+    from cite_right._core import (
+        PreparedCorpus as RustPreparedCorpus,
     )
 
     RUST_PREPARE_AVAILABLE = True
@@ -208,22 +210,18 @@ class PreparedCitationCorpus(BaseModel):
             max(tokenizer._vocab.values()) + 1 if tokenizer._vocab else 1
         )
 
-        # Build Python candidates from Rust corpus
+        # Build lightweight Python candidates WITHOUT fetching token data
+        # Token IDs will be fetched on-demand at alignment time
         candidates: list[Candidate] = []
         source_passages: list[tuple[NormalizedSource, list[Passage]]] = []
 
-        # Fetch all candidate metadata and tokens at once (single call to Rust)
-        all_indices = list(range(rust_corpus.num_candidates()))
-        all_metadata = rust_corpus.get_candidate_metadata(all_indices)
-        all_token_ids = rust_corpus.get_candidate_tokens(all_indices)
+        # Fetch minimal candidate info (no tokens)
+        all_candidate_info = rust_corpus.get_all_candidate_info()
 
         current_source_idx = 0
         passages: list[Passage] = []
 
-        for global_idx, (
-            (source_idx, passage_start, passage_end, token_spans),
-            token_ids,
-        ) in enumerate(zip(all_metadata, all_token_ids, strict=False)):
+        for global_idx, source_idx, passage_start, passage_end in all_candidate_info:
             # Check if we've moved to a new source
             if source_idx != current_source_idx:
                 source_passages.append((normalized_sources[current_source_idx], passages))
@@ -240,14 +238,16 @@ class PreparedCitationCorpus(BaseModel):
             )
             passages.append(passage)
 
+            # Build candidate WITHOUT token_ids (empty lists)
+            # Will fetch from rust_corpus when needed for alignment
             candidates.append(
                 Candidate(
                     global_index=global_idx,
                     source=source,
                     passage=passage,
-                    token_ids=token_ids,
-                    token_spans=token_spans,
-                    token_set=frozenset(token_ids),
+                    token_ids=[],  # Empty - will fetch from rust_corpus on demand
+                    token_spans=[],
+                    token_set=frozenset(),
                 )
             )
 
