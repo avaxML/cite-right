@@ -7,11 +7,13 @@ from typing import TYPE_CHECKING, Iterable, Literal, Sequence, TypeAlias
 from pydantic import BaseModel, ConfigDict
 
 if TYPE_CHECKING:
-    from cite_right._core import InvertedIndex, PreparedCorpus as RustPreparedCorpus
+    from cite_right._core import InvertedIndex
+    from cite_right._core import PreparedCorpus as RustPreparedCorpus
 
 try:
     from cite_right import _core
-    from cite_right._core import InvertedIndex, PreparedCorpus as RustPreparedCorpus
+    from cite_right._core import InvertedIndex
+    from cite_right._core import PreparedCorpus as RustPreparedCorpus
 
     HAS_RUST_CORE = True
 except ImportError:

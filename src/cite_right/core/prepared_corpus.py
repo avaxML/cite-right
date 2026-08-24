@@ -25,7 +25,8 @@ from cite_right.text.segmenter_simple import SimpleSegmenter
 from cite_right.text.tokenizer import SimpleTokenizer
 
 if TYPE_CHECKING:
-    from cite_right._core import InvertedIndex, PreparedCorpus as RustPreparedCorpus
+    from cite_right._core import InvertedIndex
+    from cite_right._core import PreparedCorpus as RustPreparedCorpus
 
 try:
     from cite_right._core import (  # type: ignore[attr-defined]
