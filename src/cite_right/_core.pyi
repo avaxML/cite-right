@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Sequence
+from typing import Dict, Sequence
 
 class InvertedIndex:
     """Inverted index for token-to-candidate mapping (Rust object)."""
@@ -27,6 +27,46 @@ class InvertedIndex:
             Number of postings for this token
         """
         ...
+
+class PyEvidenceSpan:
+    """Evidence span returned from Rust."""
+
+    char_start: int
+    char_end: int
+    evidence: str
+
+class PyCitation:
+    """Citation result from Rust."""
+
+    score: float
+    source_id: str
+    source_index: int
+    candidate_index: int
+    char_start: int
+    char_end: int
+    evidence: str
+    evidence_spans: list[PyEvidenceSpan]
+    components: Dict[str, float]
+
+class PyRetrievalSupport:
+    """Retrieval support from Rust."""
+
+    retrieval_score: float
+    source_id: str
+    source_index: int
+    candidate_index: int
+    passage_char_start: int
+    passage_char_end: int
+    passage_text: str
+    embedding_score: float
+    lexical_score: float
+
+class PyCitationResult:
+    """Citation building result from Rust."""
+
+    citations: list[PyCitation]
+    supports: list[PyRetrievalSupport]
+    num_alignments: int
 
 class PreparedCorpus:
     """Prepared corpus kept in Rust (opaque to Python)."""
@@ -71,6 +111,26 @@ class PreparedCorpus:
         self,
     ) -> list[tuple[int, int, int, int]]:
         """Get minimal info for all candidates (global_idx, source_idx, passage_start, passage_end)."""
+        ...
+
+    def build_citations(
+        self,
+        answer_tokens: Sequence[int],
+        candidate_indices: Sequence[int],
+        lexical_scores: Sequence[float],
+        embed_scores: Sequence[float],
+        source_id_map: Dict[int, str],
+        base_offset_map: Dict[int, int],
+        config_tuple: tuple[int, float, float, bool, int, float, float, float, float, float],
+        multi_span_config: tuple[bool, int, int],
+        match_score: int,
+        mismatch_score: int,
+        gap_score: int,
+    ) -> PyCitationResult:
+        """Build citations directly from PreparedCorpus without Python marshalling.
+
+        This eliminates the overhead of copying full source texts to Python and back.
+        """
         ...
 
 def rust_tokenize_and_prepare(

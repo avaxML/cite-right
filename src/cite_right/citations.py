@@ -294,9 +294,121 @@ def _process_answer_span(
                 candidate.token_ids for candidate in selected_candidates
             ]
 
-        # Try Rust fast path for full citation building
+        # Try Rust PreparedCorpus fast path (no marshalling overhead)
+        use_corpus_fast_path = (
+            HAS_RUST_CORE
+            and rust_corpus is not None
+            and hasattr(rust_corpus, "build_citations")
+            and isinstance(aligner, RustSmithWatermanAligner)
+        )
+
+        if use_corpus_fast_path:
+            try:
+                candidate_indices_orig = [
+                    candidate_index for candidate_index, _, _ in selected
+                ]
+                embed_scores = [embed_score for _, embed_score, _ in selected]
+                lexical_scores_list = [
+                    lexical_score for _, _, lexical_score in selected
+                ]
+
+                # Build source_id and base_offset maps
+                source_id_map = {
+                    candidates[idx].source.source_index: candidates[idx].source.source_id
+                    for idx in candidate_indices_orig
+                }
+                base_offset_map = {
+                    candidates[idx].source.source_index: candidates[
+                        idx
+                    ].source.base_doc_offset
+                    for idx in candidate_indices_orig
+                }
+
+                # Build config tuple
+                config_tuple = (
+                    cfg.min_alignment_score,
+                    cfg.min_answer_coverage,
+                    cfg.min_final_score,
+                    cfg.require_all_answer_tokens_in_evidence,
+                    cfg.match_score,
+                    cfg.weights.alignment,
+                    cfg.weights.answer_coverage,
+                    cfg.weights.evidence_coverage,
+                    cfg.weights.lexical,
+                    cfg.weights.embedding,
+                )
+
+                multi_span_config = (
+                    cfg.multi_span_evidence,
+                    cfg.multi_span_merge_gap_chars,
+                    cfg.multi_span_max_spans,
+                )
+
+                # Call Rust PreparedCorpus.build_citations
+                result = rust_corpus.build_citations(  # type: ignore[attr-defined]
+                    answer_tokens,
+                    candidate_indices_orig,
+                    lexical_scores_list,
+                    embed_scores,
+                    source_id_map,
+                    base_offset_map,
+                    config_tuple,
+                    multi_span_config,
+                    aligner.match_score,  # type: ignore[attr-defined]
+                    aligner.mismatch_score,  # type: ignore[attr-defined]
+                    aligner.gap_score,  # type: ignore[attr-defined]
+                )
+
+                num_alignments = result.num_alignments  # type: ignore[attr-defined]
+
+                # Convert Rust structs to Pydantic models
+                for cit in result.citations:  # type: ignore[attr-defined]
+                    citations.append(
+                        Citation(
+                            score=cit.score,
+                            source_id=cit.source_id,
+                            source_index=cit.source_index,
+                            candidate_index=cit.candidate_index,
+                            char_start=cit.char_start,
+                            char_end=cit.char_end,
+                            evidence=cit.evidence,
+                            evidence_spans=[
+                                EvidenceSpan(
+                                    char_start=es.char_start,
+                                    char_end=es.char_end,
+                                    evidence=es.evidence,
+                                )
+                                for es in cit.evidence_spans
+                            ],
+                            components=cit.components,
+                        )
+                    )
+
+                for sup in result.supports:  # type: ignore[attr-defined]
+                    retrieval_support.append(
+                        RetrievalSupport(
+                            retrieval_score=sup.retrieval_score,
+                            source_id=sup.source_id,
+                            source_index=sup.source_index,
+                            candidate_index=sup.candidate_index,
+                            passage_char_start=sup.passage_char_start,
+                            passage_char_end=sup.passage_char_end,
+                            passage_text=sup.passage_text,
+                            embedding_score=sup.embedding_score,
+                            lexical_score=sup.lexical_score,
+                        )
+                    )
+
+                alignment_time = (time.perf_counter() - align_start) * 1000
+                use_corpus_fast_path = True
+            except Exception:
+                # Fall back to standard path
+                use_corpus_fast_path = False
+
+        # Try Rust fast path for full citation building (legacy JSON-based)
         use_rust_fast_path = (
             HAS_RUST_CORE
+            and not use_corpus_fast_path
             and isinstance(aligner, RustSmithWatermanAligner)
             and hasattr(_core, "rust_build_citations_fast")
         )
@@ -434,7 +546,7 @@ def _process_answer_span(
                 # Fall back to standard path
                 use_rust_fast_path = False
 
-        if not use_rust_fast_path:
+        if not use_corpus_fast_path and not use_rust_fast_path:
             align_batch = getattr(aligner, "align_batch", None)
             if align_batch is None:
                 alignments = [
