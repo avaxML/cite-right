@@ -28,17 +28,53 @@ class InvertedIndex:
         """
         ...
 
+class PreparedCorpus:
+    """Prepared corpus kept in Rust (opaque to Python)."""
+
+    def num_candidates(self) -> int:
+        """Get the number of candidates."""
+        ...
+
+    def get_candidate_tokens(
+        self, candidate_indices: Sequence[int]
+    ) -> list[list[int]]:
+        """Get token_ids for specific candidate indices (for alignment)."""
+        ...
+
+    def get_candidate_metadata(
+        self, candidate_indices: Sequence[int]
+    ) -> list[tuple[int, int, int, list[tuple[int, int]]]]:
+        """Get candidate metadata (source_index, passage_start, passage_end, token_spans)."""
+        ...
+
+    def query_index(
+        self, query_tokens: Sequence[int], max_candidates: int
+    ) -> list[int]:
+        """Query inverted index for seed candidates."""
+        ...
+
+    def get_idf(self) -> list[tuple[int, float]]:
+        """Get IDF weights."""
+        ...
+
+    def get_vocab(self) -> list[tuple[str, int]]:
+        """Get vocabulary."""
+        ...
+
+    def get_source_text(self, source_index: int) -> str | None:
+        """Get source text by index."""
+        ...
+
+    def get_source_candidates(
+        self, source_index: int
+    ) -> list[tuple[int, int, int]]:
+        """Get all candidates for a specific source (global_idx, passage_start, passage_end)."""
+        ...
+
 def rust_tokenize_and_prepare(
-    source_texts: Sequence[str],
-    window_size: int,
-    stride: int,
-) -> tuple[
-    list[list[tuple[int, int, list[int], list[tuple[int, int]]]]],
-    list[tuple[int, float]],
-    list[tuple[str, int]],
-    InvertedIndex,
-]:
-    """Tokenize and prepare sources with inverted index.
+    source_texts: Sequence[str], window_size: int, stride: int
+) -> PreparedCorpus:
+    """Tokenize and prepare sources, returning a Rust-side corpus object.
 
     Args:
         source_texts: List of source text strings
@@ -46,7 +82,7 @@ def rust_tokenize_and_prepare(
         stride: Stride size in sentences
 
     Returns:
-        Tuple of (source_candidates, idf_vec, vocab_vec, inverted_index)
+        PreparedCorpus object (opaque Rust object)
     """
     ...
 

@@ -27,6 +27,7 @@ from cite_right.text.tokenizer import SimpleTokenizer
 try:
     from cite_right._core import (  # type: ignore[attr-defined]
         InvertedIndex,
+        PreparedCorpus as RustPreparedCorpus,
         rust_tokenize_and_prepare,
     )
 
@@ -35,6 +36,7 @@ except ImportError:
     RUST_PREPARE_AVAILABLE = False
     if not TYPE_CHECKING:
         InvertedIndex = object  # type: ignore[misc,assignment]
+        RustPreparedCorpus = object  # type: ignore[misc,assignment]
 
 MetricsCallback = Callable[["AlignmentMetrics"], None]
 LexicalScores = dict[int, float]
@@ -105,6 +107,7 @@ class PreparedCitationCorpus(BaseModel):
     idf: IdfWeights
     embedding_index: EmbeddingIndex | None = None
     inverted_index: InvertedIndex | None = None  # Rust InvertedIndex object
+    rust_corpus: object | None = None  # Rust PreparedCorpus object (when available)
     _embedding_build_time_ms: float = PrivateAttr(default=0.0)
 
     @property
@@ -188,17 +191,16 @@ class PreparedCitationCorpus(BaseModel):
         tokenizer: SimpleTokenizer,
     ) -> "PreparedCitationCorpus":
         """Fast path using Rust for tokenization, passages, candidates, and IDF."""
-        # Call Rust to do all the heavy lifting
+        # Call Rust to get PreparedCorpus object (keeps data in Rust)
         source_texts = [src.text for src in normalized_sources]
-        rust_candidates, rust_idf, rust_vocab, inverted_index = (
-            rust_tokenize_and_prepare(
-                source_texts,
-                cfg.window_size_sentences,
-                cfg.window_stride_sentences,
-            )
+        rust_corpus = rust_tokenize_and_prepare(
+            source_texts,
+            cfg.window_size_sentences,
+            cfg.window_stride_sentences,
         )
 
         # Populate the Python tokenizer's vocab from Rust
+        rust_vocab = rust_corpus.get_vocab()
         tokenizer._vocab = {
             normalized: int(token_id) for normalized, token_id in rust_vocab
         }
@@ -206,49 +208,56 @@ class PreparedCitationCorpus(BaseModel):
             max(tokenizer._vocab.values()) + 1 if tokenizer._vocab else 1
         )
 
-        # Convert Rust results to Python objects
+        # Build Python candidates from Rust corpus
         candidates: list[Candidate] = []
         source_passages: list[tuple[NormalizedSource, list[Passage]]] = []
-        global_index = 0
 
-        for _source_idx, (source, rust_source_candidates) in enumerate(
-            zip(normalized_sources, rust_candidates, strict=False)
-        ):
-            passages: list[Passage] = []
+        # Fetch all candidate metadata and tokens at once (single call to Rust)
+        all_indices = list(range(rust_corpus.num_candidates()))
+        all_metadata = rust_corpus.get_candidate_metadata(all_indices)
+        all_token_ids = rust_corpus.get_candidate_tokens(all_indices)
 
-            for passage_idx, (
-                passage_start,
-                passage_end,
-                token_ids,
-                token_spans,
-            ) in enumerate(rust_source_candidates):
-                passage = Passage(
-                    doc_char_start=passage_start,
-                    doc_char_end=passage_end,
-                    segment_start=passage_idx,  # Approximate - Rust doesn't track segment boundaries
-                    segment_end=passage_idx + 1,
-                    source_text=source.text,
+        current_source_idx = 0
+        passages: list[Passage] = []
+
+        for global_idx, (
+            (source_idx, passage_start, passage_end, token_spans),
+            token_ids,
+        ) in enumerate(zip(all_metadata, all_token_ids, strict=False)):
+            # Check if we've moved to a new source
+            if source_idx != current_source_idx:
+                source_passages.append((normalized_sources[current_source_idx], passages))
+                passages = []
+                current_source_idx = source_idx
+
+            source = normalized_sources[source_idx]
+            passage = Passage(
+                doc_char_start=passage_start,
+                doc_char_end=passage_end,
+                segment_start=len(passages),
+                segment_end=len(passages) + 1,
+                source_text=source.text,
+            )
+            passages.append(passage)
+
+            candidates.append(
+                Candidate(
+                    global_index=global_idx,
+                    source=source,
+                    passage=passage,
+                    token_ids=token_ids,
+                    token_spans=token_spans,
+                    token_set=frozenset(token_ids),
                 )
-                passages.append(passage)
+            )
 
-                candidates.append(
-                    Candidate(
-                        global_index=global_index,
-                        source=source,
-                        passage=passage,
-                        token_ids=token_ids,
-                        token_spans=token_spans,
-                        token_set=frozenset(token_ids),
-                    )
-                )
-                global_index += 1
+        # Append last source
+        if passages:
+            source_passages.append((normalized_sources[current_source_idx], passages))
 
-            source_passages.append((source, passages))
-
-        # Convert IDF from Rust [(u32, f64)] to Python dict[int, float]
+        # Convert IDF from Rust
+        rust_idf = rust_corpus.get_idf()
         idf: IdfWeights = {int(token_id): weight for token_id, weight in rust_idf}
-
-        # inverted_index is kept as Rust object (opaque)
 
         return cls(
             config=cfg,
@@ -260,7 +269,8 @@ class PreparedCitationCorpus(BaseModel):
             candidates=candidates,
             idf=idf,
             embedding_index=None,
-            inverted_index=inverted_index,
+            inverted_index=None,  # Index is in rust_corpus now
+            rust_corpus=rust_corpus,
         )
 
     def align(
@@ -310,6 +320,7 @@ class PreparedCitationCorpus(BaseModel):
                     embedding_cache=embedding_cache,
                     embedding_index=self.embedding_index,
                     inverted_index=self.inverted_index,
+                    rust_corpus=self.rust_corpus,
                     aligner=resolved_aligner,
                     cfg=self.config,
                     backend=backend,

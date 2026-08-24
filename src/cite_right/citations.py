@@ -189,6 +189,7 @@ def _process_answer_span_with_backend(
     embedding_cache: EmbeddingCache | None,
     embedding_index: EmbeddingIndex | None,
     inverted_index: InvertedIndex | None,
+    rust_corpus: object | None,
     aligner: Aligner | None,
     cfg: CitationConfig,
     backend: str,
@@ -203,6 +204,7 @@ def _process_answer_span_with_backend(
         embedding_cache=embedding_cache,
         embedding_index=embedding_index,
         inverted_index=inverted_index,
+        rust_corpus=rust_corpus,
         aligner=active_aligner,
         cfg=cfg,
     )
@@ -224,6 +226,7 @@ def _process_answer_span(
     embedding_cache: EmbeddingCache | None,
     embedding_index: EmbeddingIndex | None,
     inverted_index: InvertedIndex | None,
+    rust_corpus: object | None,
     aligner: Aligner,
     cfg: CitationConfig,
 ) -> _SpanProcessingResult:
@@ -253,6 +256,7 @@ def _process_answer_span(
             lexical_scores=lexical_scores,
             embedding_index=embedding_index,
             inverted_index=inverted_index,
+            rust_corpus=rust_corpus,
             query_vector=query_vector,
             cfg=cfg,
         )
@@ -753,13 +757,21 @@ def _select_candidates(
     lexical_scores: LexicalScores,
     embedding_index: EmbeddingIndex | None,
     inverted_index: InvertedIndex | None,
+    rust_corpus: object | None,
     query_vector: list[float] | None,
     cfg: CitationConfig,
 ) -> CandidateSelection:
     selected: dict[int, tuple[float, float]] = {}
 
-    # Use inverted index for seeding if available
-    if inverted_index is not None and HAS_RUST_CORE:
+    # Use rust_corpus index for seeding if available, else inverted_index
+    if rust_corpus is not None and HAS_RUST_CORE:
+        _add_index_candidates_from_corpus(
+            selected, answer_tokens, rust_corpus, lexical_scores, cfg
+        )
+        # Fall back to lexical if index found nothing
+        if not selected:
+            _add_lexical_candidates(selected, candidates, lexical_scores, cfg)
+    elif inverted_index is not None and HAS_RUST_CORE:
         _add_index_candidates(
             selected, answer_tokens, inverted_index, lexical_scores, cfg
         )
@@ -772,6 +784,34 @@ def _select_candidates(
     _add_embedding_candidates(selected, embedding_index, query_vector, cfg)
 
     return _rank_selected_candidates(selected, candidates, cfg)
+
+
+def _add_index_candidates_from_corpus(
+    selected: dict[int, tuple[float, float]],
+    answer_tokens: list[int],
+    rust_corpus: object,
+    lexical_scores: LexicalScores,
+    cfg: CitationConfig,
+) -> None:
+    """Add candidates from rust corpus index lookup using conjunctive query."""
+    if cfg.max_candidates_lexical <= 0:
+        return
+
+    try:
+        # Query rust_corpus index directly (stays in Rust, uses intersection)
+        seed_candidates = rust_corpus.query_index(  # type: ignore[attr-defined]
+            answer_tokens, cfg.max_candidates_lexical
+        )
+
+        # Add seed candidates with their lexical scores
+        for idx in seed_candidates:
+            lexical_score = lexical_scores.get(idx, 0.0)
+            selected[idx] = (0.0, lexical_score)
+    except Exception as e:
+        # Fall back to empty selection; caller can handle fallback
+        import sys
+
+        print(f"Warning: rust corpus index query failed: {e}", file=sys.stderr)
 
 
 def _add_index_candidates(
