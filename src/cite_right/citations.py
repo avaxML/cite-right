@@ -242,7 +242,7 @@ def _process_answer_span(
 
     if answer_tokens and candidates:
         answer_set = frozenset(answer_tokens)
-        
+
         # Skip lexical prefilter when rust_corpus is available (compute on-demand if needed)
         if rust_corpus is not None and HAS_RUST_CORE:
             lexical_scores: LexicalScores = {}
@@ -272,15 +272,21 @@ def _process_answer_span(
         selected_candidates = [
             candidates[candidate_index] for candidate_index, _, _ in selected
         ]
-        
+
         # Fetch token_ids for selected candidates
         # If rust_corpus is available, fetch from Rust (on-demand)
         # Otherwise use token_ids from Python candidates
         if rust_corpus is not None and HAS_RUST_CORE:
-            candidate_indices_for_tokens = [candidate_index for candidate_index, _, _ in selected]
-            candidate_token_ids = rust_corpus.get_candidate_tokens(candidate_indices_for_tokens)  # type: ignore[attr-defined]
+            candidate_indices_for_tokens = [
+                candidate_index for candidate_index, _, _ in selected
+            ]
+            candidate_token_ids = rust_corpus.get_candidate_tokens(
+                candidate_indices_for_tokens
+            )  # type: ignore[attr-defined]
         else:
-            candidate_token_ids = [candidate.token_ids for candidate in selected_candidates]
+            candidate_token_ids = [
+                candidate.token_ids for candidate in selected_candidates
+            ]
 
         # Try Rust fast path for full citation building
         use_rust_fast_path = (
@@ -303,11 +309,17 @@ def _process_answer_span(
 
                 # Fetch token_spans from rust_corpus if needed
                 if rust_corpus is not None and HAS_RUST_CORE:
-                    candidate_metadata = rust_corpus.get_candidate_metadata(candidate_indices_orig)  # type: ignore[attr-defined]
+                    candidate_metadata = rust_corpus.get_candidate_metadata(
+                        candidate_indices_orig
+                    )  # type: ignore[attr-defined]
                     # candidate_metadata is list of (source_idx, passage_start, passage_end, token_spans)
-                    candidate_token_spans = [metadata[3] for metadata in candidate_metadata]
+                    candidate_token_spans = [
+                        metadata[3] for metadata in candidate_metadata
+                    ]
                 else:
-                    candidate_token_spans = [candidates[idx].token_spans for idx in candidate_indices_orig]
+                    candidate_token_spans = [
+                        candidates[idx].token_spans for idx in candidate_indices_orig
+                    ]
 
                 # Build candidate data with NEW indices (0, 1, 2, ...)
                 # But store the original global_index in the first field
@@ -796,7 +808,13 @@ def _select_candidates(
         # Fall back to lexical if index found nothing
         if not selected:
             _add_lexical_candidates(
-                selected, candidates, lexical_scores, cfg, answer_set=answer_set, idf=idf, rust_corpus=rust_corpus
+                selected,
+                candidates,
+                lexical_scores,
+                cfg,
+                answer_set=answer_set,
+                idf=idf,
+                rust_corpus=rust_corpus,
             )
     elif inverted_index is not None and HAS_RUST_CORE:
         _add_index_candidates(
@@ -882,13 +900,19 @@ def _add_lexical_candidates(
     """Add top lexical candidates to the selected set."""
     if cfg.max_candidates_lexical <= 0:
         return
-    
+
     # Compute lexical scores on-demand if needed
-    if not lexical_scores and rust_corpus is not None and answer_set is not None and idf is not None and HAS_RUST_CORE:
+    if (
+        not lexical_scores
+        and rust_corpus is not None
+        and answer_set is not None
+        and idf is not None
+        and HAS_RUST_CORE
+    ):
         # Fetch token_ids for all candidates from rust_corpus
         all_indices = list(range(len(candidates)))
         all_token_ids = rust_corpus.get_candidate_tokens(all_indices)  # type: ignore[attr-defined]
-        
+
         # Compute lexical scores
         denom = sum(idf.get(token_id, 1.0) for token_id in answer_set)
         if denom > 0.0:
@@ -898,10 +922,10 @@ def _add_lexical_candidates(
                 if overlap:
                     numer = sum(idf.get(token_id, 1.0) for token_id in overlap)
                     lexical_scores[idx] = numer / denom
-    
+
     if not lexical_scores:
         return
-    
+
     ordered = sorted(
         lexical_scores.items(),
         key=lambda item: (-item[1], candidates[item[0]].source.source_index, item[0]),

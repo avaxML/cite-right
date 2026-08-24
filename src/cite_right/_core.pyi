@@ -35,9 +35,7 @@ class PreparedCorpus:
         """Get the number of candidates."""
         ...
 
-    def get_candidate_tokens(
-        self, candidate_indices: Sequence[int]
-    ) -> list[list[int]]:
+    def get_candidate_tokens(self, candidate_indices: Sequence[int]) -> list[list[int]]:
         """Get token_ids for specific candidate indices (for alignment)."""
         ...
 
@@ -65,9 +63,7 @@ class PreparedCorpus:
         """Get source text by index."""
         ...
 
-    def get_source_candidates(
-        self, source_index: int
-    ) -> list[tuple[int, int, int]]:
+    def get_source_candidates(self, source_index: int) -> list[tuple[int, int, int]]:
         """Get all candidates for a specific source (global_idx, passage_start, passage_end)."""
         ...
 

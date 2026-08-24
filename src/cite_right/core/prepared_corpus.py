@@ -224,7 +224,9 @@ class PreparedCitationCorpus(BaseModel):
         for global_idx, source_idx, passage_start, passage_end in all_candidate_info:
             # Check if we've moved to a new source
             if source_idx != current_source_idx:
-                source_passages.append((normalized_sources[current_source_idx], passages))
+                source_passages.append(
+                    (normalized_sources[current_source_idx], passages)
+                )
                 passages = []
                 current_source_idx = source_idx
 
