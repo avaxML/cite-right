@@ -457,22 +457,44 @@ impl PreparedCorpus {
             return None;
         }
 
-        // Build full evidence text
-        let evidence = evidence_spans
-            .iter()
-            .map(|span| span.evidence.as_str())
-            .collect::<Vec<_>>()
-            .join(" ");
-
+        // Build full evidence text spanning from first to last span
+        // This matches v8 behavior: slice from first span start to last span end
         let char_start = evidence_spans.first().unwrap().char_start;
         let char_end = evidence_spans.last().unwrap().char_end;
 
+        // Convert absolute positions to passage-relative
+        let passage_rel_start = char_start - base_offset - candidate.passage_start;
+        let passage_rel_end = char_end - base_offset - candidate.passage_start;
+
+        let evidence = source_text
+            .get(
+                (candidate.passage_start + passage_rel_start)
+                    ..(candidate.passage_start + passage_rel_end),
+            )
+            .unwrap_or("")
+            .to_string();
+
+        // Match v8 component keys and values
         let mut components = HashMap::new();
-        components.insert("alignment".to_string(), normalized_alignment);
+        components.insert("alignment_score".to_string(), alignment.score as f64);
+        components.insert("normalized_alignment".to_string(), normalized_alignment);
+        components.insert("matches".to_string(), alignment.matches as f64);
         components.insert("answer_coverage".to_string(), answer_coverage);
         components.insert("evidence_coverage".to_string(), evidence_coverage);
-        components.insert("lexical".to_string(), lexical_score);
-        components.insert("embedding".to_string(), embed_score.max(0.0));
+        components.insert("lexical_score".to_string(), lexical_score);
+        components.insert("embedding_score".to_string(), embed_score.max(0.0));
+        components.insert(
+            "num_evidence_spans".to_string(),
+            evidence_spans.len() as f64,
+        );
+        components.insert(
+            "passage_char_start".to_string(),
+            (base_offset + candidate.passage_start) as f64,
+        );
+        components.insert(
+            "passage_char_end".to_string(),
+            (base_offset + candidate.passage_end) as f64,
+        );
 
         Some(CitationOrSupport::Citation(PyCitation {
             score: final_score,
@@ -506,6 +528,11 @@ impl PreparedCorpus {
         weight_lexical: f64,
         weight_embedding: f64,
     ) -> Option<CitationOrSupport> {
+        // Match v8 behavior: filter out low-quality supports
+        if lexical_score <= 0.0 && embed_score < 0.3 {
+            return None;
+        }
+
         let retrieval_score = weight_alignment * normalized_alignment
             + weight_answer_coverage * answer_coverage
             + weight_evidence_coverage * evidence_coverage
@@ -646,8 +673,22 @@ impl PreparedCorpus {
 }
 
 fn tokens_match(answer_tokens: &[u32], evidence_tokens: &[u32]) -> bool {
-    if answer_tokens.len() > evidence_tokens.len() {
-        return false;
+    // Match v8 behavior: check if all answer tokens are in evidence (with multiplicity)
+    if answer_tokens == evidence_tokens {
+        return true;
     }
-    answer_tokens.iter().all(|&t| evidence_tokens.contains(&t))
+
+    let mut counts: HashMap<u32, isize> = HashMap::new();
+    for &token in answer_tokens {
+        *counts.entry(token).or_insert(0) += 1;
+    }
+    for &token in evidence_tokens {
+        if let Some(count) = counts.get_mut(&token) {
+            *count -= 1;
+            if *count == 0 {
+                counts.remove(&token);
+            }
+        }
+    }
+    counts.is_empty()
 }
