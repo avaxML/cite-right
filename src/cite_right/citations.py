@@ -314,7 +314,9 @@ def _process_answer_span(
 
                 # Build source_id and base_offset maps
                 source_id_map = {
-                    candidates[idx].source.source_index: candidates[idx].source.source_id
+                    candidates[idx].source.source_index: candidates[
+                        idx
+                    ].source.source_id
                     for idx in candidate_indices_orig
                 }
                 base_offset_map = {

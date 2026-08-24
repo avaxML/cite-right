@@ -121,7 +121,9 @@ class PreparedCorpus:
         embed_scores: Sequence[float],
         source_id_map: Dict[int, str],
         base_offset_map: Dict[int, int],
-        config_tuple: tuple[int, float, float, bool, int, float, float, float, float, float],
+        config_tuple: tuple[
+            int, float, float, bool, int, float, float, float, float, float
+        ],
         multi_span_config: tuple[bool, int, int],
         match_score: int,
         mismatch_score: int,
