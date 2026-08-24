@@ -243,27 +243,35 @@ fn rust_tokenize_and_prepare(
     window_size: usize,
     stride: usize,
 ) -> PyResult<prepared_corpus::PreparedCorpus> {
+    use rayon::prelude::*;
+
     py.detach(|| {
+        // Tokenize sequentially to maintain consistent vocabulary
         let mut tokenizer = prepare::SimpleTokenizer::new();
-        let mut all_tokenized = Vec::new();
+        let all_tokenized: Vec<_> = source_texts
+            .iter()
+            .map(|text| tokenizer.tokenize(text))
+            .collect();
 
-        // Tokenize all sources
-        for text in &source_texts {
-            all_tokenized.push(tokenizer.tokenize(text));
-        }
+        // Process sources in parallel: segment + generate passages
+        let source_passages: Vec<_> = source_texts
+            .par_iter()
+            .map(|text| {
+                let segments = prepare::simple_segment(text);
+                prepare::generate_passages(&segments, window_size, stride)
+            })
+            .collect();
 
-        // Build candidates and index inline
+        // Build candidates and index sequentially (index needs global ordering)
         let mut candidates = Vec::new();
         let mut all_candidate_tokens = Vec::new();
         let mut index = inverted_index::InvertedIndex::new();
         let mut global_candidate_index = 0;
 
-        for (source_index, (text, tokenized)) in source_texts.iter().zip(&all_tokenized).enumerate()
+        for (source_index, (tokenized, passages)) in
+            all_tokenized.iter().zip(&source_passages).enumerate()
         {
-            let segments = prepare::simple_segment(text);
-            let passages = prepare::generate_passages(&segments, window_size, stride);
-
-            for (passage_start, passage_end) in passages {
+            for &(passage_start, passage_end) in passages {
                 let (token_ids, token_spans) = prepare::slice_tokenized_text(
                     &tokenized.token_ids,
                     &tokenized.token_spans,
