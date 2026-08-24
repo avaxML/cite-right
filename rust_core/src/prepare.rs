@@ -9,11 +9,37 @@
 use std::collections::HashMap;
 use unicode_normalization::UnicodeNormalization;
 
-/// Convert byte index to character index in a UTF-8 string
-fn byte_to_char_index(text: &str, byte_index: usize) -> usize {
-    text.char_indices()
-        .take_while(|(i, _)| *i < byte_index)
-        .count()
+/// Build a byte-to-char index mapping for fast lookups
+fn build_byte_to_char_map(text: &str) -> Vec<usize> {
+    let char_positions: Vec<(usize, usize)> = text
+        .char_indices()
+        .enumerate()
+        .map(|(char_idx, (byte_idx, _))| (byte_idx, char_idx))
+        .collect();
+
+    let mut map = vec![0; text.len() + 1];
+
+    // Fill in byte positions that start characters
+    for &(byte_idx, char_idx) in &char_positions {
+        map[byte_idx] = char_idx;
+    }
+
+    // Fill in gaps (middle of multi-byte chars) with forward fill
+    let mut last_char_idx = 0;
+    for (i, entry) in map.iter_mut().enumerate() {
+        if *entry > 0 || i == 0 {
+            last_char_idx = *entry;
+        } else {
+            *entry = last_char_idx;
+        }
+    }
+
+    // Set the final position (text.len()) to total char count
+    if let Some(&(_, last_char_idx)) = char_positions.last() {
+        map[text.len()] = last_char_idx + 1;
+    }
+
+    map
 }
 
 #[derive(Clone)]
@@ -48,6 +74,9 @@ impl SimpleTokenizer {
         let mut token_ids = Vec::new();
         let mut token_spans = Vec::new();
 
+        // Build byte-to-char mapping once for the entire document
+        let byte_to_char = build_byte_to_char_map(text);
+
         for (start_byte, end_byte) in iter_token_spans(text) {
             let raw = &text[start_byte..end_byte];
             let normalized = normalize_token_simple(raw);
@@ -62,9 +91,9 @@ impl SimpleTokenizer {
             });
 
             token_ids.push(token_id);
-            // Convert byte indices to char indices for Python
-            let start_char = byte_to_char_index(text, start_byte);
-            let end_char = byte_to_char_index(text, end_byte);
+            // Convert byte indices to char indices using precomputed map
+            let start_char = byte_to_char[start_byte];
+            let end_char = byte_to_char[end_byte];
             token_spans.push((start_char, end_char));
         }
 
@@ -206,6 +235,10 @@ fn is_combining_mark(ch: char) -> bool {
 pub fn simple_segment(text: &str) -> Vec<(usize, usize)> {
     let mut segments = Vec::new();
     let chars: Vec<(usize, char)> = text.char_indices().collect();
+
+    // Build byte-to-char mapping once
+    let byte_to_char = build_byte_to_char_map(text);
+
     let mut start_byte = 0;
     let mut i = 0;
 
@@ -232,9 +265,9 @@ pub fn simple_segment(text: &str) -> Vec<(usize, usize)> {
                     text.len()
                 };
 
-                // Convert to char indices for Python
-                let start_char = byte_to_char_index(text, start_byte);
-                let end_char = byte_to_char_index(text, end_byte);
+                // Convert to char indices using precomputed map
+                let start_char = byte_to_char[start_byte];
+                let end_char = byte_to_char[end_byte];
                 segments.push((start_char, end_char));
 
                 // Start next segment after the space
@@ -251,13 +284,13 @@ pub fn simple_segment(text: &str) -> Vec<(usize, usize)> {
     }
 
     if start_byte < text.len() {
-        let start_char = byte_to_char_index(text, start_byte);
-        let end_char = text.chars().count();
+        let start_char = byte_to_char[start_byte];
+        let end_char = byte_to_char[text.len()];
         segments.push((start_char, end_char));
     }
 
     if segments.is_empty() && !text.is_empty() {
-        segments.push((0, text.chars().count()));
+        segments.push((0, byte_to_char[text.len()]));
     }
 
     segments
