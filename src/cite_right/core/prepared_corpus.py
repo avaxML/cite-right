@@ -24,6 +24,9 @@ from cite_right.text.passage import Passage, generate_passages
 from cite_right.text.segmenter_simple import SimpleSegmenter
 from cite_right.text.tokenizer import SimpleTokenizer
 
+if TYPE_CHECKING:
+    from cite_right._core import InvertedIndex, PreparedCorpus as RustPreparedCorpus
+
 try:
     from cite_right._core import (  # type: ignore[attr-defined]
         InvertedIndex,
@@ -109,7 +112,9 @@ class PreparedCitationCorpus(BaseModel):
     idf: IdfWeights
     embedding_index: EmbeddingIndex | None = None
     inverted_index: InvertedIndex | None = None  # Rust InvertedIndex object
-    rust_corpus: object | None = None  # Rust PreparedCorpus object (when available)
+    rust_corpus: RustPreparedCorpus | None = (
+        None  # Rust PreparedCorpus object (when available)
+    )
     _embedding_build_time_ms: float = PrivateAttr(default=0.0)
 
     @property

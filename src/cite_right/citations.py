@@ -6,9 +6,12 @@ from typing import TYPE_CHECKING, Iterable, Literal, Sequence, TypeAlias
 
 from pydantic import BaseModel, ConfigDict
 
+if TYPE_CHECKING:
+    from cite_right._core import InvertedIndex, PreparedCorpus as RustPreparedCorpus
+
 try:
     from cite_right import _core
-    from cite_right._core import InvertedIndex
+    from cite_right._core import InvertedIndex, PreparedCorpus as RustPreparedCorpus
 
     HAS_RUST_CORE = True
 except ImportError:
@@ -16,6 +19,7 @@ except ImportError:
     _core = None  # type: ignore[assignment]
     if not TYPE_CHECKING:
         InvertedIndex = object  # type: ignore[misc,assignment]
+        RustPreparedCorpus = object  # type: ignore[misc,assignment]
 
 from cite_right.contradiction import check_contradiction
 from cite_right.core.aligner_py import SmithWatermanAligner
@@ -189,7 +193,7 @@ def _process_answer_span_with_backend(
     embedding_cache: EmbeddingCache | None,
     embedding_index: EmbeddingIndex | None,
     inverted_index: InvertedIndex | None,
-    rust_corpus: object | None,
+    rust_corpus: RustPreparedCorpus | None,
     aligner: Aligner | None,
     cfg: CitationConfig,
     backend: str,
@@ -226,7 +230,7 @@ def _process_answer_span(
     embedding_cache: EmbeddingCache | None,
     embedding_index: EmbeddingIndex | None,
     inverted_index: InvertedIndex | None,
-    rust_corpus: object | None,
+    rust_corpus: RustPreparedCorpus | None,
     aligner: Aligner,
     cfg: CitationConfig,
 ) -> _SpanProcessingResult:
@@ -794,7 +798,7 @@ def _select_candidates(
     idf: IdfWeights,
     embedding_index: EmbeddingIndex | None,
     inverted_index: InvertedIndex | None,
-    rust_corpus: object | None,
+    rust_corpus: RustPreparedCorpus | None,
     query_vector: list[float] | None,
     cfg: CitationConfig,
 ) -> CandidateSelection:
@@ -834,7 +838,7 @@ def _select_candidates(
 def _add_index_candidates_from_corpus(
     selected: dict[int, tuple[float, float]],
     answer_tokens: list[int],
-    rust_corpus: object,
+    rust_corpus: RustPreparedCorpus,
     lexical_scores: LexicalScores,
     cfg: CitationConfig,
 ) -> None:
@@ -895,7 +899,7 @@ def _add_lexical_candidates(
     cfg: CitationConfig,
     answer_set: frozenset[int] | None = None,
     idf: IdfWeights | None = None,
-    rust_corpus: object | None = None,
+    rust_corpus: RustPreparedCorpus | None = None,
 ) -> None:
     """Add top lexical candidates to the selected set."""
     if cfg.max_candidates_lexical <= 0:
