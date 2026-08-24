@@ -279,21 +279,6 @@ def _process_answer_span(
             candidates[candidate_index] for candidate_index, _, _ in selected
         ]
 
-        # Fetch token_ids for selected candidates
-        # If rust_corpus is available, fetch from Rust (on-demand)
-        # Otherwise use token_ids from Python candidates
-        if rust_corpus is not None and HAS_RUST_CORE:
-            candidate_indices_for_tokens = [
-                candidate_index for candidate_index, _, _ in selected
-            ]
-            candidate_token_ids = rust_corpus.get_candidate_tokens(
-                candidate_indices_for_tokens
-            )  # type: ignore[attr-defined]
-        else:
-            candidate_token_ids = [
-                candidate.token_ids for candidate in selected_candidates
-            ]
-
         # Try Rust PreparedCorpus fast path (no marshalling overhead)
         use_corpus_fast_path = (
             HAS_RUST_CORE
@@ -301,6 +286,23 @@ def _process_answer_span(
             and hasattr(rust_corpus, "build_citations")
             and isinstance(aligner, RustSmithWatermanAligner)
         )
+
+        # Fetch token_ids only if not using corpus_fast_path (which has tokens internally)
+        # If rust_corpus is available, fetch from Rust (on-demand)
+        # Otherwise use token_ids from Python candidates
+        candidate_token_ids: list[list[int]] = []
+        if not use_corpus_fast_path:
+            if rust_corpus is not None and HAS_RUST_CORE:
+                candidate_indices_for_tokens = [
+                    candidate_index for candidate_index, _, _ in selected
+                ]
+                candidate_token_ids = rust_corpus.get_candidate_tokens(
+                    candidate_indices_for_tokens
+                )  # type: ignore[attr-defined]
+            else:
+                candidate_token_ids = [
+                    candidate.token_ids for candidate in selected_candidates
+                ]
 
         if use_corpus_fast_path:
             try:

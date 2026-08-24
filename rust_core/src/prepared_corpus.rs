@@ -239,16 +239,28 @@ impl PreparedCorpus {
                 gap_score,
             };
 
+            // Use match_blocks only when multi_span_evidence is enabled
+            // This matches v8 behavior where plain SW was used for single-span mode
             let alignments: Vec<_> = candidate_indices
                 .par_iter()
                 .map(|&idx| {
                     if let Some(candidate) = self.candidates.get(idx) {
-                        let (alignment, match_blocks) = smith_waterman::smith_waterman_match_blocks(
-                            &answer_tokens,
-                            &candidate.token_ids,
-                            params,
-                        );
-                        Some((alignment, match_blocks))
+                        if multi_span_evidence {
+                            let (alignment, match_blocks) =
+                                smith_waterman::smith_waterman_match_blocks(
+                                    &answer_tokens,
+                                    &candidate.token_ids,
+                                    params,
+                                );
+                            Some((alignment, Some(match_blocks)))
+                        } else {
+                            let alignment = smith_waterman::smith_waterman(
+                                &answer_tokens,
+                                &candidate.token_ids,
+                                params,
+                            );
+                            Some((alignment, None))
+                        }
                     } else {
                         None
                     }
@@ -264,12 +276,12 @@ impl PreparedCorpus {
                 .zip(&lexical_scores)
                 .zip(&embed_scores)
                 .filter_map(|(((&cand_idx, alignment), &lex), &emb)| {
-                    alignment.as_ref().and_then(|(align, match_blocks)| {
+                    alignment.as_ref().and_then(|(align, match_blocks_opt)| {
                         self.process_alignment_internal(
                             &answer_tokens,
                             cand_idx,
                             align,
-                            match_blocks,
+                            match_blocks_opt.as_deref(),
                             lex,
                             emb,
                             &source_id_map,
@@ -333,7 +345,7 @@ impl PreparedCorpus {
         answer_tokens: &[u32],
         candidate_index: usize,
         alignment: &smith_waterman::Alignment,
-        match_blocks: &[(usize, usize)],
+        match_blocks: Option<&[(usize, usize)]>,
         lexical_score: f64,
         embed_score: f64,
         source_id_map: &HashMap<usize, String>,
@@ -527,13 +539,13 @@ impl PreparedCorpus {
         source_text: &str,
         base_offset: usize,
         alignment: &smith_waterman::Alignment,
-        match_blocks: &[(usize, usize)],
+        match_blocks: Option<&[(usize, usize)]>,
         multi_span_evidence: bool,
         merge_gap_chars: i32,
         max_spans: usize,
     ) -> Option<Vec<PyEvidenceSpan>> {
         if !multi_span_evidence {
-            // Single span mode
+            // Single span mode - use alignment token range directly
             if alignment.token_start >= candidate.token_spans.len()
                 || alignment.token_end > candidate.token_spans.len()
             {
@@ -562,11 +574,12 @@ impl PreparedCorpus {
         }
 
         // Multi-span mode: merge consecutive match blocks
+        let blocks = match_blocks?;
         let mut spans = Vec::new();
         let mut current_start: Option<usize> = None;
         let mut current_end: Option<usize> = None;
 
-        for &(token_start, token_end) in match_blocks {
+        for &(token_start, token_end) in blocks {
             if token_start >= candidate.token_spans.len() || token_end > candidate.token_spans.len()
             {
                 continue;
