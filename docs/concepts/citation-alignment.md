@@ -11,7 +11,10 @@ from cite_right import SourceDocument, align_citations, CitationConfig
 
 answer = "The study found a 30% reduction in emissions."
 sources = [
-    SourceDocument(id="paper", text="Research indicates a 30% reduction in emissions over the study period.")
+    SourceDocument(
+        id="paper",
+        text="Research indicates a 30% reduction in emissions over the study period.",
+    )
 ]
 
 config = CitationConfig(top_k=3)
@@ -32,7 +35,7 @@ from cite_right import SourceDocument
 doc = SourceDocument(
     id="annual_report_2024",
     text="The full text of the annual report goes here...",
-    metadata={"year": 2024, "type": "financial"}
+    metadata={"year": 2024, "type": "financial"},
 )
 ```
 
@@ -45,7 +48,7 @@ chunk = SourceChunk(
     source_id="annual_report_2024",
     text="This is a specific passage from the document.",
     doc_char_start=1500,
-    doc_char_end=1548
+    doc_char_end=1548,
 )
 ```
 
@@ -154,7 +157,7 @@ results = align_citations(
     answer,
     sources,
     answer_segmenter=SpacyAnswerSegmenter(split_clauses=True),
-    source_segmenter=SpacySegmenter()
+    source_segmenter=SpacySegmenter(),
 )
 ```
 

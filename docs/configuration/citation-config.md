@@ -16,11 +16,7 @@ results = align_citations(answer, sources, config=config)
 Each parameter can be customized by passing keyword arguments to the constructor.
 
 ```python
-config = CitationConfig(
-    top_k=3,
-    min_final_score=0.25,
-    window_size_sentences=2
-)
+config = CitationConfig(top_k=3, min_final_score=0.25, window_size_sentences=2)
 ```
 
 ## Output Filtering and Status
@@ -166,11 +162,7 @@ Penalty applied when tokens do not match. Default is -1.
 Penalty for gaps (insertions/deletions) in alignment. Default is -1.
 
 ```python
-config = CitationConfig(
-    match_score=2,
-    mismatch_score=-1,
-    gap_score=-2
-)
+config = CitationConfig(match_score=2, mismatch_score=-1, gap_score=-2)
 ```
 
 Higher gap penalties produce more compact evidence spans with fewer skipped tokens. Lower penalties allow bridging gaps between matching regions.
@@ -187,7 +179,7 @@ weights = CitationWeights(
     answer_coverage=1.0,
     evidence_coverage=0.0,
     lexical=0.5,
-    embedding=0.0
+    embedding=0.0,
 )
 
 config = CitationConfig(weights=weights)
@@ -214,10 +206,7 @@ config = CitationConfig(multi_span_evidence=True)
 Maximum character gap between evidence spans before they are merged. Default is 16.
 
 ```python
-config = CitationConfig(
-    multi_span_evidence=True,
-    multi_span_merge_gap_chars=30
-)
+config = CitationConfig(multi_span_evidence=True, multi_span_merge_gap_chars=30)
 ```
 
 ### multi_span_max_spans
@@ -243,7 +232,7 @@ high_precision_weights = CitationWeights(
     answer_coverage=1.0,
     evidence_coverage=0.0,
     lexical=0.5,
-    embedding=0.5
+    embedding=0.5,
 )
 
 # Benchmark-optimized high-precision configuration
@@ -254,14 +243,16 @@ high_precision_config = CitationConfig(
     supported_answer_coverage=0.6,
     min_embedding_similarity=0.3,
     min_final_score=2.6,  # Crucial threshold separating true positives from near-miss hallucinations
-    weights=high_precision_weights
+    weights=high_precision_weights,
 )
 
 results = align_citations(
     answer,
     sources,
     config=high_precision_config,
-    embedder=SentenceTransformerEmbedder("sentence-transformers/paraphrase-MiniLM-L3-v2")
+    embedder=SentenceTransformerEmbedder(
+        "sentence-transformers/paraphrase-MiniLM-L3-v2"
+    ),
 )
 ```
 

@@ -63,7 +63,7 @@ Adjacent or nearby evidence spans are merged to avoid fragmentation. The `multi_
 ```python
 config = CitationConfig(
     multi_span_evidence=True,
-    multi_span_merge_gap_chars=30  # Spans within 30 chars are merged
+    multi_span_merge_gap_chars=30,  # Spans within 30 chars are merged
 )
 ```
 
@@ -79,15 +79,17 @@ Consider an answer span that makes a compound statement: "The company increased 
 
 ```python
 answer = "The company increased revenue and reduced costs."
-sources = [SourceDocument(
-    id="report",
-    text="""
+sources = [
+    SourceDocument(
+        id="report",
+        text="""
     In Q4, the company increased revenue by 15% through new product launches.
 
     Various cost reduction initiatives were implemented throughout the year.
     Operating costs were reduced by 8% compared to the previous quarter.
-    """
-)]
+    """,
+    )
+]
 
 config = CitationConfig(multi_span_evidence=True)
 results = align_citations(answer, sources, config=config)
@@ -106,14 +108,16 @@ When source documents present information in a non-linear order, multi-span evid
 
 ```python
 answer = "The CEO, John Smith, announced the acquisition."
-sources = [SourceDocument(
-    id="news",
-    text="""
+sources = [
+    SourceDocument(
+        id="news",
+        text="""
     A major acquisition was announced today at the annual shareholder meeting.
     The deal is valued at 2.5 billion dollars.
     John Smith, the company's CEO since 2018, made the announcement personally.
-    """
-)]
+    """,
+    )
+]
 ```
 
 The relevant information about "John Smith" and "CEO" appears in the third sentence, while "announced the acquisition" aligns with the first sentence. Multi-span evidence captures both regions.
@@ -137,7 +141,7 @@ def render_evidence_with_highlights(source_text, evidence_spans):
     for span in sorted_spans:
         # Add text before this span
         if span.char_start > position:
-            parts.append(html_escape(source_text[position:span.char_start]))
+            parts.append(html_escape(source_text[position : span.char_start]))
 
         # Add highlighted span
         parts.append(f"<mark>{html_escape(span.evidence)}</mark>")

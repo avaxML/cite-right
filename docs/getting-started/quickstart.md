@@ -14,7 +14,7 @@ answer = "Acme Corporation reported revenue of 5.2 billion dollars in 2024."
 sources = [
     SourceDocument(
         id="annual_report",
-        text="Acme Corporation reported revenue of 5.2 billion dollars in 2024, representing a 12% increase over the previous year."
+        text="Acme Corporation reported revenue of 5.2 billion dollars in 2024, representing a 12% increase over the previous year.",
     )
 ]
 
@@ -52,16 +52,16 @@ Real applications often retrieve several documents that might contain relevant i
 sources = [
     SourceDocument(
         id="earnings_call",
-        text="During the Q4 earnings call, CEO Jane Smith noted that revenue reached 5.2 billion dollars, exceeding analyst expectations."
+        text="During the Q4 earnings call, CEO Jane Smith noted that revenue reached 5.2 billion dollars, exceeding analyst expectations.",
     ),
     SourceDocument(
         id="press_release",
-        text="Acme Corporation today announced fourth quarter revenue of 5.2 billion dollars, a new company record."
+        text="Acme Corporation today announced fourth quarter revenue of 5.2 billion dollars, a new company record.",
     ),
     SourceDocument(
         id="market_analysis",
-        text="Industry analysts had predicted Acme would report between 4.8 and 5.0 billion in revenue for the quarter."
-    )
+        text="Industry analysts had predicted Acme would report between 4.8 and 5.0 billion in revenue for the quarter.",
+    ),
 ]
 
 answer = "Revenue reached 5.2 billion dollars, exceeding expectations."
@@ -86,9 +86,16 @@ The company attributed growth to its new product line.
 European sales exceeded expectations."""
 
 sources = [
-    SourceDocument(id="financial", text="Q4 revenue hit a record high at 5.2 billion dollars."),
-    SourceDocument(id="products", text="The new product line launched in March drove significant growth."),
-    SourceDocument(id="regional", text="Sales in Europe surpassed all projections by 15%."),
+    SourceDocument(
+        id="financial", text="Q4 revenue hit a record high at 5.2 billion dollars."
+    ),
+    SourceDocument(
+        id="products",
+        text="The new product line launched in March drove significant growth.",
+    ),
+    SourceDocument(
+        id="regional", text="Sales in Europe surpassed all projections by 15%."
+    ),
 ]
 
 results = align_citations(answer, sources)
@@ -113,7 +120,10 @@ from cite_right import align_citations, compute_hallucination_metrics
 answer = "Revenue grew 15% year-over-year. The company will acquire its main competitor next month."
 
 sources = [
-    SourceDocument(id="report", text="Annual revenue growth was 15% compared to the previous fiscal year.")
+    SourceDocument(
+        id="report",
+        text="Annual revenue growth was 15% compared to the previous fiscal year.",
+    )
 ]
 
 results = align_citations(answer, sources)
@@ -135,7 +145,12 @@ For common patterns, Cite-Right provides high-level convenience functions that c
 from cite_right import is_grounded, check_groundedness, annotate_answer
 
 answer = "The project was completed on time and under budget."
-sources = [SourceDocument(id="status", text="Project completion occurred ahead of schedule and below the allocated budget.")]
+sources = [
+    SourceDocument(
+        id="status",
+        text="Project completion occurred ahead of schedule and below the allocated budget.",
+    )
+]
 
 # Simple boolean check
 if is_grounded(answer, sources, threshold=0.5):

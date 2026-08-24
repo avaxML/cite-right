@@ -19,7 +19,7 @@ results = align_citations(
     answer,
     sources,
     answer_segmenter=SpacyAnswerSegmenter(),
-    source_segmenter=SimpleSegmenter()
+    source_segmenter=SimpleSegmenter(),
 )
 ```
 

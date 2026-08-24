@@ -26,9 +26,9 @@ The `max_candidates_lexical`, `max_candidates_embedding`, and `max_candidates_to
 from cite_right import CitationConfig, align_citations
 
 config = CitationConfig(
-    max_candidates_lexical=100,   # Default is 200
+    max_candidates_lexical=100,  # Default is 200
     max_candidates_embedding=50,  # Default is 200 (when using embeddings)
-    max_candidates_total=120      # Default is 400
+    max_candidates_total=120,  # Default is 400
 )
 results = align_citations(answer, sources, config=config)
 ```
@@ -42,7 +42,7 @@ Reducing passage window size decreases both the number of passages and the lengt
 ```python
 config = CitationConfig(
     window_size_sentences=2,  # Default is 1
-    window_stride_sentences=2  # Default is 1
+    window_stride_sentences=2,  # Default is 1
 )
 ```
 
@@ -96,7 +96,9 @@ When the same source set is reused across many answers, prepare the corpus once 
 from cite_right import CitationConfig, PreparedCitationCorpus, SourceDocument
 
 sources = [
-    SourceDocument(id="report", text="Annual revenue increased by 20% during fiscal year 2024."),
+    SourceDocument(
+        id="report", text="Annual revenue increased by 20% during fiscal year 2024."
+    ),
 ]
 corpus = PreparedCitationCorpus.from_sources(
     sources,
@@ -116,6 +118,7 @@ For batch workloads, process multiple answers concurrently.
 ```python
 from concurrent.futures import ThreadPoolExecutor
 
+
 def process_batch(items, max_workers=4):
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = [
@@ -134,9 +137,11 @@ For very large batches, multiprocessing avoids GIL limitations entirely.
 ```python
 from multiprocessing import Pool
 
+
 def align_worker(args):
     answer, sources = args
     return align_citations(answer, sources)
+
 
 with Pool(processes=8) as pool:
     results = pool.map(align_worker, workload)
@@ -251,6 +256,7 @@ Cache alignment results for repeated queries.
 ```python
 from functools import lru_cache
 
+
 @lru_cache(maxsize=1000)
 def cached_align(answer, source_key):
     sources = load_sources(source_key)
@@ -288,14 +294,10 @@ from concurrent.futures import ThreadPoolExecutor
 
 executor = ThreadPoolExecutor()
 
+
 async def async_align(answer, sources):
     loop = asyncio.get_event_loop()
-    return await loop.run_in_executor(
-        executor,
-        align_citations,
-        answer,
-        sources
-    )
+    return await loop.run_in_executor(executor, align_citations, answer, sources)
 ```
 
 This keeps the event loop responsive while citations compute.
@@ -306,6 +308,7 @@ Create representative benchmarks for your specific use case.
 
 ```python
 import statistics
+
 
 def benchmark(workload, iterations=10):
     times = []

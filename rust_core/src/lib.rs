@@ -243,38 +243,44 @@ fn rust_tokenize_and_prepare(
     window_size: usize,
     stride: usize,
 ) -> PyResult<prepared_corpus::PreparedCorpus> {
+    // Type alias for tokenized document
+    type TokenizedDocument = (Vec<u32>, Vec<(usize, usize)>);
+
     py.detach(|| {
         let mut tokenizer = prepare::SimpleTokenizer::new();
-        let mut all_tokenized = Vec::new();
 
-        // Tokenize all sources
-        for text in &source_texts {
-            all_tokenized.push(tokenizer.tokenize(text));
-        }
+        // Tokenize all sources and store in source_tokens
+        let source_tokens: Vec<TokenizedDocument> = source_texts
+            .iter()
+            .map(|text| {
+                let tokenized = tokenizer.tokenize(text);
+                (tokenized.token_ids, tokenized.token_spans)
+            })
+            .collect();
 
-        // Build candidates and index inline
+        // Build candidates and index without cloning tokens
         let mut candidates = Vec::new();
-        let mut all_candidate_tokens = Vec::new();
+        let mut all_candidate_token_refs = Vec::new();
         let mut index = inverted_index::InvertedIndex::new();
         let mut global_candidate_index = 0;
 
-        for (source_index, (text, tokenized)) in source_texts.iter().zip(&all_tokenized).enumerate()
+        for (source_index, (text, (doc_token_ids, doc_token_spans))) in
+            source_texts.iter().zip(&source_tokens).enumerate()
         {
             let segments = prepare::simple_segment(text);
             let passages = prepare::generate_passages(&segments, window_size, stride);
 
             for (passage_start, passage_end) in passages {
-                let (token_ids, token_spans) = prepare::slice_tokenized_text(
-                    &tokenized.token_ids,
-                    &tokenized.token_spans,
-                    passage_start,
-                    passage_end,
-                );
+                // Find token range in document that covers this passage
+                let (token_start_in_doc, token_end_in_doc) =
+                    prepare::find_token_range(doc_token_spans, passage_start, passage_end);
 
-                // Add to index inline
-                for (token_pos, (&token_id, &(char_start, char_end))) in
-                    token_ids.iter().zip(token_spans.iter()).enumerate()
-                {
+                // Add to index directly from document tokens (no clone)
+                for token_pos in 0..(token_end_in_doc - token_start_in_doc) {
+                    let doc_token_idx = token_start_in_doc + token_pos;
+                    let token_id = doc_token_ids[doc_token_idx];
+                    let (char_start, char_end) = doc_token_spans[doc_token_idx];
+
                     index.add_posting(
                         token_id,
                         inverted_index::Posting {
@@ -286,26 +292,30 @@ fn rust_tokenize_and_prepare(
                     );
                 }
 
+                // Store candidate as view into source tokens
                 candidates.push(prepared_corpus::Candidate {
                     source_index,
                     passage_start,
                     passage_end,
-                    token_ids: token_ids.clone(),
-                    token_spans: token_spans.clone(),
+                    token_start_in_doc,
+                    token_end_in_doc,
                 });
-                all_candidate_tokens.push(token_ids);
+
+                // Keep reference to token slice for IDF computation
+                all_candidate_token_refs.push(&doc_token_ids[token_start_in_doc..token_end_in_doc]);
                 global_candidate_index += 1;
             }
         }
 
-        // Compute IDF
-        let idf = prepare::compute_idf(&all_candidate_tokens);
+        // Compute IDF from token references (no clone needed)
+        let idf = prepare::compute_idf_from_slices(&all_candidate_token_refs);
 
         // Extract vocab
         let vocab = tokenizer.get_vocab();
 
         Ok(prepared_corpus::PreparedCorpus {
             candidates,
+            source_tokens,
             idf,
             vocab,
             inverted_index: index,

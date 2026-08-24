@@ -50,7 +50,9 @@ from cite_right import SourceDocument, align_citations, CitationConfig
 
 answer = "The company grew revenue by 20% in 2024."
 sources = [
-    SourceDocument(id="report", text="Annual revenue increased by 20% during fiscal year 2024.")
+    SourceDocument(
+        id="report", text="Annual revenue increased by 20% during fiscal year 2024."
+    )
 ]
 
 config = CitationConfig(top_k=3)
@@ -97,7 +99,9 @@ class PreparedCitationCorpus:
 from cite_right import CitationConfig, PreparedCitationCorpus, SourceDocument
 
 sources = [
-    SourceDocument(id="report", text="Annual revenue increased by 20% during fiscal year 2024."),
+    SourceDocument(
+        id="report", text="Annual revenue increased by 20% during fiscal year 2024."
+    ),
 ]
 corpus = PreparedCitationCorpus.from_sources(
     sources,
@@ -185,11 +189,7 @@ def verify_facts(
 from cite_right import verify_facts
 from cite_right.claims import SpacyClaimDecomposer
 
-result = verify_facts(
-    answer,
-    sources,
-    claim_decomposer=SpacyClaimDecomposer()
-)
+result = verify_facts(answer, sources, claim_decomposer=SpacyClaimDecomposer())
 
 print(f"Verified claims: {result.num_verified}/{result.total_claims}")
 ```
@@ -326,6 +326,7 @@ sources = from_dicts(docs)
 
 # From LangChain
 from langchain_core.documents import Document
+
 lc_docs = [Document(page_content="...", metadata={"source": "file.pdf"})]
 sources = from_langchain_documents(lc_docs)
 ```

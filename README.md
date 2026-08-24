@@ -95,7 +95,7 @@ for result in results:
     print(result.answer_span.text, result.status)
     for citation in result.citations:
         source_doc = sources[citation.source_index]
-        evidence = source_doc.text[citation.char_start:citation.char_end]
+        evidence = source_doc.text[citation.char_start : citation.char_end]
         print(" ", citation.source_id, evidence)
 ```
 
@@ -118,7 +118,7 @@ high_precision_weights = CitationWeights(
     answer_coverage=1.0,
     evidence_coverage=0.0,
     lexical=0.5,
-    embedding=0.5
+    embedding=0.5,
 )
 
 # High-precision configuration
@@ -129,7 +129,7 @@ high_precision_config = CitationConfig(
     supported_answer_coverage=0.6,
     min_embedding_similarity=0.3,
     min_final_score=2.6,  # Threshold designed to filter out adversarial and near-miss false positives
-    weights=high_precision_weights
+    weights=high_precision_weights,
 )
 ```
 

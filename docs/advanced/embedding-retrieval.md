@@ -74,9 +74,7 @@ Candidate selection combines lexical overlap and (optionally) embedding similari
 from cite_right import CitationConfig, align_citations
 
 config = CitationConfig(
-    max_candidates_lexical=200,
-    max_candidates_embedding=100,
-    max_candidates_total=250
+    max_candidates_lexical=200, max_candidates_embedding=100, max_candidates_total=250
 )
 results = align_citations(answer, sources, embedder=embedder, config=config)
 ```
@@ -95,7 +93,7 @@ config = CitationConfig(
         answer_coverage=1.0,
         evidence_coverage=0.0,
         lexical=0.3,
-        embedding=0.7
+        embedding=0.7,
     )
 )
 results = align_citations(answer, sources, embedder=embedder, config=config)
@@ -117,16 +115,14 @@ from typing import Sequence
 
 from cite_right.models.base import Embedder
 
+
 class OpenAIEmbedder:
     def __init__(self, client, model="text-embedding-ada-002"):
         self.client = client
         self.model = model
 
     def encode(self, texts: Sequence[str]) -> list[list[float]]:
-        response = self.client.embeddings.create(
-            input=texts,
-            model=self.model
-        )
+        response = self.client.embeddings.create(input=texts, model=self.model)
         return [item.embedding for item in response.data]
 ```
 
@@ -141,6 +137,7 @@ Sentence transformer models load on first use, adding several seconds to initial
 ```python
 # Initialize at server startup
 embedder = SentenceTransformerEmbedder("all-MiniLM-L6-v2")
+
 
 # Reuse across requests
 def handle_request(answer, sources):
@@ -158,6 +155,7 @@ Sentence transformers automatically use GPU when available. For high-throughput 
 ```python
 # Check if GPU is being used
 import torch
+
 print(f"CUDA available: {torch.cuda.is_available()}")
 ```
 

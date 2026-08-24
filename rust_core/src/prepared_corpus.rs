@@ -8,20 +8,27 @@ use crate::inverted_index::InvertedIndex;
 /// Type alias for candidate metadata tuple
 type CandidateMetadata = (usize, usize, usize, Vec<(usize, usize)>);
 
-/// A single candidate passage
+/// Type alias for tokenized document: (token_ids, token_spans)
+type TokenizedDocument = (Vec<u32>, Vec<(usize, usize)>);
+
+/// A single candidate passage stored as a view into source document tokens
 #[derive(Clone)]
 pub struct Candidate {
     pub source_index: usize,
     pub passage_start: usize,
     pub passage_end: usize,
-    pub token_ids: Vec<u32>,
-    pub token_spans: Vec<(usize, usize)>,
+    /// Start index in source document's token array
+    pub token_start_in_doc: usize,
+    /// End index (exclusive) in source document's token array
+    pub token_end_in_doc: usize,
 }
 
 /// Prepared corpus kept in Rust (opaque to Python)
 #[pyclass]
 pub struct PreparedCorpus {
     pub(crate) candidates: Vec<Candidate>,
+    /// Tokenized documents: (token_ids, token_spans) per source
+    pub(crate) source_tokens: Vec<TokenizedDocument>,
     pub(crate) idf: HashMap<u32, f64>,
     pub(crate) vocab: HashMap<String, u32>,
     pub(crate) inverted_index: InvertedIndex,
@@ -44,7 +51,15 @@ impl PreparedCorpus {
         py.detach(|| {
             candidate_indices
                 .iter()
-                .filter_map(|&idx| self.candidates.get(idx).map(|c| c.token_ids.clone()))
+                .filter_map(|&idx| {
+                    self.candidates.get(idx).and_then(|c| {
+                        self.source_tokens
+                            .get(c.source_index)
+                            .map(|(token_ids, _)| {
+                                token_ids[c.token_start_in_doc..c.token_end_in_doc].to_vec()
+                            })
+                    })
+                })
                 .collect()
         })
     }
@@ -60,13 +75,14 @@ impl PreparedCorpus {
             candidate_indices
                 .iter()
                 .filter_map(|&idx| {
-                    self.candidates.get(idx).map(|c| {
-                        (
-                            c.source_index,
-                            c.passage_start,
-                            c.passage_end,
-                            c.token_spans.clone(),
-                        )
+                    self.candidates.get(idx).and_then(|c| {
+                        self.source_tokens
+                            .get(c.source_index)
+                            .map(|(_, token_spans)| {
+                                let spans =
+                                    token_spans[c.token_start_in_doc..c.token_end_in_doc].to_vec();
+                                (c.source_index, c.passage_start, c.passage_end, spans)
+                            })
                     })
                 })
                 .collect()

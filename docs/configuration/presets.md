@@ -47,8 +47,8 @@ config = CitationConfig(
         answer_coverage=1.0,
         evidence_coverage=0.0,
         lexical=0.5,
-        embedding=0.5
-    )
+        embedding=0.5,
+    ),
 )
 ```
 
@@ -103,7 +103,7 @@ config = CitationConfig(
     top_k=base.top_k,
     min_answer_coverage=base.min_answer_coverage,
     supported_answer_coverage=0.6,  # Slightly lower than strict default
-    window_size_sentences=base.window_size_sentences
+    window_size_sentences=base.window_size_sentences,
 )
 ```
 
@@ -142,6 +142,7 @@ def get_config_for_context(context):
         return CitationConfig.fast()
     else:
         return CitationConfig.balanced()
+
 
 config = get_config_for_context(current_context)
 results = align_citations(answer, sources, config=config)

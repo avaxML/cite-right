@@ -22,7 +22,7 @@ The CEO will retire next month."""
 sources = [
     SourceDocument(
         id="earnings",
-        text="Fourth quarter profits reached an all-time high, beating analyst expectations."
+        text="Fourth quarter profits reached an all-time high, beating analyst expectations.",
     )
 ]
 
@@ -121,8 +121,7 @@ The `HallucinationConfig` class provides control over how metrics are computed.
 from cite_right import HallucinationConfig, compute_hallucination_metrics
 
 config = HallucinationConfig(
-    weak_citation_threshold=0.4,
-    include_partial_in_grounded=True
+    weak_citation_threshold=0.4, include_partial_in_grounded=True
 )
 
 metrics = compute_hallucination_metrics(results, config=config)
@@ -218,6 +217,7 @@ Track hallucination rates over time to identify model or prompt degradation.
 ```python
 import logging
 
+
 def log_hallucination_metrics(query, answer, metrics):
     logging.info(
         "hallucination_check",
@@ -225,8 +225,8 @@ def log_hallucination_metrics(query, answer, metrics):
             "query_hash": hash(query),
             "groundedness": metrics.groundedness_score,
             "hallucination_rate": metrics.hallucination_rate,
-            "unsupported_count": metrics.num_unsupported
-        }
+            "unsupported_count": metrics.num_unsupported,
+        },
     )
 ```
 

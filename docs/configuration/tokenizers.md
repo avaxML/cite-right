@@ -34,9 +34,7 @@ from cite_right import SimpleTokenizer
 from cite_right.text.tokenizer import TokenizerConfig
 
 config = TokenizerConfig(
-    normalize_numbers=True,
-    normalize_percent=True,
-    normalize_currency=True
+    normalize_numbers=True, normalize_percent=True, normalize_currency=True
 )
 
 tokenizer = SimpleTokenizer(config=config)
@@ -94,7 +92,7 @@ By default, the wrapper excludes special tokens like `[CLS]` and `[SEP]` from th
 ```python
 tokenizer = HuggingFaceTokenizer.from_pretrained(
     "bert-base-uncased",
-    add_special_tokens=False  # Default
+    add_special_tokens=False,  # Default
 )
 ```
 
@@ -162,6 +160,7 @@ You can implement custom tokenizers by following the `Tokenizer` protocol define
 ```python
 from cite_right.core.interfaces import Tokenizer
 from typing import Sequence
+
 
 class MyTokenizer:
     def tokenize(self, text: str) -> tuple[Sequence[int], Sequence[tuple[int, int]]]:

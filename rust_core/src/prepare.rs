@@ -291,6 +291,7 @@ pub fn generate_passages(
     passages
 }
 
+#[allow(dead_code)]
 pub fn slice_tokenized_text(
     token_ids: &[u32],
     token_spans: &[(usize, usize)],
@@ -320,6 +321,38 @@ pub fn slice_tokenized_text(
     (result_ids, result_spans)
 }
 
+/// Find token range in document that covers the given character range
+pub fn find_token_range(
+    token_spans: &[(usize, usize)],
+    passage_start: usize,
+    passage_end: usize,
+) -> (usize, usize) {
+    let mut token_start_in_doc = token_spans.len();
+    let mut token_end_in_doc = token_spans.len();
+
+    for (i, &(token_start, token_end)) in token_spans.iter().enumerate() {
+        // Find first token that overlaps or is after passage_start
+        if token_start_in_doc == token_spans.len() && token_end > passage_start {
+            token_start_in_doc = i;
+        }
+        // Find last token that overlaps the passage
+        if token_start < passage_end {
+            token_end_in_doc = i + 1;
+        } else {
+            break;
+        }
+    }
+
+    // Handle edge case where no tokens found
+    if token_start_in_doc == token_spans.len() {
+        token_start_in_doc = 0;
+        token_end_in_doc = 0;
+    }
+
+    (token_start_in_doc, token_end_in_doc)
+}
+
+#[allow(dead_code)]
 pub fn compute_idf(candidate_token_sets: &[Vec<u32>]) -> HashMap<u32, f64> {
     let mut df: HashMap<u32, usize> = HashMap::new();
 
@@ -331,6 +364,23 @@ pub fn compute_idf(candidate_token_sets: &[Vec<u32>]) -> HashMap<u32, f64> {
     }
 
     let n = candidate_token_sets.len();
+    df.into_iter()
+        .map(|(token_id, count)| (token_id, ((n + 1) as f64 / (count + 1) as f64).ln() + 1.0))
+        .collect()
+}
+
+/// Compute IDF from token slices without cloning
+pub fn compute_idf_from_slices(candidate_token_slices: &[&[u32]]) -> HashMap<u32, f64> {
+    let mut df: HashMap<u32, usize> = HashMap::new();
+
+    for token_ids in candidate_token_slices {
+        let unique: std::collections::HashSet<u32> = token_ids.iter().copied().collect();
+        for token_id in unique {
+            *df.entry(token_id).or_insert(0) += 1;
+        }
+    }
+
+    let n = candidate_token_slices.len();
     df.into_iter()
         .map(|(token_id, count)| (token_id, ((n + 1) as f64 / (count + 1) as f64).ln() + 1.0))
         .collect()

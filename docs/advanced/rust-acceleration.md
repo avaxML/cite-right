@@ -23,6 +23,7 @@ You can check whether the Rust extension is available.
 ```python
 try:
     from cite_right._core import align_pair
+
     print("Rust extension is available")
 except ImportError:
     print("Rust extension is not available, using pure Python")
@@ -141,6 +142,7 @@ The Rust extension is thread-safe. Multiple Python threads can call alignment fu
 
 ```python
 from concurrent.futures import ThreadPoolExecutor
+
 
 def process_batch(items):
     results = []
