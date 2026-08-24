@@ -43,7 +43,16 @@ pub fn smith_waterman(seq1: &[u32], seq2: &[u32], params: ScoreParams) -> Alignm
         };
     }
 
-    let (scores, directions, max_score, best_end) = fill_matrices_reduced_state(seq1, seq2, params);
+    // Use banded alignment for seed-based hits (expected high overlap)
+    // Band width adaptive: wider band for longer sequences or larger length differences
+    let len_diff = (seq1.len() as i32 - seq2.len() as i32).unsigned_abs() as usize;
+    let min_len = seq1.len().min(seq2.len());
+    // Formula: base band + length diff + percentage of min length
+    // Clamp between 30 and 200 to handle diverse cases
+    let band_width = (30 + len_diff + min_len / 3).clamp(30, 200);
+
+    let (scores, directions, max_score, best_end) =
+        fill_matrices_banded(seq1, seq2, params, band_width);
 
     if max_score == 0 {
         return Alignment {
@@ -356,7 +365,195 @@ fn fill_matrices(
     (scores, directions, max_score, best_end)
 }
 
-#[allow(unused_assignments)]
+/// Banded Smith-Waterman: only compute cells within band_width of diagonal
+fn fill_matrices_banded(
+    seq1: &[u32],
+    seq2: &[u32],
+    params: ScoreParams,
+    band_width: usize,
+) -> (Vec<i32>, Vec<u8>, i32, Option<(usize, usize)>) {
+    let rows = seq1.len() + 1;
+    let cols = seq2.len() + 1;
+    let mut scores = vec![0i32; rows * cols];
+    let mut directions = vec![0u8; rows * cols];
+
+    let mut max_score = 0i32;
+    let mut best_end: Option<(usize, usize)> = None;
+    let mut best_key: Option<(usize, usize, usize, usize, usize, usize)> = None;
+
+    let mut prev_match_counts = vec![0usize; cols];
+    let mut prev_query_starts = vec![0usize; cols];
+    let mut prev_token_starts = vec![0usize; cols];
+
+    let mut current_match_counts = vec![0usize; cols];
+    let mut current_query_starts = vec![0usize; cols];
+    let mut current_token_starts = vec![0usize; cols];
+
+    for i in 1..rows {
+        let row_offset = i * cols;
+        let prev_row_offset = (i - 1) * cols;
+        let s1_val = seq1[i - 1];
+
+        current_match_counts[0] = 0;
+        current_query_starts[0] = 0;
+        current_token_starts[0] = 0;
+
+        // Band constraints: only compute cells where |i - j| <= band_width
+        // For efficiency, compute j_start and j_end for this row
+        let j_start = i.saturating_sub(band_width).max(1);
+        let j_end = (i + band_width).min(cols);
+
+        for j in j_start..j_end {
+            let is_match = s1_val == seq2[j - 1];
+            let diag_delta = if is_match {
+                params.match_score
+            } else {
+                params.mismatch_score
+            };
+
+            let mut best_score = 0i32;
+            let mut best_direction = 0u8;
+            let mut best_matches = 0usize;
+            let mut best_query_start = 0usize;
+            let mut best_token_start = 0usize;
+            let mut best_priority = 0u8;
+
+            // 1. DIAGONAL (if within band)
+            if j > 0 {
+                let score_diag = scores[prev_row_offset + j - 1] + diag_delta;
+                if score_diag > 0 {
+                    let (matches, query_start, token_start) = if scores[prev_row_offset + j - 1] > 0
+                    {
+                        (
+                            prev_match_counts[j - 1] + usize::from(is_match),
+                            prev_query_starts[j - 1],
+                            prev_token_starts[j - 1],
+                        )
+                    } else {
+                        (usize::from(is_match), i - 1, j - 1)
+                    };
+                    best_score = score_diag;
+                    best_direction = 1;
+                    best_matches = matches;
+                    best_query_start = query_start;
+                    best_token_start = token_start;
+                    best_priority = 0;
+                }
+            }
+
+            // 2. UP (delete from seq1, if within band)
+            let score_up = scores[prev_row_offset + j] + params.gap_score;
+            if score_up > 0 {
+                let matches = prev_match_counts[j];
+                let query_start = prev_query_starts[j];
+                let token_start = prev_token_starts[j];
+                let priority = if scores[prev_row_offset + j] == 0 {
+                    2
+                } else {
+                    1
+                };
+
+                let is_better = match score_up.cmp(&best_score) {
+                    Ordering::Greater => true,
+                    Ordering::Equal => {
+                        if matches != best_matches {
+                            matches > best_matches
+                        } else if token_start != best_token_start {
+                            token_start < best_token_start
+                        } else if query_start != best_query_start {
+                            query_start < best_query_start
+                        } else {
+                            priority < best_priority
+                        }
+                    }
+                    Ordering::Less => false,
+                };
+
+                if is_better {
+                    best_score = score_up;
+                    best_direction = 2;
+                    best_matches = matches;
+                    best_query_start = query_start;
+                    best_token_start = token_start;
+                    best_priority = priority;
+                }
+            }
+
+            // 3. LEFT (delete from seq2, if within band)
+            if j > 0 {
+                let score_left = scores[row_offset + j - 1] + params.gap_score;
+                if score_left > 0 {
+                    let matches = current_match_counts[j - 1];
+                    let query_start = current_query_starts[j - 1];
+                    let token_start = current_token_starts[j - 1];
+                    let priority = if scores[row_offset + j - 1] == 0 {
+                        2
+                    } else {
+                        1
+                    };
+
+                    let is_better = match score_left.cmp(&best_score) {
+                        Ordering::Greater => true,
+                        Ordering::Equal => {
+                            if matches != best_matches {
+                                matches > best_matches
+                            } else if token_start != best_token_start {
+                                token_start < best_token_start
+                            } else if query_start != best_query_start {
+                                query_start < best_query_start
+                            } else {
+                                priority < best_priority
+                            }
+                        }
+                        Ordering::Less => false,
+                    };
+
+                    if is_better {
+                        best_score = score_left;
+                        best_direction = 3;
+                        best_matches = matches;
+                        best_query_start = query_start;
+                        best_token_start = token_start;
+                        // best_priority is not read after this, so we don't assign it
+                    }
+                }
+            }
+
+            scores[row_offset + j] = best_score;
+            directions[row_offset + j] = best_direction;
+            current_match_counts[j] = best_matches;
+            current_query_starts[j] = best_query_start;
+            current_token_starts[j] = best_token_start;
+
+            if best_score > max_score {
+                max_score = best_score;
+                best_end = Some((i, j));
+                best_key = Some(alignment_key(
+                    best_query_start,
+                    best_token_start,
+                    i,
+                    j,
+                    best_matches,
+                ));
+            } else if best_score == max_score && best_score > 0 {
+                let candidate_key =
+                    alignment_key(best_query_start, best_token_start, i, j, best_matches);
+                if best_key.is_none_or(|current| candidate_key < current) {
+                    best_end = Some((i, j));
+                    best_key = Some(candidate_key);
+                }
+            }
+        }
+
+        std::mem::swap(&mut prev_match_counts, &mut current_match_counts);
+        std::mem::swap(&mut prev_query_starts, &mut current_query_starts);
+        std::mem::swap(&mut prev_token_starts, &mut current_token_starts);
+    }
+
+    (scores, directions, max_score, best_end)
+}
+
+#[allow(unused_assignments, dead_code)]
 fn fill_matrices_reduced_state(
     seq1: &[u32],
     seq2: &[u32],
