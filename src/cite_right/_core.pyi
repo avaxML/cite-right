@@ -128,6 +128,7 @@ class PreparedCorpus:
         match_score: int,
         mismatch_score: int,
         gap_score: int,
+        query_stopword_ids: Sequence[int],
     ) -> PyCitationResult:
         """Build citations directly from PreparedCorpus without Python marshalling.
 

@@ -1,7 +1,7 @@
 //! Rust-side prepared corpus that keeps all data in Rust memory
 
 use pyo3::prelude::*;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use crate::inverted_index::InvertedIndex;
 use crate::smith_waterman;
@@ -220,6 +220,7 @@ impl PreparedCorpus {
         match_score: i32,
         mismatch_score: i32,
         gap_score: i32,
+        query_stopword_ids: Vec<u32>,
     ) -> PyResult<PyCitationResult> {
         py.detach(|| {
             use rayon::prelude::*;
@@ -239,6 +240,9 @@ impl PreparedCorpus {
 
             let (multi_span_evidence, multi_span_merge_gap_chars, multi_span_max_spans) =
                 multi_span_config;
+
+            let mut stopword_ids = crate::content_coverage::stopword_token_ids(&self.vocab);
+            stopword_ids.extend(query_stopword_ids);
 
             // Align answer_tokens against each candidate in parallel
             let params = smith_waterman::ScoreParams {
@@ -307,6 +311,7 @@ impl PreparedCorpus {
                             multi_span_evidence,
                             multi_span_merge_gap_chars,
                             multi_span_max_spans,
+                            &stopword_ids,
                         )
                     })
                 })
@@ -371,6 +376,7 @@ impl PreparedCorpus {
         multi_span_evidence: bool,
         multi_span_merge_gap_chars: i32,
         multi_span_max_spans: usize,
+        stopword_ids: &HashSet<u32>,
     ) -> Option<CitationOrSupport> {
         let candidate = self.candidates.get(candidate_index)?;
         let source_text = self.source_texts.get(candidate.source_index)?;
@@ -390,11 +396,18 @@ impl PreparedCorpus {
         let evidence_coverage = alignment.matches as f64 / evidence_len as f64;
         let normalized_alignment =
             alignment.score as f64 / (match_score as f64 * answer_len.max(1) as f64);
+        let passage_coverage = crate::content_coverage::content_token_coverage(
+            answer_tokens,
+            &candidate.token_ids,
+            stopword_ids,
+        );
 
-        // Check thresholds
+        let sequential_ok = answer_coverage >= min_answer_coverage;
+        let paraphrase_ok = passage_coverage >= min_answer_coverage;
         if alignment.score < min_alignment_score
             || alignment.token_start >= alignment.token_end
-            || answer_coverage < min_answer_coverage
+            || passage_coverage <= 0.0
+            || (!sequential_ok && !paraphrase_ok)
         {
             return self.build_support_internal(
                 candidate,
