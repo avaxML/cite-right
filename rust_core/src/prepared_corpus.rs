@@ -9,6 +9,11 @@ use crate::smith_waterman;
 /// Type alias for candidate metadata tuple
 type CandidateMetadata = (usize, usize, usize, Vec<(usize, usize)>);
 
+/// Helper function to slice a string by char indices (not byte indices)
+fn char_slice(s: &str, start_char: usize, end_char: usize) -> String {
+    s.chars().skip(start_char).take(end_char.saturating_sub(start_char)).collect()
+}
+
 /// Evidence span for Python
 #[pyclass]
 #[derive(Clone)]
@@ -466,13 +471,11 @@ impl PreparedCorpus {
         let passage_rel_start = char_start - base_offset - candidate.passage_start;
         let passage_rel_end = char_end - base_offset - candidate.passage_start;
 
-        let evidence = source_text
-            .get(
-                (candidate.passage_start + passage_rel_start)
-                    ..(candidate.passage_start + passage_rel_end),
-            )
-            .unwrap_or("")
-            .to_string();
+        let evidence = char_slice(
+            source_text,
+            candidate.passage_start + passage_rel_start,
+            candidate.passage_start + passage_rel_end,
+        );
 
         // Match v8 component keys and values
         let mut components = HashMap::new();
@@ -585,13 +588,10 @@ impl PreparedCorpus {
             let char_start_abs = base_offset + candidate.passage_start + char_start_rel;
             let char_end_abs = base_offset + candidate.passage_start + char_end_rel;
 
-            let evidence = source_text
-                .get(
-                    (candidate.passage_start + char_start_rel)
-                        ..(candidate.passage_start + char_end_rel),
-                )
-                .unwrap_or("")
-                .to_string();
+            // Convert char indices to byte indices for string slicing
+            let passage_char_start = candidate.passage_start + char_start_rel;
+            let passage_char_end = candidate.passage_start + char_end_rel;
+            let evidence = char_slice(source_text, passage_char_start, passage_char_end);
 
             return Some(vec![PyEvidenceSpan {
                 char_start: char_start_abs,
@@ -624,10 +624,7 @@ impl PreparedCorpus {
                         // Finalize current span
                         let char_start_abs = base_offset + candidate.passage_start + cs;
                         let char_end_abs = base_offset + candidate.passage_start + ce;
-                        let evidence = source_text
-                            .get((candidate.passage_start + cs)..(candidate.passage_start + ce))
-                            .unwrap_or("")
-                            .to_string();
+                        let evidence = char_slice(source_text, candidate.passage_start + cs, candidate.passage_start + ce);
                         spans.push(PyEvidenceSpan {
                             char_start: char_start_abs,
                             char_end: char_end_abs,
@@ -649,10 +646,7 @@ impl PreparedCorpus {
         if let (Some(cs), Some(ce)) = (current_start, current_end) {
             let char_start_abs = base_offset + candidate.passage_start + cs;
             let char_end_abs = base_offset + candidate.passage_start + ce;
-            let evidence = source_text
-                .get((candidate.passage_start + cs)..(candidate.passage_start + ce))
-                .unwrap_or("")
-                .to_string();
+            let evidence = char_slice(source_text, candidate.passage_start + cs, candidate.passage_start + ce);
             spans.push(PyEvidenceSpan {
                 char_start: char_start_abs,
                 char_end: char_end_abs,
