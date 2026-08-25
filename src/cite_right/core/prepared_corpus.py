@@ -144,13 +144,12 @@ class PreparedCitationCorpus(BaseModel):
         if (
             use_rust
             and RUST_PREPARE_AVAILABLE
-            and embedder is None
             and isinstance(tokenizer, SimpleTokenizer)
             and isinstance(source_segmenter, SimpleSegmenter)
         ):
             try:
                 return cls._from_sources_rust(
-                    normalized_sources, cfg, source_segmenter, tokenizer
+                    normalized_sources, cfg, source_segmenter, tokenizer, embedder
                 )
             except Exception as e:
                 # Fall back to Python if Rust path fails
@@ -197,6 +196,7 @@ class PreparedCitationCorpus(BaseModel):
         cfg: CitationConfig,
         source_segmenter: SimpleSegmenter,
         tokenizer: SimpleTokenizer,
+        embedder: Embedder | None = None,
     ) -> "PreparedCitationCorpus":
         """Fast path using Rust for tokenization, passages, candidates, and IDF."""
         # Call Rust to get PreparedCorpus object (keeps data in Rust)
@@ -267,19 +267,29 @@ class PreparedCitationCorpus(BaseModel):
         rust_idf = rust_corpus.get_idf()
         idf: IdfWeights = {int(token_id): weight for token_id, weight in rust_idf}
 
-        return cls(
+        # Build embedding index if embedder provided
+        embedding_build_time_ms = 0.0
+        embedding_index = None
+        if embedder is not None:
+            embedding_start = time.perf_counter()
+            embedding_index = build_embedding_index(embedder, candidates)
+            embedding_build_time_ms = (time.perf_counter() - embedding_start) * 1000
+
+        corpus = cls(
             config=cfg,
             tokenizer=tokenizer,
             source_segmenter=source_segmenter,
-            embedder=None,
+            embedder=embedder,
             normalized_sources=normalized_sources,
             source_passages=source_passages,
             candidates=candidates,
             idf=idf,
-            embedding_index=None,
+            embedding_index=embedding_index,
             inverted_index=None,  # Index is in rust_corpus now
             rust_corpus=rust_corpus,
         )
+        corpus._embedding_build_time_ms = embedding_build_time_ms
+        return corpus
 
     def align(
         self,
