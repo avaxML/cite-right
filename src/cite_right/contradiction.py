@@ -5,13 +5,63 @@ Checks for:
 - Number mismatches (answer says "15%" but source says "20%")
 - Entity-token mismatches in key positions
 - Temporal/polarity markers (BC vs ago, oppose vs support, etc.)
-- Number context mismatches (same number, different context)
+- Number context mismatches (same number, different slot)
 """
 
 from __future__ import annotations
 
 import re
 import unicodedata
+
+_FUNCTION_WORDS = frozenset(
+    {
+        "a",
+        "an",
+        "the",
+        "of",
+        "in",
+        "on",
+        "at",
+        "to",
+        "for",
+        "with",
+        "by",
+        "from",
+        "and",
+        "or",
+        # Tokenizer/source normalization variants, not slot labels.
+        "percent",
+        "percentage",
+        "pct",
+    }
+)
+
+# Sentence-initial words that are not entities even when capitalized.
+_SENTENCE_START_STOPWORDS = _FUNCTION_WORDS | {
+    "this",
+    "that",
+    "these",
+    "those",
+    "we",
+    "they",
+    "he",
+    "she",
+    "it",
+    "i",
+    "if",
+    "when",
+    "while",
+    "after",
+    "before",
+    "as",
+    "so",
+    "then",
+    "there",
+    "here",
+    "however",
+    "therefore",
+    "but",
+}
 
 
 def check_contradiction(answer_text: str, evidence_text: str) -> bool:
@@ -24,26 +74,16 @@ def check_contradiction(answer_text: str, evidence_text: str) -> bool:
     Returns:
         True if contradiction is detected, False otherwise
     """
-    # Check for negation mismatch
     if has_negation_mismatch(answer_text, evidence_text):
         return True
-
-    # Check for number mismatch
     if has_number_mismatch(answer_text, evidence_text):
         return True
-
-    # Check for entity swaps (proper nouns that differ)
     if has_entity_swap(answer_text, evidence_text):
         return True
-
-    # Check for temporal/polarity contradictions
     if has_temporal_polarity_mismatch(answer_text, evidence_text):
         return True
-
-    # Check for number context mismatches (same number, different meaning)
     if has_number_context_mismatch(answer_text, evidence_text):
         return True
-
     return False
 
 
@@ -57,11 +97,7 @@ def has_negation_mismatch(answer_text: str, evidence_text: str) -> bool:
     Returns:
         True if negation mismatch detected
     """
-    answer_negated = contains_negation(answer_text)
-    evidence_negated = contains_negation(evidence_text)
-
-    # Mismatch if exactly one is negated
-    return answer_negated != evidence_negated
+    return contains_negation(answer_text) != contains_negation(evidence_text)
 
 
 def contains_negation(text: str) -> bool:
@@ -121,15 +157,10 @@ def has_number_mismatch(answer_text: str, evidence_text: str) -> bool:
     answer_numbers = extract_numbers(answer_text)
     evidence_numbers = extract_numbers(evidence_text)
 
-    # If answer has numbers not in evidence, potential mismatch
     if answer_numbers and evidence_numbers:
         answer_set = set(answer_numbers)
         evidence_set = set(evidence_numbers)
-
-        # Check if answer has numbers not found in evidence
         unique_in_answer = answer_set - evidence_set
-
-        # If all answer numbers are missing from evidence, it's a mismatch
         if unique_in_answer and len(unique_in_answer) == len(answer_set):
             return True
 
@@ -145,21 +176,10 @@ def extract_numbers(text: str) -> list[str]:
     Returns:
         List of number strings found (normalized, without % or commas)
     """
-    # Normalize Unicode (NFKC converts fullwidth digits to ASCII)
     normalized_text = unicodedata.normalize("NFKC", text)
-
-    # Match numbers including decimals and thousands separators
     number_pattern = r"\b\d+(?:[.,]\d+)*"
     numbers = re.findall(number_pattern, normalized_text)
-
-    # Normalize numbers (remove commas, keep periods)
-    normalized = []
-    for num in numbers:
-        # Remove commas
-        num = num.replace(",", "")
-        normalized.append(num)
-
-    return normalized
+    return [num.replace(",", "") for num in numbers]
 
 
 def has_entity_swap(answer_text: str, evidence_text: str) -> bool:
@@ -172,29 +192,16 @@ def has_entity_swap(answer_text: str, evidence_text: str) -> bool:
     Returns:
         True if entity swap detected
     """
-    # Extract capitalized words (likely proper nouns/entities)
-    # Match words that start with capital letter (excluding sentence starts)
     answer_entities = extract_entities(answer_text)
     evidence_entities = extract_entities(evidence_text)
-
     if not answer_entities or not evidence_entities:
         return False
 
-    # Check if answer has entities not in evidence
-    # This catches swaps like India→France, American→Indian
     answer_set = set(answer_entities)
     evidence_set = set(evidence_entities)
-
-    # If answer has entities not in evidence, and evidence has entities not in answer,
-    # it's likely an entity swap
     unique_in_answer = answer_set - evidence_set
     unique_in_evidence = evidence_set - answer_set
-
-    # Entity swap: both have unique entities (not just missing)
-    if unique_in_answer and unique_in_evidence:
-        return True
-
-    return False
+    return bool(unique_in_answer and unique_in_evidence)
 
 
 def extract_entities(text: str) -> list[str]:
@@ -206,25 +213,17 @@ def extract_entities(text: str) -> list[str]:
     Returns:
         List of capitalized words (lowercased and normalized for comparison)
     """
-    # Normalize Unicode to handle fullwidth/halfwidth differences
     normalized_text = unicodedata.normalize("NFKC", text)
-
-    # Match capitalized words (2+ chars to avoid initials)
-    # Skip first word (might be capitalized due to sentence start)
     words = normalized_text.split()
-    entities = []
+    entities: list[str] = []
 
     for i, word in enumerate(words):
-        # Clean word of punctuation at end
         clean_word = re.sub(r"[.,;:!?]+$", "", word)
-
-        # Check if word starts with capital and has 2+ letters
-        if len(clean_word) >= 2 and clean_word[0].isupper():
-            # Skip if it's the first word and all subsequent chars are lowercase
-            # (likely sentence start, not entity)
-            if i == 0 and clean_word[1:].islower():
-                continue
-            entities.append(clean_word.lower())
+        if len(clean_word) < 2 or not clean_word[0].isupper():
+            continue
+        if i == 0 and clean_word.lower() in _SENTENCE_START_STOPWORDS:
+            continue
+        entities.append(clean_word.lower())
 
     return entities
 
@@ -242,21 +241,15 @@ def has_temporal_polarity_mismatch(answer_text: str, evidence_text: str) -> bool
     answer_lower = answer_text.lower()
     evidence_lower = evidence_text.lower()
 
-    # Temporal markers that contradict each other
     temporal_contradictions = [
-        (r"\bbc\b", r"\bago\b"),  # BC (2000+ years) vs ago (recent)
-        (r"\bce\b", r"\bbc\b"),  # CE vs BC
-        (r"\bad\b", r"\bbc\b"),  # AD vs BC
-        (r"\bbce\b", r"\bce\b"),  # BCE vs CE
+        (r"\bbc\b", r"\bago\b"),
+        (r"\bce\b", r"\bbc\b"),
+        (r"\bad\b", r"\bbc\b"),
+        (r"\bbce\b", r"\bce\b"),
     ]
+    if _paired_marker_mismatch(answer_lower, evidence_lower, temporal_contradictions):
+        return True
 
-    for pattern1, pattern2 in temporal_contradictions:
-        if re.search(pattern1, evidence_lower) and re.search(pattern2, answer_lower):
-            return True
-        if re.search(pattern2, evidence_lower) and re.search(pattern1, answer_lower):
-            return True
-
-    # Polarity/sentiment markers that contradict each other
     polarity_contradictions = [
         (r"\boppose[ds]?\b", r"\b(?:support|urge[ds]?|advocate[ds]?|promote[ds]?)\b"),
         (r"\bsupport[s]?\b", r"\b(?:oppose[ds]?|reject[s]?|resist[s]?)\b"),
@@ -264,26 +257,32 @@ def has_temporal_polarity_mismatch(answer_text: str, evidence_text: str) -> bool
         (r"\bdenied\b", r"\b(?:confirmed|admitted|acknowledged)\b"),
         (r"\bfailed\b", r"\b(?:succeeded|achieved|accomplished)\b"),
     ]
+    return _paired_marker_mismatch(
+        answer_lower, evidence_lower, polarity_contradictions
+    )
 
-    for neg_pattern, pos_pattern in polarity_contradictions:
-        if re.search(neg_pattern, evidence_lower) and re.search(
-            pos_pattern, answer_lower
-        ):
-            return True
-        if re.search(pos_pattern, evidence_lower) and re.search(
-            neg_pattern, answer_lower
-        ):
-            return True
 
+def _paired_marker_mismatch(
+    answer_lower: str,
+    evidence_lower: str,
+    pairs: list[tuple[str, str]],
+) -> bool:
+    """Return True if exactly one side of a contradictory marker pair matches."""
+    for left, right in pairs:
+        answer_left = bool(re.search(left, answer_lower))
+        answer_right = bool(re.search(right, answer_lower))
+        evidence_left = bool(re.search(left, evidence_lower))
+        evidence_right = bool(re.search(right, evidence_lower))
+        if (evidence_left and answer_right) or (evidence_right and answer_left):
+            return True
     return False
 
 
 def has_number_context_mismatch(answer_text: str, evidence_text: str) -> bool:
-    """Check if numbers appear in different contexts (leftover n-gram issue).
+    """Check if numbers appear in different slots (leftover n-gram issue).
 
-    When the same number appears in both texts but the surrounding context words
-    differ significantly, it's likely a number context mismatch (e.g., "10 rebounds"
-    vs "10 of which came in the first half").
+    Shared numbers with different content words around them (e.g. "10 rebounds"
+    vs "10 of which came in the first half") are a contradiction.
 
     Args:
         answer_text: The answer claim text
@@ -294,78 +293,40 @@ def has_number_context_mismatch(answer_text: str, evidence_text: str) -> bool:
     """
     answer_numbers = extract_numbers(answer_text)
     evidence_numbers = extract_numbers(evidence_text)
-
-    # Need at least one shared number
     shared_numbers = set(answer_numbers) & set(evidence_numbers)
     if not shared_numbers:
         return False
 
-    # For each shared number, check if context words differ
     for number in shared_numbers:
-        answer_context = extract_number_context(answer_text, number)
-        evidence_context = extract_number_context(evidence_text, number)
-
-        # Case 1: Evidence has no context (truncated) but answer has significant context
-        # This is the "leftover n-gram" problem
-        if answer_context and not evidence_context:
-            # Check if the evidence actually ends with the number (truncation indicator)
-            # vs having punctuation after it (like "123%" where % isn't captured)
-            if evidence_ends_with_number(evidence_text, number):
-                # Evidence truly truncated at the number
-                common_words = {
-                    "a",
-                    "an",
-                    "the",
-                    "of",
-                    "in",
-                    "on",
-                    "at",
-                    "to",
-                    "for",
-                    "with",
-                    "by",
-                    "from",
-                    "and",
-                    "or",
-                }
-                significant_answer_words = set(answer_context) - common_words
-                # If answer has significant context, it's suspicious
-                if len(significant_answer_words) >= 1:
-                    return True
-
-        # Case 2: Both have context but they differ significantly
-        if answer_context and evidence_context:
-            # Check for key context words that differ
-            answer_words = set(answer_context)
-            evidence_words = set(evidence_context)
-
-            # If there are context words in answer not in evidence, it's suspicious
-            unique_answer_words = answer_words - evidence_words
-
-            # Filter out common words (articles, prepositions, etc.)
-            common_words = {
-                "a",
-                "an",
-                "the",
-                "of",
-                "in",
-                "on",
-                "at",
-                "to",
-                "for",
-                "with",
-                "by",
-                "from",
-                "and",
-                "or",
-            }
-            significant_unique = unique_answer_words - common_words
-
-            # If answer has significant unique context words (likely different meaning)
-            if len(significant_unique) >= 1:
-                return True
-
+        if _number_slot_mismatch(
+            extract_number_context(answer_text, number),
+            extract_number_context(evidence_text, number),
+            evidence_text,
+            number,
+        ):
+            return True
     return False
+
+
+def _content_words(words: list[str]) -> set[str]:
+    return {word for word in words if word not in _FUNCTION_WORDS}
+
+
+def _number_slot_mismatch(
+    answer_context: list[str],
+    evidence_context: list[str],
+    evidence_text: str,
+    number: str,
+) -> bool:
+    """True when a shared number is attached to different content words."""
+    if not answer_context:
+        return False
+    if not evidence_context:
+        return bool(
+            evidence_ends_with_number(evidence_text, number)
+            and _content_words(answer_context)
+        )
+    return bool(_content_words(answer_context) - _content_words(evidence_context))
 
 
 def evidence_ends_with_number(text: str, number: str) -> bool:
@@ -378,10 +339,7 @@ def evidence_ends_with_number(text: str, number: str) -> bool:
     Returns:
         True if text ends with the number (possibly followed by whitespace/punctuation)
     """
-    # Escape special regex chars in number
     escaped_number = re.escape(number)
-
-    # Check if text ends with the number (possibly followed by whitespace or sentence-ending punctuation)
     pattern = escaped_number + r"[\s,.;!?]*$"
     return bool(re.search(pattern, text))
 
@@ -396,21 +354,15 @@ def extract_number_context(text: str, number: str) -> list[str]:
     Returns:
         List of context words (1-2 words before and after the number)
     """
-    # Escape special regex chars in number
     escaped_number = re.escape(number)
-
-    # Find the number with context (up to 2 words before/after)
     pattern = r"(\w+\s+)?(\w+\s+)?" + escaped_number + r"(\s+\w+)?(\s+\w+)?"
     match = re.search(pattern, text)
-
     if not match:
         return []
 
-    # Extract context words (excluding the number itself)
     context_words = []
     for group in match.groups():
         if group:
             words = group.strip().split()
             context_words.extend(w.lower() for w in words if not re.match(r"^\d", w))
-
     return context_words
