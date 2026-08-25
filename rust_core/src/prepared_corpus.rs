@@ -491,6 +491,13 @@ impl PreparedCorpus {
             evidence_spans.len() as f64,
         );
         components.insert(
+            "evidence_chars_total".to_string(),
+            evidence_spans
+                .iter()
+                .map(|span| (span.char_end - span.char_start) as f64)
+                .sum(),
+        );
+        components.insert(
             "passage_char_start".to_string(),
             (base_offset + candidate.passage_start) as f64,
         );
