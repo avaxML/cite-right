@@ -8,42 +8,65 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            target: x86_64
+          - os: ubuntu-latest
+            target: aarch64
+          - os: windows-latest
+            target: x64
+          - os: macos-latest
+            target: aarch64
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - uses: PyO3/maturin-action@v1
+      - name: Build wheel
+        uses: PyO3/maturin-action@v1
         with:
-          command: build
-          args: --release --out dist -i python3.11 -i python3.12 -i python3.13
+          target: ${{ matrix.target }}
+          # abi3: a single cp311-abi3 wheel per platform supports Python >= 3.11.
+          # aarch64 is cross-compiled under QEMU by maturin-action.
+          args: --release --out dist
           manylinux: auto
-      - name: Smoke test wheel (py312)
+          sccache: true
+      - name: Smoke test wheel
+        # Only possible where the wheel runs natively; aarch64 linux is emulated
+        if: matrix.target != 'aarch64'
         run: |
-          python -c "import glob, subprocess, sys; wheels = sorted(glob.glob('dist/*cp312*.whl')); assert wheels, 'no cp312 wheel found'; subprocess.check_call([sys.executable, '-m', 'pip', 'install', wheels[0]]);"
-          python -c "from cite_right import align_citations; out = align_citations('Green apples are sour.', ['Red apples are tasty. Green apples are sour.']); assert out"
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-      - name: Smoke test wheel (py313)
-        run: |
-          python -c "import glob, subprocess, sys; wheels = sorted(glob.glob('dist/*cp313*.whl')); assert wheels, 'no cp313 wheel found'; subprocess.check_call([sys.executable, '-m', 'pip', 'install', wheels[0]]);"
+          python -c "import glob, subprocess, sys; wheels = sorted(glob.glob('dist/*abi3*.whl')); assert wheels, 'no abi3 wheel found'; subprocess.check_call([sys.executable, '-m', 'pip', 'install', wheels[0]]);"
           python -c "from cite_right import align_citations; out = align_citations('Green apples are sour.', ['Red apples are tasty. Green apples are sour.']); assert out"
       - uses: actions/upload-artifact@v4
         with:
-          name: wheels-${{ matrix.os }}
+          name: wheels-${{ matrix.target }}
+          path: dist
+
+  sdist:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build sdist
+        uses: PyO3/maturin-action@v1
+        with:
+          command: sdist
+          args: --out dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sdist
           path: dist
 
   publish:
-    needs: build
+    needs: [build, sdist]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:
       - uses: actions/download-artifact@v4
         with:
-          pattern: wheels-*
+          pattern: |
+            wheels-*
+            sdist
           merge-multiple: true
           path: dist
       - uses: pypa/gh-action-pypi-publish@release/v1
