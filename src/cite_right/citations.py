@@ -287,26 +287,6 @@ def _process_answer_span(
             and isinstance(aligner, RustSmithWatermanAligner)
         )
 
-        # Compute lexical scores on-demand if needed (for rust_corpus path)
-        if rust_corpus is not None and HAS_RUST_CORE and not lexical_scores:
-            # Fetch token_ids for selected candidates to compute lexical scores
-            candidate_indices_for_scoring = [
-                candidate_index for candidate_index, _, _ in selected
-            ]
-            candidate_token_ids_for_scoring = rust_corpus.get_candidate_tokens(
-                candidate_indices_for_scoring
-            )  # type: ignore[attr-defined]
-
-            denom = sum(idf.get(token_id, 1.0) for token_id in answer_set)
-            if denom > 0.0:
-                for i, token_ids in enumerate(candidate_token_ids_for_scoring):
-                    candidate_idx = candidate_indices_for_scoring[i]
-                    token_set = frozenset(token_ids)
-                    overlap = answer_set & token_set
-                    if overlap:
-                        numer = sum(idf.get(token_id, 1.0) for token_id in overlap)
-                        lexical_scores[candidate_idx] = numer / denom
-
         # Fetch token_ids and token_spans only if not using corpus_fast_path
         # If rust_corpus is available, fetch from Rust (on-demand) and create new candidates
         # Otherwise use token_ids from Python candidates
@@ -940,6 +920,27 @@ def _default_aligner(cfg: CitationConfig, *, backend: str) -> Aligner:
         )
 
 
+def _fill_rust_lexical_scores(
+    lexical_scores: LexicalScores,
+    candidate_indices: Sequence[int],
+    rust_corpus: RustPreparedCorpus,
+    answer_set: frozenset[int],
+    idf: IdfWeights,
+) -> None:
+    """Fill IDF overlap scores for rust candidates (index/lexical seeds only)."""
+    if not candidate_indices or not answer_set:
+        return
+    denom = sum(idf.get(token_id, 1.0) for token_id in answer_set)
+    if denom <= 0.0:
+        return
+    candidate_token_ids = rust_corpus.get_candidate_tokens(candidate_indices)  # type: ignore[attr-defined]
+    for idx, token_ids in zip(candidate_indices, candidate_token_ids, strict=False):
+        overlap = answer_set & frozenset(token_ids)
+        if overlap:
+            numer = sum(idf.get(token_id, 1.0) for token_id in overlap)
+            lexical_scores[idx] = numer / denom
+
+
 def _lexical_prefilter(
     answer_set: frozenset[int],
     candidates: Sequence[Candidate],
@@ -992,6 +993,15 @@ def _select_candidates(
                 idf=idf,
                 rust_corpus=rust_corpus,
             )
+        elif not lexical_scores:
+            # Score index seeds only. Embedding-only extras keep lexical 0.0 so
+            # retrieval_support still respects min_embedding_similarity.
+            _fill_rust_lexical_scores(
+                lexical_scores, list(selected), rust_corpus, answer_set, idf
+            )
+            for idx in selected:
+                embed_score, _ = selected[idx]
+                selected[idx] = (embed_score, lexical_scores.get(idx, 0.0))
     elif inverted_index is not None and HAS_RUST_CORE:
         _add_index_candidates(
             selected, answer_tokens, inverted_index, lexical_scores, cfg
