@@ -61,7 +61,7 @@ The permissive preset accommodates heavily paraphrased content where answers exp
 config = CitationConfig.permissive()
 ```
 
-This preset lowers answer-coverage thresholds, increases `top_k`, and enables embedding-only citations. It is appropriate for summarization tasks or applications where recall matters more than precision.
+This preset lowers answer-coverage thresholds, increases `top_k`, and lowers `min_embedding_similarity` for retrieval-support expansion. It does not emit embedding-only citations. Exact citations still require localized Smith-Waterman evidence. It is appropriate for summarization tasks or applications where recall matters more than precision.
 
 ### Fast
 

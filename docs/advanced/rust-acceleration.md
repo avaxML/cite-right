@@ -1,20 +1,24 @@
 # Rust Acceleration
 
-The Smith-Waterman alignment algorithm is computationally intensive, especially when aligning against many source passages. Cite-Right includes an optional Rust extension that significantly accelerates this operation while maintaining identical results.
+Cite-Right includes an optional Rust extension that accelerates prepare, inverted-index retrieval, and Smith-Waterman alignment while matching Python results. Released 0.4.0 wheels ship that extension as abi3 (`abi3-py311`), including linux/aarch64, plus an sdist.
 
 ## How the Extension Works
 
-The Rust extension reimplements the core alignment algorithm in Rust, compiled to a Python module using PyO3. When available, the library automatically uses this faster implementation.
+The Rust extension reimplements the hot path in Rust, compiled to a Python module using PyO3. When available, the library automatically uses this faster implementation.
 
-The extension provides three main functions.
+Prepare (tokenization, passage windows, IDF, inverted index) still runs in Rust when an embedder is set. The embedding index is then built on those prepared candidates. 0.3.x skipped Rust prepare in the embedder path. That skip is gone.
 
-The `align_pair` function computes alignment between two token sequences. This is the fundamental operation called many times during citation.
+The extension also exposes lower-level alignment helpers.
+
+The `align_pair` function computes alignment between two token sequences.
 
 The `align_best` function finds the best match from one query sequence against multiple candidate sequences. It uses Rayon for parallel processing across candidates.
 
 The `align_topk_details` function returns the top-k alignments with full scoring details. This supports the multi-citation feature.
 
 All functions release the Python GIL during computation, allowing other Python threads to run concurrently.
+
+0.4.0 retrieval is index-first. The inverted index lives on the prepared Rust corpus. Rare-token intersect chooses which windows get Smith-Waterman. Smith-Waterman still localizes citations. The index only chooses the windows.
 
 ## Checking Availability
 
@@ -52,29 +56,15 @@ The "auto" setting is recommended for production. It provides Rust performance w
 
 ## Performance Characteristics
 
-The Rust extension provides substantial speedup through several mechanisms.
+On the 50-case pack with no embedder, 0.4.0 p50 wall time is about 12.4ms versus about 175.8ms in 0.3.1, roughly 14×. spp is 81.3% versus 83.4%. RAGTruth test quality on 2,675 answers matched 0.3.1.
 
-Native code execution eliminates Python interpreter overhead. The core alignment loop runs as compiled machine code rather than interpreted bytecode.
+Those numbers are the published 0.4.0 measurements. They include index-first retrieval, not Smith-Waterman over every window.
 
-SIMD vectorization in the Rust compiler optimizes memory access patterns. The dynamic programming matrix operations benefit from modern CPU features.
-
-Rayon parallelization distributes work across CPU cores. When aligning against many passages, each core processes a subset of candidates concurrently.
-
-### Benchmarks
-
-Approximate speedup factors vary by workload.
-
-For single alignments with short sequences, the Rust extension is 5-10x faster than pure Python.
-
-For alignments against many candidates (typical citation workload), the Rust extension is 20-50x faster due to parallelization.
-
-For very large passages, memory bandwidth becomes the limiting factor and speedup is more modest.
-
-These figures are illustrative. Actual performance depends on hardware, sequence lengths, and number of candidates.
+Native code execution removes Python interpreter overhead from prepare, index query, and alignment. Rayon parallelizes work across CPU cores where the extension already did so. GIL release lets other Python threads run during those calls.
 
 ## Building the Extension
 
-Pre-built wheels are available for common platforms. If you need to build from source, ensure you have a Rust toolchain installed.
+Pre-built abi3 wheels are available for common platforms, including linux/aarch64. If you need to build from source, ensure you have a Rust toolchain installed.
 
 ```bash
 # Install Rust
@@ -92,6 +82,8 @@ The `--release` flag enables optimizations. Development builds without this flag
 ### Build Requirements
 
 The Rust extension requires a C compiler in addition to Rust. On Linux, install build-essential or equivalent. On macOS, install Xcode command line tools. On Windows, install Visual Studio Build Tools with the C++ workload.
+
+Install from PyPI with `pip install cite-right==0.4.0` when you do not need a source build.
 
 ## Correctness Guarantees
 
@@ -111,7 +103,7 @@ There are scenarios where forcing the pure Python backend makes sense.
 
 Debugging alignment behavior is easier in Python. You can add print statements or step through with a debugger.
 
-Minimal environments without Rust build capability can still use the library. The pure Python implementation has no external dependencies beyond NumPy.
+Minimal environments without a wheel or Rust build capability can still use the library. The pure Python implementation has no external dependencies beyond NumPy.
 
 Verification of results in high-stakes applications may benefit from running both backends and confirming agreement.
 
@@ -128,11 +120,13 @@ for py, rs in zip(python_results, rust_results):
         assert py_cite.char_end == rs_cite.char_end
 ```
 
+Python backend still uses the same public API. It does not run Smith-Waterman over every window either when the inverted index is available. If the Rust extension is missing entirely, candidate selection falls back to the lexical prefilter.
+
 ## Memory Considerations
 
 The Rust extension allocates memory outside Python's managed heap. For very large workloads, monitor system memory rather than relying solely on Python memory profiling.
 
-The alignment matrix is the main memory consumer. For sequences of length M and N, the matrix requires O(M × N) memory. With passage windowing limiting sequence lengths, this is typically a few megabytes per alignment.
+The alignment matrix is the main memory consumer per hit. For sequences of length M and N, the matrix requires O(M × N) memory. With passage windowing limiting sequence lengths, this is typically a few megabytes per alignment. Index-first retrieval limits how many of those matrices are built.
 
 Parallelization multiplies memory usage by the number of concurrent alignments. On a 16-core system, peak memory is roughly 16x a single alignment.
 
@@ -155,4 +149,4 @@ def process_batch(items):
     return results
 ```
 
-This pattern allows processing multiple answers concurrently, with each using Rust parallelization internally for passage alignment.
+This pattern allows processing multiple answers concurrently, with each using Rust parallelization internally for index query and passage alignment.

@@ -63,7 +63,7 @@ config = CitationConfig(supported_answer_coverage=0.7)
 
 ### min_embedding_similarity
 
-Minimum embedding similarity required for a passage to be surfaced as retrieval support when an embedder is provided. Default is 0.3.
+Minimum embedding similarity required for a passage to be surfaced as embedding-only `retrieval_support` when an embedder is provided. Default is 0.3. Lexical scores are filled only for index seeds, so embedding-only extras still have to clear this threshold.
 
 ```python
 config = CitationConfig(min_embedding_similarity=0.4)
@@ -109,15 +109,17 @@ A stride of 1 creates overlapping windows and maximizes recall. Larger strides r
 
 ## Candidate Selection
 
-Candidate selection combines lexical overlap and (optionally) embedding similarity.
+0.4.0 candidate selection is index-first. Prepare builds an inverted index over source windows. Rare-token intersect chooses which windows get Smith-Waterman. Smith-Waterman still localizes; the index only chooses the windows. Optional embedding similarity can add extra windows. Rust prepare still runs when an embedder is set.
 
 ### max_candidates_lexical
 
-Maximum number of lexical candidates to consider per answer span. Default is 200.
+Maximum number of inverted-index seeds (lexical candidates) to consider per answer span. Default is 200.
 
 ```python
 config = CitationConfig(max_candidates_lexical=100)
 ```
+
+If the index returns nothing, the older lexical prefilter is the fallback and this cap still applies.
 
 ### max_candidates_embedding
 
@@ -129,13 +131,13 @@ config = CitationConfig(max_candidates_embedding=100)
 
 ### max_candidates_total
 
-Maximum total candidates after combining lexical and embedding candidates. Default is 400.
+Maximum total candidates after combining index seeds and embedding candidates. Default is 400.
 
 ```python
 config = CitationConfig(max_candidates_total=200)
 ```
 
-Candidates are ranked by the stronger of their lexical or embedding score, then capped by `max_candidates_total` before full alignment.
+Candidates are ranked by the stronger of their lexical or embedding score, then capped by `max_candidates_total` before Smith-Waterman. Embedding-only `retrieval_support` still respects `min_embedding_similarity`. Lexical scores are filled only for index seeds.
 
 ### max_retrieval_support
 

@@ -35,7 +35,7 @@ def align_citations(
 
 **source_segmenter** (`Segmenter | None`): The segmenter for splitting sources into sentences for passage windowing. Defaults to `SimpleSegmenter()`.
 
-**embedder** (`Embedder | None`): Optional embedder for semantic retrieval of candidates. When provided, enables embedding-based candidate selection.
+**embedder** (`Embedder | None`): Optional embedder for semantic retrieval of candidates. When provided, embedding similarity can add windows on top of index-first retrieval. Rust prepare still runs. Embedding-only `retrieval_support` still respects `min_embedding_similarity`.
 
 **backend** (`Literal["auto", "python", "rust"]`): The alignment implementation to use. "auto" uses Rust if available, "python" forces pure Python, "rust" requires Rust.
 
