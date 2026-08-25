@@ -286,7 +286,6 @@ def _process_answer_span(
             and hasattr(rust_corpus, "build_citations")
             and isinstance(aligner, RustSmithWatermanAligner)
         )
-        
 
         # Compute lexical scores on-demand if needed (for rust_corpus path)
         if rust_corpus is not None and HAS_RUST_CORE and not lexical_scores:
@@ -297,7 +296,7 @@ def _process_answer_span(
             candidate_token_ids_for_scoring = rust_corpus.get_candidate_tokens(
                 candidate_indices_for_scoring
             )  # type: ignore[attr-defined]
-            
+
             denom = sum(idf.get(token_id, 1.0) for token_id in answer_set)
             if denom > 0.0:
                 for i, token_ids in enumerate(candidate_token_ids_for_scoring):
@@ -356,7 +355,7 @@ def _process_answer_span(
                 embed_scores = [embed_score for _, embed_score, _ in selected]
                 # Use computed lexical scores (may have been computed on-demand)
                 lexical_scores_list = [
-                    lexical_scores.get(candidate_index, 0.0) 
+                    lexical_scores.get(candidate_index, 0.0)
                     for candidate_index, _, _ in selected
                 ]
 
@@ -623,7 +622,7 @@ def _process_answer_span(
                 # Use candidate from selected_candidates (may have token_ids/token_spans populated)
                 # Only re-fetch if needed for source context, not token data
                 num_alignments += 1
-                
+
                 # Use updated lexical score if computed on-demand
                 lexical_score = lexical_scores.get(candidate_index, lexical_score_orig)
 

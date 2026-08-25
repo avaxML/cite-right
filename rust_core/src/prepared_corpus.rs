@@ -11,7 +11,10 @@ type CandidateMetadata = (usize, usize, usize, Vec<(usize, usize)>);
 
 /// Helper function to slice a string by char indices (not byte indices)
 fn char_slice(s: &str, start_char: usize, end_char: usize) -> String {
-    s.chars().skip(start_char).take(end_char.saturating_sub(start_char)).collect()
+    s.chars()
+        .skip(start_char)
+        .take(end_char.saturating_sub(start_char))
+        .collect()
 }
 
 /// Evidence span for Python
@@ -631,7 +634,11 @@ impl PreparedCorpus {
                         // Finalize current span
                         let char_start_abs = base_offset + candidate.passage_start + cs;
                         let char_end_abs = base_offset + candidate.passage_start + ce;
-                        let evidence = char_slice(source_text, candidate.passage_start + cs, candidate.passage_start + ce);
+                        let evidence = char_slice(
+                            source_text,
+                            candidate.passage_start + cs,
+                            candidate.passage_start + ce,
+                        );
                         spans.push(PyEvidenceSpan {
                             char_start: char_start_abs,
                             char_end: char_end_abs,
@@ -653,7 +660,11 @@ impl PreparedCorpus {
         if let (Some(cs), Some(ce)) = (current_start, current_end) {
             let char_start_abs = base_offset + candidate.passage_start + cs;
             let char_end_abs = base_offset + candidate.passage_start + ce;
-            let evidence = char_slice(source_text, candidate.passage_start + cs, candidate.passage_start + ce);
+            let evidence = char_slice(
+                source_text,
+                candidate.passage_start + cs,
+                candidate.passage_start + ce,
+            );
             spans.push(PyEvidenceSpan {
                 char_start: char_start_abs,
                 char_end: char_end_abs,
