@@ -66,3 +66,87 @@ def test_entity_mismatch_not_supported() -> None:
     # TODO: Implement entity-aware contradiction detection
     # For now, we just verify it doesn't crash
     assert results[0].status in ["supported", "partial", "unsupported"]
+
+
+# Issue #48: Leftover n-gram / truncated evidence fixtures
+def test_issue48_number_leftover_rebounds() -> None:
+    """Issue #48 fixture 1: Number leftover - 18 points vs 18 points and 10 rebounds.
+    
+    Source says '10 of which came in the first half' but answer says '10 rebounds'.
+    Evidence truncates at '18 points, 10' and blesses the wrong '10 rebounds'.
+    Must NOT be marked as supported.
+    """
+    sources = ["Jahlil Okafor had 18 points, 10 of which came in the first half"]
+    answer = "Okafor had 18 points and 10 rebounds."
+
+    results = align_citations(answer, sources, config=CitationConfig(top_k=1))
+
+    assert len(results) == 1
+    # Must be partial (or unsupported), not supported
+    assert results[0].status != "supported", (
+        f"Expected partial/unsupported but got {results[0].status}. "
+        "Number leftover: '10 rebounds' contradicts '10 of which came in the first half'"
+    )
+
+
+def test_issue48_entity_swap_india_france() -> None:
+    """Issue #48 fixture 2: Entity swap - India/France, American/Indian.
+    
+    Source: India opposed American involvement.
+    Answer: France opposed Indian involvement.
+    Shared content words (opposed, involvement, Vietnam War) bless the entity flip.
+    Must NOT be marked as supported.
+    """
+    sources = ["India strongly opposed American involvement in the Vietnam War"]
+    answer = "France opposed Indian involvement in the Vietnam War"
+
+    results = align_citations(answer, sources, config=CitationConfig(top_k=1))
+
+    assert len(results) == 1
+    # Must be partial (or unsupported), not supported
+    assert results[0].status != "supported", (
+        f"Expected partial/unsupported but got {results[0].status}. "
+        "Entity swap: India→France, American→Indian"
+    )
+
+
+def test_issue48_temporal_polarity_bc_vs_ago() -> None:
+    """Issue #48 fixture 3: Temporal polarity - BC vs ago.
+    
+    Source: over 300 years BC (evidence cut at 'over 300')
+    Answer: around 300 years ago
+    'BC' means ~2300 years ago, not 300 years ago.
+    Must NOT be marked as supported.
+    """
+    sources = ["The structure was built over 300 years BC"]
+    answer = "The structure was built around 300 years ago"
+
+    results = align_citations(answer, sources, config=CitationConfig(top_k=1))
+
+    assert len(results) == 1
+    # Must be partial (or unsupported), not supported
+    assert results[0].status != "supported", (
+        f"Expected partial/unsupported but got {results[0].status}. "
+        "Temporal polarity: 'BC' (2300 years ago) vs 'ago' (300 years ago)"
+    )
+
+
+def test_issue48_polarity_flip_oppose_vs_urged() -> None:
+    """Issue #48 fixture 4: Polarity flip - oppose vs urged.
+    
+    Source: oppose laws that require or prohibit
+    Answer: urged laws
+    Leftover 'laws' + 'prohibit' blesses the polarity flip from 'oppose' to 'urged'.
+    Must NOT be marked as supported.
+    """
+    sources = ["The organization continues to oppose laws that require or prohibit certain actions"]
+    answer = "The organization urged laws restricting such actions"
+
+    results = align_citations(answer, sources, config=CitationConfig(top_k=1))
+
+    assert len(results) == 1
+    # Must be partial (or unsupported), not supported
+    assert results[0].status != "supported", (
+        f"Expected partial/unsupported but got {results[0].status}. "
+        "Polarity flip: 'oppose' contradicts 'urged'"
+    )
