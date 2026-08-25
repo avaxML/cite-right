@@ -58,4 +58,4 @@ Example: source "The vaccine is safe and effective." and answer "The vaccine is 
 
 ## CI model rotation (not wiki content)
 
-Wiki generation in GitHub Actions uses OpenRouter free models (`:free` in the model id). `scripts/openwiki_pick_model.py` ranks them (prefer `tools`, then Artificial Analysis `coding_index` if present, else `context_length`, then `created`). `scripts/openwiki_update.sh` retries the next model on 429/402/rate-limit. Do not document a single paid model id as required.
+Wiki generation in GitHub Actions uses OpenRouter free models (`:free` in the model id). `scripts/openwiki_pick_model.py` ranks them (prefer `tools`, then Artificial Analysis `coding_index` if present, else `context_length`, then `created`). `scripts/openwiki_update.sh` retries the next model on 429/402/rate-limit, 403/404, agentic-harness blocks, and model-unavailable errors; a 429 sleeps `retry_after_seconds` or until `X-RateLimit-Reset` (cap 90s). Do not document a single paid model id as required.

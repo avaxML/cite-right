@@ -8,7 +8,9 @@ name: OpenWiki Update
 # lists ids containing :free (prefer tool-calling), ranked by Artificial
 # Analysis coding_index when present, else context_length, then created.
 # scripts/openwiki_update.sh exports OPENWIKI_MODEL_ID to the first id and
-# retries the next on 429/402/rate-limit. Do not pin a paid model id here.
+# retries the next on 429/402/rate-limit, 403/404, agentic-harness blocks,
+# and model-unavailable errors. On 429 it sleeps retry_after (cap 90s).
+# Do not pin a paid model id here.
 on:
   push:
     branches: [main]
