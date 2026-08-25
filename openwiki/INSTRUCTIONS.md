@@ -29,7 +29,7 @@ Do not treat `evaluation/`, hill-climb search spaces, or RAGTruth-style bench ta
 Each `SpanCitations.status` is exactly one of `supported`, `partial`, `unsupported`. Status comes from the best exact citation, not from embedding similarity.
 
 - `supported`: citations exist and the best citation's `answer_coverage` is `>= supported_answer_coverage`
-- `partial`: citations exist but coverage is below that threshold, **or** a contradiction was detected (see below)
+- `partial`: citations exist but coverage is below that threshold, **or** a contradiction was detected (see below). The literal is `partial`, never `partially_supported`.
 - `unsupported`: no citation survived filtering
 
 `retrieval_support` is a retrieval-only hint. A high embedding score that never localizes with Smith-Waterman is **not** a `Citation` and must not flip status.
@@ -38,11 +38,17 @@ Every `Citation` has `char_start` / `char_end` as a Python half-open interval. A
 
 ## Index-first retrieval, then Smith-Waterman localization
 
-0.4.0 retrieves with an inverted index over source windows (rare-token intersect). Smith-Waterman runs only on those hits. The index chooses which windows get alignment; SW still localizes the evidence span. The public API is unchanged (`align_citations`, `PreparedCitationCorpus`).
+Default / Rust path (`SimpleTokenizer` + `SimpleSegmenter` and `cite_right._core` present): inverted index over source windows, rare-token intersect. SW localizes only on those hits, unless an embedder adds extras (below). The index chooses windows; SW still localizes `char_start` / `char_end`.
+
+Fallback: if the optional Rust extension is missing, or a custom tokenizer/segmenter is supplied, `PreparedCitationCorpus.from_sources` leaves `inverted_index=None` and `_select_candidates` uses lexical selection.
+
+Embedder path: `_add_embedding_candidates` can add windows that were not inverted-index hits before alignment. Those extras still need SW to localize. `retrieval_support` is still not a `Citation`.
+
+Public API unchanged (`align_citations`, `PreparedCitationCorpus`).
 
 ## Rust prepare still runs with an embedder
 
-`PreparedCitationCorpus.from_sources(..., embedder=...)` still takes the Rust prepare path when the simple tokenizer/segmenter are in use. The embedding index is built on those prepared candidates. Embedding-only `retrieval_support` still respects `min_embedding_similarity`. Lexical scores are filled only for inverted-index seeds.
+`PreparedCitationCorpus.from_sources(..., embedder=...)` still takes the Rust prepare path when the simple tokenizer/segmenter are in use. The embedding index is built on those prepared candidates. Embedding-only `retrieval_support` still respects `min_embedding_similarity`. Lexical scores are filled only for inverted-index seeds. Embedding extras can still join the alignment set as above.
 
 ## Contradiction stays `partial`
 
