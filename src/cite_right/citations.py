@@ -286,9 +286,30 @@ def _process_answer_span(
             and hasattr(rust_corpus, "build_citations")
             and isinstance(aligner, RustSmithWatermanAligner)
         )
+        
 
-        # Fetch token_ids only if not using corpus_fast_path (which has tokens internally)
-        # If rust_corpus is available, fetch from Rust (on-demand)
+        # Compute lexical scores on-demand if needed (for rust_corpus path)
+        if rust_corpus is not None and HAS_RUST_CORE and not lexical_scores:
+            # Fetch token_ids for selected candidates to compute lexical scores
+            candidate_indices_for_scoring = [
+                candidate_index for candidate_index, _, _ in selected
+            ]
+            candidate_token_ids_for_scoring = rust_corpus.get_candidate_tokens(
+                candidate_indices_for_scoring
+            )  # type: ignore[attr-defined]
+            
+            denom = sum(idf.get(token_id, 1.0) for token_id in answer_set)
+            if denom > 0.0:
+                for i, token_ids in enumerate(candidate_token_ids_for_scoring):
+                    candidate_idx = candidate_indices_for_scoring[i]
+                    token_set = frozenset(token_ids)
+                    overlap = answer_set & token_set
+                    if overlap:
+                        numer = sum(idf.get(token_id, 1.0) for token_id in overlap)
+                        lexical_scores[candidate_idx] = numer / denom
+
+        # Fetch token_ids and token_spans only if not using corpus_fast_path
+        # If rust_corpus is available, fetch from Rust (on-demand) and create new candidates
         # Otherwise use token_ids from Python candidates
         candidate_token_ids: list[list[int]] = []
         if not use_corpus_fast_path:
@@ -299,6 +320,29 @@ def _process_answer_span(
                 candidate_token_ids = rust_corpus.get_candidate_tokens(
                     candidate_indices_for_tokens
                 )  # type: ignore[attr-defined]
+                # Also fetch token_spans for Python citation building
+                candidate_metadata = rust_corpus.get_candidate_metadata(
+                    candidate_indices_for_tokens
+                )  # type: ignore[attr-defined]
+                # Create new candidates with populated token data
+                new_selected_candidates = []
+                for i, candidate in enumerate(selected_candidates):
+                    if i < len(candidate_token_ids) and i < len(candidate_metadata):
+                        _, _, _, token_spans = candidate_metadata[i]
+                        token_ids = candidate_token_ids[i]
+                        # Create new Candidate with populated fields
+                        new_candidate = Candidate(
+                            global_index=candidate.global_index,
+                            source=candidate.source,
+                            passage=candidate.passage,
+                            token_ids=token_ids,
+                            token_spans=token_spans,
+                            token_set=frozenset(token_ids),
+                        )
+                        new_selected_candidates.append(new_candidate)
+                    else:
+                        new_selected_candidates.append(candidate)
+                selected_candidates = new_selected_candidates
             else:
                 candidate_token_ids = [
                     candidate.token_ids for candidate in selected_candidates
@@ -310,8 +354,10 @@ def _process_answer_span(
                     candidate_index for candidate_index, _, _ in selected
                 ]
                 embed_scores = [embed_score for _, embed_score, _ in selected]
+                # Use computed lexical scores (may have been computed on-demand)
                 lexical_scores_list = [
-                    lexical_score for _, _, lexical_score in selected
+                    lexical_scores.get(candidate_index, 0.0) 
+                    for candidate_index, _, _ in selected
                 ]
 
                 # Build source_id and base_offset maps
@@ -574,7 +620,8 @@ def _process_answer_span(
                 alignments,
                 strict=True,
             ):
-                candidate = candidates[candidate_index]
+                # Use candidate from selected_candidates (may have token_ids/token_spans populated)
+                # Only re-fetch if needed for source context, not token data
                 num_alignments += 1
 
                 citation = _build_exact_citation(
