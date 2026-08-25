@@ -51,6 +51,7 @@ from cite_right.core.results import (
 )
 from cite_right.models.base import Embedder
 from cite_right.models.embedding_index import EmbeddingIndex
+from cite_right.text.content_coverage import content_token_coverage, stopword_token_ids
 
 CandidateSelection: TypeAlias = list[tuple[int, float, float]]
 """List of (candidate_index, embedding_score, lexical_score) tuples."""
@@ -373,6 +374,11 @@ def _process_answer_span(
                     cfg.multi_span_max_spans,
                 )
 
+                vocab = getattr(tokenizer, "_vocab", None)
+                query_stopword_ids = list(
+                    stopword_token_ids(vocab if isinstance(vocab, dict) else None)
+                )
+
                 # Call Rust PreparedCorpus.build_citations
                 result = rust_corpus.build_citations(  # type: ignore[attr-defined]
                     answer_tokens,
@@ -386,6 +392,7 @@ def _process_answer_span(
                     aligner.match_score,  # type: ignore[attr-defined]
                     aligner.mismatch_score,  # type: ignore[attr-defined]
                     aligner.gap_score,  # type: ignore[attr-defined]
+                    query_stopword_ids,
                 )
 
                 num_alignments = result.num_alignments  # type: ignore[attr-defined]
@@ -614,6 +621,7 @@ def _process_answer_span(
                     embed_score=embed_score,
                     lexical_score=lexical_score,
                     cfg=cfg,
+                    tokenizer=tokenizer,
                 )
                 if citation is not None:
                     citations.append(citation)
@@ -662,11 +670,15 @@ def _build_exact_citation(
     embed_score: float,
     lexical_score: float,
     cfg: CitationConfig,
+    tokenizer: Tokenizer,
 ) -> Citation | None:
     """Build an exact citation when alignment localizes evidence precisely."""
     metrics = _compute_alignment_metrics(alignment, answer_tokens, cfg)
+    passage_coverage = _passage_content_coverage(
+        tokenizer, answer_tokens, candidate.token_ids
+    )
     final_score = _compute_final_score(metrics, lexical_score, embed_score, cfg)
-    if not _should_use_alignment(alignment, metrics, cfg):
+    if not _should_use_alignment(alignment, metrics, cfg, passage_coverage):
         return None
     if cfg.require_all_answer_tokens_in_evidence and not (
         trusted_alignment_match_counts and alignment.matches == len(answer_tokens)
@@ -738,15 +750,43 @@ def _compute_alignment_metrics(
     }
 
 
-def _should_use_alignment(
-    alignment: Alignment, metrics: dict[str, float], cfg: CitationConfig
-) -> bool:
-    """Check if alignment evidence meets quality thresholds."""
-    return (
-        alignment.score >= cfg.min_alignment_score
-        and alignment.token_start < alignment.token_end
-        and metrics["answer_coverage"] >= cfg.min_answer_coverage
+def _passage_content_coverage(
+    tokenizer: Tokenizer,
+    answer_tokens: Sequence[int],
+    passage_tokens: Sequence[int],
+) -> float:
+    """Content-word overlap between the answer and the aligned candidate passage."""
+    vocab = getattr(tokenizer, "_vocab", None)
+    if not isinstance(vocab, dict):
+        return 0.0
+    return content_token_coverage(
+        answer_tokens,
+        passage_tokens,
+        stopword_token_ids(vocab),
     )
+
+
+def _should_use_alignment(
+    alignment: Alignment,
+    metrics: dict[str, float],
+    cfg: CitationConfig,
+    passage_coverage: float = 0.0,
+) -> bool:
+    """Check if alignment evidence meets quality thresholds.
+
+    Sequential Smith-Waterman coverage is enough. Content-word overlap on the
+    same SW-selected passage also counts, so paraphrases that share meaning with
+    different word order are not dropped as unsupported.
+    """
+    if alignment.score < cfg.min_alignment_score:
+        return False
+    if alignment.token_start >= alignment.token_end:
+        return False
+    min_coverage = cfg.min_answer_coverage
+    sequential_ok = metrics["answer_coverage"] >= min_coverage
+    paraphrase_ok = passage_coverage >= min_coverage
+    # Stopword-only SW hits (e.g. "the" in "Here's the summary") must not count.
+    return passage_coverage > 0.0 and (sequential_ok or paraphrase_ok)
 
 
 def _compute_final_score(
