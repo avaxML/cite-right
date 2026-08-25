@@ -613,7 +613,7 @@ def _process_answer_span(
             for (
                 candidate_index,
                 embed_score,
-                lexical_score,
+                lexical_score_orig,
             ), candidate, alignment in zip(
                 selected,
                 selected_candidates,
@@ -623,6 +623,9 @@ def _process_answer_span(
                 # Use candidate from selected_candidates (may have token_ids/token_spans populated)
                 # Only re-fetch if needed for source context, not token data
                 num_alignments += 1
+                
+                # Use updated lexical score if computed on-demand
+                lexical_score = lexical_scores.get(candidate_index, lexical_score_orig)
 
                 citation = _build_exact_citation(
                     candidate=candidate,
