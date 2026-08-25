@@ -1,20 +1,30 @@
 name: CI
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "docs/**"
+      - "**.md"
+  pull_request:
+    paths-ignore:
+      - "docs/**"
+      - "**.md"
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  python:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.11", "3.12", "3.13"]
-    runs-on: ${{ matrix.os }}
+  lint:
+    # OS/Python independent checks run once instead of 9x in the matrix
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.11"
       - uses: astral-sh/setup-uv@v10.0.1
-      - uses: dtolnay/rust-toolchain@stable
+        with:
+          enable-cache: true
       - run: uv sync --frozen --no-install-project
       - run: uv run ruff check .
       - run: uv run ruff format --check .
@@ -31,8 +41,37 @@ jobs:
             exit 1
           fi
           echo "All functions have acceptable complexity (B grade or better)"
-      - run: uv run maturin develop
-      - run: uv run pytest -q
+
+  python:
+    strategy:
+      # Full Python matrix on Linux; Windows/macOS pin one version since the
+      # abi3 extension is identical across Python versions
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.13"]
+        include:
+          - os: ubuntu-latest
+            python-version: "3.11"
+          - os: ubuntu-latest
+            python-version: "3.12"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: astral-sh/setup-uv@v10.0.1
+        with:
+          enable-cache: true
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust_core
+          prefix-key: ${{ matrix.python-version }}
+      - run: uv sync --frozen --no-install-project
+      - run: uv run --no-sync maturin develop
+      - run: uv run --no-sync pytest -q
 
   coverage:
     runs-on: ubuntu-latest
@@ -44,11 +83,17 @@ jobs:
         with:
           python-version: "3.11"
       - uses: astral-sh/setup-uv@v10.0.1
+        with:
+          enable-cache: true
       - uses: dtolnay/rust-toolchain@stable
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust_core
       - run: uv sync --frozen --no-install-project
-      - run: uv run maturin develop
+      - run: uv run --no-sync maturin develop
       - name: Run tests with coverage
-        run: uv run pytest --cov=cite_right --cov-report=term -q
+        run: uv run --no-sync pytest --cov=cite_right --cov-report=term -q
       - name: Generate coverage badge
         # tj-actions/coverage-badge-py force-upgrades setuptools, which removed
         # pkg_resources (required by coverage-badge) in newer releases. Pin it
@@ -76,6 +121,8 @@ jobs:
         with:
           python-version: "3.11"
       - uses: astral-sh/setup-uv@v10.0.1
+        with:
+          enable-cache: true
       - run: uv sync --frozen --extra spacy --no-install-project
       - name: Install pip and download spacy model
         run: |
@@ -91,6 +138,8 @@ jobs:
         with:
           python-version: "3.11"
       - uses: astral-sh/setup-uv@v10.0.1
+        with:
+          enable-cache: true
       - run: uv sync --frozen --extra embeddings --no-install-project
       - run: CITE_RIGHT_RUN_EMBEDDINGS_TESTS=1 PYTHONPATH=src uv run pytest -q -k embeddings
 
@@ -102,6 +151,8 @@ jobs:
         with:
           python-version: "3.11"
       - uses: astral-sh/setup-uv@v10.0.1
+        with:
+          enable-cache: true
       - run: uv sync --frozen --extra tiktoken --no-install-project
       - run: PYTHONPATH=src uv run pytest -q tests/test_tokenizer_tiktoken.py
 
@@ -113,6 +164,8 @@ jobs:
         with:
           python-version: "3.11"
       - uses: astral-sh/setup-uv@v10.0.1
+        with:
+          enable-cache: true
       - run: uv sync --frozen --extra huggingface --no-install-project
       - run: PYTHONPATH=src uv run pytest -q tests/test_tokenizer_huggingface.py
 
@@ -121,6 +174,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust_core
       - run: cargo fmt --check
         working-directory: rust_core
       - run: cargo clippy -- -D warnings
@@ -136,6 +193,8 @@ jobs:
         with:
           python-version: "3.11"
       - uses: astral-sh/setup-uv@v10.0.1
+        with:
+          enable-cache: true
       - run: uv sync --frozen --no-install-project
       - name: Run Bandit security scan
         run: uv run bandit -r src/cite_right -c pyproject.toml -f json -o bandit-report.json || true
