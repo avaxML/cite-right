@@ -1087,6 +1087,7 @@ def _retry_structured_field_citations(
             embed_score=embed_score,
             lexical_score=lexical_scores.get(candidate_index, lexical_score_orig),
             cfg=cfg,
+            tokenizer=tokenizer,
         )
         if citation is not None:
             citations.append(citation)
