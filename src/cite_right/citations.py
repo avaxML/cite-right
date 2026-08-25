@@ -147,6 +147,24 @@ def align_citations(
         report_empty_metrics(on_metrics)
         return []
 
+    # Detect if any sources are structured field:value data
+    # For structured sources, use a lenient gap penalty to handle token reordering
+    has_structured_sources = any(
+        _looks_like_structured_source(_extract_source_text(src)) for src in sources
+    )
+
+    # If we have structured sources and no custom aligner, adjust gap_score
+    if has_structured_sources and aligner is None and cfg.gap_score < 0:
+        # Use gap_score=0 for structured sources to allow token reordering
+        # Also lower min_answer_coverage since field:value tokens may be sparse
+        cfg = CitationConfig(
+            **{
+                **cfg.model_dump(),
+                "gap_score": 0,
+                "min_answer_coverage": min(cfg.min_answer_coverage, 0.15),
+            }
+        )
+
     start_time = time.perf_counter()
     corpus = PreparedCitationCorpus.from_sources(
         sources,
@@ -900,6 +918,58 @@ def _extract_evidence(
     evidence = _slice_source_text(candidate.source, abs_start, abs_end)
 
     return abs_start, abs_end, evidence, evidence_spans
+
+
+def _looks_like_structured_source(text: str) -> bool:
+    """Detect if a source looks like structured field:value data.
+
+    Data2txt sources often contain flattened field:value lines like:
+    - business_stars: 4.5
+    - attributes.WiFi: free
+    - hours.Monday: 9:0-17:0
+
+    These structured sources need more lenient gap penalties in alignment
+    because faithful rewrites may reorder the field values.
+    """
+    lines = text.strip().split("\n")
+    if len(lines) < 2:
+        return False
+
+    # Count lines that look like field:value pairs
+    field_value_lines = 0
+    for line in lines[:10]:  # Check first 10 lines
+        line = line.strip()
+        if not line:
+            continue
+        # Pattern: word characters (including dots/underscores) followed by colon and value
+        if ":" in line:
+            parts = line.split(":", 1)
+            if len(parts) == 2:
+                field = parts[0].strip()
+                value = parts[1].strip()
+                # Field should look like an identifier (letters, dots, underscores)
+                # Value should be non-empty and not look like prose (short or simple)
+                if (
+                    field
+                    and value
+                    and all(c.isalnum() or c in "._-" for c in field.replace(" ", ""))
+                    and len(value.split()) <= 10  # Short values, not prose
+                ):
+                    field_value_lines += 1
+
+    # If >50% of lines are field:value pairs, treat as structured
+    non_empty_lines = sum(1 for line in lines[:10] if line.strip())
+    return non_empty_lines > 0 and field_value_lines / non_empty_lines >= 0.5
+
+
+def _extract_source_text(source: str | SourceDocument | SourceChunk) -> str:
+    """Extract text from different source types."""
+    if isinstance(source, str):
+        return source
+    elif isinstance(source, SourceDocument):
+        return source.text
+    else:
+        return source.text
 
 
 def _default_aligner(cfg: CitationConfig, *, backend: str) -> Aligner:
