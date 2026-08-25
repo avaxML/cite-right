@@ -70,14 +70,8 @@ jobs:
           workspaces: rust_core
           prefix-key: ${{ matrix.python-version }}
       - run: uv sync --frozen --no-install-project
-      - run: uv run maturin develop
-      - name: Debug extension resolution
-        run: |
-          uv run python -c "import cite_right; print('pkg:', cite_right.__file__)"
-          uv run python -c "import cite_right._core as c; print('core:', c.__file__); print('has align_batch_details:', hasattr(c, 'align_batch_details'))"
-          uv pip list 2>/dev/null | grep -i cite || true
-          find .venv src -name '_core*' -type f | head
-      - run: uv run pytest -q
+      - run: uv run --no-sync maturin develop
+      - run: uv run --no-sync pytest -q
 
   coverage:
     runs-on: ubuntu-latest
@@ -97,9 +91,9 @@ jobs:
         with:
           workspaces: rust_core
       - run: uv sync --frozen --no-install-project
-      - run: uv run maturin develop
+      - run: uv run --no-sync maturin develop
       - name: Run tests with coverage
-        run: uv run pytest --cov=cite_right --cov-report=term -q
+        run: uv run --no-sync pytest --cov=cite_right --cov-report=term -q
       - name: Generate coverage badge
         # tj-actions/coverage-badge-py force-upgrades setuptools, which removed
         # pkg_resources (required by coverage-badge) in newer releases. Pin it
