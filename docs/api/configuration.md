@@ -58,7 +58,7 @@ class CitationConfig(BaseModel):
 
 **supported_answer_coverage** (`float`): Answer coverage threshold for `supported` status.
 
-**min_embedding_similarity** (`float`): Minimum embedding similarity required for a passage to be surfaced as retrieval support when an embedder is enabled.
+**min_embedding_similarity** (`float`): Minimum embedding similarity required for embedding-only `retrieval_support` when an embedder is enabled. Lexical scores are filled only for index seeds.
 
 ### Passage Windowing
 
@@ -68,11 +68,11 @@ class CitationConfig(BaseModel):
 
 ### Candidate Selection
 
-**max_candidates_lexical** (`int`): Maximum lexical candidates to consider per answer span.
+**max_candidates_lexical** (`int`): Maximum inverted-index seeds (lexical candidates) to consider per answer span.
 
 **max_candidates_embedding** (`int`): Maximum embedding candidates to consider per answer span (requires an embedder).
 
-**max_candidates_total** (`int`): Maximum candidates after combining lexical and embedding candidates.
+**max_candidates_total** (`int`): Maximum candidates after combining index seeds and embedding candidates. Smith-Waterman runs on this set, not on every window.
 
 ### Ranking
 

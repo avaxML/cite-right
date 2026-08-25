@@ -2,25 +2,29 @@
 
 **Link every piece of your AI-generated response back to its source text.**
 
-Cite-Right is a Python library that enables you to build citation-backed AI applications, similar to the "check sources" feature found in Perplexity. When your language model generates an answer from retrieved documents, Cite-Right identifies exactly which parts of the source text support each claim in the response.
+Cite-Right is a Python library for citation-backed AI applications, similar to a "check sources" feature. When a language model generates an answer from retrieved documents, Cite-Right identifies which parts of the source text support each claim and returns character offsets for highlighting.
 
-## What Makes Cite-Right Different
+## What Cite-Right Does
 
-Traditional citation systems link entire paragraphs or documents to generated text. Cite-Right takes a more precise approach by providing **character-accurate offsets** that point to the exact location in your source documents. This precision enables features like highlighting the specific supporting text when a user clicks on any sentence in your AI's response.
+Traditional citation systems link entire paragraphs or documents to generated text. Cite-Right returns **character-accurate offsets** that point to the exact location in your source documents. A frontend can highlight the supporting text when a user clicks a sentence in the answer.
 
-The library is built on the Smith-Waterman local sequence alignment algorithm, the same algorithm used in bioinformatics to find similar regions between DNA sequences. This approach excels at finding matching text even when there are minor differences in phrasing, punctuation, or formatting.
+0.4.0 is index-first. An inverted index and rare-token intersect choose which source windows are worth aligning. Smith-Waterman still localizes the citation. The index does not replace alignment, and it does not run Smith-Waterman over every window.
+
+The public API is unchanged: `align_citations` and `PreparedCitationCorpus`. Span status is `"supported"`, `"partial"`, or `"unsupported"`. There is no `"partially_supported"` status.
 
 ## Core Capabilities
 
-Cite-Right addresses three fundamental challenges in RAG (Retrieval-Augmented Generation) applications.
+Cite-Right covers three parts of a RAG citation pipeline.
 
 ### Document-Source Linking
 
 Every sentence in your generated answer can be traced back to its origin. When you call `align_citations`, the library analyzes each sentence and returns a `Citation` object containing the source document identifier along with the precise character positions where the supporting text begins and ends. Your frontend can use these offsets to scroll to and highlight the exact source passage.
 
-### Hallucination Detection
+### Groundedness Tagging
 
-Not every claim in a generated answer will have source support. Cite-Right categorizes each answer span as "supported", "partial", or "unsupported" based on how well it aligns with the provided sources. The `compute_hallucination_metrics` function aggregates these results into a groundedness score that quantifies the overall reliability of the response.
+Not every claim in a generated answer will have source support. Cite-Right categorizes each answer span as `"supported"`, `"partial"`, or `"unsupported"` based on how well it aligns with the provided sources. Cheap contradiction (negation, number, leftover n-gram slot, entity swap) downgrades to `"partial"`, not `"unsupported"`.
+
+The `compute_hallucination_metrics` function aggregates these results into a groundedness score. Cite-Right is a groundedness and citation tagger, not a clean hallucination detector. On RAGTruth test (2,675 answers), quality matched 0.3.1: false-supported on gold hallucinations is about 1.6%, and unsupported precision is about 14%. If `partial` counts, gold hallucinations are rarely blessed as `supported`.
 
 ### Fact-Level Verification
 
@@ -38,20 +42,22 @@ The `score` field indicates the alignment quality, with higher values representi
 
 ## Installation
 
-The core library has minimal dependencies and installs quickly.
-
 ```bash
-pip install cite-right
+pip install cite-right==0.4.0
 ```
+
+0.4.0 ships abi3 wheels (`abi3-py311`), linux/aarch64 wheels, and an sdist.
 
 Several optional features require additional packages. Semantic retrieval using sentence embeddings needs the embeddings extra. SpaCy-based sentence segmentation requires the spacy extra. Support for transformer tokenizers from HuggingFace or OpenAI's tiktoken are available through their respective extras.
 
 ```bash
-pip install "cite-right[embeddings]"  # For semantic retrieval
-pip install "cite-right[spacy]"       # For improved segmentation
-pip install "cite-right[huggingface]" # For BERT/RoBERTa tokenizers
-pip install "cite-right[tiktoken]"    # For GPT tokenizers
+pip install "cite-right[embeddings]==0.4.0"  # For semantic retrieval
+pip install "cite-right[spacy]==0.4.0"       # For improved segmentation
+pip install "cite-right[huggingface]==0.4.0" # For BERT/RoBERTa tokenizers
+pip install "cite-right[tiktoken]==0.4.0"    # For GPT tokenizers
 ```
+
+Rust prepare still runs when an embedder is set. Embedding-only `retrieval_support` still respects `min_embedding_similarity`.
 
 ## A Quick Example
 
@@ -78,20 +84,20 @@ for result in results:
         print(f"Location: {citation.char_start}:{citation.char_end}")
 ```
 
-This code produces output showing that the answer sentence is "supported" with evidence extracted from character positions 45 through 90 in the source document.
+This code produces output showing that the answer sentence is `"supported"` with evidence extracted from character positions 45 through 90 in the source document.
 
 ## Where to Go Next
 
-The [Installation](getting-started/installation.md) page covers detailed setup instructions including optional dependencies and platform-specific considerations.
+The [Installation](getting-started/installation.md) page covers setup, wheels, and optional extras.
 
 The [Quickstart](getting-started/quickstart.md) guide walks through building a complete citation pipeline from scratch.
 
-The [How It Works](concepts/how-it-works.md) section explains the alignment algorithm and scoring mechanisms in depth.
+The [How It Works](concepts/how-it-works.md) section explains index-first retrieval, alignment, and scoring.
 
-The [API Reference](api/core-functions.md) provides comprehensive documentation for all public functions and classes.
+The [API Reference](api/core-functions.md) documents the public functions and classes.
 
 ## Project Information
 
-Cite-Right is released under the Apache 2.0 license. The source code is available on [GitHub](https://github.com/avaxML/cite-right). The library requires Python 3.11 or later and includes an optional Rust extension for improved performance.
+Cite-Right is released under the Apache 2.0 license. The source code is available on [GitHub](https://github.com/avaxML/cite-right). The library requires Python 3.11 or later. On the 50-case pack with no embedder, 0.4.0 p50 wall time is about 12.4ms versus about 175.8ms in 0.3.1 (roughly 14×). spp is 81.3% versus 83.4%.
 
 The design draws inspiration from academic work on text alignment and citation extraction. The Smith-Waterman algorithm was originally described in "Identification of Common Molecular Subsequences" by Smith and Waterman (1981). The application of sequence alignment to citation tasks builds on research in document similarity and plagiarism detection.

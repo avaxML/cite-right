@@ -4,7 +4,7 @@ While hallucination detection operates at the sentence level, fact verification 
 
 ## The Need for Claim-Level Analysis
 
-Consider the sentence "Revenue grew 15% in Q4 and the company announced a stock split." This sentence contains two distinct claims. If the source only supports the revenue claim, sentence-level analysis might mark the entire sentence as partially supported without identifying which part is problematic.
+Consider the sentence "Revenue grew 15% in Q4 and the company announced a stock split." This sentence contains two distinct claims. If the source only supports the revenue claim, sentence-level analysis might mark the entire sentence `"partial"` without identifying which part is problematic.
 
 Fact verification addresses this by splitting the sentence into atomic claims, verifying each independently, and reporting which specific claims lack source support.
 

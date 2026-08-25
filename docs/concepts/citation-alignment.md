@@ -21,7 +21,7 @@ config = CitationConfig(top_k=3)
 results = align_citations(answer, sources, config=config)
 ```
 
-The function signature provides considerable flexibility through optional parameters.
+The function signature provides considerable flexibility through optional parameters. The public API is the same as before 0.4.0: `align_citations` and `PreparedCitationCorpus`.
 
 ## Input Types
 
@@ -74,15 +74,15 @@ for result in results:
 
 The `citations` field is a list of `Citation` objects, ranked from best to worst match. Each citation represents exact localized evidence. The number of citations depends on the `top_k` configuration parameter.
 
-The `retrieval_support` field is a list of retrieval-only support candidates. These are passages selected during lexical and/or embedding candidate search that did not produce an exact localized citation.
+The `retrieval_support` field is a list of retrieval-only support candidates. These are passages selected during index, lexical, and/or embedding candidate search that did not produce an exact localized citation.
 
-The `status` field is a string indicating overall support level. It takes one of three values based on the best citation's answer coverage.
+The `status` field is a string indicating overall support level. It takes one of three values based on the best citation's answer coverage after contradiction checking.
 
-A status of "supported" means the best citation has `answer_coverage >= supported_answer_coverage`.
+A status of `"supported"` means the best citation has `answer_coverage >= supported_answer_coverage` and the cheap contradiction check did not fire.
 
-A status of "partial" means at least one citation was produced but the supported thresholds were not met. This often occurs with paraphrased or partially supported content.
+A status of `"partial"` means at least one citation was produced but the supported thresholds were not met, or a contradiction (negation, number, leftover n-gram slot, or entity swap) downgraded the span. This often occurs with paraphrased or only partly covered content. The literal is `"partial"`, never `"partially_supported"`.
 
-A status of "unsupported" indicates no citations met the minimum thresholds. This may indicate hallucination or content derived from knowledge outside the provided sources.
+A status of `"unsupported"` indicates no citations met the minimum thresholds. This may indicate hallucination or content derived from knowledge outside the provided sources. Contradiction does not produce this status when evidence exists.
 
 ### Citation
 
@@ -107,6 +107,24 @@ The `evidence` field contains the matched text extracted from the source documen
 
 The `components` dictionary breaks down the score into its constituent parts.
 
+## How Candidates Are Chosen
+
+0.4.0 does not run Smith-Waterman over every passage window.
+
+Prepare builds an inverted index over source windows. For each answer span, rare-token intersect selects which windows are worth aligning. Smith-Waterman still localizes; the index only chooses the windows.
+
+When an embedder is provided, high-similarity passages can join that set. Rust prepare still runs. The embedding index is built on the prepared candidates. Embedding-only `retrieval_support` still respects `min_embedding_similarity`.
+
+See [How It Works](how-it-works.md) for the full pipeline and [Embedding Retrieval](../advanced/embedding-retrieval.md) for the embedder path.
+
+## Paraphrase, Fields, and Contradiction
+
+Grounded how-to and news paraphrases can emit a citation from content-word overlap on the candidate passage when Smith-Waterman sequential coverage is low. They are no longer overflagged as `unsupported` for reordered content words.
+
+Data2txt field:value paraphrases get a second Smith-Waterman pass per structured-field candidate with `gap_score=0`. Faithful rewrites of hours, amenities, and similar fields can be `"supported"` or `"partial"`. Invented fields stay `"unsupported"`.
+
+Leftover n-gram conflicts check contradiction against the full candidate passage, not only the truncated Smith-Waterman evidence span. Cheap contradiction (negation, number, leftover n-gram slot, entity swap) downgrades to `"partial"`, not `"unsupported"`.
+
 ## Character Offset Convention
 
 All character offsets in Cite-Right follow Python's standard half-open interval convention. The start position is inclusive and the end position is exclusive.
@@ -127,7 +145,7 @@ results = align_citations(answer, sources, backend="rust")
 
 The "auto" setting uses the Rust extension if available, falling back to pure Python otherwise. The "python" setting forces the pure Python implementation even when Rust is available. The "rust" setting requires the Rust extension and raises an error if it is not installed.
 
-Both implementations produce identical results. The Rust extension is significantly faster for large workloads due to parallel processing.
+Both implementations produce identical results. The Rust extension is significantly faster for large workloads due to parallel processing. Released 0.4.0 wheels ship the extension as abi3 (`abi3-py311`), including linux/aarch64, plus an sdist.
 
 ## Tokenizer Selection
 
@@ -174,7 +192,9 @@ embedder = SentenceTransformerEmbedder("all-MiniLM-L6-v2")
 results = align_citations(answer, sources, embedder=embedder)
 ```
 
-When an embedder is provided, candidate selection considers both lexical overlap and semantic similarity. This improves recall for paraphrased content where the answer uses different words than the source but conveys the same meaning.
+When an embedder is provided, candidate selection still starts from the inverted index. Semantic similarity can add extra windows. This improves recall for paraphrased content where the answer uses different words than the source but conveys the same meaning.
+
+Rust prepare is not skipped when an embedder is set. Embedding-only `retrieval_support` still respects `min_embedding_similarity`.
 
 ## Score Interpretation
 

@@ -23,6 +23,8 @@ results = align_citations(answer, sources)
 
 The `results` variable now contains a list of `SpanCitations` objects, one for each sentence or clause in the answer. Each object includes the answer text, its position within the full answer, and any citations found.
 
+Install the matching release with `pip install cite-right==0.4.0`. The public functions you will use are `align_citations` and, for repeated source sets, `PreparedCitationCorpus`.
+
 ## Understanding the Results
 
 Let us examine what the alignment returns in detail.
@@ -40,9 +42,11 @@ for result in results:
         print(f"  Score: {citation.score:.3f}")
 ```
 
-The `status` field indicates how well the answer span is supported. A status of "supported" means the alignment found strong evidence in the sources. "Partial" indicates some support was found but it may not cover the entire claim. "Unsupported" means no matching evidence was found.
+The `status` field indicates how well the answer span is supported. `"supported"` means the alignment found strong evidence in the sources. `"partial"` indicates some support was found but it may not cover the entire claim, or a cheap contradiction check downgraded the span. `"unsupported"` means no matching evidence survived filtering. The literal is `"partial"`, never `"partially_supported"`.
 
 Each citation provides the `source_id` identifying which document contains the evidence, the `evidence` text itself, and character offsets (`char_start` and `char_end`) pointing to the exact location in that source document.
+
+0.4.0 still localizes with Smith-Waterman. An inverted index chooses which source windows get that alignment. Grounded paraphrases can receive a citation from content-word overlap when sequential coverage is low.
 
 ## Working with Multiple Sources
 
@@ -112,7 +116,7 @@ Each sentence receives its own status and citation list. This granular approach 
 
 ## Checking for Hallucinations
 
-When you need to assess the overall quality of a generated response, the hallucination detection functions provide aggregate metrics.
+When you need to assess the overall quality of a generated response, the hallucination detection functions provide aggregate groundedness metrics. Cite-Right is not a clean hallucination detector. It is a groundedness and citation tagger. On RAGTruth test, unsupported precision is about 14%, so `unsupported` overflags relative to gold hallucination labels.
 
 ```python
 from cite_right import align_citations, compute_hallucination_metrics
@@ -135,7 +139,9 @@ print(f"Supported spans: {metrics.num_supported}")
 print(f"Unsupported spans: {metrics.num_unsupported}")
 ```
 
-In this example, the first sentence about revenue growth will be marked as supported because it aligns with the source. The second sentence about acquiring a competitor has no source support and will be flagged as unsupported, contributing to the hallucination rate.
+In this example, the first sentence about revenue growth will be marked as supported because it aligns with the source. The second sentence about acquiring a competitor has no source support and will be flagged as unsupported, contributing to the hallucination rate. If `partial` counts, gold hallucinations are rarely blessed as `supported`.
+
+See [Hallucination Detection](../concepts/hallucination-detection.md) for the limits of these metrics.
 
 ## Convenience Functions
 

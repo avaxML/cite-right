@@ -1,12 +1,16 @@
 # Hallucination Detection
 
-Language models sometimes generate content that is not grounded in the provided source material. Cite-Right provides tools to detect and quantify this phenomenon, helping you build more trustworthy AI applications.
+Cite-Right is a groundedness and citation tagger, not a clean hallucination detector. It marks whether each answer span has localized source support. That is useful for highlighting, quality gates, and aggregate groundedness scores. It is not a substitute for a dedicated hallucination classifier.
+
+On RAGTruth test (2,675 answers), 0.4.0 quality matched 0.3.1. False-supported on gold hallucinations is about 1.6%. Unsupported precision is about 14%. The library overflags: many spans tagged `unsupported` are not gold hallucinations. If `partial` counts as not fully supported, gold hallucinations are rarely blessed as `supported`.
 
 ## Understanding Hallucination
 
-In the context of retrieval-augmented generation, hallucination refers to generated content that cannot be traced back to the retrieved sources. This may occur when the model draws on its parametric knowledge rather than the provided context, when it makes logical leaps not supported by the text, or when it simply generates plausible-sounding but unfounded claims.
+In the context of retrieval-augmented generation, hallucination usually means generated content that cannot be traced back to the retrieved sources. That may occur when the model draws on parametric knowledge rather than the provided context, when it makes logical leaps not supported by the text, or when it generates plausible-sounding but unfounded claims.
 
-Hallucination detection in Cite-Right works by analyzing the citation alignment results. Answer spans that align well with sources are considered grounded. Those without adequate source support are flagged as potentially hallucinated.
+Cite-Right does not classify those cases with a trained detector. It analyzes citation alignment results. Answer spans that produce citations are `"supported"` or `"partial"`. Spans with no surviving citation are `"unsupported"`. Cheap contradiction (negation, number, leftover n-gram slot, entity swap) downgrades to `"partial"`, never `"unsupported"`. The status literal is `"partial"`, never `"partially_supported"`.
+
+Treat `unsupported` as "no localized citation survived," not as a high-precision hallucination label.
 
 ## Computing Hallucination Metrics
 
@@ -33,7 +37,7 @@ print(f"Groundedness: {metrics.groundedness_score:.1%}")
 print(f"Hallucination rate: {metrics.hallucination_rate:.1%}")
 ```
 
-In this example, the first sentence about record profits should align with the source. The second and third sentences have no source support and will contribute to the hallucination rate.
+In this example, the first sentence about record profits should align with the source. The second and third sentences have no source support and will contribute to the hallucination rate. Because unsupported precision is low, do not treat that rate as a hallucination probability.
 
 ## HallucinationMetrics
 
@@ -43,14 +47,16 @@ The `compute_hallucination_metrics` function returns a `HallucinationMetrics` ob
 
 The `groundedness_score` is a weighted confidence score between 0 and 1. Higher values indicate better grounding in sources. This score considers both the number of supported spans and the quality of their citations.
 
-The `hallucination_rate` is the proportion of content that lacks source support, also between 0 and 1. Lower values indicate less hallucination. This metric complements the groundedness score by focusing on problematic content.
+The `hallucination_rate` is `1 - groundedness_score`. It is the proportion of content that the tagger did not count as grounded, also between 0 and 1. With default `HallucinationConfig`, `partial` spans can contribute to groundedness. If you need a stricter reading, set `include_partial_in_grounded=False` so only `"supported"` counts.
 
 ```python
 if metrics.groundedness_score > 0.8:
     print("Answer is well-grounded")
 elif metrics.hallucination_rate > 0.3:
-    print("Warning: Significant hallucination detected")
+    print("Warning: Significant ungrounded content")
 ```
+
+Thresholds like these are application policy, not validated hallucination cutoffs.
 
 ### Span Ratios
 
@@ -58,7 +64,7 @@ Three ratio metrics describe how answer content distributes across support level
 
 The `supported_ratio` indicates what proportion of the answer text is fully supported by sources.
 
-The `partial_ratio` indicates what proportion has partial support, meaning some citation was found but it may not fully cover the claim.
+The `partial_ratio` indicates what proportion has partial support, meaning some citation was found but it may not fully cover the claim, or contradiction downgraded the span.
 
 The `unsupported_ratio` indicates what proportion has no adequate source support.
 
@@ -84,17 +90,17 @@ The `min_confidence` field reports the lowest confidence score, identifying the 
 
 ### Weak Citation Tracking
 
-The `num_weak_citations` field counts spans where a citation was found but the quality is below a configurable threshold. These represent borderline cases that may warrant manual review.
+The `num_weak_citations` field counts spans where a citation was found but answer coverage is below a configurable threshold. These represent borderline cases that may warrant manual review.
 
 ### Problem Span Identification
 
-The `unsupported_spans` field contains a list of `AnswerSpan` objects that received no adequate citations. These are the specific pieces of text most likely to be hallucinated.
+The `unsupported_spans` field contains a list of `AnswerSpan` objects that received no adequate citations. These are the pieces of text with no localized citation, which may or may not be gold hallucinations.
 
 The `weakly_supported_spans` field contains spans with low-quality citations that may be unreliable.
 
 ```python
 if metrics.unsupported_spans:
-    print("Potentially hallucinated content:")
+    print("Spans with no localized citation:")
     for span in metrics.unsupported_spans:
         print(f"  '{span.text}'")
 ```
@@ -108,7 +114,7 @@ for conf in metrics.span_confidences:
     print(f"Text: {conf.span.text}")
     print(f"Confidence: {conf.confidence:.2f}")
     print(f"Status: {conf.status}")
-    print(f"Top source: {conf.top_source_id}")
+    print(f"Sources: {conf.source_ids}")
 ```
 
 Each `SpanConfidence` includes the span text, its confidence score, status, and the identifier of the best matching source if any.
@@ -127,9 +133,9 @@ config = HallucinationConfig(
 metrics = compute_hallucination_metrics(results, config=config)
 ```
 
-The `weak_citation_threshold` parameter sets the minimum support confidence for a citation to be considered adequate. This uses answer coverage for alignment-based citations and embedding similarity for embedding-only citations. Citations below this threshold are counted as weak.
+The `weak_citation_threshold` parameter sets the minimum answer coverage for a citation to be considered adequate. Citations below this threshold are counted as weak.
 
-The `include_partial_in_grounded` parameter controls whether partial matches contribute to the groundedness score. Setting this to False produces a stricter groundedness metric that only counts fully supported spans.
+The `include_partial_in_grounded` parameter controls whether `"partial"` matches contribute to the groundedness score. Setting this to `False` produces a stricter groundedness metric that only counts fully supported spans. If `partial` is excluded, gold hallucinations are rarely counted as `supported`.
 
 ## Convenience Functions
 
@@ -150,7 +156,7 @@ else:
     pass
 ```
 
-This function internally calls `align_citations` and `compute_hallucination_metrics`, making it a one-step check suitable for quality gates.
+This function internally calls `align_citations` and `compute_hallucination_metrics`, making it a one-step check suitable for quality gates. It inherits the same overflag behavior as the metrics above.
 
 ### is_hallucinated
 
@@ -160,10 +166,10 @@ The `is_hallucinated` function checks whether the hallucination rate exceeds a t
 from cite_right import is_hallucinated
 
 if is_hallucinated(answer, sources, threshold=0.3):
-    print("Warning: Answer may contain hallucinations")
+    print("Warning: Answer may contain ungrounded content")
 ```
 
-This provides the inverse perspective from `is_grounded`, focusing on problem content.
+This is the inverse of `is_grounded`. It is still a groundedness check, not a high-precision hallucination detector.
 
 ### check_groundedness
 
@@ -183,7 +189,7 @@ This is useful when you need both the boolean decision and the detailed metrics 
 
 ### Quality Gate
 
-Use hallucination detection as a quality gate before presenting responses to users.
+Use citation status as a quality gate before presenting responses to users. Prefer inspecting `"supported"` versus `"partial"` versus `"unsupported"` over treating hallucination rate as a calibrated probability.
 
 ```python
 def generate_with_verification(query, sources):
@@ -198,7 +204,7 @@ def generate_with_verification(query, sources):
 
 ### User Interface Indicators
 
-Display confidence indicators in the user interface based on hallucination metrics.
+Display confidence indicators in the user interface based on citation metrics, and show the actual evidence offsets rather than a red/green hallucination badge.
 
 ```python
 def get_confidence_indicator(metrics):
@@ -212,7 +218,7 @@ def get_confidence_indicator(metrics):
 
 ### Logging and Monitoring
 
-Track hallucination rates over time to identify model or prompt degradation.
+Track groundedness and unsupported rates over time to identify model or prompt degradation. Log span status counts, not just a single hallucination rate, so overflag does not look like a sudden hallucination spike.
 
 ```python
 import logging
@@ -226,12 +232,15 @@ def log_hallucination_metrics(query, answer, metrics):
             "groundedness": metrics.groundedness_score,
             "hallucination_rate": metrics.hallucination_rate,
             "unsupported_count": metrics.num_unsupported,
+            "partial_count": metrics.num_partial,
         },
     )
 ```
 
 ## Limitations
 
-Hallucination detection identifies answer content that lacks source support. It does not verify factual accuracy beyond the provided sources. If a source document itself contains errors, the detection will still mark content derived from it as grounded.
+Hallucination detection identifies answer content that lacks localized source support. It does not verify factual accuracy beyond the provided sources. If a source document itself contains errors, content derived from it is still marked as grounded.
 
-The detection is also limited to explicit textual alignment. Logical inferences that are correct but not stated verbatim in sources will be marked as unsupported. Applications requiring inference verification need additional techniques beyond citation alignment.
+Unsupported precision is about 14% on RAGTruth test. Grounded paraphrases are less overflagged than in 0.3.1 (content-word overlap can emit a citation when sequential Smith-Waterman coverage is low), but the tagger still overflags relative to gold hallucination labels.
+
+The detection is limited to explicit textual alignment plus the cheap contradiction checks above. Logical inferences that are correct but not stated in sources will often be marked as unsupported. Applications requiring inference verification need additional techniques beyond citation alignment.
