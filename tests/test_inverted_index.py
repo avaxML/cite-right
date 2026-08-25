@@ -173,7 +173,7 @@ def test_python_fallback_without_index() -> None:
 
 @requires_rust
 def test_rust_corpus_with_embedder() -> None:
-    """Verify that rust corpus is not built when embedder is provided."""
+    """Rust prepare still runs when an embedder is provided, then builds embeddings."""
     from cite_right.models.base import Embedder
 
     class SimpleEmbedder(Embedder):
@@ -181,18 +181,18 @@ def test_rust_corpus_with_embedder() -> None:
             return [[1.0, 0.0] for _ in texts]
 
     sources = ["Revenue grew 15% in Q4 2024."]
+    embedder = SimpleEmbedder()
 
     corpus = PreparedCitationCorpus.from_sources(
         sources,
         config=CitationConfig(),
-        embedder=SimpleEmbedder(),
+        embedder=embedder,
         use_rust=True,
     )
 
-    # Currently, Rust prepare is skipped when embedder is provided
-    # So rust_corpus should be None
-    # (This could be changed in the future to build both)
-    assert corpus.rust_corpus is None
+    assert corpus.embedder is embedder
+    assert corpus.rust_corpus is not None
+    assert corpus.embedding_index is not None
 
 
 @requires_rust
