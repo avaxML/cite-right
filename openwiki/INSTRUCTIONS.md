@@ -1,61 +1,210 @@
----
-type: Repository guide
-title: cite-right wiki brief
-description: Scope and invariants for the cite-right code wiki. Written for coding agents.
-tags: [cite-right, citations, agents]
----
+# Cite-Right Wiki Brief
 
-Write this wiki for coding agents that need to call cite-right correctly, not for a marketing tour. Prefer `src/cite_right/__init__.py` and the types it re-exports over evaluation code, benches, or internal helpers.
+This file is the user-authored brief for OpenWiki. Generate and update wiki pages that coding agents and humans can read. Those pages will be published through the Cite-Right GitHub Pages site, so match the voice of `docs/` (start with `docs/index.md`, `docs/getting-started/`, `docs/concepts/how-it-works.md`, `docs/concepts/hallucination-detection.md`, `docs/advanced/rust-acceleration.md`). OpenWiki must not rewrite this file on `--init` or `--update`.
 
-## Product
+## Voice And Page Shape
 
-cite-right aligns generated answer text to source documents and returns character-accurate citations. The Python package `cite_right` is the public API. An optional Rust extension (`cite_right._core`) is the fast path; `backend="auto"` uses it when present.
+Address the reader as you. In prose the product is Cite-Right. The install name is `cite-right`. The import package is `cite_right`.
 
-## Public API to document
+Each generated page gets one H1, then a short opening paragraph that states what the page is for, then `##` Title Case sections. Put a small runnable example before a long theory dump. Show `align_citations` / `PreparedCitationCorpus` with complete but small Python snippets (`SourceDocument`, print status, print evidence). Use bash for install.
 
-Primary:
+Be honest, not marketing. Cite-Right is a groundedness and citation tagger, not a clean hallucination detector. Do not invent benches. The only allowed measured numbers are: 50-case pack with no embedder, p50 wall about 12.4ms versus about 175.8ms in 0.3.1 (roughly 14×), spp 81.3% versus 83.4%; RAGTruth test 2,675 answers, false-supported on gold hallucinations about 1.6%, unsupported precision about 14%. If a number is not in that list and not in current source, omit it.
 
-- `align_citations(answer, sources, *, config=None, tokenizer=None, answer_segmenter=None, source_segmenter=None, embedder=None, backend="auto")` → `list[SpanCitations]`
-- `PreparedCitationCorpus.from_sources(...)` then `.align(answer)` when many answers share the same sources
-- `SourceDocument(id, text)` for full docs; `SourceChunk(source_id, text, doc_char_start, doc_char_end)` when retrieval already chunked (offsets are rebased onto the original document)
-- `CitationConfig` / `CitationWeights`; default `supported_answer_coverage` is `0.6`
+Write status in quotes in prose: `"supported"`, `"partial"`, `"unsupported"`. `"partial"` means low answer coverage **or** contradiction. The literal is `"partial"`, never `"partially_supported"`.
 
-Also public, document only as needed: `compute_hallucination_metrics`, `verify_facts`, convenience helpers (`annotate_answer`, `check_groundedness`, `format_with_citations`, `get_citation_summary`, `is_grounded`, `is_hallucinated`), tokenizers, segmenters, `SentenceTransformerEmbedder`, LangChain/LlamaIndex adapters.
+Teach the public API. File paths such as `src/cite_right/citations.py` are fine as orientation. Do not paste long function bodies on getting-started, how-it-works, or installation pages. Architecture and testing pages may go deeper.
 
-Do not treat `evaluation/`, hill-climb search spaces, or RAGTruth-style bench tables as product documentation. Those numbers drift and they are not the API.
+Do not write that the pipeline skips Smith-Waterman for speed. Do not write that Rust prepare is skipped when an embedder is set.
 
-## Citation statuses
+## What Cite-Right Does
 
-Each `SpanCitations.status` is exactly one of `supported`, `partial`, `unsupported`. Status comes from the best exact citation, not from embedding similarity.
+Cite-Right aligns generated answer text to source documents and returns character-accurate citations. When a language model answers from retrieved documents, you call `align_citations` (in `src/cite_right/citations.py`) and get per-span status plus `char_start` / `char_end` for highlighting.
 
-- `supported`: citations exist and the best citation's `answer_coverage` is `>= supported_answer_coverage`
-- `partial`: citations exist but coverage is below that threshold, **or** a contradiction was detected (see below). The literal is `partial`, never `partially_supported`.
-- `unsupported`: no citation survived filtering
+0.4.0 is index-first on the default Rust path. An inverted index and rare-token intersect choose which source windows are worth aligning. Smith-Waterman still localizes the citation. The public API is unchanged: `align_citations` and `PreparedCitationCorpus`.
 
-`retrieval_support` is a retrieval-only hint. A high embedding score that never localizes with Smith-Waterman is **not** a `Citation` and must not flip status.
+```python
+from cite_right import SourceDocument, align_citations
 
-Every `Citation` has `char_start` / `char_end` as a Python half-open interval. After chunk rebasing, slicing the logical source text at those offsets equals `citation.evidence`.
+answer = "The company reported record revenue in Q4."
+sources = [
+    SourceDocument(
+        id="earnings_call",
+        text="During the earnings call, the CEO announced that the company reported record revenue in Q4 of 2024.",
+    )
+]
 
-## Index-first retrieval, then Smith-Waterman localization
+results = align_citations(answer, sources)
+for result in results:
+    print(result.answer_span.text, result.status)
+    for citation in result.citations:
+        print(citation.evidence, citation.char_start, citation.char_end)
+```
 
-Default / Rust path (`SimpleTokenizer` + `SimpleSegmenter` and `cite_right._core` present): inverted index over source windows, rare-token intersect. SW localizes only on those hits, unless an embedder adds extras (below). The index chooses windows; SW still localizes `char_start` / `char_end`.
+Offsets are a Python half-open interval. After chunk rebasing, `source.text[citation.char_start:citation.char_end] == citation.evidence`.
 
-Fallback: if the optional Rust extension is missing, or a custom tokenizer/segmenter is supplied, `PreparedCitationCorpus.from_sources` leaves `inverted_index=None` and `_select_candidates` uses lexical selection.
+## Installation
 
-Embedder path: `_add_embedding_candidates` can add windows that were not inverted-index hits before alignment. Those extras still need SW to localize. `retrieval_support` is still not a `Citation`.
+Maintain an installation page. Python 3.11+. 0.4.0 ships abi3 wheels (`abi3-py311`), linux/aarch64 wheels, and an sdist.
 
-Public API unchanged (`align_citations`, `PreparedCitationCorpus`).
+```bash
+pip install cite-right==0.4.0
+```
 
-## Rust prepare still runs with an embedder
+```bash
+pip install "cite-right[embeddings]==0.4.0"
+pip install "cite-right[spacy]==0.4.0"
+pip install "cite-right[huggingface]==0.4.0"
+pip install "cite-right[tiktoken]==0.4.0"
+```
 
-`PreparedCitationCorpus.from_sources(..., embedder=...)` still takes the Rust prepare path when the simple tokenizer/segmenter are in use. The embedding index is built on those prepared candidates. Embedding-only `retrieval_support` still respects `min_embedding_similarity`. Lexical scores are filled only for inverted-index seeds. Embedding extras can still join the alignment set as above.
+You can combine extras. SpaCy still needs `python -m spacy download en_core_web_sm`. Rust prepare still runs when an embedder is set if `SimpleTokenizer` and `SimpleSegmenter` are in use. Embedding-only `retrieval_support` still respects `min_embedding_similarity`.
 
-## Contradiction stays `partial`
+## Quickstart
 
-A cheap contradiction check (negation, number mismatch, leftover n-gram slot, entity swap) downgrades a span to `partial`, never `unsupported`. The check uses the full candidate passage, not only the truncated SW evidence span. Shared tokens that would otherwise bless a contradictory claim as `supported` become `partial` and still keep the citation.
+Maintain a quickstart that covers the basic pattern, reading results, multiple sources, and `PreparedCitationCorpus`.
 
-Example: source "The vaccine is safe and effective." and answer "The vaccine is not safe." → `partial` with citations, not `unsupported`.
+```python
+from cite_right import CitationConfig, PreparedCitationCorpus, SourceDocument, align_citations
 
-## CI model rotation (not wiki content)
+answer = "Acme Corporation reported revenue of 5.2 billion dollars in 2024."
+sources = [
+    SourceDocument(
+        id="annual_report",
+        text="Acme Corporation reported revenue of 5.2 billion dollars in 2024, representing a 12% increase over the previous year.",
+    )
+]
+results = align_citations(answer, sources)
+print(results[0].status)
+print(results[0].citations[0].evidence)
 
-Wiki generation in GitHub Actions uses OpenRouter free models (`:free` in the model id). `scripts/openwiki_pick_model.py` ranks them (prefer `tools`, then Artificial Analysis `coding_index` if present, else `context_length`, then `created`). `scripts/openwiki_update.sh` retries the next model on 429/402/rate-limit, 403/404, agentic-harness blocks, and model-unavailable errors; a 429 sleeps `retry_after_seconds` or until `X-RateLimit-Reset` (cap 90s). Do not document a single paid model id as required.
+corpus = PreparedCitationCorpus.from_sources(
+    sources, config=CitationConfig(top_k=3)
+)
+for later_answer in [answer, "Revenue increased during fiscal year 2024."]:
+    print(corpus.align(later_answer)[0].status)
+```
+
+`"supported"` means the best citation's `answer_coverage` is at least `supported_answer_coverage` (default 0.6) and contradiction did not fire. `"partial"` means citations exist but coverage is below that threshold, or contradiction fired. `"unsupported"` means no citation survived filtering.
+
+## How It Works
+
+Maintain a how-it-works page. Pipeline orientation lives in `src/cite_right/citations.py`. Do not paste long function bodies there.
+
+1. Segment the answer (default `SimpleAnswerSegmenter`).
+2. Prepare source passage windows.
+3. Tokenize with one tokenizer instance (default `SimpleTokenizer`, Unicode NFKC and case-fold, original offsets kept).
+4. Select candidates, then Smith-Waterman localizes.
+
+Default / Rust path (`SimpleTokenizer` + `SimpleSegmenter` and `cite_right._core` present): inverted index over source windows, rare-token intersect. Smith-Waterman localizes on those hits. The index chooses windows. Smith-Waterman still localizes `char_start` / `char_end`.
+
+Fallback: if the optional Rust extension is missing, or a custom tokenizer or segmenter is supplied, `PreparedCitationCorpus.from_sources` leaves `inverted_index=None` and `_select_candidates` uses lexical selection.
+
+Embedder path: `_add_embedding_candidates` can add windows that were not inverted-index hits before alignment. Those extras still need Smith-Waterman. `retrieval_support` is not a `Citation` and does not flip status.
+
+Rust prepare still runs with an embedder when `SimpleTokenizer` and `SimpleSegmenter` are in use. The embedding index is built on those prepared candidates. Lexical scores are filled only for inverted-index seeds. 0.3.x skipped Rust prepare on the embedder path. That skip is gone.
+
+Content-word overlap on the candidate passage can emit a citation when sequential Smith-Waterman coverage is low. That keeps grounded how-to and news paraphrases from being tagged `"unsupported"` just because shared content words are reordered.
+
+Structured field:value sources (Data2txt hours, amenities, and similar) get a second Smith-Waterman pass per matching candidate with `gap_score=0`. Faithful rewrites can be `"supported"` or `"partial"`. Invented fields stay `"unsupported"`.
+
+## Citation Alignment
+
+Maintain a citation-alignment page for inputs, outputs, and offsets.
+
+`SourceDocument(id, text)` is a full document. `SourceChunk(source_id, text, doc_char_start, doc_char_end)` is a pre-chunked excerpt. Chunk offsets are rebased onto the original document.
+
+Each `SpanCitations` has `answer_span`, ranked `citations`, `retrieval_support`, and `status`. Status comes from the best exact citation, not from embedding similarity. A high embedding score that never localizes is `retrieval_support`, not a `Citation`.
+
+## Hallucination Detection
+
+Cite-Right is a groundedness and citation tagger, not a clean hallucination detector. Maintain that page in `src/cite_right/hallucination.py` terms. It marks whether each answer span has localized source support. Treat `"unsupported"` as "no localized citation survived," not as a high-precision hallucination label.
+
+On RAGTruth test (2,675 answers), 0.4.0 quality matched 0.3.1. False-supported on gold hallucinations is about 1.6%. Unsupported precision is about 14%. The tagger overflags: many spans tagged `"unsupported"` are not gold hallucinations. If `"partial"` counts as not fully supported, gold hallucinations are rarely blessed as `"supported"`.
+
+```python
+from cite_right import SourceDocument, align_citations, compute_hallucination_metrics
+
+answer = """The company reported record profits in Q4.
+They announced plans to expand into Asia."""
+sources = [
+    SourceDocument(
+        id="earnings",
+        text="Fourth quarter profits reached an all-time high, beating analyst expectations.",
+    )
+]
+results = align_citations(answer, sources)
+metrics = compute_hallucination_metrics(results)
+print(metrics.groundedness_score, metrics.hallucination_rate)
+```
+
+`HallucinationConfig.include_partial_in_grounded` (default True) controls whether `"partial"` contributes to groundedness. Convenience helpers `is_grounded`, `is_hallucinated`, and `check_groundedness` inherit the same overflag. Do not present their thresholds as calibrated hallucination cutoffs.
+
+## Fact Verification
+
+Maintain a fact-verification page for `verify_facts` in `src/cite_right/fact_verification.py`. Sentence-level tagging can hide a mixed sentence. Claim decomposition splits it. `SimpleClaimDecomposer` keeps one claim per sentence. `SpacyClaimDecomposer` splits coordinated clauses and needs the spacy extra.
+
+```python
+from cite_right import SourceDocument, verify_facts
+
+answer = "The product launched in March and sales exceeded 10 million units."
+sources = [
+    SourceDocument(
+        id="press_release",
+        text="The new product line was introduced to the market in March 2024.",
+    )
+]
+result = verify_facts(answer, sources)
+print(result.total_claims, result.num_verified, result.num_unverified)
+```
+
+## Configuration
+
+Maintain configuration pages for `CitationConfig` / `CitationWeights` (`src/cite_right/core/citation_config.py`), presets, tokenizers, and segmenters.
+
+Default `supported_answer_coverage` is 0.6. Other defaults you may document from source: `top_k=3`, `min_final_score=0.0`, `min_answer_coverage=0.2`, `min_embedding_similarity=0.3`, `max_candidates_lexical=200`. Presets: `CitationConfig.balanced()`, `.strict()`, `.permissive()`, `.fast()`. Permissive still requires localized Smith-Waterman evidence. It does not emit embedding-only citations.
+
+Tokenizers: `SimpleTokenizer` (default), `HuggingFaceTokenizer`, `TiktokenTokenizer`. Segmenters: `SimpleSegmenter` / `SimpleAnswerSegmenter` (default), `SpacySegmenter` / `SpacyAnswerSegmenter`, `PySBDSegmenter`. A custom tokenizer or segmenter takes the lexical fallback path above.
+
+## Integrations
+
+Maintain LangChain, LlamaIndex, and custom-sources pages.
+
+LangChain: `from_langchain_documents` / `from_langchain_chunks` in `src/cite_right/integrations.py`. LlamaIndex: `from_llamaindex_nodes` / `from_llamaindex_chunks`. Custom: `SourceDocument` directly, or `from_dicts`. Then call `align_citations` as usual.
+
+## Advanced Topics
+
+**Multi-Span Evidence.** Off by default. `CitationConfig(multi_span_evidence=True)`. Prefer `evidence_spans` or `exact_evidence` for precise attribution. Legacy `evidence` / `char_start` / `char_end` stay a contiguous enclosing span.
+
+**Embedding Retrieval.** `pip install "cite-right[embeddings]==0.4.0"`, then `SentenceTransformerEmbedder("all-MiniLM-L6-v2")`. Index-first still chooses lexical seeds. `_add_embedding_candidates` may add non-index windows. Those still need Smith-Waterman. `retrieval_support` is not a `Citation` and does not flip status. Rust prepare still runs with the embedder on the simple tokenizer/segmenter path.
+
+**Rust Acceleration.** Optional `cite_right._core`. `backend="auto"|"python"|"rust"`. Prepare, inverted index, and alignment stay on the hot path. Rust must match Python outputs. If `_core` is missing, candidate selection falls back to lexical prefilter. Do not claim Smith-Waterman is skipped for speed.
+
+**Performance.** Index-first means Smith-Waterman runs on index hits plus optional embedding extras, not on every window. On the 50-case pack with no embedder, 0.4.0 p50 wall time is about 12.4ms versus about 175.8ms in 0.3.1, roughly 14×. spp is 81.3% versus 83.4%. RAGTruth test quality on 2,675 answers matched 0.3.1. Embedder encoding is extra cost on top of the no-embedder numbers. Do not add other latency or quality figures.
+
+## Invariants
+
+These must stay true on every generated page that touches them.
+
+- Public API: `align_citations`, `PreparedCitationCorpus`. Default `supported_answer_coverage` is 0.6.
+- Half-open `char_start` / `char_end`. Evidence equals the sliced source after chunk rebasing.
+- Status is exactly `"supported"`, `"partial"`, or `"unsupported"`. Never `"partially_supported"`. `"partial"` is low coverage or contradiction.
+- Default / Rust path: inverted index, rare-token intersect, Smith-Waterman localizes on hits. The index chooses windows. Smith-Waterman still localizes.
+- Fallback: no Rust, or a custom tokenizer/segmenter, then `PreparedCitationCorpus.from_sources` leaves `inverted_index=None` and `_select_candidates` uses lexical selection.
+- Embedder: `_add_embedding_candidates` may add non-index windows. Those still need Smith-Waterman. `retrieval_support` is not a `Citation` and does not flip status.
+- Rust prepare still runs with an embedder when `SimpleTokenizer` and `SimpleSegmenter` are in use.
+- Contradiction (negation, number, leftover n-gram slot, entity swap) downgrades to `"partial"` with citations, never `"unsupported"`. The check uses the full candidate passage, not only truncated Smith-Waterman evidence. Example: source "The vaccine is safe and effective." and answer "The vaccine is not safe." is `"partial"` with citations.
+- Content-word overlap can emit a citation when sequential Smith-Waterman coverage is low.
+- Data2txt field:value gets a second Smith-Waterman pass with `gap_score=0`. Invented fields stay `"unsupported"`.
+- Do not document `evaluation/`, hill-climb, or RAGTruth tables beyond the two allowed measured lines.
+
+## Testing And Architecture
+
+Agent-only pages may be denser. Cover pytest markers from `tests/conftest.py`: `rust`, `spacy`, `embeddings`, `tiktoken`, `huggingface`, `pysbd`, `slow`. Contract tests compare Python and Rust backends for status and offsets. Point at `src/cite_right/__init__.py` for the public surface, `src/cite_right/citations.py` for the pipeline, `src/cite_right/core/prepared_corpus.py` for prepare, `src/cite_right/contradiction.py` for the cheap check, and `rust_core/` for the extension. Do not dump private helper bodies onto getting-started pages.
+
+## Pages To Maintain
+
+Mirror the MkDocs nav in `mkdocs.yml`: Home, Getting Started (Installation, Quickstart), Core Concepts (How It Works, Citation Alignment, Hallucination Detection, Fact Verification), Configuration (Citation Configuration, Presets, Tokenizers, Segmenters), Integrations (LangChain, LlamaIndex, Custom Sources), Advanced Topics (Multi-Span Evidence, Embedding Retrieval, Rust Acceleration, Performance Tuning), plus API orientation to the public types. Humans browse the same Markdown through GitHub Pages.
+
+## CI Model Rotation
+
+Wiki generation in GitHub Actions uses OpenRouter `:free` models. `scripts/openwiki_pick_model.py` ranks them (prefer `tools`, then Artificial Analysis `coding_index` if present, else `context_length`, then `created`). `scripts/openwiki_update.sh` retries the next model on 429/402/rate-limit, 403/404, agentic-harness blocks, and model-unavailable errors. A 429 sleeps `retry_after_seconds` or until `X-RateLimit-Reset` (cap 90s). That rotation is CI machinery, not wiki content. Do not document a paid model id as required.
