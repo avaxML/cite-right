@@ -1,7 +1,5 @@
 """Tests for Data2txt field:value paraphrase support (issue #50)."""
 
-import pytest
-
 from cite_right import CitationConfig, align_citations
 
 
@@ -68,8 +66,7 @@ attributes.OutdoorSeating: null"""
         span = results[0]
         # Invented amenity should stay unsupported
         assert span.status == "unsupported", (
-            f"Invented WiFi when null should be unsupported. "
-            f"Got status: {span.status}"
+            f"Invented WiFi when null should be unsupported. Got status: {span.status}"
         )
 
     def test_platform_mismatch_not_fully_supported(self) -> None:
