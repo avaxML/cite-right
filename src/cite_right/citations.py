@@ -632,7 +632,12 @@ def _process_answer_span(
             alignment_time = (time.perf_counter() - align_start) * 1000
 
     citations = _rank_and_limit_citations(citations, cfg)
-    status = _span_status(citations, cfg, answer_span.text)
+    status = _span_status(
+        citations,
+        cfg,
+        answer_span.text,
+        candidates=candidates,
+    )
     retrieval_support = _rank_retrieval_support(retrieval_support, cfg)
 
     return _SpanProcessingResult(
@@ -1369,18 +1374,41 @@ def _citation_sort_key(
     )
 
 
+def _contradiction_context(
+    citation: Citation,
+    candidates: Sequence[Candidate] | None,
+) -> str:
+    """Prefer the candidate passage over truncated Smith-Waterman evidence.
+
+    Leftover n-grams (issue #48) attach to the wrong slot when alignment
+    truncates evidence and hides the contradicting remainder of the passage.
+    """
+    if candidates:
+        for candidate in candidates:
+            if candidate.global_index == citation.candidate_index:
+                passage = candidate.passage.text
+                if passage:
+                    return passage
+    return citation.evidence
+
+
 def _span_status(
     citations: Sequence[Citation],
     cfg: CitationConfig,
     answer_text: str | None = None,
+    candidates: Sequence[Candidate] | None = None,
 ) -> Literal["supported", "partial", "unsupported"]:
     if not citations:
         return "unsupported"
     best = citations[0]
     coverage = float(best.components.get("answer_coverage", 0.0))
 
-    # Check for contradictions if answer text is provided
-    if answer_text is not None and check_contradiction(answer_text, best.evidence):
+    # Check for contradictions if answer text is provided.
+    # Use the candidate passage so leftover tokens beyond truncated evidence
+    # (e.g. "BC", "of which came in the first half") are visible.
+    if answer_text is not None and check_contradiction(
+        answer_text, _contradiction_context(best, candidates)
+    ):
         # Downgrade to partial (not unsupported) if contradiction detected
         # because we have evidence, it just contradicts the claim
         return "partial"
