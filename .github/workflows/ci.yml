@@ -75,8 +75,6 @@ jobs:
 
   coverage:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -99,45 +97,15 @@ jobs:
         # pkg_resources (required by coverage-badge) in newer releases. Pin it
         # ourselves instead of relying on the action's unconstrained install.
         run: uv run --with coverage-badge --with "setuptools<81" coverage-badge -o coverage.svg -f
-      # Always keep the generated badge. Never git push it to main: that branch
-      # is protected, and GH006 rejects the update because the new commit has
-      # no required status checks yet.
+      # Upload the generated badge. Do not git push it: main is protected
+      # (GH006), and a GITHUB_TOKEN push to a PR branch would move HEAD
+      # without retriggering required checks.
       - name: Upload coverage badge
         uses: actions/upload-artifact@v4
         with:
           name: coverage-badge
           path: coverage.svg
           if-no-files-found: error
-      - name: Commit coverage badge to PR branch
-        if: >
-          github.event_name == 'pull_request'
-          && github.event.pull_request.head.repo.full_name == github.repository
-          && github.event.pull_request.head.ref != 'main'
-        env:
-          HEAD_REF: ${{ github.head_ref }}
-        run: |
-          set -euo pipefail
-          if [[ -z "${HEAD_REF}" || "${HEAD_REF}" == "main" ]]; then
-            echo "Refusing to push coverage.svg to '${HEAD_REF:-<empty>}'"
-            exit 0
-          fi
-          if git diff --quiet -- coverage.svg; then
-            echo "coverage.svg is unchanged"
-            exit 0
-          fi
-          cp coverage.svg "${RUNNER_TEMP}/coverage.svg"
-          git fetch origin "refs/heads/${HEAD_REF}:refs/remotes/origin/${HEAD_REF}"
-          git checkout --force -B "${HEAD_REF}" "origin/${HEAD_REF}"
-          cp "${RUNNER_TEMP}/coverage.svg" coverage.svg
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add coverage.svg
-          if git diff --cached --quiet; then
-            echo "PR branch already has this badge"
-            exit 0
-          fi
-          git commit -m "Update coverage badge"
-          git push origin "HEAD:${HEAD_REF}"
 
   python-spacy:
     runs-on: ubuntu-latest
