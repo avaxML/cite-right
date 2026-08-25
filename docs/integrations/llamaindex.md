@@ -80,7 +80,7 @@ from cite_right.integrations import from_llamaindex_chunks
 sources = from_llamaindex_chunks(nodes)
 
 for source in sources:
-    if hasattr(source, 'doc_char_start'):
+    if hasattr(source, "doc_char_start"):
         print(f"Position in original: {source.doc_char_start} to {source.doc_char_end}")
 ```
 
@@ -99,7 +99,9 @@ from cite_right.integrations import from_llamaindex_nodes
 
 # Configure LlamaIndex settings
 Settings.llm = Ollama(model="llama2")
-Settings.embed_model = HuggingFaceEmbedding(model_name="sentence-transformers/all-MiniLM-L6-v2")
+Settings.embed_model = HuggingFaceEmbedding(
+    model_name="sentence-transformers/all-MiniLM-L6-v2"
+)
 
 # Load documents and create index
 documents = SimpleDirectoryReader("./knowledge_base").load_data()
@@ -107,6 +109,7 @@ index = VectorStoreIndex.from_documents(documents)
 
 # Create query engine
 query_engine = index.as_query_engine(similarity_top_k=5)
+
 
 def query_with_citations(question):
     # Execute query
@@ -128,15 +131,16 @@ def query_with_citations(question):
         "answer": str(response),
         "citations": citations,
         "groundedness": metrics.groundedness_score,
-        "source_nodes": source_nodes
+        "source_nodes": source_nodes,
     }
+
 
 # Use the pipeline
 result = query_with_citations("What is the company's mission statement?")
 print(f"Answer: {result['answer']}")
 print(f"Groundedness: {result['groundedness']:.1%}")
 
-for citation_result in result['citations']:
+for citation_result in result["citations"]:
     print(f"\n{citation_result.answer_span.text}")
     for cite in citation_result.citations:
         print(f"  From {cite.source_id}: {cite.evidence[:50]}...")
@@ -149,6 +153,7 @@ For custom query engines that need citation support, you can wrap the retrieval 
 ```python
 from llama_index.core.query_engine import CustomQueryEngine
 from llama_index.core.retrievers import BaseRetriever
+
 
 class CitationQueryEngine(CustomQueryEngine):
     retriever: BaseRetriever
@@ -167,11 +172,7 @@ class CitationQueryEngine(CustomQueryEngine):
         sources = from_llamaindex_nodes(nodes)
         citations = align_citations(str(response), sources)
 
-        return {
-            "response": str(response),
-            "citations": citations,
-            "nodes": nodes
-        }
+        return {"response": str(response), "citations": citations, "nodes": nodes}
 ```
 
 ## Response Synthesis
@@ -182,9 +183,7 @@ LlamaIndex provides various response synthesis strategies. Citations work with a
 from llama_index.core.response_synthesizers import ResponseMode
 
 # Tree summarize mode
-query_engine = index.as_query_engine(
-    response_mode=ResponseMode.TREE_SUMMARIZE
-)
+query_engine = index.as_query_engine(response_mode=ResponseMode.TREE_SUMMARIZE)
 
 response = query_engine.query(question)
 sources = from_llamaindex_nodes(response.source_nodes)
@@ -204,10 +203,7 @@ filters = MetadataFilters(
     ]
 )
 
-retriever = index.as_retriever(
-    similarity_top_k=5,
-    filters=filters
-)
+retriever = index.as_retriever(similarity_top_k=5, filters=filters)
 
 nodes = retriever.retrieve(query)
 sources = from_llamaindex_nodes(nodes)  # Only 2024 documents

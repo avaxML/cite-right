@@ -19,7 +19,7 @@ answer = "The product launched in March and sales exceeded 10 million units."
 sources = [
     SourceDocument(
         id="press_release",
-        text="The new product line was introduced to the market in March 2024."
+        text="The new product line was introduced to the market in March 2024.",
     )
 ]
 
@@ -113,11 +113,7 @@ metrics = check_groundedness(answer, sources)
 
 if metrics.hallucination_rate > 0.2:
     # Detailed analysis of problematic content
-    result = verify_facts(
-        answer,
-        sources,
-        claim_decomposer=SpacyClaimDecomposer()
-    )
+    result = verify_facts(answer, sources, claim_decomposer=SpacyClaimDecomposer())
 
     for claim in result.claims:
         if claim.status == "unverified":
@@ -131,10 +127,7 @@ The `verify_facts` function accepts the same configuration options as `align_cit
 ```python
 from cite_right import CitationConfig, verify_facts
 
-config = CitationConfig(
-    top_k=3,
-    min_answer_coverage=0.3
-)
+config = CitationConfig(top_k=3, min_answer_coverage=0.3)
 
 result = verify_facts(answer, sources, config=config)
 ```

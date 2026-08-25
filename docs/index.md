@@ -64,7 +64,7 @@ answer = "The company reported record revenue in Q4."
 sources = [
     SourceDocument(
         id="earnings_call",
-        text="During the earnings call, the CEO announced that the company reported record revenue in Q4 of 2024."
+        text="During the earnings call, the CEO announced that the company reported record revenue in Q4 of 2024.",
     )
 ]
 

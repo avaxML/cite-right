@@ -105,13 +105,16 @@ class CitationConfig(BaseModel):
 def balanced(cls) -> "CitationConfig":
     """Default balanced configuration."""
 
+
 @classmethod
 def strict(cls) -> "CitationConfig":
     """High-precision configuration for fact-checking."""
 
+
 @classmethod
 def permissive(cls) -> "CitationConfig":
     """Lenient configuration for paraphrased content."""
+
 
 @classmethod
 def fast(cls) -> "CitationConfig":
@@ -175,8 +178,7 @@ class TokenizerConfig:
         normalize_numbers: bool = True,
         normalize_percent: bool = True,
         normalize_currency: bool = True,
-    ) -> None:
-        ...
+    ) -> None: ...
 ```
 
 **normalize_numbers** (`bool`): Convert numeric separators like "1,200" to "1200".
@@ -204,8 +206,8 @@ config = CitationConfig(
         answer_coverage=1.0,
         evidence_coverage=0.0,
         lexical=0.3,
-        embedding=0.0
-    )
+        embedding=0.0,
+    ),
 )
 
 results = align_citations(answer, sources, config=config)
@@ -223,7 +225,7 @@ config = CitationConfig(
     min_answer_coverage=base.min_answer_coverage,
     supported_answer_coverage=base.supported_answer_coverage,
     window_size_sentences=base.window_size_sentences,
-    max_candidates_lexical=base.max_candidates_lexical
+    max_candidates_lexical=base.max_candidates_lexical,
 )
 ```
 
@@ -233,8 +235,7 @@ config = CitationConfig(
 from cite_right import HallucinationConfig, compute_hallucination_metrics
 
 config = HallucinationConfig(
-    weak_citation_threshold=0.3,
-    include_partial_in_grounded=False
+    weak_citation_threshold=0.3, include_partial_in_grounded=False
 )
 
 metrics = compute_hallucination_metrics(results, config=config)
@@ -249,7 +250,7 @@ from cite_right.text.tokenizer import TokenizerConfig
 config = TokenizerConfig(
     normalize_numbers=True,
     normalize_percent=True,
-    normalize_currency=False  # Keep $ and € as-is
+    normalize_currency=False,  # Keep $ and € as-is
 )
 
 tokenizer = SimpleTokenizer(config=config)

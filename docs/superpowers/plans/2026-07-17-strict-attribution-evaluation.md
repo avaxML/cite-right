@@ -183,20 +183,24 @@ Define frozen Pydantic models:
 SupportLabel = Literal["entailed", "contradicted", "not_in_sources"]
 Split = Literal["train", "dev", "holdout"]
 
+
 class CharSpan(BaseModel):
     model_config = ConfigDict(frozen=True)
     start: int
     end: int
+
 
 class CitationTarget(BaseModel):
     model_config = ConfigDict(frozen=True)
     source_id: str
     spans: tuple[CharSpan, ...]
 
+
 class CitationRequirement(BaseModel):
     model_config = ConfigDict(frozen=True)
     requirement_id: str
     alternatives: tuple[CitationTarget, ...]
+
 
 class ClaimAnnotation(BaseModel):
     model_config = ConfigDict(frozen=True)
@@ -205,6 +209,7 @@ class ClaimAnnotation(BaseModel):
     label: SupportLabel
     citation_requirements: tuple[CitationRequirement, ...] = ()
     acceptable_retrieval_source_ids: tuple[str, ...] = ()
+
 
 class EvaluationUnit(BaseModel):
     model_config = ConfigDict(frozen=True)
@@ -264,8 +269,10 @@ def canonical_json_bytes(value: BaseModel | Mapping[str, object]) -> bytes:
         allow_nan=False,
     ).encode("utf-8")
 
+
 def sha256_hex(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
+
 
 def authoritative_case_id(
     case_without_operational_metadata: Mapping[str, object],
@@ -323,11 +330,11 @@ class FactTemplate(BaseModel):
     source_text: str
     facts: tuple[Fact, ...]
 
+
 class Transformation(Protocol):
     name: str
-    def generate(
-        self, template: FactTemplate, seed: int
-    ) -> tuple[EvaluationCase, ...]:
+
+    def generate(self, template: FactTemplate, seed: int) -> tuple[EvaluationCase, ...]:
         raise NotImplementedError
 ```
 
@@ -474,6 +481,7 @@ class ValidationFinding(BaseModel):
     case_id: str | None
     path: str
     message: str
+
 
 def validate_dataset(bundle: DatasetBundle) -> ValidationReport:
     findings = [

@@ -13,12 +13,9 @@ sources = [
     SourceDocument(
         id="doc_1",
         text="The full text of the first document goes here.",
-        metadata={"author": "Smith", "year": 2024}
+        metadata={"author": "Smith", "year": 2024},
     ),
-    SourceDocument(
-        id="doc_2",
-        text="The full text of the second document goes here."
-    )
+    SourceDocument(id="doc_2", text="The full text of the second document goes here."),
 ]
 
 results = align_citations(answer, sources)
@@ -59,9 +56,7 @@ For the identifier, it checks "id", "doc_id", "document_id", and "source". If no
 All other fields become metadata.
 
 ```python
-docs = [
-    {"body": "Document content", "url": "https://example.com/doc1"}
-]
+docs = [{"body": "Document content", "url": "https://example.com/doc1"}]
 
 sources = from_dicts(docs)
 # sources[0].text == "Document content"
@@ -74,15 +69,10 @@ sources = from_dicts(docs)
 If your data uses different field names, you can map them explicitly.
 
 ```python
-docs = [
-    {"document_text": "Content here", "document_uuid": "abc123"}
-]
+docs = [{"document_text": "Content here", "document_uuid": "abc123"}]
 
 # Rename fields before conversion
-standardized = [
-    {"text": d["document_text"], "id": d["document_uuid"]}
-    for d in docs
-]
+standardized = [{"text": d["document_text"], "id": d["document_uuid"]} for d in docs]
 
 sources = from_dicts(standardized)
 ```
@@ -100,13 +90,13 @@ chunks = [
         source_id="report_2024",
         text="This is the text of chunk 1.",
         doc_char_start=0,
-        doc_char_end=28
+        doc_char_end=28,
     ),
     SourceChunk(
         source_id="report_2024",
         text="This is the text of chunk 2.",
         doc_char_start=29,
-        doc_char_end=57
+        doc_char_end=57,
     ),
 ]
 
@@ -131,26 +121,33 @@ Here is an example of integrating with a PostgreSQL database containing document
 import psycopg2
 from cite_right import SourceDocument, align_citations
 
+
 def get_relevant_docs(query, connection, limit=10):
     cursor = connection.cursor()
-    cursor.execute("""
+    cursor.execute(
+        """
         SELECT id, content, title, created_at
         FROM documents
         WHERE to_tsvector(content) @@ plainto_tsquery(%s)
         ORDER BY ts_rank(to_tsvector(content), plainto_tsquery(%s)) DESC
         LIMIT %s
-    """, (query, query, limit))
+    """,
+        (query, query, limit),
+    )
 
     sources = []
     for row in cursor.fetchall():
         doc_id, content, title, created_at = row
-        sources.append(SourceDocument(
-            id=str(doc_id),
-            text=content,
-            metadata={"title": title, "created_at": str(created_at)}
-        ))
+        sources.append(
+            SourceDocument(
+                id=str(doc_id),
+                text=content,
+                metadata={"title": title, "created_at": str(created_at)},
+            )
+        )
 
     return sources
+
 
 # Usage
 connection = psycopg2.connect(...)
@@ -168,28 +165,27 @@ from cite_right import SourceDocument, align_citations
 
 es = Elasticsearch()
 
+
 def search_and_cite(query, answer):
     # Retrieve from Elasticsearch
     response = es.search(
-        index="documents",
-        body={
-            "query": {"match": {"content": query}},
-            "size": 10
-        }
+        index="documents", body={"query": {"match": {"content": query}}, "size": 10}
     )
 
     # Convert to SourceDocument
     sources = []
     for hit in response["hits"]["hits"]:
-        sources.append(SourceDocument(
-            id=hit["_id"],
-            text=hit["_source"]["content"],
-            metadata={
-                "score": hit["_score"],
-                "index": hit["_index"],
-                **hit["_source"]
-            }
-        ))
+        sources.append(
+            SourceDocument(
+                id=hit["_id"],
+                text=hit["_source"]["content"],
+                metadata={
+                    "score": hit["_score"],
+                    "index": hit["_index"],
+                    **hit["_source"],
+                },
+            )
+        )
 
     # Compute citations
     return align_citations(answer, sources)
@@ -204,11 +200,11 @@ import requests
 from cite_right.integrations import from_dicts
 from cite_right import align_citations
 
+
 def fetch_and_cite(query, answer):
     # Call your retrieval API
     response = requests.post(
-        "https://api.example.com/search",
-        json={"query": query, "limit": 10}
+        "https://api.example.com/search", json={"query": query, "limit": 10}
     )
     response.raise_for_status()
 
@@ -227,7 +223,12 @@ You can mix `SourceDocument` and `SourceChunk` in the same call. The library han
 ```python
 sources = [
     SourceDocument(id="full_doc", text="Complete document text..."),
-    SourceChunk(source_id="chunked_doc", text="Chunk text...", doc_char_start=100, doc_char_end=200),
+    SourceChunk(
+        source_id="chunked_doc",
+        text="Chunk text...",
+        doc_char_start=100,
+        doc_char_end=200,
+    ),
 ]
 
 results = align_citations(answer, sources)

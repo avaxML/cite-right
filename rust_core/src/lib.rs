@@ -1,7 +1,10 @@
 use pyo3::prelude::*;
 
 mod citation_fast;
+mod contradiction_check;
+mod inverted_index;
 mod prepare;
+mod prepared_corpus;
 mod smith_waterman;
 
 type MatchBlocks = Vec<(usize, usize)>;
@@ -234,36 +237,41 @@ fn align_batch_blocks_details(
 }
 
 #[pyfunction]
-#[allow(clippy::type_complexity)]
 fn rust_tokenize_and_prepare(
     py: Python<'_>,
     source_texts: Vec<String>,
     window_size: usize,
     stride: usize,
-) -> PyResult<(
-    Vec<Vec<(usize, usize, Vec<u32>, Vec<(usize, usize)>)>>,
-    Vec<(u32, f64)>,
-    Vec<(String, u32)>,
-)> {
+) -> PyResult<prepared_corpus::PreparedCorpus> {
+    use rayon::prelude::*;
+
     py.detach(|| {
+        // Tokenize sequentially to maintain consistent vocabulary
         let mut tokenizer = prepare::SimpleTokenizer::new();
-        let mut all_tokenized = Vec::new();
+        let all_tokenized: Vec<_> = source_texts
+            .iter()
+            .map(|text| tokenizer.tokenize(text))
+            .collect();
 
-        // Tokenize all sources
-        for text in &source_texts {
-            all_tokenized.push(tokenizer.tokenize(text));
-        }
+        // Process sources in parallel: segment + generate passages
+        let source_passages: Vec<_> = source_texts
+            .par_iter()
+            .map(|text| {
+                let segments = prepare::simple_segment(text);
+                prepare::generate_passages(&segments, window_size, stride)
+            })
+            .collect();
 
-        // Build candidates per source
-        let mut source_candidates = Vec::new();
+        // Build candidates and index sequentially (index needs global ordering)
+        let mut candidates = Vec::new();
         let mut all_candidate_tokens = Vec::new();
+        let mut index = inverted_index::InvertedIndex::new();
+        let mut global_candidate_index = 0;
 
-        for (text, tokenized) in source_texts.iter().zip(&all_tokenized) {
-            let segments = prepare::simple_segment(text);
-            let passages = prepare::generate_passages(&segments, window_size, stride);
-            let mut candidates = Vec::new();
-
-            for (passage_start, passage_end) in passages {
+        for (source_index, (tokenized, passages)) in
+            all_tokenized.iter().zip(&source_passages).enumerate()
+        {
+            for &(passage_start, passage_end) in passages {
                 let (token_ids, token_spans) = prepare::slice_tokenized_text(
                     &tokenized.token_ids,
                     &tokenized.token_spans,
@@ -271,21 +279,46 @@ fn rust_tokenize_and_prepare(
                     passage_end,
                 );
 
-                candidates.push((passage_start, passage_end, token_ids.clone(), token_spans));
-                all_candidate_tokens.push(token_ids);
-            }
+                // Add to index inline
+                for (token_pos, (&token_id, &(char_start, char_end))) in
+                    token_ids.iter().zip(token_spans.iter()).enumerate()
+                {
+                    index.add_posting(
+                        token_id,
+                        inverted_index::Posting {
+                            candidate_index: global_candidate_index,
+                            token_pos,
+                            char_start,
+                            char_end,
+                        },
+                    );
+                }
 
-            source_candidates.push(candidates);
+                candidates.push(prepared_corpus::Candidate {
+                    source_index,
+                    passage_start,
+                    passage_end,
+                    token_ids: token_ids.clone(),
+                    token_spans: token_spans.clone(),
+                });
+                all_candidate_tokens.push(token_ids);
+                global_candidate_index += 1;
+            }
         }
 
         // Compute IDF
         let idf = prepare::compute_idf(&all_candidate_tokens);
-        let idf_vec: Vec<(u32, f64)> = idf.into_iter().collect();
 
         // Extract vocab
-        let vocab_vec: Vec<(String, u32)> = tokenizer.get_vocab().into_iter().collect();
+        let vocab = tokenizer.get_vocab();
 
-        Ok((source_candidates, idf_vec, vocab_vec))
+        Ok(prepared_corpus::PreparedCorpus {
+            candidates,
+            idf,
+            vocab,
+            inverted_index: index,
+            source_texts,
+        })
     })
 }
 
@@ -492,5 +525,7 @@ fn _core(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(rust_tokenize_and_prepare, module)?)?;
     module.add_function(wrap_pyfunction!(rust_align_batch_candidates, module)?)?;
     module.add_function(wrap_pyfunction!(rust_build_citations_fast, module)?)?;
+    module.add_class::<inverted_index::InvertedIndex>()?;
+    module.add_class::<prepared_corpus::PreparedCorpus>()?;
     Ok(())
 }

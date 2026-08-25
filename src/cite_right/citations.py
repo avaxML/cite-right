@@ -2,18 +2,28 @@ from __future__ import annotations
 
 import time
 from collections import Counter
-from typing import Iterable, Literal, Sequence, TypeAlias
+from typing import TYPE_CHECKING, Iterable, Literal, Sequence, TypeAlias
 
 from pydantic import BaseModel, ConfigDict
 
+if TYPE_CHECKING:
+    from cite_right._core import InvertedIndex
+    from cite_right._core import PreparedCorpus as RustPreparedCorpus
+
 try:
     from cite_right import _core
+    from cite_right._core import InvertedIndex
+    from cite_right._core import PreparedCorpus as RustPreparedCorpus
 
     HAS_RUST_CORE = True
 except ImportError:
     HAS_RUST_CORE = False
     _core = None  # type: ignore[assignment]
+    if not TYPE_CHECKING:
+        InvertedIndex = object  # type: ignore[misc,assignment]
+        RustPreparedCorpus = object  # type: ignore[misc,assignment]
 
+from cite_right.contradiction import check_contradiction
 from cite_right.core.aligner_py import SmithWatermanAligner
 from cite_right.core.aligner_rust import RustSmithWatermanAligner
 from cite_right.core.citation_config import CitationConfig
@@ -184,6 +194,8 @@ def _process_answer_span_with_backend(
     idf: IdfWeights,
     embedding_cache: EmbeddingCache | None,
     embedding_index: EmbeddingIndex | None,
+    inverted_index: InvertedIndex | None,
+    rust_corpus: RustPreparedCorpus | None,
     aligner: Aligner | None,
     cfg: CitationConfig,
     backend: str,
@@ -197,6 +209,8 @@ def _process_answer_span_with_backend(
         idf=idf,
         embedding_cache=embedding_cache,
         embedding_index=embedding_index,
+        inverted_index=inverted_index,
+        rust_corpus=rust_corpus,
         aligner=active_aligner,
         cfg=cfg,
     )
@@ -217,6 +231,8 @@ def _process_answer_span(
     idf: IdfWeights,
     embedding_cache: EmbeddingCache | None,
     embedding_index: EmbeddingIndex | None,
+    inverted_index: InvertedIndex | None,
+    rust_corpus: RustPreparedCorpus | None,
     aligner: Aligner,
     cfg: CitationConfig,
 ) -> _SpanProcessingResult:
@@ -232,7 +248,12 @@ def _process_answer_span(
 
     if answer_tokens and candidates:
         answer_set = frozenset(answer_tokens)
-        lexical_scores = _lexical_prefilter(answer_set, candidates, idf)
+
+        # Skip lexical prefilter when rust_corpus is available (compute on-demand if needed)
+        if rust_corpus is not None and HAS_RUST_CORE:
+            lexical_scores: LexicalScores = {}
+        else:
+            lexical_scores = _lexical_prefilter(answer_set, candidates, idf)
 
         embed_start = time.perf_counter()
         query_vector: list[float] | None = None
@@ -242,8 +263,13 @@ def _process_answer_span(
 
         selected = _select_candidates(
             candidates,
+            answer_tokens=answer_tokens,
+            answer_set=answer_set,
             lexical_scores=lexical_scores,
+            idf=idf,
             embedding_index=embedding_index,
+            inverted_index=inverted_index,
+            rust_corpus=rust_corpus,
             query_vector=query_vector,
             cfg=cfg,
         )
@@ -252,11 +278,186 @@ def _process_answer_span(
         selected_candidates = [
             candidates[candidate_index] for candidate_index, _, _ in selected
         ]
-        candidate_token_ids = [candidate.token_ids for candidate in selected_candidates]
 
-        # Try Rust fast path for full citation building
+        # Try Rust PreparedCorpus fast path (no marshalling overhead)
+        use_corpus_fast_path = (
+            HAS_RUST_CORE
+            and rust_corpus is not None
+            and hasattr(rust_corpus, "build_citations")
+            and isinstance(aligner, RustSmithWatermanAligner)
+        )
+
+        # Compute lexical scores on-demand if needed (for rust_corpus path)
+        if rust_corpus is not None and HAS_RUST_CORE and not lexical_scores:
+            # Fetch token_ids for selected candidates to compute lexical scores
+            candidate_indices_for_scoring = [
+                candidate_index for candidate_index, _, _ in selected
+            ]
+            candidate_token_ids_for_scoring = rust_corpus.get_candidate_tokens(
+                candidate_indices_for_scoring
+            )  # type: ignore[attr-defined]
+
+            denom = sum(idf.get(token_id, 1.0) for token_id in answer_set)
+            if denom > 0.0:
+                for i, token_ids in enumerate(candidate_token_ids_for_scoring):
+                    candidate_idx = candidate_indices_for_scoring[i]
+                    token_set = frozenset(token_ids)
+                    overlap = answer_set & token_set
+                    if overlap:
+                        numer = sum(idf.get(token_id, 1.0) for token_id in overlap)
+                        lexical_scores[candidate_idx] = numer / denom
+
+        # Fetch token_ids and token_spans only if not using corpus_fast_path
+        # If rust_corpus is available, fetch from Rust (on-demand) and create new candidates
+        # Otherwise use token_ids from Python candidates
+        candidate_token_ids: list[list[int]] = []
+        if not use_corpus_fast_path:
+            if rust_corpus is not None and HAS_RUST_CORE:
+                candidate_indices_for_tokens = [
+                    candidate_index for candidate_index, _, _ in selected
+                ]
+                candidate_token_ids = rust_corpus.get_candidate_tokens(
+                    candidate_indices_for_tokens
+                )  # type: ignore[attr-defined]
+                # Also fetch token_spans for Python citation building
+                candidate_metadata = rust_corpus.get_candidate_metadata(
+                    candidate_indices_for_tokens
+                )  # type: ignore[attr-defined]
+                # Create new candidates with populated token data
+                new_selected_candidates = []
+                for i, candidate in enumerate(selected_candidates):
+                    if i < len(candidate_token_ids) and i < len(candidate_metadata):
+                        _, _, _, token_spans = candidate_metadata[i]
+                        token_ids = candidate_token_ids[i]
+                        # Create new Candidate with populated fields
+                        new_candidate = Candidate(
+                            global_index=candidate.global_index,
+                            source=candidate.source,
+                            passage=candidate.passage,
+                            token_ids=token_ids,
+                            token_spans=token_spans,
+                            token_set=frozenset(token_ids),
+                        )
+                        new_selected_candidates.append(new_candidate)
+                    else:
+                        new_selected_candidates.append(candidate)
+                selected_candidates = new_selected_candidates
+            else:
+                candidate_token_ids = [
+                    candidate.token_ids for candidate in selected_candidates
+                ]
+
+        if use_corpus_fast_path:
+            try:
+                candidate_indices_orig = [
+                    candidate_index for candidate_index, _, _ in selected
+                ]
+                embed_scores = [embed_score for _, embed_score, _ in selected]
+                # Use computed lexical scores (may have been computed on-demand)
+                lexical_scores_list = [
+                    lexical_scores.get(candidate_index, 0.0)
+                    for candidate_index, _, _ in selected
+                ]
+
+                # Build source_id and base_offset maps
+                source_id_map = {
+                    candidates[idx].source.source_index: candidates[
+                        idx
+                    ].source.source_id
+                    for idx in candidate_indices_orig
+                }
+                base_offset_map = {
+                    candidates[idx].source.source_index: candidates[
+                        idx
+                    ].source.base_doc_offset
+                    for idx in candidate_indices_orig
+                }
+
+                # Build config tuple
+                config_tuple = (
+                    cfg.min_alignment_score,
+                    cfg.min_answer_coverage,
+                    cfg.min_final_score,
+                    cfg.require_all_answer_tokens_in_evidence,
+                    cfg.match_score,
+                    cfg.weights.alignment,
+                    cfg.weights.answer_coverage,
+                    cfg.weights.evidence_coverage,
+                    cfg.weights.lexical,
+                    cfg.weights.embedding,
+                )
+
+                multi_span_config = (
+                    cfg.multi_span_evidence,
+                    cfg.multi_span_merge_gap_chars,
+                    cfg.multi_span_max_spans,
+                )
+
+                # Call Rust PreparedCorpus.build_citations
+                result = rust_corpus.build_citations(  # type: ignore[attr-defined]
+                    answer_tokens,
+                    candidate_indices_orig,
+                    lexical_scores_list,
+                    embed_scores,
+                    source_id_map,
+                    base_offset_map,
+                    config_tuple,
+                    multi_span_config,
+                    aligner.match_score,  # type: ignore[attr-defined]
+                    aligner.mismatch_score,  # type: ignore[attr-defined]
+                    aligner.gap_score,  # type: ignore[attr-defined]
+                )
+
+                num_alignments = result.num_alignments  # type: ignore[attr-defined]
+
+                # Convert Rust structs to Pydantic models
+                for cit in result.citations:  # type: ignore[attr-defined]
+                    citations.append(
+                        Citation(
+                            score=cit.score,
+                            source_id=cit.source_id,
+                            source_index=cit.source_index,
+                            candidate_index=cit.candidate_index,
+                            char_start=cit.char_start,
+                            char_end=cit.char_end,
+                            evidence=cit.evidence,
+                            evidence_spans=[
+                                EvidenceSpan(
+                                    char_start=es.char_start,
+                                    char_end=es.char_end,
+                                    evidence=es.evidence,
+                                )
+                                for es in cit.evidence_spans
+                            ],
+                            components=cit.components,
+                        )
+                    )
+
+                for sup in result.supports:  # type: ignore[attr-defined]
+                    retrieval_support.append(
+                        RetrievalSupport(
+                            retrieval_score=sup.retrieval_score,
+                            source_id=sup.source_id,
+                            source_index=sup.source_index,
+                            candidate_index=sup.candidate_index,
+                            passage_char_start=sup.passage_char_start,
+                            passage_char_end=sup.passage_char_end,
+                            passage_text=sup.passage_text,
+                            embedding_score=sup.embedding_score,
+                            lexical_score=sup.lexical_score,
+                        )
+                    )
+
+                alignment_time = (time.perf_counter() - align_start) * 1000
+                use_corpus_fast_path = True
+            except Exception:
+                # Fall back to standard path
+                use_corpus_fast_path = False
+
+        # Try Rust fast path for full citation building (legacy JSON-based)
         use_rust_fast_path = (
             HAS_RUST_CORE
+            and not use_corpus_fast_path
             and isinstance(aligner, RustSmithWatermanAligner)
             and hasattr(_core, "rust_build_citations_fast")
         )
@@ -273,6 +474,20 @@ def _process_answer_span(
                     lexical_score for _, _, lexical_score in selected
                 ]
 
+                # Fetch token_spans from rust_corpus if needed
+                if rust_corpus is not None and HAS_RUST_CORE:
+                    candidate_metadata = rust_corpus.get_candidate_metadata(
+                        candidate_indices_orig
+                    )  # type: ignore[attr-defined]
+                    # candidate_metadata is list of (source_idx, passage_start, passage_end, token_spans)
+                    candidate_token_spans = [
+                        metadata[3] for metadata in candidate_metadata
+                    ]
+                else:
+                    candidate_token_spans = [
+                        candidates[idx].token_spans for idx in candidate_indices_orig
+                    ]
+
                 # Build candidate data with NEW indices (0, 1, 2, ...)
                 # But store the original global_index in the first field
                 candidates_data = [
@@ -285,10 +500,10 @@ def _process_answer_span(
                         candidates[idx].source.base_doc_offset,
                         candidates[idx].passage.doc_char_start,
                         candidates[idx].passage.doc_char_end,
-                        candidates[idx].token_ids,
-                        candidates[idx].token_spans,
+                        candidate_token_ids[i],  # Use fetched token_ids
+                        candidate_token_spans[i],
                     )
-                    for idx in candidate_indices_orig
+                    for i, idx in enumerate(candidate_indices_orig)
                 ]
 
                 # Use sequential indices for alignment (matching candidates_data)
@@ -380,7 +595,7 @@ def _process_answer_span(
                 # Fall back to standard path
                 use_rust_fast_path = False
 
-        if not use_rust_fast_path:
+        if not use_corpus_fast_path and not use_rust_fast_path:
             align_batch = getattr(aligner, "align_batch", None)
             if align_batch is None:
                 alignments = [
@@ -397,15 +612,19 @@ def _process_answer_span(
             for (
                 candidate_index,
                 embed_score,
-                lexical_score,
+                lexical_score_orig,
             ), candidate, alignment in zip(
                 selected,
                 selected_candidates,
                 alignments,
                 strict=True,
             ):
-                candidate = candidates[candidate_index]
+                # Use candidate from selected_candidates (may have token_ids/token_spans populated)
+                # Only re-fetch if needed for source context, not token data
                 num_alignments += 1
+
+                # Use updated lexical score if computed on-demand
+                lexical_score = lexical_scores.get(candidate_index, lexical_score_orig)
 
                 citation = _build_exact_citation(
                     candidate=candidate,
@@ -433,7 +652,7 @@ def _process_answer_span(
             alignment_time = (time.perf_counter() - align_start) * 1000
 
     citations = _rank_and_limit_citations(citations, cfg)
-    status = _span_status(citations, cfg)
+    status = _span_status(citations, cfg, answer_span.text)
     retrieval_support = _rank_retrieval_support(retrieval_support, cfg)
 
     return _SpanProcessingResult(
@@ -740,17 +959,104 @@ def _lexical_prefilter(
 def _select_candidates(
     candidates: Sequence[Candidate],
     *,
+    answer_tokens: list[int],
+    answer_set: frozenset[int],
     lexical_scores: LexicalScores,
+    idf: IdfWeights,
     embedding_index: EmbeddingIndex | None,
+    inverted_index: InvertedIndex | None,
+    rust_corpus: RustPreparedCorpus | None,
     query_vector: list[float] | None,
     cfg: CitationConfig,
 ) -> CandidateSelection:
     selected: dict[int, tuple[float, float]] = {}
 
-    _add_lexical_candidates(selected, candidates, lexical_scores, cfg)
+    # Use rust_corpus index for seeding if available, else inverted_index
+    if rust_corpus is not None and HAS_RUST_CORE:
+        _add_index_candidates_from_corpus(
+            selected, answer_tokens, rust_corpus, lexical_scores, cfg
+        )
+        # Fall back to lexical if index found nothing
+        if not selected:
+            _add_lexical_candidates(
+                selected,
+                candidates,
+                lexical_scores,
+                cfg,
+                answer_set=answer_set,
+                idf=idf,
+                rust_corpus=rust_corpus,
+            )
+    elif inverted_index is not None and HAS_RUST_CORE:
+        _add_index_candidates(
+            selected, answer_tokens, inverted_index, lexical_scores, cfg
+        )
+        # Fall back to lexical if index found nothing
+        if not selected:
+            _add_lexical_candidates(selected, candidates, lexical_scores, cfg)
+    else:
+        _add_lexical_candidates(selected, candidates, lexical_scores, cfg)
+
     _add_embedding_candidates(selected, embedding_index, query_vector, cfg)
 
     return _rank_selected_candidates(selected, candidates, cfg)
+
+
+def _add_index_candidates_from_corpus(
+    selected: dict[int, tuple[float, float]],
+    answer_tokens: list[int],
+    rust_corpus: RustPreparedCorpus,
+    lexical_scores: LexicalScores,
+    cfg: CitationConfig,
+) -> None:
+    """Add candidates from rust corpus index lookup using conjunctive query."""
+    if cfg.max_candidates_lexical <= 0:
+        return
+
+    try:
+        # Query rust_corpus index directly (stays in Rust, uses intersection)
+        seed_candidates = rust_corpus.query_index(  # type: ignore[attr-defined]
+            answer_tokens, cfg.max_candidates_lexical
+        )
+
+        # Add seed candidates with their lexical scores
+        for idx in seed_candidates:
+            lexical_score = lexical_scores.get(idx, 0.0)
+            selected[idx] = (0.0, lexical_score)
+    except Exception as e:
+        # Fall back to empty selection; caller can handle fallback
+        import sys
+
+        print(f"Warning: rust corpus index query failed: {e}", file=sys.stderr)
+
+
+def _add_index_candidates(
+    selected: dict[int, tuple[float, float]],
+    answer_tokens: list[int],
+    inverted_index: InvertedIndex,
+    lexical_scores: LexicalScores,
+    cfg: CitationConfig,
+) -> None:
+    """Add candidates from inverted index lookup using conjunctive query."""
+    if cfg.max_candidates_lexical <= 0:
+        return
+
+    try:
+        # Query index directly (stays in Rust, uses intersection)
+        # Request fewer candidates since we're using intersection
+        seed_candidates = inverted_index.query(
+            answer_tokens, cfg.max_candidates_lexical
+        )  # type: ignore[attr-defined]
+
+        # Add seed candidates with their lexical scores
+        for idx in seed_candidates:
+            lexical_score = lexical_scores.get(idx, 0.0)
+            selected[idx] = (0.0, lexical_score)
+    except Exception as e:
+        # Fall back to empty selection; caller can handle fallback
+        import sys
+
+        print(f"Warning: inverted index query failed: {e}", file=sys.stderr)
 
 
 def _add_lexical_candidates(
@@ -758,10 +1064,39 @@ def _add_lexical_candidates(
     candidates: Sequence[Candidate],
     lexical_scores: LexicalScores,
     cfg: CitationConfig,
+    answer_set: frozenset[int] | None = None,
+    idf: IdfWeights | None = None,
+    rust_corpus: RustPreparedCorpus | None = None,
 ) -> None:
     """Add top lexical candidates to the selected set."""
-    if cfg.max_candidates_lexical <= 0 or not lexical_scores:
+    if cfg.max_candidates_lexical <= 0:
         return
+
+    # Compute lexical scores on-demand if needed
+    if (
+        not lexical_scores
+        and rust_corpus is not None
+        and answer_set is not None
+        and idf is not None
+        and HAS_RUST_CORE
+    ):
+        # Fetch token_ids for all candidates from rust_corpus
+        all_indices = list(range(len(candidates)))
+        all_token_ids = rust_corpus.get_candidate_tokens(all_indices)  # type: ignore[attr-defined]
+
+        # Compute lexical scores
+        denom = sum(idf.get(token_id, 1.0) for token_id in answer_set)
+        if denom > 0.0:
+            for idx, token_ids in enumerate(all_token_ids):
+                token_set = frozenset(token_ids)
+                overlap = answer_set & token_set
+                if overlap:
+                    numer = sum(idf.get(token_id, 1.0) for token_id in overlap)
+                    lexical_scores[idx] = numer / denom
+
+    if not lexical_scores:
+        return
+
     ordered = sorted(
         lexical_scores.items(),
         key=lambda item: (-item[1], candidates[item[0]].source.source_index, item[0]),
@@ -1027,11 +1362,19 @@ def _citation_sort_key(
 def _span_status(
     citations: Sequence[Citation],
     cfg: CitationConfig,
+    answer_text: str | None = None,
 ) -> Literal["supported", "partial", "unsupported"]:
     if not citations:
         return "unsupported"
     best = citations[0]
     coverage = float(best.components.get("answer_coverage", 0.0))
+
+    # Check for contradictions if answer text is provided
+    if answer_text is not None and check_contradiction(answer_text, best.evidence):
+        # Downgrade to partial (not unsupported) if contradiction detected
+        # because we have evidence, it just contradicts the claim
+        return "partial"
+
     if coverage >= cfg.supported_answer_coverage:
         return "supported"
     return "partial"

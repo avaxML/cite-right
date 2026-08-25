@@ -33,7 +33,7 @@ from cite_right import SourceDocument
 doc = SourceDocument(
     id="annual_report_2024",
     text="The full document text goes here...",
-    metadata={"author": "Finance Team", "date": "2024-03-15"}
+    metadata={"author": "Finance Team", "date": "2024-03-15"},
 )
 ```
 
@@ -79,7 +79,7 @@ chunk = SourceChunk(
     source_id="annual_report_2024",
     text="Revenue increased by 20% year-over-year.",
     doc_char_start=1500,
-    doc_char_end=1540
+    doc_char_end=1540,
 )
 ```
 
@@ -194,7 +194,11 @@ def slice_source_text(source, char_start, char_end):
         char_start - source.base_doc_offset : char_end - source.base_doc_offset
     ]
 
-assert slice_source_text(source, citation.char_start, citation.char_end) == citation.evidence
+
+assert (
+    slice_source_text(source, citation.char_start, citation.char_end)
+    == citation.evidence
+)
 ```
 
 For `SourceChunk`, `citation.char_start` and `citation.char_end` remain absolute offsets in the original document even though `source.text` may hold only the chunk text.

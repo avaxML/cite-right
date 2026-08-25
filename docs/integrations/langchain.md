@@ -79,7 +79,7 @@ from cite_right.integrations import from_langchain_chunks
 splitter = RecursiveCharacterTextSplitter(
     chunk_size=500,
     chunk_overlap=50,
-    add_start_index=True  # Important: enables offset tracking
+    add_start_index=True,  # Important: enables offset tracking
 )
 
 full_doc = Document(page_content=long_text, metadata={"source": "report.pdf"})
@@ -134,6 +134,7 @@ Answer the question based on the following context:
 Question: {question}
 Answer:""")
 
+
 def rag_with_citations(question):
     # Retrieve relevant documents
     docs = retriever.invoke(question)
@@ -156,8 +157,9 @@ def rag_with_citations(question):
         "answer": answer,
         "citations": citations,
         "groundedness": metrics.groundedness_score,
-        "sources": docs
+        "sources": docs,
     }
+
 
 # Use the pipeline
 result = rag_with_citations("What were the company's key achievements?")
@@ -172,10 +174,12 @@ For applications using LCEL chains, citations can be computed as a post-processi
 ```python
 from langchain_core.runnables import RunnablePassthrough, RunnableLambda
 
+
 def add_citations(data):
     sources = from_langchain_documents(data["documents"])
     citations = align_citations(data["answer"], sources)
     return {**data, "citations": citations}
+
 
 chain = (
     {"documents": retriever, "question": RunnablePassthrough()}
