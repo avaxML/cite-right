@@ -4,13 +4,16 @@
 # scripts/openwiki_pick_model.py lists :free ids (prefer tool-calling), ranked
 # by Artificial Analysis coding_index when present, else context_length, then
 # created. This wrapper exports OPENWIKI_MODEL_ID to the first id, then retries
-# the next on 429 / 402 / rate-limit. Do not pin a paid model such as
-# z-ai/glm-5.2 (without :free).
+# the next on 429/402/rate-limit, 403/404, agentic-harness blocks, and
+# model-unavailable errors. On 429, sleep retry_after_seconds or until
+# X-RateLimit-Reset (cap 90s) before the next model. Do not pin a paid model
+# such as z-ai/glm-5.2 (without :free).
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 PICKER="${SCRIPT_DIR}/openwiki_pick_model.py"
+MAX_RATE_LIMIT_SLEEP=90
 
 if [[ -z "${OPENROUTER_API_KEY:-}" ]]; then
   echo "::warning::OPENROUTER_API_KEY is not set. Add the GitHub Actions secret, then re-run this workflow (workflow_dispatch or next merge to main)."
@@ -40,13 +43,73 @@ fi
 
 cd "${REPO_ROOT}"
 
-is_rate_or_payment_error() {
+# Provider errors that mean "this free model is unusable right now, try the next".
+# Real OpenWiki crashes and other unexpected errors still fail the job.
+is_retryable_provider_error() {
   local log_file="$1"
-  grep -Eiq '([^0-9]|^)(429|402)([^0-9]|$)|rate[-_ ]?limit|too many requests|payment required|insufficient.?credit|quota.?exceeded' "${log_file}"
+  grep -Eiq \
+    'HTTP[/ ]*(429|402|403|404)([^0-9]|$)|Error:[[:space:]]*(429|402|403|404)([^0-9]|$)|status["'\''[:space:]=]+(429|402|403|404)([^0-9]|$)|(429|402|403|404)[[:space:]]+(Forbidden|Not Found|Too Many|Payment Required)|rate[-_ ]?limit|too many requests|free-models-per-min|payment required|insufficient.?credit|quota.?exceeded|only available on agentic harnesses|model not found|no endpoints|\bunavailable\b' \
+    "${log_file}"
+}
+
+is_rate_limit_error() {
+  local log_file="$1"
+  grep -Eiq \
+    'HTTP[/ ]*429([^0-9]|$)|Error:[[:space:]]*429([^0-9]|$)|(429)[[:space:]]+Too Many|rate[-_ ]?limit|too many requests|free-models-per-min' \
+    "${log_file}"
+}
+
+rate_limit_sleep_seconds() {
+  python3 - "${1}" "${MAX_RATE_LIMIT_SLEEP}" <<'PY'
+import re
+import sys
+import time
+
+path, cap_s = sys.argv[1], int(sys.argv[2])
+text = open(path, encoding="utf-8", errors="replace").read()
+wait = None
+
+match = re.search(
+    r"retry_after_seconds[\"'\s:=]+(\d+(?:\.\d+)?)", text, re.IGNORECASE
+)
+if match:
+    wait = float(match.group(1))
+else:
+    match = re.search(
+        r"x-ratelimit-reset[\"'\s:=]+(\d+(?:\.\d+)?)", text, re.IGNORECASE
+    )
+    if match:
+        value = float(match.group(1))
+        now = time.time()
+        if value >= 10**12:
+            wait = value / 1000.0 - now
+        elif value >= 10**9:
+            wait = value - now
+        else:
+            wait = value
+            if wait > cap_s and wait <= 90_000:
+                wait = wait / 1000.0
+
+if wait is None or wait <= 0:
+    raise SystemExit(0)
+print(min(cap_s, int(wait + 0.999)))
+PY
+}
+
+sleep_rate_limit_backoff() {
+  local log_file="$1"
+  local seconds
+  seconds="$(rate_limit_sleep_seconds "${log_file}" || true)"
+  if [[ -n "${seconds}" && "${seconds}" -gt 0 ]]; then
+    echo "Rate limited. Sleeping ${seconds}s (cap ${MAX_RATE_LIMIT_SLEEP}s) before the next model."
+    sleep "${seconds}"
+  fi
 }
 
 last_status=1
+model_index=0
 for model_id in "${MODELS[@]}"; do
+  model_index=$((model_index + 1))
   export OPENWIKI_MODEL_ID="${model_id}"
   echo "Running OpenWiki with OPENWIKI_MODEL_ID=${OPENWIKI_MODEL_ID}"
   log_file="$(mktemp)"
@@ -59,15 +122,18 @@ for model_id in "${MODELS[@]}"; do
     rm -f "${log_file}"
     exit 0
   fi
-  if is_rate_or_payment_error "${log_file}"; then
-    echo "OpenWiki failed on ${model_id} with 429/402/rate-limit. Trying the next free model."
+  if is_retryable_provider_error "${log_file}"; then
+    if is_rate_limit_error "${log_file}" && [[ "${model_index}" -lt "${#MODELS[@]}" ]]; then
+      sleep_rate_limit_backoff "${log_file}"
+    fi
+    echo "OpenWiki failed on ${model_id} with a retryable provider error (429/402/403/404/unavailable). Trying the next free model."
     rm -f "${log_file}"
     continue
   fi
-  echo "OpenWiki failed on ${model_id} with a non-rate-limit error (exit ${last_status})." >&2
+  echo "OpenWiki failed on ${model_id} with a non-retryable error (exit ${last_status})." >&2
   rm -f "${log_file}"
   exit "${last_status}"
 done
 
-echo "All ${#MODELS[@]} free OpenRouter models failed with 429/402/rate-limit." >&2
+echo "All ${#MODELS[@]} free OpenRouter models failed with retryable provider errors." >&2
 exit "${last_status}"
