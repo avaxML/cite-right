@@ -71,6 +71,12 @@ jobs:
           prefix-key: ${{ matrix.python-version }}
       - run: uv sync --frozen --no-install-project
       - run: uv run maturin develop
+      - name: Debug extension resolution
+        run: |
+          uv run python -c "import cite_right; print('pkg:', cite_right.__file__)"
+          uv run python -c "import cite_right._core as c; print('core:', c.__file__); print('has align_batch_details:', hasattr(c, 'align_batch_details'))"
+          uv pip list 2>/dev/null | grep -i cite || true
+          find .venv src -name '_core*' -type f | head
       - run: uv run pytest -q
 
   coverage:
