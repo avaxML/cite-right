@@ -1,0 +1,132 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:ad3f40d97e4f453df713546ba10ea0fcced598fbf3059b0aa466de760097f392",
+  "claims": [
+    {
+      "id": "claim_af62f89c21fa48b28a001a18b2758329",
+      "statement": "The convenience module exposes six high-level helper functions: is_grounded, is_hallucinated, check_groundedness, annotate_answer, format_with_citations, and get_citation_summary. All six are re-exported from the top-level cite_right package.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/__init__.py#L12-L19",
+          "version": "repo-lines-v1:sha256:9a3633085ccd66a418044574cce1a5340842a5d518de5ddc97c5ce0211acaeca:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNmJlYWYyNTM1ODIzZjNjNTFiYjZmMGNjNWUxNTA2MjdkZTkwZDM5MDQzMmVmOGJmMmU5ODhjYzVlMTE3MGZlZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZmFmYmEwNTI3YzM5NTNjNGI2ZTBlNWI1NzM5YmE4MzYxMmY4MDUzYmNkYzk0NjY3MzAxOTNjZDFkNTkwYjQwOCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjQ3YjI5NDY1N2M3MGE1YjZiYzZkZjk4NWU4ZDM4ZjdmMmE3ZDMwMmMwZDg4OGRhNzdlY2E2YjQxMjlmOWJiNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTYxYzAzZTNkOTQxNTQzM2VjMTUxZjI3OTg2MGQ4ZGVjNDljYmRhN2QzNTYyMzI4N2JmMjNjYzM5MDg1Zjg1YiJ9"
+        },
+        {
+          "resource": "repo://src/cite_right/convenience.py#L1-L21",
+          "version": "repo-lines-v1:sha256:058557a6ee8f3c1ff6e45bc3ef07a9233e11d11948f24fd74b6658042aa5bcba:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM0ZGY4ZjcxODQyNzdjNWQ4N2QwYTNmNTM3YjJjMGNkMWRiMTYxMDZmZDM0ZTVmZjcxYjIyMjhkOTJkNzdjN2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJkNmE2NzNjZGUyMWUxNDQ1MzEwZThiYTQwN2ZmMDY4ZmE2ZGJiZDk1NTk5N2JlZGQ3ODExMTkyYjlhNzA0ZWUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e40dede5caf14f27be5b713f6cf2b8b3",
+      "statement": "is_grounded() returns True when metrics.groundedness_score >= threshold and False otherwise. The default threshold is 0.5, meaning at least 50% of the answer (by character count) must be grounded.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/convenience.py#L23-L71",
+          "version": "repo-lines-v1:sha256:c87c4c084aa2355f778a34fc76858ef22c7f7bdc6ee91963664903e0b29e6c91:eyJzZWxlY3RlZExpbmVDb3VudCI6NDksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEyZTk0MWU1ZWY2ODI2NzFlMWE5ZWMzYzU3MDNjYTFjZGVjMzM0OTQ3MjYzM2E2ODQxYzFkMzc2ZGVmOThhMWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFlOWY0Yjk0Njc1ZmJhN2E4OWVlZWZjN2ZiMGY1ZDE2YThiOGEzY2MzNTE3MjZhMzU0YzM4NzY0ZDdhZDdkYmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhiMmQ0ZjIzYTZjN2YyOWM4MGVjZjdjYzY4YjBmMDc2OTZlM2JkN2Y4YTYzNzQwMzg4MjUwNWUyOTc2Yzk5OTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFhMmM2YjkzMTRmNjFlODEwZjY4MzRjNzA3MzdmNjE1YzUwYmNkMTVlOTYwNTFlZjA0OWM3NGI1NzQyZDNiM2UifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_4de99d7dac06451ba1de922ad0265cb2",
+      "statement": "is_hallucinated() returns True when metrics.hallucination_rate > threshold and False otherwise. The default threshold is 0.5, flagging answers where more than 50% of content lacks grounding evidence.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/convenience.py#L74-L120",
+          "version": "repo-lines-v1:sha256:da0b6631b68e1f8d2909252efa9c76ce36b3d042c5b850e31407bde4dfc3d7d9:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI5MWZkNmU5ZTMyNWE5NWVkNTA2YzdiZjY0ZmZkNGM4YWIwNjVmNGMyMGMyYmUzNDE5OTg0NTUzMDgwMzE4NDgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJkNDllNjNmZGY3ODY0ODNjZTg1ZDk1MDJlZDgwNzllN2M5YjhmY2I4NjJiZTBhODA4ZDZiMzg2ODdlZTkwNTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk1NjUxZWE4ZjIxMWU3YWYxMjRlZDZmZjg0ZDY4ZDc4MmYzMmYwYmE2ZDRiMzc4ZmM5OGU5MzVmNWYxZTg2MDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE3ODU4M2U4N2JmNDI4M2I4MzE0OWVjNjFiMTY5Yzk3NDdjODJlZmFiNjA4MDc2ZGNlMjU2MTkzMDc5NGQ2MzcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_04a72e2f3587438abaed4bc908dc97d0",
+      "statement": "The hallucination_rate equals 1.0 minus the groundedness_score, making is_grounded and is_hallucinated complementary inverses for threshold values in the open interval (0, 1).",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/hallucination.py#L88-L90",
+          "version": "repo-lines-v1:sha256:f7a5aa9a682b1c3adb0ab077585c21da8899e12217a82ca30de3eaf263e89880:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZjM1ZjNkNDNlMGE1MzBhYTQ3ZmUxYjM2YjkxOTk2MzkxZmFjZmI4NWU3ZjkwZDFiN2IzZGYzNjMxNTE4YzYwYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNTFhZjlmZmQwOGE0MGYyZWZjMWM5MDUzYmU4OTkxMDAxNWUxZjU1MWRkM2M1NGNmZjBjOWM5NmI0MjE4YWI5OSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjI1ZTE3NWYzM2I0N2QwNDdlY2FkZjA0NTQ1ZTA3NzYxN2EzOWY4ZmRhMGM1ZTI5NmQ4ZGVkODQ4NDMzMTE0NCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_1c3c7a887c314ddb9d742b8b068d17d6",
+      "statement": "The groundedness_score is computed as a weighted average of per-span confidence values by character count. Confidence for each span derives from its top-ranked citation's answer_coverage component; spans with no citations contribute 0.0.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/hallucination.py#L189-L212",
+          "version": "repo-lines-v1:sha256:9c2123c51bb20efbb2d1ba9887209c3ec98e9ee633fea89c73671e4685f525dc:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYwNDk0OGEyNjhlOWM0MTAxNmJkMjQ0ZjlhYmI3NTNjYWY5Yzk3MTIzNDM1NTA1YzQwM2FiYjBkNzA4OWYxYzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg2YTZjMGI5NTZmNWExOWM5NWY2MTA2MDM3NmUzYmFjM2U1MDJlODdhYTdlNDAwYmI2NzA0OWVhYWJiYjYxMTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI5NjAzNmViYTY2MmI0MGUwNTBjNDI0YTJlZjIwNDRiNmQ1NTY0YzVlMmM0YzE3OTk1YmVlZTExYzFhZTA3MDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI3ZGQ4OTA1ZDJjNWNhMjEyNmRjOTAxOWRlNTQwMjc0NjYxMzZmNGQ2ZDA4YWUxOTMzODcwZjA5ODYwZTkxOTQifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/hallucination.py#L231-L249",
+          "version": "repo-lines-v1:sha256:19e1d1301cc482f93c307bb6ca903d603e20270bfa9dca73470d7d08e3e10dec:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQxNTZhYmQxNWNmMjcxMjZkNWRiNWFiZGE0MjQ0ZWU3MjA4OWQ0YWZkZjE0MDIzNjU3YWFkODUzNTZlNTE3OTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY0NjAwYjg1NzhhMWMzOTE4ZTU3YjRmN2U1ODZlMDBmZTQ5N2MxNTFhMGRlZWUwMDlkNDk5YzA0NmM4ZTA5OTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhiNTljNTRhNGVjNGY5NzdjZTJhYjAyZmMzYzRjMDM1ZGEyMjRiOWQ3MmJjNjdhOGQ2ZDY0ZWEyMDc1M2JmYmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMwNjM4M2M3YmFlYmY0NzU1ZjUwMzI0ZDQzZmU5ODc0NzZmOGRjMjRhMTQyOWRiODBkNTkwZTZiMWZiMGU1MzQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_4a7c1794822a4c3f87ec8ef2cbcc522b",
+      "statement": "When HallucinationConfig.include_partial_in_grounded is True (the default), partial-status spans count toward the grounded score weighted by their coverage confidence; when False, partial spans contribute 0 and only supported spans count as grounded.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/hallucination.py#L214-L229",
+          "version": "repo-lines-v1:sha256:3a222acc63d01d0024c7472adf60dfd18cc833a191d46bb698811a05fdeb301a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1NDRjZTFjMGNlYzBhZGU4OWJkMzIzM2E2NGUyNGQxZmVkMTNkNmViOGQ0Y2Q3OTZhOTkxODVmNzE5M2IzYmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI5N2M3MTI0N2FmM2NkMWVkZjU1NWE3ZDEwNzU5MzE1N2Y2ZGMyYTIyYWYwZGU4MmU3Nzc0YWJmMTBmOGFkZTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVlZWJmYTVkN2Q5YmZhMDA0NGJiODNmMTMyZDExMTBhNzdkMDJlZDM3YTZiZTBiOTdiMDg3Njg2YTI3OWUzZmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFmOWVjM2E2ZjFiYmI1M2FkMDllNTdiZDIwNTNkZWFlYjJlYmFkNjJjNzYwOGQyZTc5ZWViMzQxMzViNWExYjEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a540daf534f84bc293f46eed5d28ccda",
+      "statement": "check_groundedness() returns the full HallucinationMetrics object including unsupported_spans and weakly_supported_spans lists for downstream inspection.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/convenience.py#L123-L173",
+          "version": "repo-lines-v1:sha256:08cc2263276191a05a135d0aff3a87b50ac0291da5d6961f78e3120e102d824a:eyJzZWxlY3RlZExpbmVDb3VudCI6NTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlhMDhiMzUzMDA0N2E4OTZkNGRlZWFiMTNiODU0YmI3NGM3ODQ1YTVjMmFjYmMxYmY0MzJlZTgzYjBiMjYyMjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyZjBhN2YzNzc0NjY1NzdjZGNhNjllY2EwNGNiMmYxNWRkMGM4NmY1ZGQyZjdjYTc3YzdjNGNiMjFiYTk4Y2UiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUyZDllMGE4NDQ3YjVjMmYxYWRkM2JlODU3ZDk3ZTJlZmM4NDhhNjE3YmU3NDhhYmFhYWQyYzdiMjk2ZTk5ZDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNjNzAxMjRhMjlkODI1NTVkODI3YjIyMjU3YTA5ZmU2ODgwODk4MmUzNTY1YmI2MDA3YTVmYmU5NGI3YTAwNWEifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/hallucination.py#L57-L103",
+          "version": "repo-lines-v1:sha256:d5c21fc1e64820fcfa78e94d7fdc3b931499dc5945a17edb7370247ce0168551:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBiNmI4NzZhMTE5MDJlNmM0OWI5NzhmMDYyOGFhYzZiNDNhODM0ZDExZDdkOTVjODgzNmQzOGU0OWYwMjVkNDgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyOWYyYzkzYzAxMzM0OWY2NmU5YjhkNjg0YzdmNmFlMzI3Y2YxNDg4NTgwMTQ4ZDc0NzI0ZjRiNDRlNWMzODUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE2YWZlODk4NDUwMTA2ZGYwYjBmNGVkZGI1YzEzNWRhZjdiY2Y0MjlmN2QzMTI2NDIwMmE0NTRlNjlhYzkxYTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQwYzk3OGIzNGU3N2JmYjA4YmY2NTM5MDgwNjE0N2IzNjg4MGNmMjExNzhhYjgzYTE1ZTFkNjBmYmIyOTQzNTgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_981d76491dbc4dcd9b6bcaa99d4c1d87",
+      "statement": "annotate_answer() performs citation alignment and returns the answer with inline citation markers inserted. It delegates to format_with_citations() after computing alignment via align_citations().",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/convenience.py#L176-L237",
+          "version": "repo-lines-v1:sha256:2193ee476870065b175d7212dc4310ce531e363dfec172ba1c9c2331f3c1ee7a:eyJzZWxlY3RlZExpbmVDb3VudCI6NjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEzMzcyYThiMDIxMmMzNzg3ZTMyZDU3ZDM2Y2U3NzhlMjMxOWJmZWNlMWJjY2FhZTJmMzg5NDZmYjk1NWRiMzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg2YWNhNzZjZTljYzNjYjZlY2U0NDA5OGEyNjhkZDA1ZWJlZWM4MzZiZGRmYTAyMzllMGQ5YjljZTc1YTViNWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIyYWE5MWRmMWQ2YmVhNWE3OTg5ZDYwNGE2YjFkNWI1OGJmNmNjYmY5Y2UyZjQ5MmU2MWNkNzE1OWJmNDJkODIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_884e06f72b0f462fa54ba5545c6c5a8d",
+      "statement": "format_with_citations() accepts pre-computed SpanCitations results and inserts citation markers. It supports three format styles: 'markdown' ([n] default), 'superscript' (^n), and 'footnote' ([^n]).",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/convenience.py#L240-L308",
+          "version": "repo-lines-v1:sha256:2c2df7f69e3044016273cf26f35c95c88137492e646dc3dff91b8fa199fdfeb0:eyJzZWxlY3RlZExpbmVDb3VudCI6NjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRiYjlhZjI4YmNlOTEwNDg5NTdkZjY4ZTMyMTY5ZTNjYzE2Njc5NDBmZDY0ZWYxZGQwZGFhYjg1NzhiNTdlYjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhMTFjMDU2N2QwYTVmOWU5YjEzNWY2NWNkMjUzNzJkZmQ2Mjg3NzVmN2MxZWQyNTNmOGJhZDQyZGQyZDY2NjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhjYzRhN2QxY2M3OTZhYmEzZTQ2NzIzMzI3ZjUxN2U5ZjgxMTk4MmQyNTBmMDcwMjk4NmU0YjU3NjRhZDk1ODkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJiNTFhMzBhMDhlMjQ0NDYxMjI4ZGJhMTIzZThjZjI0OWU1Nzg2ODk1ODM1ZWU4N2U2YmQ0MDNjN2I2M2JiMjYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0c25920fd15042f992c18aa95c9377dd",
+      "statement": "When include_unsupported=True (the default), unsupported spans receive a [?] marker (or ^? / [^?] depending on format); when False, unsupported spans receive no marker.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/convenience.py#L277-L288",
+          "version": "repo-lines-v1:sha256:174ee0c9c3e755aa6ab3611f72eab14701cf54033f8510c748ab1f057de802bf:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI0NWZjNmE5NzJlZjA2MWYwMzQzOWFjYjA3OWVlM2Q4MmE3ODIzNGU3NzY5ZTQ1ZTgyMDI1Y2Q1NWVjYjA4YWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUwY2VkMjM3NDAzZjA3YWNlZDE5ZTVlOTJlZmMxZDllYWVjODc4MzJkNmVlN2I0ZGJhMDdlZDIxMzMwMGJkZDAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU2OWZlZmJiNmQyYjAzOGNlZTIzYzU0MDU3ZDU1YTY3NWFiZGFiNDQxNTQ1YjRmODNiMjJjMzdiYmY2YTVkZTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImMzNzRiNzk0NjE1Mjc5OGU1YTc5ZWE4ZTFmNmZiMWJmYzU4NmVmNGZmMzRjNTMxZDA1MGY1ZTdkNDM2ODY3NDEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_c7949c22109943bb8c12ea94ec931dad",
+      "statement": "get_citation_summary() reports the count of spans by status, the number of unsupported spans that had retrieval-only support candidates (where not sc.citations and sc.retrieval_support is true), and the set of unique source IDs cited.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/convenience.py#L311-L359",
+          "version": "repo-lines-v1:sha256:bc181380c3708459139b31234ccb12c2a1a259a614cb81c4a30aecf2ff4e15bd:eyJzZWxlY3RlZExpbmVDb3VudCI6NDksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3ZjZjZmFlNTU0NTc1YjU0N2ZkMzY0MzQyZmM1MDBhZTYxODNkZWJlZDVmZmZjZGQyZmRkZDg1ODI2MjVkZmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEzZTdiYjMxNTZkZjFmNzcyOGY0NTMxOTM0NDlhYTc0NmQ3MWE1NDEzYTQ0M2FjZGVkMTZkYzcwNTI2Nzg0ODEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ3MjIzMTA2ZmQ4NzQyYjcwZWEyMzNmOWRjMzU5ZjRiMDJiYmIwNjliNzI4M2VlZjc2MjQ5OTUxNmJkN2I5YzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.4.0",
+    "at": "2026-08-25T18:44:12.628Z"
+  }
+}

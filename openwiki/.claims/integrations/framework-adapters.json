@@ -1,0 +1,202 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:36e816b80419356d197d0a58cc9b5c737df9c196043511c50d759f5a61d88f1f",
+  "claims": [
+    {
+      "id": "claim_99c5e529a6004e80a96ff4e7c847dfc8",
+      "statement": "The cite_right.integrations module provides functions to convert LangChain Documents, LlamaIndex nodes, and plain dictionaries into cite-right's SourceDocument and SourceChunk types for citation alignment.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/integrations.py#L1-L10",
+          "version": "repo-lines-v1:sha256:dc5ef11d4f04955645a84a49a1cc51d4fa4523a3b4faf65eb4003db67690db15:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE1MzhhOWRlMzllODA3YmY4ZTQzMjA4YzIzMTA4N2JkYWJmODAyNWY5MjQwZjlmM2NjZjdkOGM3MTUzN2ZjNDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzMDNlY2RkNGE0ZDEwZjE5YzczZmQ0MmZkMTI0MzdmZDMzNTRhODI2ODE2MDVkYTUyNTVhOTdhMzkwNjhkYmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU1YjZlODcwNmI0MzA0N2YyYTZkYjY3ZjEzMjYzODU5NTYwNGU2N2YzNjk2Njg3NmNlMDE1OGYwMDUzZTZiZDEifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/integrations.py#L138-L181",
+          "version": "repo-lines-v1:sha256:7b6aa6b86ebf58466ef54d3e0324389b39b3fe6885f32c25b1cad8b0d3f619da:eyJzZWxlY3RlZExpbmVDb3VudCI6NDQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE0MGQ2MmE0MmNiYmNjNTBkZWE1NDY3ZDM2Mzc0MGQyMmFmM2EwMDYxODU3NzhjMTkwZGE1NTAxMDZmYmIwMTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjcyNWIzODQxZTZlMjdkZjI0ZjE3OGE4M2ExNjMyMjNjYTg0YWM2MDMyMTQwZmE4MjVlOTkyZDk3OTcwMTU5NWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjlhNjk5ZDIwYmJjODdjYjBjYjQzNTgxODVmMTUzNTAxZDA0ZTVhZDc1ZGZjNTViMGZkNzVkODQ5NmVlNTgyYjkifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/integrations.py#L242-L285",
+          "version": "repo-lines-v1:sha256:43750019f0c712bb33135d731fa796ea23be29e442172d5af2c1401595550cdc:eyJzZWxlY3RlZExpbmVDb3VudCI6NDQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcwOWY4ZDFiYmJjYTRiMmViMjQ0OTBiMzZiNWMwZTQ1NTdhMWYzNDE1NzhhMDJmOTA5M2JiMGIzYmZiMTZhNzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ3MjIzMTA2ZmQ4NzQyYjcwZWEyMzNmOWRjMzU5ZjRiMDJiYmIwNjliNzI4M2VlZjc2MjQ5OTUxNmJkN2I5YzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNmMmY3MDRjZWJkMjYyNjVkMjgzZTIzMTU3NzNkZjZlNWQyN2UxYmE0ZmZlNzMyMWJmNjI0YTU1MzMxNGNlMzkifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/integrations.py#L345-L381",
+          "version": "repo-lines-v1:sha256:3b857f731a4e33629dfa399e9e378a8def0ff9a77b62780cb03c67b2c0b00a04:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUwYTViNjQxMzc4ZjYzNzA3YTYwODkxYTIyMjFhNTdhM2MxODZhOTk1ZGQ5ODY2YmQ1MmNmNDEyM2VjYzVjNWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhMTFjMDU2N2QwYTVmOWU5YjEzNWY2NWNkMjUzNzJkZmQ2Mjg3NzVmN2MxZWQyNTNmOGJhZDQyZGQyZDY2NjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ3MjIzMTA2ZmQ4NzQyYjcwZWEyMzNmOWRjMzU5ZjRiMDJiYmIwNjliNzI4M2VlZjc2MjQ5OTUxNmJkN2I5YzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_daf330b848264a4482831f6eebd4aa95",
+      "statement": "LANGCHAIN_AVAILABLE and LLAMAINDEX_AVAILABLE are boolean flags set at import time by attempting to import each framework, and are False when the respective package is not installed.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/integrations.py#L18-L43",
+          "version": "repo-lines-v1:sha256:b7cf6cdae881f266b879e3352a19bf8ee2b937cd33c8d760cbe729fb7c1dd45b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNjODM0ODY2ZWRiYTBhYWY1NjMxNDIxM2EyNzMwMDE2YjI2YTQ5MzQwNTRhNGVmZjRiOTg2YzEwYmZlYTc0NWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU0NDVlMTdhZGVkMzA5NzQ1ZmZkYTMyOWZjZDY1ODYyZDUyOTZjNGVkN2IwZmVjZWIzMzA0NzVmNmUyNzRjNjEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNlOTZhOGVjZGQzOWIxMDEyZWY4MzhhZTMzOGM4ZDUxZThlMjY4YmZmMmE1ZjVjMWM2MDcxOTRkNzg5NDIwZWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcxN2I5YzU2MWY3ZjA1YWFhNGVjZDYwYjBhOGMzNGY1MjBlNzM2YTk5NjRiOThmZTUzMGMyY2UxYzU3NTA4MTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_98079c020cc6465e9a006d125011051d",
+      "statement": "is_langchain_available() and is_llamaindex_available() are runtime functions that return the respective availability flags, enabling conditional code paths without catching ImportError.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/integrations.py#L64-L91",
+          "version": "repo-lines-v1:sha256:3e0ffe71dbddc29005d177668550019595d3f3dec539c6fe463b7a52d9f26849:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjczN2IwYTBlZmEyY2NmY2QyZjg5ZDk0MjBkNGRhZjFiMTQ5ZDVkMTZiZTJmYzM2NjliY2UyNjAxZWIwMWMyMjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZkZThiNGIxNjEzMzAxMDgxMmNmMmIxZTRmMWM5ZWZjMWE5Mjk3ZDJhNDg0ZGQxYjIwYzM5OWEyOTRmNDljNzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIzZGYyYWNmMDZlOGMzZjAzYzcxMzVjNmU4YWM1YTljYTU0MzJhYmUwNmE3NGFjYTBmZGQ5YTUzYTAwOGY5ODciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFmMjIyNmEzMGNkMTllZTkxNjUxNzMyZjhhYTFmMjU3YTE2MWY0NDI0MzRkYTA5ZjMzMWMyMDE5ZDM1ZjgwZTYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_4f1d02daa7ba4724bed20e60d445d046",
+      "statement": "is_langchain_document(obj) returns True only when the object is a langchain_core.documents.Document instance and langchain-core is installed, otherwise returns False safely without raising ImportError.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/integrations.py#L94-L112",
+          "version": "repo-lines-v1:sha256:45d4a7f269c3a4f9ea4ab063d7394827503b755e88e99d294316eb57cfdd54f6:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc0OWFiN2JlYmM1M2NlMGZhMmYxN2Q2MTZjNzRlNDU5ZTNkZmE4OGRhNzc4NjJmOGZjMTY1MGM5ZGQxN2RlNzQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI3M2RjNmRiYWU4MTAzNGEwZDY5ZTc2ODI4ZTJjMjM4NDcxMGQ1MzgyNDA1ZDA0ZTA4MmU0ZWQ5NzRmNzg4MjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE0ZTM3NzFjYTFiNmFmYWFhZjcxODFkNzI3MTMxZjlkMTgzZmM2ZTQyZTA3NjU4NzQzOWZjNWY2MWJlNTA4MzIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcyMjlhMjI0MWNkNTgwNGRlMGYyYmEzZDllZmRlODgzNjY4MDA4ZWVmMmViYjJkODVjYWMyNWYyMmI1ZmFhYjkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_127807fd03274a8192d57ccac3bb99fd",
+      "statement": "is_llamaindex_node(obj) returns True for both LlamaIndex TextNode and NodeWithScore instances when llama-index-core is installed, otherwise returns False.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/integrations.py#L115-L135",
+          "version": "repo-lines-v1:sha256:25fc0bd7fd8352e6124fa461ca38552e3f1f185e82dd23668f9a4150fda856c9:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImExOTA3Y2YzNzcyNzQ1MWIyYWM3Y2Q5ZDg1YjY0ZmY2YTgwYjE5YThhOThjMTYwZTcyNzFjNTFiN2UwNWViMTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY1OWQ0ZGJjZDE0NmFhYjgwNTAwNDI2Y2YzODVmZmJhMzE2MGU1MDg0NjcxYzNlZWU4NjY4ZTFlNDA2MjQxMWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzNGJiMzlhYTUwMzVlODE5N2FiYTdmZDQ0NjI1ZDQyOThkN2VlNjBiM2RjZGVlZjc1MTEyZWNkODM4Njc2ODYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk0ZDZiNjI1ZDJiYzA2YzQ0ZTYxMWZjNTNmZWEwMTZjODEzYjI5NjMzY2FmMTdmYTEzNjU3NzU3NWE4YzkyODgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7ff8cf0db106458ea3374070a741edbe",
+      "statement": "from_langchain_documents reads page_content for text and metadata[id_key] for the document ID, defaulting id_key to 'source' and falling back to the zero-based index string when the key is absent.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/integrations.py#L138-L180",
+          "version": "repo-lines-v1:sha256:30b8e9dfdbc2c82f4d51b5f490a946aae28f2996dcee9b0a6eb4175e13e63d00:eyJzZWxlY3RlZExpbmVDb3VudCI6NDMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE0MGQ2MmE0MmNiYmNjNTBkZWE1NDY3ZDM2Mzc0MGQyMmFmM2EwMDYxODU3NzhjMTkwZGE1NTAxMDZmYmIwMTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhMTFjMDU2N2QwYTVmOWU5YjEzNWY2NWNkMjUzNzJkZmQ2Mjg3NzVmN2MxZWQyNTNmOGJhZDQyZGQyZDY2NjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjcyNWIzODQxZTZlMjdkZjI0ZjE3OGE4M2ExNjMyMjNjYTg0YWM2MDMyMTQwZmE4MjVlOTkyZDk3OTcwMTU5NWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhkZGU5YzRjMWFmYWQ0MWQ2MjM1YjZkOGRlMDZjMTYxNjcyNDQ5MTFlMTAyOGRkNmRmN2UzMzg4NzQ2NTQ4Y2IifQ"
+        },
+        {
+          "resource": "repo://tests/test_integrations.py#L128-L134",
+          "version": "repo-lines-v1:sha256:4e6f323911569f7c56e2e1ded878af5b234ee9168b2bbbb5d98e98fba58afcda:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDI1MjZjZGJlMjQxNGI5MDdkN2RmZTRhNzAwMzMwZDNiNTliNmIwMjM0YjA2NTkzODM2MDNjOGQzZTViYjA4ZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTE1OGJmNDkwYThkOTAzZWZkNmY5ODRkZTg3MmYxNmI3MGVhMTgzZTU0NzBjM2FlMTZhMjM1YjU4YTg2YWZiZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzI5OWNjMjk3N2M3NjIyMTViODg1ZjM0MzkxNzhmMjY1MjQxZTVjODNhMDUyNTRhYTBmODM4ZmE0MzU0OGIxZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMGVhY2ZhNGI5N2IxN2EwNWRiMDllNzg1ODZmNDgyODFhNjVlNTBhYjU3NDAwMTQyZGEwMDY1OGQ0ZDYwN2Y0NCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_535cbd6939f84b5a9b9a0f2df002da46",
+      "statement": "from_langchain_chunks reads metadata keys start_key ('start_index'), end_key ('end_index'), and optionally full_text_key to construct SourceChunk objects with doc_char_start, doc_char_end, and document_text fields.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/integrations.py#L183-L239",
+          "version": "repo-lines-v1:sha256:be4992f94e7d46ce0a8e9f67c8763c996aa6521fc3ca02143ee6e1127bcccd54:eyJzZWxlY3RlZExpbmVDb3VudCI6NTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU3NjhkZjE1NTllZDI4MTZmYjZiNWJjYzQzYjRlYzNkYmVlZjY1Y2I1ZDI5MmI3ZTkyZDg2MzQwODM5MjA3ZTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhMTFjMDU2N2QwYTVmOWU5YjEzNWY2NWNkMjUzNzJkZmQ2Mjg3NzVmN2MxZWQyNTNmOGJhZDQyZGQyZDY2NjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ3MjIzMTA2ZmQ4NzQyYjcwZWEyMzNmOWRjMzU5ZjRiMDJiYmIwNjliNzI4M2VlZjc2MjQ5OTUxNmJkN2I5YzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYzZjEwNDFkN2Q5YmE3ZTUyZTFjNmQxYjllMzNhZjk0Zjg2MjFlOWIwMjFhODI5ZGI5NjAxZDQwNTgwYTVkOGQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ae81cf583d084219a4adbf01f84dbc69",
+      "statement": "from_llamaindex_nodes handles both bare TextNode and wrapped NodeWithScore by extracting the inner node via getattr(node, 'node', node), reads id_key from metadata (default 'file_name'), and uses node.get_content() for text.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/integrations.py#L242-L284",
+          "version": "repo-lines-v1:sha256:b928d50699b060566f5c620a61d46722d35339d1870ed9cd6bb96287a66e3d59:eyJzZWxlY3RlZExpbmVDb3VudCI6NDMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcwOWY4ZDFiYmJjYTRiMmViMjQ0OTBiMzZiNWMwZTQ1NTdhMWYzNDE1NzhhMDJmOTA5M2JiMGIzYmZiMTZhNzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhMTFjMDU2N2QwYTVmOWU5YjEzNWY2NWNkMjUzNzJkZmQ2Mjg3NzVmN2MxZWQyNTNmOGJhZDQyZGQyZDY2NjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ3MjIzMTA2ZmQ4NzQyYjcwZWEyMzNmOWRjMzU5ZjRiMDJiYmIwNjliNzI4M2VlZjc2MjQ5OTUxNmJkN2I5YzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEyZmMwNzFiNTk5YmViZWU3ODIzOWQ1OGUzZjNmZjMwMTRkZTZiM2ExODE5N2Q0NWU2MDZhY2Y3MTk2NjI0NDYifQ"
+        },
+        {
+          "resource": "repo://tests/test_integrations.py#L229-L240",
+          "version": "repo-lines-v1:sha256:5c170cb02527764a92a95dbe55ee8c914bc0dac01a63c78b27569c3ebd8bd38f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3OWI0YjY0YTZlOGUxZGE1MmMwY2FjNWZkNmUwYjhlMzlmODhiN2VkYjliNDIwMjIyMzU1MmM3ZTg4OGFiOTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdjZTlmZDMxOWNjNTU4MjdhOGVjNTVhZWUwMjNiMTkzNWIyMDdhYjlkYjQwNmM1ZTkyZjA4MzRhNGI2NGM4MzAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhkMzk0ZjkxZjQ2NDBiNmU4ZWM4MjAyNTAyMzk0YWM1OTdlMTQzNTc4MDdhZjk4MzI4NzI1MzY2MmE4YTZhODkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZhYWYxNTA3ZTA2YWNiNjAxNjgxMmE5MTA4ZWM1ZWU2ZTNhZWEyMjgzNzJhOGE0MWM5NmJmN2JhNmU3NDQxNzIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6675ed1670544c80b69f57fba28bbc95",
+      "statement": "from_llamaindex_chunks reads start_key ('start_char_idx') and end_key ('end_char_idx') from node metadata to populate SourceChunk doc_char_start and doc_char_end, with None values defaulting to 0 or content length.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/integrations.py#L287-L342",
+          "version": "repo-lines-v1:sha256:54cafe5a5dc29816c9f9c564f5ee266e605d8e5aa61f8cf0de44319934bf98da:eyJzZWxlY3RlZExpbmVDb3VudCI6NTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc4ZDNjZTlmZTM0Y2YzMzk3ODdjYTdiNWMyNjFmMmFiZTJlZWNjNTI0OTJjODRjZTlmYTFlOTM3OGU2Y2RkNGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhMTFjMDU2N2QwYTVmOWU5YjEzNWY2NWNkMjUzNzJkZmQ2Mjg3NzVmN2MxZWQyNTNmOGJhZDQyZGQyZDY2NjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ3MjIzMTA2ZmQ4NzQyYjcwZWEyMzNmOWRjMzU5ZjRiMDJiYmIwNjliNzI4M2VlZjc2MjQ5OTUxNmJkN2I5YzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ3NTRiNDVjM2ZlMmNiYWFiZTJiNTFmYWQ0MWRjNWMxNzBkYmQxYmI3ODY3NTQ4ZWEyYWQ2OWJiM2QwMWFmOWUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f172f12af92146b1aeb9c76cef9d10d3",
+      "statement": "from_dicts requires no external dependencies and extracts text via text_key (default 'text'), id via id_key (default 'id'), and stores all remaining dict fields as metadata.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/integrations.py#L345-L381",
+          "version": "repo-lines-v1:sha256:3b857f731a4e33629dfa399e9e378a8def0ff9a77b62780cb03c67b2c0b00a04:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUwYTViNjQxMzc4ZjYzNzA3YTYwODkxYTIyMjFhNTdhM2MxODZhOTk1ZGQ5ODY2YmQ1MmNmNDEyM2VjYzVjNWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhMTFjMDU2N2QwYTVmOWU5YjEzNWY2NWNkMjUzNzJkZmQ2Mjg3NzVmN2MxZWQyNTNmOGJhZDQyZGQyZDY2NjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ3MjIzMTA2ZmQ4NzQyYjcwZWEyMzNmOWRjMzU5ZjRiMDJiYmIwNjliNzI4M2VlZjc2MjQ5OTUxNmJkN2I5YzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://tests/test_integrations.py#L335-L341",
+          "version": "repo-lines-v1:sha256:55844d4ad9700094e5127d7b457759f8a6e0e40875fd13a7ceb50c3153792a58:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZmRmNGNkNTBmNGEzZDQ1Zjc1MWRhOGFhZWM5MmUwYTUwNGY4MGUxMGVmMjY2ZTVjNDcwYzM5MjcxYzVlNGZmOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjFiMmFhYjMwN2M3NGFkODAzYjc0NTcxY2U1ODBjYzYwZTBlMGI3YjZmZGE2Nzk3ZGQ5NTdiMzQzYjg2NjRhNiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTA1ZTE5MjdhOGMzZTYzZjFjZmMyNWQxMWMyYTgyOGMxMmEyNjlmMGZkOWM4YjE0ZDcxOGY2ZTgxZmY3ODExMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODQxNjJmMjEwYWRmMTAzNWM5ODQ4N2QzMzA2ZGM4M2YxMGEyMDQ4NDk1NjM0MjU4ZDFlYTEyYWViNWUxOTQxOSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_02871a2df95f418d953acac4865de08b",
+      "statement": "LangChain adapter functions raise ImportError with an installation message when langchain-core is not installed, checked via _require_langchain() at the start of each function.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/integrations.py#L168-L168",
+          "version": "repo-lines-v1:sha256:e017febf07c35834fa73f2f80cf6f8c0480b204ed4af910d59683bb8248a3b2a:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTAxN2ZlYmYwN2MzNTgzNGZhNzNmMmY4MGNmNmY4YzA0ODBiMjA0ZWQ0YWY5MTBkNTk2ODNiYjgyNDhhM2IyYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTAxN2ZlYmYwN2MzNTgzNGZhNzNmMmY4MGNmNmY4YzA0ODBiMjA0ZWQ0YWY5MTBkNTk2ODNiYjgyNDhhM2IyYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDIxYTU4MWM2ZTY0NzIwZGE5NmZiZGNjZTE5YjhiMmM4MjA0NmFmOGFlYWM3MmRkNzg4YzYzMjM1ODI0Y2QxOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMjllNjIwYTNlYzJiOGJiYjkzZTY1MjI5NDU5MTUxZTY4MjRlYmIxMWJiOWQ4ZjQ2MTI3Y2U2OGFlZmY2YzEzYyJ9"
+        },
+        {
+          "resource": "repo://src/cite_right/integrations.py#L219-L219",
+          "version": "repo-lines-v1:sha256:e017febf07c35834fa73f2f80cf6f8c0480b204ed4af910d59683bb8248a3b2a:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTAxN2ZlYmYwN2MzNTgzNGZhNzNmMmY4MGNmNmY4YzA0ODBiMjA0ZWQ0YWY5MTBkNTk2ODNiYjgyNDhhM2IyYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTAxN2ZlYmYwN2MzNTgzNGZhNzNmMmY4MGNmNmY4YzA0ODBiMjA0ZWQ0YWY5MTBkNTk2ODNiYjgyNDhhM2IyYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNWJjZTgxNDgwZDlhMTMxYTk2MzAwYTQwNTM1MjkwOGEwYjFmNDIzMzE2YmIzYjg0Nzc3NjFmYTAxYzI1ZDA5MiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzYyOWNlZDdjNjg0OTY2NWE1ODFhZTJmNGVmZGNjYTVjNGRjNjgwZWU3MWJmMTVjMjhlOGNhMDAwNmRjMGZiZSJ9"
+        },
+        {
+          "resource": "repo://src/cite_right/integrations.py#L46-L52",
+          "version": "repo-lines-v1:sha256:df94f0d6a4c7a6a32496e3fccb4f9efa830323057838e03e8c11d3297840cce9:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNzhiNWI1ZTY0NWVmOTAwMzE1ZGUxNmZlZmYzYjc5M2NjMTIzZTRhYWRhMWE3ZWM2OGRkOTUxMmVmNjgyYzRhZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTkwOWE1M2E2MThkMDI4ZTFkMzAwMGMwYTdhYmNlZWNiZTVmYjM3ZjRlNTExZWZlNDY2NDNmYWQ2ZTY2ODcyZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODU0MTI3MzA5ZmRlMmJlZTE5ZDM4NjUxZGQ5ZTlmYmJmZDMzYTkwYzZiNzU4OTg2NjgzMzc3ZTViY2M3NTI5ZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYTJjYjExZWU1ZTgwZjI2NjVjYTIwYjI5Y2Q3YzFlZDdkNDU5ZWVlY2Y3OWMxYjA1NDM4OGJkYmM2ZjRhZDllNCJ9"
+        },
+        {
+          "resource": "repo://tests/test_integrations.py#L65-L76",
+          "version": "repo-lines-v1:sha256:5d4824e0578662dad9060c7deca9bf15d17721d37cb06500f827878cec04777c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVlMmU5ZjJlN2Y5MzE1MzBiNmY0OTcxYWIzZTZkY2YxOWVhOGY3MjczODViYWZkNTY3MTdiMzY1MDBhZWM2YmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRhNTczMWFkMWFlMDk2ZmUzZDg3ZDQ3YmUyNjJlNWEzNTQ2NDA2YTliZDhjZmRjZjIxZDQ4OTQ2YWMwYjM0ODQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzNTAxMWQ3Mjg0MWUwYWNjNjU3ZmJmYzMzNDJlYTM0YmU3YTdhNzBlMWRjNmEzY2JhNDMwMjhhMzRhYTE5NDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZiNzcwMzU4NDFjNzMxMjljMTg2OTFiMDQ4NTYwMWVkYTRjYjRhNTMwMjIzOGI4YTFmNWY3YjQxZWM3OGM4YWQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e473be3a53284b0585dd9b02d287e063",
+      "statement": "LlamaIndex adapter functions raise ImportError with an installation message when llama-index-core is not installed, checked via _require_llamaindex() at the start of each function.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/integrations.py#L268-L268",
+          "version": "repo-lines-v1:sha256:2ac85436169d4932101901501001e777ec9570d7e085d9d6ad4a5600d7b00edc:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMmFjODU0MzYxNjlkNDkzMjEwMTkwMTUwMTAwMWU3NzdlYzk1NzBkN2UwODVkOWQ2YWQ0YTU2MDBkN2IwMGVkYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMmFjODU0MzYxNjlkNDkzMjEwMTkwMTUwMTAwMWU3NzdlYzk1NzBkN2UwODVkOWQ2YWQ0YTU2MDBkN2IwMGVkYyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDI1OWY1N2JiZTk3ZDdhNTFkZjgyNWVmZWU3M2Y2NjQyM2I5YjkyYjU4MGIyNTAxM2I5OGMyNmVkNWVmOWIyZCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYTlmMGIyMTM3ZjYyMjA2MWIzOTI1YmRlNjA1NGI5N2E0NTNjOTc5ZTNmNTMyMjU2MWVmMzVlNzVkMWFiZGNmMiJ9"
+        },
+        {
+          "resource": "repo://src/cite_right/integrations.py#L320-L320",
+          "version": "repo-lines-v1:sha256:2ac85436169d4932101901501001e777ec9570d7e085d9d6ad4a5600d7b00edc:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMmFjODU0MzYxNjlkNDkzMjEwMTkwMTUwMTAwMWU3NzdlYzk1NzBkN2UwODVkOWQ2YWQ0YTU2MDBkN2IwMGVkYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMmFjODU0MzYxNjlkNDkzMjEwMTkwMTUwMTAwMWU3NzdlYzk1NzBkN2UwODVkOWQ2YWQ0YTU2MDBkN2IwMGVkYyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYzVkODJlZTA3MmUxNTY1ZTFmZTUwZmY0ZmM5ZTc3MWY4MGU0MTY0NmIwODY0ZjkzZGVmNGI3Mzc1NTQ2ZWM2MiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNzE1N2RkY2RmYzdlNzg3ZDcwMTVlNjBlYzQ3NDFkYWUzNzE2NzgxMDJlMmNiNGNhMjNkNGVkMDJmNjY3YWJjOCJ9"
+        },
+        {
+          "resource": "repo://src/cite_right/integrations.py#L55-L61",
+          "version": "repo-lines-v1:sha256:168e91a70244f72e98a02d7950b99d170d27143f7cb275b51bdb1d1c23eabce7:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDE5ZmIwYmNlODJmNjIzNDNkOTFiZTE2MWUyZDRlYWMxYjk2ZTZhNTMxYzc0NDhhYWI3OWQ0ZWQ0MGVjYWE0OSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTkwOWE1M2E2MThkMDI4ZTFkMzAwMGMwYTdhYmNlZWNiZTVmYjM3ZjRlNTExZWZlNDY2NDNmYWQ2ZTY2ODcyZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjNkZjJhY2YwNmU4YzNmMDNjNzEzNWM2ZThhYzVhOWNhNTQzMmFiZTA2YTc0YWNhMGZkZDlhNTNhMDA4Zjk4NyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODc1ZWQ5MTU5ZDI5ODNjMGQ4NWFkNmExYjY2NzEwYjJlNWZjYjRhNzcyODU1MjZjZWEwMWFmMzZkN2RkMTRkZiJ9"
+        },
+        {
+          "resource": "repo://tests/test_integrations.py#L85-L96",
+          "version": "repo-lines-v1:sha256:69a6c4f46725c461527aad0990027d8ee3deff3917d180691143555a4199e483:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZjZTc4OTkzYzMzYTg3YjVmMzk3YmYxMTY0MzRiYmY3MGFlMTFiMWE2YmI2MWQzNGFmYjI4ZGYwMjMyMTUyNTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg0ZWJiMWVmYjBlYzA0YTVkYmFiMGJlY2NjMzcxMGY1ZmNlNGY3ZDc0OWM3NjBmNDVjODRiN2Y0OGZmN2ZmYzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdkYWIzOTA5MTY3OTNmOWU3NGY2NDljOWU0YmNlYTcxOTRjMWNlNzJhZTU0MmJkYWZjNmZjNWI5NDNlNmQ3ODEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAwYWJlYmRhNTczNTdkZjhkZDFmYTA0MDRhYTBiNTM3NWY0YTBlZDJlNzg5NjYyNTgzYWYxYjQ2MDRiNjdmNTYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_14ca0d70aa734c54a73bcbe2bd75ed83",
+      "statement": "All integration symbols are re-exported from the top-level cite_right package including LANGCHAIN_AVAILABLE, LLAMAINDEX_AVAILABLE, type aliases, all adapter functions, and type guards.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/__init__.py#L44-L60",
+          "version": "repo-lines-v1:sha256:3b9af0f99132e1bddbd2da59235deeb0de3d8ba3f340bf31b3f48b94dea4cdc3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk2Y2VlMWY2YmJhYmE5ODAwOWRjNDBjMTEwZTAwYTgxM2FmOGYxZDEzOGE2ZWEzMDJjMmRmODZlMTgxYmQ3NWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhZmJhMDUyN2MzOTUzYzRiNmUwZTViNTczOWJhODM2MTJmODA1M2JjZGM5NDY2NzMwMTkzY2QxZDU5MGI0MDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZjOGMyYjIyMGVlZWU2Njc0MDcwODUzZWY1MmZhZDM1NTBkYjNiYTgzZjEyMjc2NzMzMGU2NjAwMmY5MTc4ZTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcxY2U2NmYxNGIzZjg3MzAzZjY0MGU3YjA2MTQ5YWE2NTNmMTJlNWY2MjMzMmM2MDVhOGZhMTg3NGViOWIyOTUifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/__init__.py#L85-L99",
+          "version": "repo-lines-v1:sha256:127e9b41758f99c9ad0480d8a21bbb63556cc144fb5ddb410ca070e2e75bc7fc:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVkNzI3YmI0Y2FkMWJjNTQyNzdkMmM5MWVkMzg5M2ZmZTMyZTcyNjFhMmJjODJiNTIyZjUxM2I0MGE1NTNiMzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVlMmFjYjAwMTUzNmYwYTM3ZjczZjM5N2I3YzEyNjI0OGIxNDBmMjFjNGU2NTE4Zjg0YzFkNDA3M2FkZjNjYzciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjcxYTNhZGIyZWY2OWMxNjQ2ODc5ZTQwZjNkM2I5MmM3N2I2NTA2OTlhNDU5ZjM3OGM3MGU4NzEzYTViYTU0ZjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFhMGQxNDU1N2I0NDYwZmMyNzMyYzliMWM4NDUyOTRhNTY4YzFjYzg3MDNiMDkwZWVjMmZmMTYyNWMwYTk0OGUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3446d25e2874416782282b4e98789c84",
+      "statement": "The langchain optional extra installs langchain-core>=0.3.0 and the llamaindex extra installs llama-index-core>=0.11.0 as declared in pyproject.toml.",
+      "evidence": [
+        {
+          "resource": "repo://pyproject.toml#L20-L21",
+          "version": "repo-lines-v1:sha256:ddc738acc9109438fff7b90b1f10e37bfae51c876d9de17a410ca217cf92ec4c:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDUxYjllNGVhNGE2MWM0M2VhMDIwNjZjMDg5NzJmMGJjZDE1MzIxMGU2ZjJlZGEzNDVhNzljY2I2MTdjZTk2OSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZWE3YzAwYjJmYTk1ODZiMmRiNjRlNWFjZmMyMmE2ZTk2MWU0MTM3ZDRmMGI3M2EwMzlkYjcyNWUwNzhiMGRhNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNGQzNTIyMzJkNTlkMzgwMjczMWIzMzk3ZTIzMGU0MWVhYWY4YWZhMmI1Y2M5OTNlMjM1MmU3MzI1OTA3YzU5YSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjg0Yjg2YjYyMTI4YjZiYmQ0YTUyZDRkMzg2NjNhNmY3OTc1YzAwM2Y3YWZlNTc3MTAwNDc1OWY1OWVhYmZkNCJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.4.0",
+    "at": "2026-08-25T18:44:12.628Z"
+  }
+}

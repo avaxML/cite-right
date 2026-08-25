@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:9388a31d09fa85f5cb59564c4a1fc177d38d4258b926d22663e0f240326c9f11",
+  "claims": [
+    {
+      "id": "claim_bb5c607c1aa44fd19e2bbe5f8269b2b0",
+      "statement": "align_citations() accepts exactly three input shapes for sources: plain str, SourceDocument, and SourceChunk.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L93-L94",
+          "version": "repo-lines-v1:sha256:cd1bea26a54d240ab9f8ff2eca460401264dd9a67d829c86f198ed7672d4a7a8:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTk3MzNiM2E1MjkxNzdkYmViZWE0OTNmNjAwNjRiYTk4NWMzMjAzMGIxYTE4OTZiZjg4ZmE0YTJmNTc0MGY0NCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYjNlNWI0MGIxMmQyZjI1MDJlN2VkZWI5NzVlZDdkODliYTliOWM3MmI4YWM5YTJmMmViYzBhOWMxNDQ3MGZmZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYWMyYTEyM2ZiZTcwNWQxOTgxZTZiM2U4ZDY1OWY3OTMzNjMxMTc0YzVmNzlkZDNhYzcwY2MyNzhhM2VkZDA3ZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTQ4ZWIwYzFhZjRiMGQ4NWU4NmVjZTkyMzgyNmM0NDI0MjA0OWIwYzRlMDYxYmNiZWMwOWRlMWNiZDNmMGRjZCJ9"
+        },
+        {
+          "resource": "repo://src/cite_right/core/prepared_corpus.py#L129-L129",
+          "version": "repo-lines-v1:sha256:1bfccd18d60f1163a57d133193f4ea3152fec36a6e90fc70b95df06fef17f5cf:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMWJmY2NkMThkNjBmMTE2M2E1N2QxMzMxOTNmNGVhMzE1MmZlYzM2YTZlOTBmYzcwYjk1ZGYwNmZlZjE3ZjVjZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMWJmY2NkMThkNjBmMTE2M2E1N2QxMzMxOTNmNGVhMzE1MmZlYzM2YTZlOTBmYzcwYjk1ZGYwNmZlZjE3ZjVjZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNmEwNzJmNTg4ODk1NTE2N2YzM2U4M2VhMGVlOWVkM2UxZTVmMDIyZjBjZjQwNGJhZDFiZWQzMDdjNDAwZjk1NCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTFmNGUwMWFhNjM1Njk0NTJlZmM0ZGI4MzRiNWI3YjlmYzhlNzNiNjA5ODM1MzY2Mjg5MzQ2YmY3NGE5ZjFlMSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_8801bccc66c74924b64c87f8771afcdc",
+      "statement": "normalize_sources() converts all three input shapes into NormalizedSource. For SourceChunk it sets base_doc_offset to item.doc_char_start and full_text to item.document_text (or None).",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/prepared_corpus.py#L399-L435",
+          "version": "repo-lines-v1:sha256:9112fab59b0aff42fa7dcf2901527a6aeebafb3becc7f42d1f80d2d23a32489b:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM3ZjQ1MThlNDFhN2FmODVjZTBlN2FiMTE4YjgyYjczMDUzY2ZjYWVlZjdmMDZiZmY0ZmQ5ZmU2OWFkNzdiYjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAyMTI3MTViZWM1OWE0NDFmMTY4MmZmYjUyZTg5YmZhZDk5NzdmNTBmZmY3YWQzZjhhMWQxOTFkZGMzMDhkNDciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIyZDA1MDVkYTVkOGJhNDczMWY2MTYxZjQ4ZGM5ZjlkMTczNTBiNTY3Mjk1ZjFiYTU3NTk0YzZkOGIwNzE1OGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRjMjc4MTAwY2Y0Mzk0MzM2YjE3MzQ0NzI2YzcyZTQyMWEwOWQ5YmVjNTlmZThhOTM2YTI0MjA2MDRiMjZhOGIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_28f779f8d45542b088716f3dbd35f1d3",
+      "statement": "SourceChunk._validate_document_text_alignment enforces three checks when document_text is supplied: (1) doc_char_start >= 0 and doc_char_end >= doc_char_start, (2) doc_char_end <= len(document_text), (3) document_text[doc_char_start:doc_char_end] == text. It raises ValueError on any violation.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/results.py#L149-L162",
+          "version": "repo-lines-v1:sha256:e57c7155059681641ddc8894355a3389018d4689ff0fa90f8df83b150d398408:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFlZjFjZGQwZjU3NDMzY2U1MDc3OTA3MjJlMmY1MWQ5NzM1NmNiZmZhN2IyNGRkN2NhMTM0NDgzMmQ0ZTUyNDgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEyYWIwOTBiY2QxNjIwZmE2MmVhZWUxNTdhNzRmY2E2MzVhYTI5ZTEyY2JmZmQ2MThiNTc5MmQ4N2JjMDNhM2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVhYmQ0OTIzNGFiNTk4NTY4MDBmYTMyMzQyOWYyMGI0OGUwZWRlMzExZmI3Mzk2MDkzNDY4ZGMyYmUxNWJkNWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc3MWY3MDIwMWRkY2U2MTI2Y2ExNWFhZTZiOGY5ZGZkZmZhM2RiNGFlOTY4YzQ1OTAwZGQxZTk5N2NmMTI4MWMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_c0a4f481916740ee8ee0e266716d62f0",
+      "statement": "_slice_source_text() uses full_text directly when available (full_text[abs_start:abs_end]), otherwise subtracts base_doc_offset to re-base absolute offsets to local chunk coordinates (text[local_start:local_end]).",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L1376-L1381",
+          "version": "repo-lines-v1:sha256:381a97f49f96a995bb156510a3acf6588642911cb50acaa6424525e376b57be7:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTNjM2I3MGM2NTIzNWQxZmVkYzVjODE5Y2VmZGUzZDMwOGU2ZmVmODVjNDliM2UwMTBmZGE5ODlkZmIxODIyOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTViZjFiZTQyMzgxNDIxZDdiNzBjNmI0ZDUxOTc0MDAyNjkzZjMwZGZjYjc0ZDRlOTA0MzFiODY1YmM5NTkzMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOGY5NThhZmI0NzdiMTMxOWFmZDU0MmZjNTkxOGFlMDcyNzU4NDdlMzQ0MzczNzhjMmE0OGNlYzFhNzhlMDY2MiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODI3NDg3ZTNjZDNlY2M3MDJmZmZhMTVhYzlhZmQxZWRmOGUwN2E0MDM3YjU4MDk1YTUxYjZjOTJhZDY5NjVkNSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_91bcebf6a1c24c39a41c39cb3d896f17",
+      "statement": "Evidence span absolute offsets are computed as base_doc_offset + passage.doc_char_start + local_seg_char_offset. This produces offsets in the original document coordinate system for all three input types.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L1450-L1458",
+          "version": "repo-lines-v1:sha256:1ad9eb0785c665b82bcbb952b96dca469820ec8523371401fc244efd2c7a32b4:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYWRlZDBmMGJmMTBkODU4ZTkwYWFmMmNhMTg3Yjk3M2ViZTg3Mzk4NjM3M2M3MDAzNDYyNGZjMDkzZDUxMWZlNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTk0ZjVjMGUwZGNkZGExNDI1ZDE4MzE5NTA5ODJjM2JjOGE2MTkxODQzMjY0M2Y4OGZmMTE4OGFmMzJkMjliZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODA1Y2E0NzQ4NzkzOWVjMWI0ZmViMjBiNjY0MWM2ZWJjMDVkNDE2YzBhYjBmMWExY2E4MWJhOTUwYTQxOWMzYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYWU0MTQxMjdiZjRmYzIxOTk1MTk1M2IwMGRkZTc4ZWQ0YjA1MTFjMWJlNWRmODVlMDg5ZTc4YWNmOTUyNTM5NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_87c70d17f344452bb58fc5f1266f6542",
+      "statement": "When document_text is supplied, citation evidence is re-sliced directly from the full document using absolute offsets. When document_text is None, evidence is re-sliced from SourceChunk.text using local offsets computed by subtracting base_doc_offset.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L1376-L1381",
+          "version": "repo-lines-v1:sha256:381a97f49f96a995bb156510a3acf6588642911cb50acaa6424525e376b57be7:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTNjM2I3MGM2NTIzNWQxZmVkYzVjODE5Y2VmZGUzZDMwOGU2ZmVmODVjNDliM2UwMTBmZGE5ODlkZmIxODIyOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTViZjFiZTQyMzgxNDIxZDdiNzBjNmI0ZDUxOTc0MDAyNjkzZjMwZGZjYjc0ZDRlOTA0MzFiODY1YmM5NTkzMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOGY5NThhZmI0NzdiMTMxOWFmZDU0MmZjNTkxOGFlMDcyNzU4NDdlMzQ0MzczNzhjMmE0OGNlYzFhNzhlMDY2MiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODI3NDg3ZTNjZDNlY2M3MDJmZmZhMTVhYzlhZmQxZWRmOGUwN2E0MDM3YjU4MDk1YTUxYjZjOTJhZDY5NjVkNSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_648ba642dece4044bdc9ad69b17a3eea",
+      "statement": "Framework integration helpers (from_langchain_chunks, from_llamaindex_chunks) produce SourceChunk objects, while from_langchain_documents, from_llamaindex_nodes, and from_dicts produce SourceDocument objects.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/integrations.py#L183-L381",
+          "version": "repo-lines-v1:sha256:e9558cb8b1e282b7637ffd633411ccc6ffd3464a4b5807e342eecd0b30f7c7cc:eyJzZWxlY3RlZExpbmVDb3VudCI6MTk5LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI1NzY4ZGYxNTU5ZWQyODE2ZmI2YjViY2M0M2I0ZWMzZGJlZWY2NWNiNWQyOTJiN2U5MmQ4NjM0MDgzOTIwN2U3IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJmYTExYzA1NjdkMGE1ZjllOWIxMzVmNjVjZDI1MzcyZGZkNjI4Nzc1ZjdjMWVkMjUzZjhiYWQ0MmRkMmQ2NjY5IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJkNzIyMzEwNmZkODc0MmI3MGVhMjMzZjlkYzM1OWY0YjAyYmJiMDY5YjcyODNlZWY3NjI0OTk1MTZiZDdiOWM4IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_b2312a62500b431a91e61917435e6bd4",
+      "statement": "Test test_sourcechunk_document_text_must_match_chunk_text verifies that _validate_document_text_alignment raises ValueError when the document_text slice does not match SourceChunk.text.",
+      "evidence": [
+        {
+          "resource": "repo://tests/test_error_conditions.py#L192-L200",
+          "version": "repo-lines-v1:sha256:41d670394843c5f1654473d1bf142ce52d94e984ec748e36ceccd6d76b81352d:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYTQwNzAzNWRkNGZjMWYxNTk0NzFjZDA5N2I0ZTRkODBkYzM1MTUwMWY2ZDkwYTY3YWJjZmJkZjY1Y2I2MWM0YSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTUwMzJlOTY0ZDA5MzIzNTFlNWQxODUyNjkyODFiMTcxYTNhMDliMDhiMjg2ZTY2MWVhNDcwMzIzYzgyZWI0ZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOWUyZTVhNDhiNjAwYzBiMmYwMDg1ZGJjOGU1MDQ5ZWMwODdlNjRkZjRhOWJhZWEwZDA2MGY5ZjE5MDFlZDRiMSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDVjYTgxODZiMjk1MGYyOTExZWVmYTc2MzY3ZWYyYTcyOTI3MWFhNTI3ODMwZmU5MTEwMzlmMTExY2E3YWQwZiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_32af111f9f714dd196da87c7f70f7c86",
+      "statement": "Test test_align_citations_multi_span_evidence_respects_sourcechunk_offsets verifies that multi-span citations produce correct absolute offsets in full_doc when document_text is supplied.",
+      "evidence": [
+        {
+          "resource": "repo://tests/test_citations_multi_span.py#L83-L123",
+          "version": "repo-lines-v1:sha256:abc361840e0c19bbddf28005a4b5ae2c1628269c8cf2fd4209a0416eba607f91:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBjNjhhYTgwN2JlN2EwOTNmZTJlNDkzZTA5M2U4M2YwZTMwNDNjNjQ2N2M4MjBmYWI3OTc3YWE2NWNhODcyNjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MDlhNTNhNjE4ZDAyOGUxZDMwMDBjMGE3YWJjZWVjYmU1ZmIzN2Y0ZTUxMWVmZTQ2NjQzZmFkNmU2Njg3MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlhODJlYmU5ZWQ0MDdjM2E2YmE0YjAwMzQyOTJiYWE1MmMxMWNlNWFlMjg2MTA3NDAyZGU0NzkyZWVlY2FjZmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBmYWY2OGY2MGI5YTM5NGFhMDVmNWNhMzdkNmQ2MzI0NmU0ZDI1ODZmZGQ4NzJhOWY0ZWQwMTNmMDk1Mjg5MWUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_866fb94b114a4c60972e3fecf616fd48",
+      "statement": "Test test_align_citations_sourcechunk_without_document_text_slices_locally verifies that when document_text is None, evidence is correctly re-sliced from the chunk text using base_doc_offset subtraction.",
+      "evidence": [
+        {
+          "resource": "repo://tests/test_citations_multi_span.py#L220-L248",
+          "version": "repo-lines-v1:sha256:46a4d77b7115bf0a77630224331fe5a5929af95cad59e5d996d5bccf3896568c:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk2ZjU2OTkyMzllZGJjYTNiNjAwM2Y4OWJmYWQ0MTQ5MTBlOTgyZDA3MjgwZTllYjRmZGE3OTA5NTU3OWNlMjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjczOGZkMjRiZGQyMGIzMGQzYTFjNzY1ZDY1ZmFmNTg5MzhjODI3MmMyYmMzYmFhYzliY2RkYTEzN2I2MWU3MjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJiNDEzNzc5YTJiNGU4ZjEzOGRmOGU1MjNjMWJhYjNjNDlmZjliNTE1ZjM2ZDQ4ZDM4ODdmZWQzMTEzYjQ5ZTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVkNGI3YzlhOTRlYmRkM2FmMTI2NDM0YTBhYjIxYzMwNzA4ZmZkOTdhMDYxZDQwNWNmMTEwNjk0MTJhZjljMzcifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.4.0",
+    "at": "2026-08-25T18:44:12.628Z"
+  }
+}

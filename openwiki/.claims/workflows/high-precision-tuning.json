@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:c1ba2f6974a4c4dd92d945c1543286a9f54ae50a71b3a90fc9a3950185d49f09",
+  "claims": [
+    {
+      "id": "claim_9f3113e5570c48a6ac576c88eae90a10",
+      "statement": "The benchmarked high-precision configuration combines CitationWeights(alignment=1.0, answer_coverage=1.0, evidence_coverage=0.0, lexical=0.5, embedding=0.5) with CitationConfig(min_answer_coverage=0.4, supported_answer_coverage=0.6, min_final_score=2.6, top_k=1). It was derived via multi-dimensional grid search over an adversarial RAG dataset.",
+      "evidence": [
+        {
+          "resource": "repo://README.md#L108-L136",
+          "version": "repo-lines-v1:sha256:5943d6c9dfaed3514c9b3c97ee5d82498516851c8b7582e25bfafb5afd8b59a0:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3OWZjY2EyZjA0YTQ0OTA1ZGQ1N2NmMGFmODA5OTQ4ZTZlNzI3MjU2ZjlkMWVkZDI5NTI1ODRiZmNlMjgzOTEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg1MzFiNGY2N2EyMzdkMWM0NGJlNTdjMjc0MmJkYjkxOWQ5NmU5ZWVlYjQ1MDU0YWE2ODdmYmI5ZDAyMzI0NDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRmMDAzOTRkYmExY2M5MGEwZDI1YmM0YjQwMTA4MjQxYTI5ZDg1ZGFlNjdmZDBjYTQ2MjA1ODU3MmIwMjk3ZDYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI3ZjMyMDE4MmVhOWIxMGEzYTUxNDk5ZDliNWM2NzM5MWExNWNmYjVhZjQyMTkwZjFhY2I1NjIyNjU1YWFiMDkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7ddc1488f0264fbcae00ba2234cc6e5d",
+      "statement": "min_final_score is the most impactful precision knob because it gates the composite weighted score after all individual signals (alignment, coverage, lexical, embedding) have been computed. With the high-precision weights, the theoretical maximum score is 3.0; setting min_final_score=2.6 requires ~87% of that maximum, eliminating near-miss paraphrases, embedding-only matches, and partial numeric mismatches.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L808-L821",
+          "version": "repo-lines-v1:sha256:deb6b66ede4dfed1022481cea9c62b7d2836d8634ca663e0c0a63dcf9059d82a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNiZmZjNzJmYmYzZTViMjI1ZDExMjA4MDIxOTIyMjViNDc5MGI1ZGJlNjQ0Y2VmNGVjNmM1N2ZlYTI3M2ZhYzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFhMzg3YjVkZTEzNDNlNjQ2ZmE5ZjJiNzlhYjcwYjU4MjI5MWEyYmEyMWRmYWUwZWU2ZDk2MDQ1OTRjYWRlZTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ5Y2IwNzU5Y2VmOWE4NzYzZmJlMzA5NTUyMzg2YTZlNTU5MTlmZThkN2FmNThlYmY3YTIxZTgyYWM4ZmI4ZmEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1f0d76c02d8e424ca6690c4303f2059f",
+      "statement": "The composite score formula in _compute_final_score() is: weights.alignment * normalized_alignment + weights.answer_coverage * answer_coverage + weights.evidence_coverage * evidence_coverage + weights.lexical * lexical_score + weights.embedding * max(0.0, embed_score). Weights are summed directly and are not normalized, so absolute values affect the score scale.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L808-L821",
+          "version": "repo-lines-v1:sha256:deb6b66ede4dfed1022481cea9c62b7d2836d8634ca663e0c0a63dcf9059d82a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNiZmZjNzJmYmYzZTViMjI1ZDExMjA4MDIxOTIyMjViNDc5MGI1ZGJlNjQ0Y2VmNGVjNmM1N2ZlYTI3M2ZhYzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFhMzg3YjVkZTEzNDNlNjQ2ZmE5ZjJiNzlhYjcwYjU4MjI5MWEyYmEyMWRmYWUwZWU2ZDk2MDQ1OTRjYWRlZTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ5Y2IwNzU5Y2VmOWE4NzYzZmJlMzA5NTUyMzg2YTZlNTU5MTlmZThkN2FmNThlYmY3YTIxZTgyYWM4ZmI4ZmEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_cfb56bb46fc244a69bf09e61242f9cc2",
+      "statement": "min_answer_coverage controls the minimum fraction of answer tokens that must appear in aligned evidence; raising it from the default 0.2 to 0.4 rejects citations with significant paraphrasing. supported_answer_coverage is the threshold for supported status: coverage >= supported_answer_coverage -> supported; below -> partial.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L785-L805",
+          "version": "repo-lines-v1:sha256:b2d994ba7eb8cb1b5340067c352cb856502f3133365828f8727e5d51dd237309:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRhZTk3MjliY2RmOTZiNzY3Nzk1MDZiYTAyM2IzOGFkYjMyNDA4N2ExYTU5NDcxNWJkNTgzOGJkZjE3MTlmYjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRiNTUzZjYwNzM5NTUzMTBkNDI0Yzg5NTkyNDdjMGE1ODk3OTNlZDEwOTM2MDZkZTdkM2Y3YTU5ODdhYjNlYmQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhjYzRhN2QxY2M3OTZhYmEzZTQ2NzIzMzI3ZjUxN2U5ZjgxMTk4MmQyNTBmMDcwMjk4NmU0YjU3NjRhZDk1ODkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM5MzU5ZTdhMmUzMzZkNTJjMmIzZWE2NTVhYmZhM2JlNWJhZjg5NGQ0NGYxNDE5NjU4ZjViMjMzMWMyYjEyMTIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_32ed00c7b5ac4c66ab7d054087646f3c",
+      "statement": "_span_status() (repo://src/cite_right/citations.py#L1610-L1633) returns 'unsupported' when there are no citations, 'partial' when a contradiction is detected or coverage < supported_answer_coverage, and 'supported' only when coverage >= supported_answer_coverage and no contradiction exists.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L1610-L1633",
+          "version": "repo-lines-v1:sha256:0546591f2ac5ef2ec8353fa6d983babe6920c357814b4eae7d76a64a8120f7ff:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRmN2M5NjczZmU0NGEwOWMzM2UxZmM0Njk1YzQwOGNhNDFlZjkwZTEzMzIzYTQwZTM5NzhkMjZhOWE4Yjk3NjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI1YzNlYzMyMWRkZDgzYTU5YWViZmFlYzU2MjQ4NDMxNTI3Zjc2Njk5MGY3ODU4YjI3YjYwMGUyYjYzMjFkNGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgzMDFkODExNWRlZjc2NzNjNDI0OWZhZGQ3MmJjMWE0OTljMDJkYzI0ZTQ5MDhkMTc0OGY3YzE3OTc0MTBlMGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_df4dec4a4f474bf8a9d77c4d26392ce3",
+      "statement": "require_all_answer_tokens_in_evidence=True forces every answer token to appear in aligned evidence via _answer_tokens_match_evidence(), catching negation flips and numeric mismatches that min_final_score alone might miss. It is used by CitationConfig.strict() but not the README high-precision recipe.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L699-L708",
+          "version": "repo-lines-v1:sha256:6b8bcad04cb957ad0070134a566da18df7872aded17189f7f9911de5d163b3a2:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM2ODBiZmUwN2UwNTI3NWNkNmVmY2Y2Zjc3ZGY2NWVhZGEyNTRiMTU0ZDkyYmU3YWNiYmIyODQzZWM0YjQxODYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQyMDc4MzkyZmZlOTM1MTNhNGNlYzA2MjQ2ODZhOTcyM2Y4MzgxYjM4YTNjNjBmYWQ0NmYzYjEwYTc2NjVlN2UiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY5ODNjNzhmNjU1NjYwMDdiYThjYjNmOGZhNWRmZDEyN2VlY2RiODdjZDkzYmY2MDk5ZWVmZmZkYWFmZWMxMWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU1NzMwYmJiODE2MmFlMGUyYTUwMzIwY2QwOWM4MDVjYmYzZTM5Yjg0NDcxNzc0ZjliYTFhNTQ2ZGM4ZDhiMjcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_834bcf59cd074c2982cc4023b6e85002",
+      "statement": "CitationConfig.strict() and the README high-precision recipe differ in three key ways: strict() sets require_all_answer_tokens_in_evidence=True, uses supported_answer_coverage=0.7, and min_final_score=0.3; the README recipe sets require_all_answer_tokens_in_evidence=False, uses supported_answer_coverage=0.6, and min_final_score=2.6.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/citation_config.py#L100-L126",
+          "version": "repo-lines-v1:sha256:d53bc121a82dbb137fdb4d1f675eeb0a571bafb41e53e0163365cbcb53652895:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIwMzM1N2ZjYWI3ODE4MzBmYzU0MGJjNGVjZjA3ZWU0MTFlOGJmNmRkNTJhYjEzYzVkOGQ1YjdmMWRhODcxYTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MDlhNTNhNjE4ZDAyOGUxZDMwMDBjMGE3YWJjZWVjYmU1ZmIzN2Y0ZTUxMWVmZTQ2NjQzZmFkNmU2Njg3MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZiM2U3Yzg2ZTQ3ZTgyMjllOTU1NDBiZTg3YTI3ZmVhZTYxZTZkM2Y3MzQzY2VlNWEzZGJjMjgzYTNjZjdjZDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImViNjgwY2ZmZWE3YjJlYWRlNDRmZDBmZWFlMzAzNzMyMDk5ODY4YWZjYzYzOWExYTZhNzgzNThjYWU0ZGIzMmIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_10b50f72b0f441c9a7e0a572fbca98d6",
+      "statement": "check_contradiction() implements five contradiction checks: negation mismatch, number mismatch, entity swap, temporal/polarity mismatch, and number context mismatch. Contradiction detection runs in _span_status() against the full candidate passage (not truncated alignment evidence) via _contradiction_context().",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/contradiction.py#L67-L87",
+          "version": "repo-lines-v1:sha256:1317147db28d1aec0bf8ab7b1fe33dc1ab584be40ba8f917e31c4eeb561b4dea:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNlZTQ4ZDBmMWU3ZDhjYWFmMzFjY2Q2YWQyZDczYTAyYTk3YjVhMTE3MTk1NzQ4Y2ZmZmE4ZDYyZTAwYzkyZTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU1YmM0NzExZWNjYTA0NTBhZmM4MzI3NzlhODg2NzZhN2M2OTYwZmEzZGE1YWY0MTBlZTAyZDFlMDE1MTU5MWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA5ZjkzMDgzYzE5NzEyMWI5ODI3MDBiYThhZmFiZDE3MjJjZjFkM2U3NDA0NTA5ZTgwZWZhMjcyNDdmNjJmMDciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA1YWNiZmVkMzJhOWVlNDNjYzM1YjM4MzBlMzkxYzRkMTcxNGY2Nzc4YzYwOWMyMjg0MzIzYzk5ODgxMTE5MjIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_dedcec42ec2c421a9aaa4386f87933c8",
+      "statement": "When contradiction is detected, _span_status() returns 'partial' rather than 'unsupported' to retain the citation for transparency, allowing downstream consumers to surface the contradicting passage.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L1621-L1629",
+          "version": "repo-lines-v1:sha256:2e9e3279555e5f17068c5d36ccadfd794649f9dcfc19e39da1ec5fedf8aaace5:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYjM0MzM2ZjgyOWZmMzc5MzdmMDUzMTFlMTkxNWU5NDdkZDU3MWRmZjUxM2JkMzBmNzU5ZWRhZDZhM2Y0MWIyMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTMxMjJkOTNmZDc1MTE2YjgwZTkwZTEwY2IyZDAwMzNjMGMzNTY4ZWI3YjVlOWE0N2ZhZjI1MTE0NmY0NzhiZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYWY1ZDU4OTkxZDQyMWZjYjNhZjZiMGY1YjY3YjlkMzg0NTRlYTU0ZGRhZDAwY2Q1Y2MzMDAxOWMzYmExZTk1YSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTE3ZGZiNWI4NjExOGVlOGZhNWExZjcyY2JlZGE5OTBlYTkxZGU3ZDcwNzFiYjcwNTRlYzQ2ZDkwY2NmMTYyYiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_f401f22fb6464b158e2f1923c87cd196",
+      "statement": "multi_span_evidence settings (multi_span_evidence, multi_span_merge_gap_chars, multi_span_max_spans) control non-contiguous evidence extraction. When multi_span_evidence=True and alignment produces disjoint match blocks, the pipeline extracts separate EvidenceSpan objects; merging and max-span limits apply. For high-precision use cases, keeping multi_span_evidence=False is recommended for simpler output and reduced offset error surface.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L1384-L1423",
+          "version": "repo-lines-v1:sha256:176ecbc6091cac2a69d1e8ea04d459ca14bbe71012a63ca61e09ff6a5944cf8b:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2ZDI1MjM3NzYxYTlkZTlmODE0MDM4MDQ5MzkwMGY2MDQ5NjM1Y2IwMmEzNWUzYzg5MzA1YjRlMWY2ZjcwOGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZiMWJmOTJmNWMwNDFkN2FkNzcxNGUwMDM5ZGI5NzBjMmU4ZDViY2ZmZjFmN2RiMTIwY2YzNDkzODJmNWNlY2IiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZmMjY3NzFiZjhjZGRhYzBhYzg3YjY3ZmFkNzQwODdkYTI1ZTc4ODg2YzFiODIxMjcwYzgxNjFlZjA3OGZiODgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNjODE0MjNjZmFjMzdiZmU0Nzk5NmUwMTQwNzg2ZjEwMmY4NWExMGVlZmI3MjJlOWU5YzllZDNmMWNkODNmYTgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1a193279f98e495abb035bd63a3cf96b",
+      "statement": "test_strict_exact_citation_rejects_numeric_token_mismatch() demonstrates that '125 days' vs '124 days' produces unsupported status with the high-precision config, and test_strict_exact_citation_rejects_negation_token_mismatch() demonstrates that 'shall make every' vs 'shall make no' is rejected when require_all_answer_tokens_in_evidence=True.",
+      "evidence": [
+        {
+          "resource": "repo://tests/test_citations_retrieval_support.py#L131-L166",
+          "version": "repo-lines-v1:sha256:5334ff07e940cd47e68205e6fc10efd486f77993a0c784dc86d72dd18fe87a55:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNhMDg0YTNhYzUzYjc5Mjg5MmY2NGQzNDk4Yzc5NWY4YmI5ZGM1NjE4MDZmNTc2MDljNzQxNTFkNjBhYjU4MjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMxN2VmMjNhN2M0NTY4ZmQ5YTRjZGU4ZGI0YmYwMTRhYzI0M2NhYzhjZDI5MGRlNzI2YjkzMWRkY2QxMjkwMWYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk5ZmQxNGQwZjRkNzQwZmQxMGE5NzA2NzVmNWExN2IwODFmMWI4MjkyZTkyZTFjY2FlODY3Y2ExNzdjNGM4MDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRkNzY5YmNiNzBlNDFmZThlMzQ4NWYzODc5Y2ZhYjhlNmY4NGM5ZDQ2OTg2M2Y1OGVlMWI5MGQ2ZDA4MWRkZjMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_393b653e57ed435cb8b9818789c66d92",
+      "statement": "min_answer_coverage and min_final_score are not redundant: coverage controls what fraction of the answer must be present, while min_final_score controls the overall composite quality gate. Lower min_answer_coverage improves recall; raise min_final_score improves precision.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L808-L821",
+          "version": "repo-lines-v1:sha256:deb6b66ede4dfed1022481cea9c62b7d2836d8634ca663e0c0a63dcf9059d82a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNiZmZjNzJmYmYzZTViMjI1ZDExMjA4MDIxOTIyMjViNDc5MGI1ZGJlNjQ0Y2VmNGVjNmM1N2ZlYTI3M2ZhYzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFhMzg3YjVkZTEzNDNlNjQ2ZmE5ZjJiNzlhYjcwYjU4MjI5MWEyYmEyMWRmYWUwZWU2ZDk2MDQ1OTRjYWRlZTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ5Y2IwNzU5Y2VmOWE4NzYzZmJlMzA5NTUyMzg2YTZlNTU5MTlmZThkN2FmNThlYmY3YTIxZTgyYWM4ZmI4ZmEifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.4.0",
+    "at": "2026-08-25T18:44:12.628Z"
+  }
+}

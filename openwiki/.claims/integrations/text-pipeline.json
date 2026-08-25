@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:f3936af025bbf6551bc613a27889bcab70ccaae1d6be4cce9d032e1c5dca0506",
+  "claims": [
+    {
+      "id": "claim_5d0d6f99ccce40849b8867b3e371f604",
+      "statement": "Tokenizer, Segmenter, AnswerSegmenter, and Aligner are defined as @runtime_checkable Protocol interfaces in src/cite_right/core/interfaces.py, enabling isinstance() checks and custom implementations.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/interfaces.py#L10-L31",
+          "version": "repo-lines-v1:sha256:4645809795e84f5fae19001d5c4794cca3280c086d9ab7c8f0789ec651542e78:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwMzA2OWQzZjMyN2IwY2ZkMWQwODcyNzRlYzI3NTY1ODU0ZDg1MmIzMjI1NTNkMzkwMmM4OWY1M2YwMDBlZGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2MjBkODVkZTRlZDdhYjgwMjFiNGE4ZGQ0ZmExNWVjNTE5MjVjZGZjY2RlMTgwNTg5NWE0YzhhM2MzYmE0OGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU2Nzk0YjgyZWZiZmU0NmZhZDk2MTNjM2RmM2E5YWE4YmM2NDU0ZWFlYWE0ZDcxNTA4YTRhOGEzOGJjOThlZWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQzYzYyNWY5MWRmYjhlNGMzZDFlYjFjN2NjNDU3NWNjOGE1NWJhOGE2N2E4ZmM1MjA1MjYwYTBiZDgyYTgyYjIifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/core/interfaces.py#L34-L55",
+          "version": "repo-lines-v1:sha256:904dc06ba8a2c74ec15b4825375a6d00715fa6f0fec1f2b06d43201705ad73c8:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwMzA2OWQzZjMyN2IwY2ZkMWQwODcyNzRlYzI3NTY1ODU0ZDg1MmIzMjI1NTNkMzkwMmM4OWY1M2YwMDBlZGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2MjBkODVkZTRlZDdhYjgwMjFiNGE4ZGQ0ZmExNWVjNTE5MjVjZGZjY2RlMTgwNTg5NWE0YzhhM2MzYmE0OGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhlMTAyYTE5YmE2NTQwZmFhMjNhMTQ4NTZkYmM0MTMyZTQ5MjFkYjA4OWM1NjA5NThjZGQ2ZDlkYTAwZjkyODYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQzYzYyNWY5MWRmYjhlNGMzZDFlYjFjN2NjNDU3NWNjOGE1NWJhOGE2N2E4ZmM1MjA1MjYwYTBiZDgyYTgyYjIifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/core/interfaces.py#L58-L79",
+          "version": "repo-lines-v1:sha256:33af3e3105922eacb5f372a3dd48e9d5e30c481c320a1f27e83093399114fc91:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwMzA2OWQzZjMyN2IwY2ZkMWQwODcyNzRlYzI3NTY1ODU0ZDg1MmIzMjI1NTNkMzkwMmM4OWY1M2YwMDBlZGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2MjBkODVkZTRlZDdhYjgwMjFiNGE4ZGQ0ZmExNWVjNTE5MjVjZGZjY2RlMTgwNTg5NWE0YzhhM2MzYmE0OGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhlMTAyYTE5YmE2NTQwZmFhMjNhMTQ4NTZkYmM0MTMyZTQ5MjFkYjA4OWM1NjA5NThjZGQ2ZDlkYTAwZjkyODYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQzYzYyNWY5MWRmYjhlNGMzZDFlYjFjN2NjNDU3NWNjOGE1NWJhOGE2N2E4ZmM1MjA1MjYwYTBiZDgyYTgyYjIifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/models/base.py#L8-L28",
+          "version": "repo-lines-v1:sha256:a86571f6c748f60f9194839f8f46fdab199b5f3f454464df0801ad459385527b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwMzA2OWQzZjMyN2IwY2ZkMWQwODcyNzRlYzI3NTY1ODU0ZDg1MmIzMjI1NTNkMzkwMmM4OWY1M2YwMDBlZGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUwZGUyNTg3MTk2MTQ5MjYwNzFjOGZiMTlmZDg2NjE1MDU1NWYxYjAxMzU0ZjhjZDE2MDNhMTA5YTdkZGFlNDAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIwYWQxYmI2ZjM5ZDc4YzFhNWNmZWY3OTY1N2E5Mzc4NWRkMWYyMzQ3Njg3MGI3ZjFjNGE0ZTRjNWQ1ZjgxZWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU2MjBkODVkZTRlZDdhYjgwMjFiNGE4ZGQ0ZmExNWVjNTE5MjVjZGZjY2RlMTgwNTg5NWE0YzhhM2MzYmE0OGMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_449ad168ed2a490bbebb432d3540d646",
+      "statement": "SimpleTokenizer uses a TokenizerConfig with normalize_numbers, normalize_percent, and normalize_currency toggles; its _vocab dict maps normalized tokens to integer IDs and is essential for content-coverage token matching between answer and source.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/text/tokenizer.py#L11-L63",
+          "version": "repo-lines-v1:sha256:46094847b2ba3ce4f5bb14f66c94063ccb4b9ca99477ce39b56e192c3b32cb60:eyJzZWxlY3RlZExpbmVDb3VudCI6NTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAzMDRmMDM5N2RlZDE0ZDc1MDQ0YjFmYWJlYTRkMWFmZjNjMmRmNjIzZTgwYzE4YjQ1Nzg3MzMwZThmNmNhMjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MDlhNTNhNjE4ZDAyOGUxZDMwMDBjMGE3YWJjZWVjYmU1ZmIzN2Y0ZTUxMWVmZTQ2NjQzZmFkNmU2Njg3MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE4YWU3N2ZmNzExMjg3OGY4NGNhNjAxMWE5NjY1YzQ0MDMzNWIwZTFkMjkwNjQxMDZmOGZhODBmNTc3OGE4YWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcyNzAyYTc1YTBlYzA4OGVkZjAzMjcyMGNlNDU4MGMwZDNkMjdjOWFhZGIzZWE5ZjI0MzY3NjFlZmQzNGU5MjYifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/text/tokenizer.py#L66-L112",
+          "version": "repo-lines-v1:sha256:49c643780abafd6dcd3e20b8b673fcc9870655fca55e37d9e5ad35f28581d6f7:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg2NTFiZWZjMzEyODQ4ZDViMDU2ODg1MmU4Yjc3MjNmYzdjMjI1YzJlODJhM2NlYmFlY2ExZGE1ZTMwYTA4MzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjczMjVkZTUxMzEyMWUwODljNDVhZGRlNzE3NDRhMzI5YWYwZDEyN2EwZmVjZWU2NzdmZmM3ZmUwYTM5MzBlNTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIzZGYyYWNmMDZlOGMzZjAzYzcxMzVjNmU4YWM1YTljYTU0MzJhYmUwNmE3NGFjYTBmZGQ5YTUzYTAwOGY5ODciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZiMzFlNTc1MzA4ODU3MmI4YWEyN2E1OWRlY2NhYTJlNzgwY2UxOWVjOTJiMDJjNmE5MzFlMzliYTFhZDkxMTQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_62a161a104ad4342a87108b21e7b986b",
+      "statement": "TiktokenTokenizer wraps OpenAI's tiktoken BPE tokenization with character-accurate spans computed via UTF-8 byte-to-character mapping, defaulting to cl100k_base encoding used by GPT-4 and GPT-3.5-turbo.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/text/tokenizer_tiktoken.py#L25-L155",
+          "version": "repo-lines-v1:sha256:90d8f2b10d024188eb78609eb637f73e04495fb3ba26fceadeabe4d0de890a05:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMxLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIxMDJjODlmZjkzNTE5NzIzMGE5ZDA5ODE2NTJmY2I2ODQ5YTIzZmVhOGJiYWI4MmY5NzE1ZmIxYzhhNzAxOTJhIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI1OTA5YTUzYTYxOGQwMjhlMWQzMDAwYzBhN2FiY2VlY2JlNWZiMzdmNGU1MTFlZmU0NjY0M2ZhZDZlNjY4NzJmIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI1MTY4YzkzYzE4NjA3MGVmYTZhZTgxOGI4M2M0ZDNhZTY0YTI1MzgzOTllZGQ4ODUxNmNjOGRlYjlhZGFiNTc4IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI5OTZlMDYzZjc1ZTMzNDYzZmE1MzQzY2YxMjc1NGRhMzhiMTMxYjI1OTFlZmFhYTk0MGZjM2MzOGY0M2FiMGY5In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_a517b18ce55943b68c3f957f49f1f16a",
+      "statement": "HuggingFaceTokenizer wraps HuggingFace tokenizers (both tokenizers library and transformers), filters special tokens with empty (0, 0) offsets, and provides from_pretrained() for loading models from the Hub.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/text/tokenizer_huggingface.py#L26-L240",
+          "version": "repo-lines-v1:sha256:4fa5fefec3c282710a3edb742f5bd43161b1c5c7d6bf56bd3a07c0010a8bc11d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjE1LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwYjg5YjRiMWNkMTUyZGQ0NzA5ZDgwZGUwNTI4ODlhNTdjNTM5ODk1OTJhMDg1Y2NkZWQzOTJlZGRmNGRmYWIxIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI1OTA5YTUzYTYxOGQwMjhlMWQzMDAwYzBhN2FiY2VlY2JlNWZiMzdmNGU1MTFlZmU0NjY0M2ZhZDZlNjY4NzJmIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJjMmU5NDM4Y2FjMTdlMDFlOGYzYmFlYzJlN2VhN2NhNWJiN2ZhY2VmMjUzNzRhZDBkNTMzYmQzYTI5MzRmMGM0IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJjZGM5NDE2ZGU3YWZmYzRkYWQxYjc3OTA2M2I5MjI2NDhiZDEzNmJkM2YzNWI4YWQxMGFkYTM2YmRlMjhiZmU2In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_a820df7906de4daca7b8ab61c84cdc88",
+      "statement": "SimpleSegmenter splits text on sentence-ending punctuation with hardcoded abbreviation handling; SpacySegmenter uses spaCy dependency parsing to further split sentences at clause-level conjunctions (and/or/but) when heads are verbs or adjectives.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/text/segmenter_simple.py#L1-L136",
+          "version": "repo-lines-v1:sha256:b3444d7378f615fd431d5a0ecd2482371fb8e4f4cb70301fc947bcbd3473fd1e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTM2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI1YjAzNWU0YTVhZTc5NmUwMzkzY2M0ODIzNjk1MWZhZDQ3MTA4ZWU5NDIyN2ZiMWJmNWZjNzBmOWFiYzRmMmU1IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIzMGMxZjE4OGYxNDJlZDdhODI0NjgwYjIwNzE3MmM1NTE5YmM2MTRhNDhmZGE3Y2YxNjdlZGI4ZGRmNzk5NTZjIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MCwicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_9ec426dcbb9e4332a9c28207f7bb0e2a",
+      "statement": "PySBDSegmenter uses pySBD for rule-based sentence boundary disambiguation with LRU-cached segmentation and offset preservation; it handles abbreviations, URLs, and emails without a full NLP pipeline.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/text/segmenter_pysbd.py#L10-L111",
+          "version": "repo-lines-v1:sha256:a442ced3cfdaffac412db517e806000fde1bfbb7f3986a93228f8dd9b66e9ed5:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAyLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwZmVkZDlhNTM1YTM1YTZjMzQ3MWIyNTU4NjY5NGQ1MDhjMDJjMGFjNDJmYjQ4NmMwYjE3ZmVjN2RmOWEzMGNiIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJiYWFlOGEwY2E3NmY5OGY3YjdkYzc5ODQ5NTFkNjNlNTdkYjNjNjQ1NTc5Y2E1MWJhZDZhNTM5ZDYxNGVkYmJlIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIyZDM4ODRiZTA5ZTg1NmNlYmY0M2E3MTQwMzU5NDQ4NGQxMzBjY2Q0YTU2OTUyMjcyYmZiZmVmOTQ0NTEwYmE2IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_692ff31f087e480eaabd24e5d75ec1df",
+      "statement": "SimpleAnswerSegmenter splits answers into paragraphs then sentences using SimpleSegmenter; SpacyAnswerSegmenter uses spaCy with optional clause-level splitting and returns AnswerSpan objects with kind='sentence' or kind='clause'.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/text/answer_segmenter.py#L1-L118",
+          "version": "repo-lines-v1:sha256:e4a4fe08a22f01609253468b9f2399b91d39c183e71bf1c3afda61acb9a12b67:eyJzZWxlY3RlZExpbmVDb3VudCI6MTE4LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJlZGFjNzBkNWE1OTFiYWRlZWIzMmU2M2Y2MGYxMzE4MTUzYmI4OWE0MWY1MDYyZjBhYTFjZGZlZmUyOTk5NzY2IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJiNWZhYjBhN2Y1YmIzMTZjZjdjOTEwMjM5ZTgwOTViZjkyYzJiYzNlZmExNDc3OWVlYmNhMmU0YzVlNzcwZDg3IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MCwicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_0b5a3ae485034ccc9f8af4c1baa88d1b",
+      "statement": "PreparedCitationCorpus.from_sources() attempts a Rust fast path only when tokenizer is SimpleTokenizer and source_segmenter is SimpleSegmenter; using any custom tokenizer or segmenter disables this fast path, falling back to Python-only processing with per-candidate FFI marshalling overhead.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/prepared_corpus.py#L141-L162",
+          "version": "repo-lines-v1:sha256:be55490484b1bf6d6bfa95052570652588868ede987a33290cfa39b6e3a356dc:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZkODliNDVhYzk4NDk4ZGE1N2UwODY5MjA5OTg4M2EwMjg4YjBiMjc4MzU4ZTBmMTYwNmE4NjFiOTE4NzhkYjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBlZWM1MGM5NjU0NDFlMGUxNWQ3ZjI3ZDc5M2QxZTg0NjhjY2M5MzczMWI5OGJiNDFhOWEwYzY2MDUxMDhjNWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE1YWVkODIyZWQ2ZWEzZjE2MzdmNGNlMjRkYzcxZmVlZGExMGFmZTkwMWNmOTkzMTk2NjM4OTRmMGY3MWYwNjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjliYjk1ZjhhYzQ4ZjAyYjgzZTA3MzAzYzU3MTU5ZDljNDEyMzQ1MzdiOWY5ZmQ5ZTgxNjNjYWFkYjc0OTVkNzEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_4f04ab800d1c4ef2b1bf02e2cfc77c44",
+      "statement": "content_token_coverage() in content_coverage.py computes the fraction of non-stopword answer tokens appearing in source passages (with multiplicity), complementing Smith-Waterman's sequential matching to prevent paraphrased content from falling out of citation scope.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/text/content_coverage.py#L129-L146",
+          "version": "repo-lines-v1:sha256:22a9df88e472f85f699045a6e6e94548af6a9d8235a4daeb42c9bf8d9a6625fc:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxMGJjNTMyNWRkYTA3ZGQ3ODgxZjE5YjhhMGM3Y2I0MWQ5MDg2YTVhYzI5ZWNkNDdhYzlhNTM3ZTI1M2YyOGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRhMTAyMGYwNDQyMWU2YzhmZWViNDg0MjVjNzFiN2FjMTM1ZDcwYzJlNTRjZDEwMTMyZWZmN2Q2NzI3ZWFjMzEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJiNGYyMjhjYTg1ZjkzYjkzYTdiYmU5YjlhNDBiZTIxMzA2YmFmMjQ2OWViYTYxMjA5MWUzY2EyMTk2NjVlMzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7b05d83512314d6b9f5b273c3663d50d",
+      "statement": "SentenceTransformerEmbedder wraps sentence-transformers for dense semantic encoding with a global LRU cache of 10,000 entries and precomputed L2 norms in EmbeddingIndex for fast cosine similarity top-k search.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/models/sbert_embedder.py#L1-L69",
+          "version": "repo-lines-v1:sha256:16e27e256314b6d2febdfdf4dc827e4469a8bc9491f414f8a860fc984efb5b86:eyJzZWxlY3RlZExpbmVDb3VudCI6NjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU1MmU5ODhjNDQ0ZTFjNGJiZGQ4Yjk3OTdjZjEwYjJlNGQxMWUxNTU0NjgwZjBiZmM0MDgzMDNhZDZkYjFiOGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVhNGNmM2QzMTFlMDNhMTQzYjM0NTUwYTUxMDc0YTUyMmIzOTA1ODdjNmZkMDM5MWZkODk1ZDc0NTk5NmMwOWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.4.0",
+    "at": "2026-08-25T18:44:12.628Z"
+  }
+}

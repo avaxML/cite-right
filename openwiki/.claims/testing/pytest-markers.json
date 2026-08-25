@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:05c228bdda8177448fa17ff2a0371593fbc0af5aa1251b220fcdaba0f4f3e60c",
+  "claims": [
+    {
+      "id": "claim_229472d42a824d409e1b98a5b5a5fb17",
+      "statement": "All custom markers (rust, spacy, embeddings, tiktoken, huggingface, pysbd, slow) are registered via pytest_configure in tests/conftest.py, not in pyproject.toml",
+      "evidence": [
+        {
+          "resource": "repo://tests/conftest.py#L23-L31",
+          "version": "repo-lines-v1:sha256:650bb5833ebdb57a222b759dd56d062679b34a529dc957a44c222b6dea93419c:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTFhODA4NzYyYTRiMDI5ZDE0ZDlmMWE5MWZmZWRlN2FhYTU5YzU3MTJjMmY2M2UwYTJkMTllZjc3NTUyZmNiMiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiY2E3ZmY3ODA4N2NlMjFlODhkNDNmZDdiNzhiYTk5YTlmNTRmY2VhMTZmYjBmZWNiNmMxZDJjZmRhYWZjOWU0MCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZWE5YjJhYjc3MzZmMjljYWI1N2RiNmIxZTMxZWU2YmEyZTFiY2EyZDQ3OWZiMTA4MTQ1N2VkMTUxZTI0ODFlNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTM3ZWQ1MjRjMzEzMDg4ODVlMTM4MjUyYjkzZjVlNWU1NTllNTQ4ZTkwODNkN2QxYzBiZDkyOTg1N2YyN2I1MiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_3f91e42c27e9407ea25d1b00bd4ac6b8",
+      "statement": "The requires_rust skipif decorator skips tests when cite_right._core cannot be imported",
+      "evidence": [
+        {
+          "resource": "repo://tests/conftest.py#L39-L46",
+          "version": "repo-lines-v1:sha256:6be58abc4ded1aaefd1d8c5be0e509fdb58da98cd48f8e1f1fb5d0dd5833e5a4:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYmRkYmRkMThmYjhhNzczMzhkNmRiZDg1OGVlNWM3NTdiNDJhYWMzZTc0NzY0YTVlNjJlOGQ1N2RkYzI2NTM4NiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYjk3YzcxMjQ3YWYzY2QxZWRmNTU1YTdkMTA3NTkzMTU3ZjZkYzJhMjJhZjBkZTgyZTc3NzRhYmYxMGY4YWRlMSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZWE5YjJhYjc3MzZmMjljYWI1N2RiNmIxZTMxZWU2YmEyZTFiY2EyZDQ3OWZiMTA4MTQ1N2VkMTUxZTI0ODFlNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTUxOTkzYWM4NDBjZDMyNDY3ZTE2MmFhYTI5YWRlZWViOWQ0MGRlNzM2MzEwM2ViMjU2ZGZmYjVlYjc3ODgzNyJ9"
+        },
+        {
+          "resource": "repo://tests/conftest.py#L85-L88",
+          "version": "repo-lines-v1:sha256:ba69237f5d791d872742cd802a80ffea72c0504b24901cf5e69dc9c909b187a0:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZDQ0NmExOGMxMmRlMzZlODZkNTczNGI0OTUxMTg5MzNhOGQ1ZDk1NWE2ZjJjM2MwZmQyNWRhMjBiZjdhNjNmNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZmFmYmEwNTI3YzM5NTNjNGI2ZTBlNWI1NzM5YmE4MzYxMmY4MDUzYmNkYzk0NjY3MzAxOTNjZDFkNTkwYjQwOCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDI5ODhmZDU0YzcwYWVhNjE3ODk1ZDhlMTYzZTNlM2ZjZmFmOWM0NjhiZTU4ODY5NjcyMGI5MGU5Y2M2ODZkNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMDlmNGQ1ZWIxODU3OGVmMGVkOTIyNTkyOTE3OTJlYzhjZjVlYzEwY2E3OTc4ZTk3N2U2NTY3MTU0MGNkZTQyMCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_e02e4e1fd7094bb9bf7f4bac220d86e5",
+      "statement": "The requires_rust_blocks skipif decorator skips tests when the Rust extension lacks align_pair_blocks_details, which provides match-block traceback required for multi-span evidence",
+      "evidence": [
+        {
+          "resource": "repo://tests/conftest.py#L49-L55",
+          "version": "repo-lines-v1:sha256:c8de8bbc9dae404f1ee46f9299c0b72ed6ff47079062f0f37dee65d71008c04d:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjU3ZThiOTcxMGZjYzdkOWM1MzI1MDFmYjY3ZDIwNjU0M2EyZTc5M2EzODk4YTU2N2ZkYjgyYzk5NGNmODE2MCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMTlhMDI0MDQ2Zjg5ZDRlMGQxMjkzMTVlNTlkNjQzYTBmOTVkMTQxMTJkY2VjNGRiMTI2ZGFhNDM2ZTEyZmFkZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZjk5ZWZlZGZkMmQ5NzA2ZDg5MWM3YmE5ODNlN2Y4NGUwNWFkMGUwMTkxYzEzMjc5OGJlNWUzYzFjYzUzMDQyNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODFjMTQyNmJlYTdmYWJhMDVhMTJjMWUxYzg2MGRhNjdjNjE3MzhmZmNjY2NhNGY2NzZlNGI5MjZkZWE2NmUwMiJ9"
+        },
+        {
+          "resource": "repo://tests/conftest.py#L90-L93",
+          "version": "repo-lines-v1:sha256:cc7d4c64340774d265f1f0a92d0c751826dea136bc793526ef52b5c723cf1ceb:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMWQ5MDAwYTYyZjUzOGNkYzE5MTI1NTdjZTU4NGE4N2NhODRhNGFhYWM2ZDk3NTM3OTdjMTkxMDgzMjg0MDgzOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZmFmYmEwNTI3YzM5NTNjNGI2ZTBlNWI1NzM5YmE4MzYxMmY4MDUzYmNkYzk0NjY3MzAxOTNjZDFkNTkwYjQwOCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOWE5NGQ1ZGU4M2M5NDRiYWUwMDdiOGFjNzM4NDc5YjMzMTE1OTM4ZGRkNzAyOTAyMDZmZDUyNGQ2MzRhZmIzMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTM3ZWQ1MjRjMzEzMDg4ODVlMTM4MjUyYjkzZjVlNWU1NTllNTQ4ZTkwODNkN2QxYzBiZDkyOTg1N2YyN2I1MiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_6947c72b3c17439ab8f1da9c924cfbab",
+      "statement": "The rust_core_with_blocks fixture provides cite_right._core only when align_pair_blocks_details exists, and skips otherwise",
+      "evidence": [
+        {
+          "resource": "repo://tests/conftest.py#L70-L81",
+          "version": "repo-lines-v1:sha256:a53b1e14e1e569f7a1c55ac8cdf802165866f66d889ea21704f30a23e55798fa:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcyMzdhZjYzZWMzMDhkYWIwY2RjNmJhYTJlZGFmZmE4ZGQ0YmM4MmYwNGNmMmE5MTZlMDNmNDA1OWMyYjQyOWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY4NjA3MjhkYTA2M2M1OTc5OTU5OTgyMDRhYmRkMWNiNzc5OWM4NjU3MDE3YjJlM2NiZDg0YjNkOTk4NzczMjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgxYzE0MjZiZWE3ZmFiYTA1YTEyYzFlMWM4NjBkYTY3YzYxNzM4ZmZjY2NjYTRmNjc2ZTRiOTI2ZGVhNjZlMDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQyOTg4ZmQ1NGM3MGFlYTYxNzg5NWQ4ZTE2M2UzZTNmY2ZhZjljNDY4YmU1ODg2OTY3MjBiOTBlOWNjNjg2ZDcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_464226a75dfc4927ab1ca4018d665d6f",
+      "statement": "requires_rust_blocks is used in test_alignment_rust_parity.py for block-level traceback parity tests and in test_citations_multi_span.py for backend comparison",
+      "evidence": [
+        {
+          "resource": "repo://tests/test_alignment_rust_parity.py#L8-L8",
+          "version": "repo-lines-v1:sha256:258842dc41adb09d504e0e0cdb7b62e3e1986630362ca6c8f6f3f06a0567e51e:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjU4ODQyZGM0MWFkYjA5ZDUwNGUwZTBjZGI3YjYyZTNlMTk4NjYzMDM2MmNhNmM4ZjZmM2YwNmEwNTY3ZTUxZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjU4ODQyZGM0MWFkYjA5ZDUwNGUwZTBjZGI3YjYyZTNlMTk4NjYzMDM2MmNhNmM4ZjZmM2YwNmEwNTY3ZTUxZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTczOGUzN2RmMzY5Y2VhMGVhZDdjYmMyYTk3ZmYzMWJmOGYyM2YxZDM4OTcwZTdhNzAzNGYyYTZiMWI4NTA5NCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMjI4N2RlYzk4NmFlNTg4ZDQwNDU2ODhmOTM1YTgyOWM1YTdlNjE0ZDUxYjI0M2RmYzQ2MzkzNDI2ZmI4YTE3NSJ9"
+        },
+        {
+          "resource": "repo://tests/test_citations_multi_span.py#L6-L6",
+          "version": "repo-lines-v1:sha256:ed0c6df7059036b03439af78ff7484e11fdcf12fa32c07958e2c6ebcf38060ad:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZWQwYzZkZjcwNTkwMzZiMDM0MzlhZjc4ZmY3NDg0ZTExZmRjZjEyZmEzMmMwNzk1OGUyYzZlYmNmMzgwNjBhZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZWQwYzZkZjcwNTkwMzZiMDM0MzlhZjc4ZmY3NDg0ZTExZmRjZjEyZmEzMmMwNzk1OGUyYzZlYmNmMzgwNjBhZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzliOTU2N2MzMWI3MjYyMDcyNTk5MjU5MjJiZGJjNjVhMDhmMTlmMGM5ZjY2ZDRiMjNhN2QwZGJkZjFmNmExNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTc4NWU3ZDFjY2U2YjNkZjlhOTljM2QyM2E2NDI0NzQxZjMwOGEzMTYzZGNlYTNkMmQ1OTU5NzU3NzIzMjNmZiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_0b5240718e0240f6b3e88619f3bcf710",
+      "statement": "pyproject.toml documents that markers are registered in conftest.py via pytest_configure, with no inline marker declarations",
+      "evidence": [
+        {
+          "resource": "repo://pyproject.toml#L73-L73",
+          "version": "repo-lines-v1:sha256:30f0a88c7a7c2249225e4115ad2e9d69cfab09d2e9bc7d86f0d01e0a1fa14778:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzBmMGE4OGM3YTdjMjI0OTIyNWU0MTE1YWQyZTlkNjljZmFiMDlkMmU5YmM3ZDg2ZjBkMDFlMGExZmExNDc3OCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzBmMGE4OGM3YTdjMjI0OTIyNWU0MTE1YWQyZTlkNjljZmFiMDlkMmU5YmM3ZDg2ZjBkMDFlMGExZmExNDc3OCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzk4M2NkYThkMDJlMzE4YjE5YTMzYWY0ZTgxYzJmZjhkZjQ4Y2IzMmQzOGRhNWMyNzBhNDY4YmVhZTczNDQxOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOWM3MDk1NzM4ZDBiNTgzZmY1NDI0Mjk2Y2Y0NGYzMTMzMTczOGQ1ZDJmMjI4ZWI3MWJhY2JhYTQ1ODc3YmFhNSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_20f54b0cd3eb4307aaeb8e3ba4df3228",
+      "statement": "The requires_spacy_model skipif checks for both spaCy availability and the en_core_web_sm model specifically",
+      "evidence": [
+        {
+          "resource": "repo://tests/conftest.py#L106-L137",
+          "version": "repo-lines-v1:sha256:2e06752f0b5bdb4ea0908c001c6fda8df4039bebdcfc0d58fb3a5c371d688df5:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFiMmIwZjQ5Y2M1MDA1NDNmNTExZjZhYWYwNTMyZDdjOTdmY2VkMDZlNjdlMWIxZDdkZWUzYWFhN2RkZWEwZDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhZmJhMDUyN2MzOTUzYzRiNmUwZTViNTczOWJhODM2MTJmODA1M2JjZGM5NDY2NzMwMTkzY2QxZDU5MGI0MDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhlMGJmMTk1OWYxNmNlNmE3ZGYyYTI4NWI4ZGQzZDM5M2M1NWI1ZGVhNWE3Y2IwNDkxYTAzOTY0MmRlZjZiMTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzN2VkNTI0YzMxMzA4ODg1ZTEzODI1MmI5M2Y1ZTVlNTU5ZTU0OGU5MDgzZDdkMWMwYmQ5Mjk4NTdmMjdiNTIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a6034cdee4ed4dada2a9cd79e608b17d",
+      "statement": "requires_embeddings, requires_tiktoken, requires_huggingface, and requires_pysbd use importlib.util.find_spec to detect optional dependency availability",
+      "evidence": [
+        {
+          "resource": "repo://tests/conftest.py#L145-L204",
+          "version": "repo-lines-v1:sha256:63e011956d418fd6179ca9a3d56b7e79b1a73f5533597bdae8731383a05fcecd:eyJzZWxlY3RlZExpbmVDb3VudCI6NjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk2M2MyYWE4YWMyMzNhZGI5ZWRhOGRkMThlZTAxNTkwODgxYWI1NWYwNWM4ODhjOWY0NTA4MzY0MzVmY2U5NGEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhZmJhMDUyN2MzOTUzYzRiNmUwZTViNTczOWJhODM2MTJmODA1M2JjZGM5NDY2NzMwMTkzY2QxZDU5MGI0MDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVhOWIyYWI3NzM2ZjI5Y2FiNTdkYjZiMWUzMWVlNmJhMmUxYmNhMmQ0NzlmYjEwODE0NTdlZDE1MWUyNDgxZTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzN2VkNTI0YzMxMzA4ODg1ZTEzODI1MmI5M2Y1ZTVlNTU5ZTU0OGU5MDgzZDdkMWMwYmQ5Mjk4NTdmMjdiNTIifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.4.0",
+    "at": "2026-08-25T18:44:12.628Z"
+  }
+}

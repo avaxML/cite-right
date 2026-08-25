@@ -1,0 +1,140 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:983766703bc49d04924a69f293be846fdd4cc9fd0ffe7867e26ff2206ea58f7f",
+  "claims": [
+    {
+      "id": "claim_b9105de6f3b647ccac48e53a75fc1034",
+      "statement": "verify_facts is the primary entrypoint for fact-level verification in cite-right, returning a FactVerificationMetrics object with per-claim verification results.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/fact_verification.py#L103-L115",
+          "version": "repo-lines-v1:sha256:576c46478f7bfb3f81598f7291386b3d42fa1d0f1c621f50cfbbaa6c4c357b4b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ0NGVmNTM4ZjYzMTM4NjM1MzRmMzZjMzc2YzhkZjAyYjA5MGU0ODMxNmY0MzE3ZDM1MzRkOWQ3NTIxYWE4MGEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc1NDQ4YTI4NjdiMzhjNmRkOTAwYTVjYjYxYWQ2NzM0MGZmNzQwYjRkMmFjM2YyYmU4ZjAwMzQxNzNkOTg0OGEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgyZDcyM2E4OGRjOTE2ZTcxYWM5YjNkMDYyNzEzMjNjNmJkMmE1NWU2MzgzYzk4YjAyZDFmNDA3ZDJmMDA0Y2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE5M2EzNjZlMDNkNDU2ZGZlZWIwNWNkODhkOTNmN2EwZDZiYmUzYmExNWQzYmQ4MDg0Y2JlMzU2ZTAzZjg5NTkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_c4e72684ebe24c26af689d65c419e579",
+      "statement": "FactVerificationConfig has verified_coverage_threshold defaulting to 0.6 and partial_coverage_threshold defaulting to 0.3, determining claim status based on answer_coverage from the best citation.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/fact_verification.py#L27-L43",
+          "version": "repo-lines-v1:sha256:e56abac4c0d00136af708ffad26c69b48d1ad0cdb048815989213d9416c5c766:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMxOTFlOGM5NTM5NDRhZjBmYzhhMjIzZWRlOWFmNTZmODZhNzZmM2ZiNzY4MzBiNmRmMGI0OGJjZmEwYTgxYjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFiNzVkMzViMTM3NTVjNjllYjE5Mjc3MzU1YzE1YTU2Nzc2ZWY1MTk4ZjJkYjFhM2FhNjJlNTgwYmQwZjc1YTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ0NDQyY2I0MmExZGY2OWNhM2U4YzIzYjIzM2RiMDUxY2ZjMWFjMGRlOWFjOGUyN2VlNDZhNzk0YmEyM2E5NzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdiMzg1M2RiNjFjNzJiODFmMDA0NWUxNTMwYTVkOTY4YjA0OWU3NTRhNzEyODViZjg0MGU1NmEwMGU3MjY3YjYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0dc0a1b0ef584e3babe1dbcc5d86f861",
+      "statement": "SimpleClaimDecomposer treats each answer span as a single atomic claim without further splitting, serving as a fallback when spaCy is unavailable.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/claims.py#L53-L70",
+          "version": "repo-lines-v1:sha256:01532e2f125f2c2911b3f974593df924aa4265a04fc7d47207b8780c963f9b3d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZjNTk0YTEyZTgwMjdhZmQzYTExODVkNmM1ZTA5OTIxMGYxNzYzOGI1OTgzNTFkOTM5MjhmODNjOTZhODNiYzIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJhYWU4YTBjYTc2Zjk4ZjdiN2RjNzk4NDk1MWQ2M2U1N2RiM2M2NDU1NzljYTUxYmFkNmE1MzlkNjE0ZWRiYmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhlMTAyYTE5YmE2NTQwZmFhMjNhMTQ4NTZkYmM0MTMyZTQ5MjFkYjA4OWM1NjA5NThjZGQ2ZDlkYTAwZjkyODYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFjNjYwYTc3M2FkYzExMzFjMWZjOWNmOTUyMTIwNWM5NDNjZjFmOTI2NTY4MjQ2NDhiMWIxYzIxYzc3YjRmN2YifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_9f2023c4921644eeb3640f13b272b389",
+      "statement": "SpacyClaimDecomposer uses spaCy's 'conj' (conjunction) dependency relation to identify coordinated clauses and splits them into separate claims.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/claims.py#L73-L89",
+          "version": "repo-lines-v1:sha256:343c369d9b388b61920f77a17a22ecc680eea2a7091b8a754f6423e8a537f694:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFmOWExZGI4Y2M3MWVkZDAxZmRkNjMwOWE5MDRiMDA5MGY2ZWE3OTQwNWMxNjVhMGM0M2JmNGM1MDkwNjg3Y2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2YTcxNTI1NzJlZTg0ZjEwOTA2Yzc0YjlmMmE5MjQzNGRkYWIwZTNjNDI4MTNiMDRlNTk3ZWZjZWM5NTFiMjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA5ZDZkYmI0NmY3ODcyNmI2OGE5NWMwYTNkMjJiYzgxYWFhZDQ3M2FhMDNmYjZmNzk0ZDk5OGQzZTEwMzRkMjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQzMzEwOTVkNWZkOTQ5N2Y0M2RkNjkwMWE5M2Y3NDNiYjY1NTUwNmEwNTBlMTVjMjgxNWJmMWM5ZDRmMTMyOTgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_366b3d64a9ee4b43b9e372496178a092",
+      "statement": "SpacyClaimDecomposer._find_claim_boundaries iterates over tokens with dep_=='conj', calling _get_boundary_for_conj to compute split boundaries, then returns sorted unique boundaries for claim extraction.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/claims.py#L160-L172",
+          "version": "repo-lines-v1:sha256:ada02544f9589ed57050345783b6b497520831ff0e11cc7609410e9e6ed109de:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc4MTVjMDEyMWVlZTBiYWFiNDYxZWViYzc3OWYwMDAwOGVlOWNjMjBmNzEwYTkwMDlmOWQ2YTU5ZTY1Y2M5NzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIwMWI4MDA0N2VjM2UzMTkxZGZmZGI2N2U0NTY3ODU2MGJmNGViYTYxOWNmMDI3YTExOWI4ZjQ0YjBiMzg3ZjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFmNTk5NGEzZDA4Zjk0ODQ0MmMxNWIxMDQwZWEwOWI3MjY3YTQ5OThkZmE3NzhiYTVlMzY5YTRkMzNlYTY0YmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjlkNDlmNDk5NzI2MDJlNTU5OGVlYTA5N2M0NGUxOWNkMmRhNWJhMjFhZGJhOTJkMGYyZGJlODM0NmZiYmIyZTQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3dbe7f18a8d948aea363cedb05e11841",
+      "statement": "When a coordinating conjunction (cc) token is found, _boundary_from_cc places the split after the cc; otherwise _boundary_from_separator places the split after the preceding comma or semicolon.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/claims.py#L174-L224",
+          "version": "repo-lines-v1:sha256:f155b942e6f702f489374dc73857383b4017d4dfe4f07395e09725faf6f86af4:eyJzZWxlY3RlZExpbmVDb3VudCI6NTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIxYzczZDA0MDcxMjZhOWY2ZGQxMmJmNWE1MDQ4ZDEyZjA3OWMxNTRiNmQyOTc5NjNmOTM3M2NkOWMyYTQyZWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdkZDA3YWU1MjU3NWRiZjBhY2YzYjBlNzhiMTZlY2ZhNzM0OTkwZjM2ZmJiMjJkOWZhYzYzYTFmNDE5M2E1OWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImViYTgyZTVmODBmNDI0OGNlNzcwYjUwODJjZWI4ZDg5MDhjNmZmNmRjYjM2OThmNzU4MmZmMTRhZjZlOGRhNzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU3ZjI5MTJiNjQzNDMxMWU2OGI2ZDg5ZTkxZWM4ZWRjMTA3OWFjN2FhZDY2ZTRhNzg1Yzg2NDljMDcwYmRjMTkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ff8fa7fa9b474d39a6b52de2b5389b6a",
+      "statement": "verify_facts calls align_citations per claim with a derived CitationConfig that sets top_k=3, min_answer_coverage=0.2, and supported_answer_coverage matching the FactVerificationConfig's verified_coverage_threshold.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/fact_verification.py#L120-L124",
+          "version": "repo-lines-v1:sha256:be010b756238b461a64113ca91de24115f31abb9493b5acf25612ffa7326c3d5:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZmNmYWM3ZTU5YWE0NjUyOTBiNjQ5NTZmNjIwZTcwZWFiOGE0Y2M4ZjhlOTFhMDkwYjk4NjdjYWQ3OTIzNzhiMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzBjMWYxODhmMTQyZWQ3YTgyNDY4MGIyMDcxNzJjNTUxOWJjNjE0YTQ4ZmRhN2NmMTY3ZWRiOGRkZjc5OTU2YyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjA1Yjk5MWUzYzc5YjI4ZDI0NzcwZjczNmI3YmNhMmY2NzkwMTYwNzE4ZWY5ODUzYjdlZjA5ZGQwZmUxMWZjYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjc4Y2Y2MjUwODA5NmRlMDUxZjVmY2EyYWE4ZjMwMWZkN2NkMzQ0MmRmOWExNzlkYjQ1YzMyN2EwM2VlMjEyNyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_b1f62413d963456cb49211ae8cee6fc8",
+      "statement": "The confidence score for each ClaimVerification is the answer_coverage component from the best-ranked citation, and status is determined by comparing this value against the verified and partial coverage thresholds.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/fact_verification.py#L271-L289",
+          "version": "repo-lines-v1:sha256:bd937e25482a68e111ab994f2e369469c08f4292cb3b9ac955d47e0a588d7a36:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNhNDEwNzgzYjMyNWNkNDIyMmRmMDQyZjQyODgzYWFmZTFmOTAyZTc1YTQyN2ViN2YyNWQ1YWQxNzMzMGZhMjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg1YTEwZWUxNzdmZTY2MThkMjQ4NjVkZmU1Y2E2ZDU5MmEwZGY1MzBjOGU4YjJhN2E3NDQyZTQxMDEyZjg3ZDAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFmNDY4MTI2ZDE0MTdlZWJlNGQ1ZjM2MDc3YjE2OGI3MjhlNDBiNTZhMDY3YzMyMjFkNTRmY2RiZmIzMzQxNjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_4895a9dc67bb4feba36292926547b2e3",
+      "statement": "SpacyClaimDecomposer raises RuntimeError if spaCy is not installed, with installation instructions in the error message.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/claims.py#L104-L109",
+          "version": "repo-lines-v1:sha256:5c50c92d58bc333b6f488b7a6a7cea2605255b5cddf613b90b75fe9dd72e6bb4:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYjU2OWNiMDkyODBlZTA3ODE5NDVlNDhkNDA0MWJkMmRmYWFlNjkxYWQyZWFiZjVkM2NiYTA4NDZjNzIxNmNhYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiY2EzNzAyNTdjOWVkN2VhMjE4MjZjZThhZTUyNTQ5ZDE4NWVkYTdjZTVlMmMzN2QwYzdiMmIwY2NlNTFiNjU4MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTc4NzM5MWRkMmM0N2NhMDM5OGMyOWRmMDFmZmE4MTlmNDRiYTJmYTg3N2MxN2Q1ODYwY2NkMjY1ODkzNjQ4OCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMGY2MmUwYjcwYzc5NzA5MTU0NDY5NWI0MjRlMzA0M2I2NjZkODVjODdkODM2ZWFlMTRkMGY5ZTNhMTVhNzM0NyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_edef8e21bb214640a52d3edf9fb2f52f",
+      "statement": "FactVerificationMetrics.claim_verifications holds per-claim ClaimVerification objects, while verified_claims, partial_claims, and unverified_claims provide convenience lists of claims by status.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/fact_verification.py#L71-L100",
+          "version": "repo-lines-v1:sha256:35d2c95eeb6aaf4ffc3e9ab587b08011740cdfc0f65eddc40fa6329c71ea455a:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImViY2YwOGMxZGIwZGVhMTllMzQwYzYyMTJjZTg0MDU3ZmE2NmU3MTU0YzE3Y2E1OGMwNDVjMzA2MWZhN2EwMTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjljNGI5NzEwNGY0YjcxODNlZmU5ZDI3ZmJhYjMyNjdkYzIwYzQ0ZDEyMTU4MjdmMjE4MjcwMmU1Yjk3YjUzNDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE2YWZlODk4NDUwMTA2ZGYwYjBmNGVkZGI1YzEzNWRhZjdiY2Y0MjlmN2QzMTI2NDIwMmE0NTRlNjlhYzkxYTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY3MWQwOTJjYjZkMjZiNmQ4OGM3MTVmYTI0MTY2ODdmYjg5ODI1NzAzMDBjMjY3YTc2OGRlMjZjOWY0OWRkYTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_affc0cbb06eb47aea41a934f061ef5e7",
+      "statement": "Empty input (no claims) returns optimistic defaults: verification_rate=1.0, avg_confidence=1.0, min_confidence=1.0.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/fact_verification.py#L154-L168",
+          "version": "repo-lines-v1:sha256:76219d93bce9407dbc139d20ee53c0610ff718efb66b613cc10b2a8870613db6:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3YzE1M2NlM2M0MDk4NjY5MmNhODRlMjY1NWVjNzEyODg3NjNhZTYyZWIzNTQ3NWQ2YTczMTRjM2NmMzJlYmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU0MDJmNzgwZTY3MTFmMzJmOWI3Mjg2ZWY1NGNiMzYwMTc0ODNiNWVjZWYxMjRmYjgxM2IzYzcyMzQ2NDg0MGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZjNzMzNGM4OThkODc3MTAyNDI4ZDA5ZTA3NTllYTdlYWZjMDNhYTEyODRmNWZjZGMxNWE1Y2JjZTY4OTgxMDYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_db7f95464baf43f3a58851a8e09fd7e5",
+      "statement": "Claim objects are frozen (immutable) Pydantic models storing text, character offsets, source AnswerSpan reference, and claim_index within the source span.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/claims.py#L16-L33",
+          "version": "repo-lines-v1:sha256:8b6e21c443655d1410bc4a705b11326c9b4b783c5e92d2bf5e2d3b5c766503f9:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyMDUxOGEwMWRhMmU0YTQyZjI1NTYzZTI3MjRkYWJmZTAyZTEwNjc5MDMwMDk4YWUyNzg0ODQxOWE1ZWY1NGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU4MTZiZThmMTEyYmFlNTg3OWYyOTMzMzNmZDI5NGE4ZWI5MTlkNjZkYzJlZmRiY2U3MzM3Yjk5MzNmMDRmODUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkyODlhNzNmYzI1NTU4YzVlMjc0Y2E5MDAzNDY4NmEzMWFlZjg2MDAzMDMwNmE1MWM1MTBiNDljYjY1Y2NiNmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQzYzYyNWY5MWRmYjhlNGMzZDFlYjFjN2NjNDU3NWNjOGE1NWJhOGE2N2E4ZmM1MjA1MjYwYTBiZDgyYTgyYjIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_688ed93ee43b48abad3e0f2c8ef30092",
+      "statement": "SpacyClaimDecomposer supports a min_claim_tokens parameter (default 2) that filters out extracted claims below the token threshold by merging them back into neighboring claims.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/claims.py#L91-L119",
+          "version": "repo-lines-v1:sha256:661bd1ca9cb8d706c40469fef2a4fce56c5f0de8bee6cedc145aa74831faf569:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlmZDdhMDdhODNkZDE5OTZmYjUxNjg0YjQyYWVjYWY0ZTkwZmI3OGJhNzIzMGU1NDJlZDdiZDAxZDQyMzAxYmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZjYjY0YWY5MmJlY2U3MTMyNDg4MTlkY2VkNjlhZjZiNmI2ZDZlYjk5NGJiMjA2MTVhYmJlMjgzZmU5MTVlMjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNkNjE1ZDIxZWZjOWYwNzUwYjczYTg1ZmVjNjgzNjA5YTUxYjJiMzAzMjM1NDU1ZDMzNDJhMzI1ZjU4NTZiYzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImMzOTY5ZGE2YmM5MWQyNTgwNmQzZjU2Y2FhNzZmZDNkNWU2MTI2ZjBlNWQ0NGMzNTJiMTliOWE1NGM0M2I2MTgifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.4.0",
+    "at": "2026-08-25T18:44:12.628Z"
+  }
+}

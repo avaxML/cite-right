@@ -1,0 +1,126 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:b8434d5cff329423cda12b070a60b7d91fd82264f26272d00c3e8ab8b5456dbd",
+  "claims": [
+    {
+      "id": "claim_3fa4493f8a1e41fb8a2226f14bc1f11e",
+      "statement": "Contradiction detection is a post-alignment validation step that runs inside _span_status() after citations are ranked, downgrading span status to 'partial' (not 'unsupported') when evidence contradicts the answer claim.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L1610-L1633",
+          "version": "repo-lines-v1:sha256:0546591f2ac5ef2ec8353fa6d983babe6920c357814b4eae7d76a64a8120f7ff:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRmN2M5NjczZmU0NGEwOWMzM2UxZmM0Njk1YzQwOGNhNDFlZjkwZTEzMzIzYTQwZTM5NzhkMjZhOWE4Yjk3NjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI1YzNlYzMyMWRkZDgzYTU5YWViZmFlYzU2MjQ4NDMxNTI3Zjc2Njk5MGY3ODU4YjI3YjYwMGUyYjYzMjFkNGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgzMDFkODExNWRlZjc2NzNjNDI0OWZhZGQ3MmJjMWE0OTljMDJkYzI0ZTQ5MDhkMTc0OGY3YzE3OTc0MTBlMGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/citations.py#L1621-L1629",
+          "version": "repo-lines-v1:sha256:2e9e3279555e5f17068c5d36ccadfd794649f9dcfc19e39da1ec5fedf8aaace5:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYjM0MzM2ZjgyOWZmMzc5MzdmMDUzMTFlMTkxNWU5NDdkZDU3MWRmZjUxM2JkMzBmNzU5ZWRhZDZhM2Y0MWIyMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTMxMjJkOTNmZDc1MTE2YjgwZTkwZTEwY2IyZDAwMzNjMGMzNTY4ZWI3YjVlOWE0N2ZhZjI1MTE0NmY0NzhiZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYWY1ZDU4OTkxZDQyMWZjYjNhZjZiMGY1YjY3YjlkMzg0NTRlYTU0ZGRhZDAwY2Q1Y2MzMDAxOWMzYmExZTk1YSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTE3ZGZiNWI4NjExOGVlOGZhNWExZjcyY2JlZGE5OTBlYTkxZGU3ZDcwNzFiYjcwNTRlYzQ2ZDkwY2NmMTYyYiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_c53d90def9584402911760fc80c3d3d8",
+      "statement": "check_contradiction() runs five independent checks in sequence: has_negation_mismatch, has_number_mismatch, has_entity_swap, has_temporal_polarity_mismatch, and has_number_context_mismatch.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/contradiction.py#L67-L87",
+          "version": "repo-lines-v1:sha256:1317147db28d1aec0bf8ab7b1fe33dc1ab584be40ba8f917e31c4eeb561b4dea:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNlZTQ4ZDBmMWU3ZDhjYWFmMzFjY2Q2YWQyZDczYTAyYTk3YjVhMTE3MTk1NzQ4Y2ZmZmE4ZDYyZTAwYzkyZTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU1YmM0NzExZWNjYTA0NTBhZmM4MzI3NzlhODg2NzZhN2M2OTYwZmEzZGE1YWY0MTBlZTAyZDFlMDE1MTU5MWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA5ZjkzMDgzYzE5NzEyMWI5ODI3MDBiYThhZmFiZDE3MjJjZjFkM2U3NDA0NTA5ZTgwZWZhMjcyNDdmNjJmMDciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA1YWNiZmVkMzJhOWVlNDNjYzM1YjM4MzBlMzkxYzRkMTcxNGY2Nzc4YzYwOWMyMjg0MzIzYzk5ODgxMTE5MjIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3f6fd336948640bc9c54ca191c72588c",
+      "statement": "has_negation_mismatch uses contains_negation() to search for negation patterns (not, n't contractions, no, neither, nor, cannot, never, etc.) and returns True when exactly one string contains negation.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/contradiction.py#L103-L144",
+          "version": "repo-lines-v1:sha256:8d5df09eb9ca98a8d4a2a1629beadb5578fed088210fed47d5ed61505694b361:eyJzZWxlY3RlZExpbmVDb3VudCI6NDIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYxMmYwMTc1ZTVlNTliYmE4ZGQwZTJmZmUwMTUxMGM2YTY1ZGM4M2JmMTU5ODVjYmE0YWYzNmM2MGE2ZjFhOTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU1YmM0NzExZWNjYTA0NTBhZmM4MzI3NzlhODg2NzZhN2M2OTYwZmEzZGE1YWY0MTBlZTAyZDFlMDE1MTU5MWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM1M2EzZTU3YTEyZTU3Njk0ZWM5NDlhYjNhOWMwODc4Mzc4OGQ3MTNjYTdhYmIxZWMwOTk3MWRhMDRiZjI0M2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ3MTUxOTNlOWQ0YTA2ZDc5ZTYwODRkZGRkYzk3YTE2MzBhYjk1Y2ViM2JhZWY1ZTY1ZWFiZTRiYmViMWJjMjQifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/contradiction.py#L90-L100",
+          "version": "repo-lines-v1:sha256:f0ec2749dc612f1ad06e90356fbf7e566234b223646a9d146fa793875504c3e2:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIyYjE2N2ZjYmQyMDU5M2JmOGY2YjRmNmQwZDJkZjZlODhmMWY0Y2JhNmJmMGQ1OTA3NjA3NThiZmJlMmM3MmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVlMTg0NjU3NDc0OGNiNTQ3YTIxZTY3ZDg0ZGUwYmZhYTg3OTJjZjA4MGQ0M2JmZmExNjA3ZTBlYzY0MTU3ZmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUwYjIxYmY4OTVmYWUyZDczOTIwZDkzMTc4Y2ZkNTg0MWNkZjhmOTUyNDUxNmM4YTU2NTg0MzZhNGFjNDhmM2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRkODFhMDZlNDMwN2NmOTg0MGE0YTU3YzVmNzBmNGJiMjZmOWIyYjMwZTMyOWIxYjg5N2JhZjJhYzBiZTAxNGIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6d511deec79c4702b232f04e17fcef58",
+      "statement": "has_number_mismatch extracts numbers via extract_numbers() (Unicode NFKC normalization), builds answer and evidence sets, and returns True only when every number in the answer is absent from evidence — meaning a shared number is not a mismatch.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/contradiction.py#L147-L167",
+          "version": "repo-lines-v1:sha256:6984e7cbe4a5e6ba53fd295f9e476cbf13484cb83d84306517894eea64b75d6c:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFjOWJmYjM2ZjEwOTRmZDc2MGYyNmRmNjcwZDJkNTU0YWI2NDc2MWQ2MDUwZDc2M2JkYWY2NTc3MTc4OWM4YTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU1YmM0NzExZWNjYTA0NTBhZmM4MzI3NzlhODg2NzZhN2M2OTYwZmEzZGE1YWY0MTBlZTAyZDFlMDE1MTU5MWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUwYjIxYmY4OTVmYWUyZDczOTIwZDkzMTc4Y2ZkNTg0MWNkZjhmOTUyNDUxNmM4YTU2NTg0MzZhNGFjNDhmM2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNhZDlmYzVhMTU3MTQ5Mjg5YmUzNWZiOTEyNWVmNTk0YzcyMGM0NDEwYWFjZjM4ODViMmI1ZmZkOGVkYjA5NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_456bba9e137c425089707756fe5d14f0",
+      "statement": "has_entity_swap extracts capitalized words (excluding _FUNCTION_WORDS and _SENTENCE_START_STOPWORDS), returns True when both strings have entities and each contains unique entities absent from the other.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/contradiction.py#L185-L204",
+          "version": "repo-lines-v1:sha256:e2602955355b5481bc915751530c5e4abd8210cfb9d3dc96ecb2fbfe9aeba38c:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJiOTkwNmVmZWE3MzRkZTVjMmZlMDM4Y2Q2ZjRlODQ5YzE3MmQxMzRlN2UyYWViZjQ1MzYzZWVhMmI3YzBmMjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAyZWViM2E0MmM0OGRhZGI5MjY2YWQ5YjVlNDBhODgyMGRmMDBhZjJkMmU0NzAyY2FjNTE0MjRiZDkyMDUxN2MiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY1NzM3YTMwMWM2ZjYyMWYyMzBhMDVjZTA1MDc3MjUwNzg2MTE5ZmRhNzllYzhlMGNmOWIwZDliMzg0OTBjOTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUwMjY4ODQ3NmRhY2ZhN2VlZDRlODMwODk5YzRiYmMyOGNlM2M1ZmQ0OGYyM2YwMjg0YTRlMjM3NWUxOWNhODkifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/contradiction.py#L207-L228",
+          "version": "repo-lines-v1:sha256:9f50d791fdb5eece82ecc73899d9b6554973aed50bf89a198a2e77e0f130c557:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNkOGJiMDA3YzBiZGRmOGMzYzg3ZTY0ZTc3NGM1ZWMxYmZlOGRhNDNkOWU5YTI2ZTdhNjliNzE0M2QwMzNhOTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZkYmYzN2YzOGM3MDc3NjVlYmYzMzQ2ZDliZWM3NjhiY2E5MTBkZTc4MWY2NjA5ODFhZjJmM2Q5YjEwYmRlZTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE1OTY5ZDkyNWFkZTA5ODU1YWYyYjZkNzM1ZTYxNjZlM2Y5OTFkMDdkYWZmNTdhZTQ4ZGMwODMyZWJjMmZhNjgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE5ZDUxYjg1MzFlOWRlYmI2YzZjNTNjMGIwMGI2MmNlNmZjOGUwMmIzMjhkMWUyZWZhMGUxMTViMDIwY2JjODQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_70127d99f9494599997dc062ec0b93cb",
+      "statement": "has_temporal_polarity_mismatch uses _paired_marker_mismatch() with temporal pairs (BC/ago, CE/BC, AD/BC, BCE/CE) and polarity pairs (oppose/support, reject/accept, denied/confirmed, failed/succeeded), returning True when exactly one side of a pair matches.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/contradiction.py#L231-L262",
+          "version": "repo-lines-v1:sha256:dbcc92355dc27c5a417814f08105cee96eaa050cf127723d5b0de2a7c227fcf4:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRjMDIwMTIxMjNjYjU0Mzk2YzEzMWI0M2Q1YTIzNWU0MTUxY2JmYjM3MDM2NTc2YzIzOTc2MmQzYzYxNzRlNzgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjEzYmQyNTQwZWNiZWQ5YjkyNjQ2MjcwNzZjOGU2NDM2ZGUxYzk0NDIyMDRlNzQ1MzEwYjMwMzIwMjJlMmI4NmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk5MzFhNTA3M2M5MmM2ZWEzODVmOGIyNjMwOGQ0ZDc0MjU4MWJjMmJmYjdkY2FlM2U1ZWU4YTZiMjEwYTAwZjUifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/contradiction.py#L265-L278",
+          "version": "repo-lines-v1:sha256:62a2a855792f361a9879a0c4cb11ed6ca5966854eeda0ca136a4ea8488865c92:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIxZjkyODNjY2I4YjBjZDFmZDhmNDhlNzY3MDZhNDEzMTJiODI1ZDU1NzA2ZTU2OWQ5ODA4OWVlZWQzNjJmYjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU1YmM0NzExZWNjYTA0NTBhZmM4MzI3NzlhODg2NzZhN2M2OTYwZmEzZGE1YWY0MTBlZTAyZDFlMDE1MTU5MWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhjYzRhN2QxY2M3OTZhYmEzZTQ2NzIzMzI3ZjUxN2U5ZjgxMTk4MmQyNTBmMDcwMjk4NmU0YjU3NjRhZDk1ODkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZhNTQ4ZjZkZmIyNDk4YzdiNjA2ZGU2YmM4NDU2MzIxYzI0NzE0ZThkMTNhNmFkNjM3MmUxZGJjY2ZlYzNhZjMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_2b68413baa0647908efd745c9a61b47e",
+      "statement": "has_number_context_mismatch handles the same-number-different-slot problem by extracting 1-2 content words before and after each shared number, returning True when answer content words are absent from evidence context.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/contradiction.py#L281-L329",
+          "version": "repo-lines-v1:sha256:2ca03d2d1593cc76af79aa0217590eb09de593969d48e9df4ac2dd41709cf251:eyJzZWxlY3RlZExpbmVDb3VudCI6NDksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI4ZDIwNDY2NDQ2MGRiZjFiMGI3YzYyOWE2NDUyOGQ5ZjY5YTJkMWIxMTg2NjE3MGVmODU2MjIwN2Y3ZTU1Y2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBkNDY1ODEyZjIzZjQ0MTU5MzQ2ZjA1MmUwM2FiMTNmMTM0ZGY5OGQ5YzQ2NjgzNjQ3OWE1YTQyNjhhYjc3MzciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUwYjIxYmY4OTVmYWUyZDczOTIwZDkzMTc4Y2ZkNTg0MWNkZjhmOTUyNDUxNmM4YTU2NTg0MzZhNGFjNDhmM2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY5OGY0ZGY0NjYwMTA3YjUxNzY5NGM2NDA4ZWZjOWQ4ZjhkOWVkYWRmODIyNzFlYzY0NjZiOWM1OWE0MjAzNzcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d176da2541ab40ffb2beb925ae9546fc",
+      "statement": "_contradiction_context() prefers the full candidate passage over the truncated Smith-Waterman evidence span to expose leftover n-grams (e.g., 'not' appearing before the aligned window) that would otherwise be hidden.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L1592-L1607",
+          "version": "repo-lines-v1:sha256:c95392171298b580ea68d065b5cc1d37971661cab38b2e1e9b115e5ba928dfc8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZmNDYxM2VhMzFmZjNiOTAwODIzNjYxNmZlNTVjNjRmZWIyYzJkMDJkMjJjZjQxZTgxY2UzNDk0ZmIwY2I1ZWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2NjY3MTA1MzQ3ODU4ZDc0NjFhYTE1ZTY4MzBhZDI0YzRjNTg0NjA2OGQ1ODFkZTc3MTBlYWRhM2Y5MDhiOTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhjYzRhN2QxY2M3OTZhYmEzZTQ2NzIzMzI3ZjUxN2U5ZjgxMTk4MmQyNTBmMDcwMjk4NmU0YjU3NjRhZDk1ODkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEwZTc2Nzc0YjJhZjNjNTJhMzk1NjVjN2YzYmI2YTMxNWM3MjFjOGQ5NTcxOGEzYjdkYzkwM2FlNTlkODQwZDMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ba343ae88e4b45ef882c9f79b130ab54",
+      "statement": "When contradiction is detected, _span_status() returns 'partial' (retaining the citation) rather than 'unsupported' (which discards it), preserving transparency about the cited but contradicting evidence.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L1624-L1629",
+          "version": "repo-lines-v1:sha256:ae3ebe7a08eb8ba00cb64331539c918a37d0afd7d60e77b46f3d87aeb5a9eab2:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNGU4YjU0MTY0NmJmYzdiY2JmOTkzZjU1YzlkNzgxNjBjNzdiMzU4Mzc5NmVmNzYxYjUxNzZmZjljZWUwOTNmYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTMxMjJkOTNmZDc1MTE2YjgwZTkwZTEwY2IyZDAwMzNjMGMzNTY4ZWI3YjVlOWE0N2ZhZjI1MTE0NmY0NzhiZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMDFhZTkzMmFmNjhkYjY0MGE5MTk4ZmIxOTkyNzQxZjkyYjhiMTI3MTliMjAzODk5ZjdiOGYyMDFmZjI2ZDIzYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTE3ZGZiNWI4NjExOGVlOGZhNWExZjcyY2JlZGE5OTBlYTkxZGU3ZDcwNzFiYjcwNTRlYzQ2ZDkwY2NmMTYyYiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_6aad02890919430f89c3f29e707c98f8",
+      "statement": "_FUNCTION_WORDS is a frozenset of 19 words (standard stopwords plus percent/percentage/pct) used to filter content words in both entity extraction and number-context mismatch detection.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/contradiction.py#L16-L37",
+          "version": "repo-lines-v1:sha256:10d8562e35c9b96b45962fa12e6c7b3512720aa7131d36f3ec00470252b7619c:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRlMDljZjcxMDhhZmViNDlhNGQwYzM4ZWM5ZTkxNTAzOGE4NGEzODFmNTgxMTAzMTE4NDk2MTg1OTdkNDJkNDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhZmJhMDUyN2MzOTUzYzRiNmUwZTViNTczOWJhODM2MTJmODA1M2JjZGM5NDY2NzMwMTkzY2QxZDU5MGI0MDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImMxMDk0ZGU0OGNjNWM5YWE3M2I4MGQ4Y2U2NTE5YzY1YWFiYTQ0NWQ3MjM3NTU2YzlmZDY5OTExMzQ3Y2U1NmIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjkxOWNlN2EzMTQ4MzRmODYwZGI0Mzk4M2Y4YTU3YjRlOTc5NjBkZDAxYzI3MWE1ZjlmYmI0MjdiZmNiMmVkZjUifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.4.0",
+    "at": "2026-08-25T18:44:12.628Z"
+  }
+}

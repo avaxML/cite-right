@@ -1,0 +1,142 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:f15dca8f30fbc209d6e7bdeba719b569a03c7426f2d0c2f7d60f804617dceecf",
+  "claims": [
+    {
+      "id": "claim_bedde482cc164319b3983a642275ced5",
+      "statement": "The cite_right._core Rust extension is optional and probed at import time via the HAS_RUST_CORE boolean in src/cite_right/citations.py, which attempts to import the extension module and sets the flag accordingly.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L13-L20",
+          "version": "repo-lines-v1:sha256:8e7106f5d4077dd23307ee75e215383dd3b0b78883af5057fd079eda61010b0d:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzFjNWFlYjViYzA2ODQwNGFhNWY0YjU1MDE3NDRjMzFiZTIyZDg1ZjY1NDhkYWYwYmI3NWU2OTEwODMyMmM2OCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZWI0ZGZjMWViZjkwYWJiM2I1YTNiOWZiYjM1NTUxY2RkNjJlY2IzNWIwOTQ1NTA5YjE3NjlkODc3OGUyNDk4YyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYzZjMmZiMDhhMjA4ODRjOTMxM2JiNWJlMGUxMjY4Y2ExYjRmNzJjNTdlMTQzZTMwMjQzZmYwYTllNDM2YjgwYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYWU0NWY1MDBjMTU5ZjFhYzE1OGU4Yzc4NDljNTU2MDNhNGI2N2E5ZTJlMTI4MmM4OTA1MmNiYzkyZWJlMjdiNiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_16c608cc6e684b569bdeeab8caeec305",
+      "statement": "The align_citations() function accepts a backend parameter with three modes: 'auto' (attempts Rust, falls back silently), 'python' (forces pure Python SmithWatermanAligner), and 'rust' (forces RustSmithWatermanAligner, raising RuntimeError if unavailable).",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L1105-L1135",
+          "version": "repo-lines-v1:sha256:7643e5fb077d3df99c2310c24e87a7d597b65de1fd99f141e384e79df4f73ff6:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJhYzIxNWIyZGE1MTFhNzk4N2RjNzM3OTQzZTc0MmJlM2RhZGEyMDk1ZTRmYTEwMzAwMGMxZjhmZjg0ZjlmZDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MDlhNTNhNjE4ZDAyOGUxZDMwMDBjMGE3YWJjZWVjYmU1ZmIzN2Y0ZTUxMWVmZTQ2NjQzZmFkNmU2Njg3MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFjMmM2OTQ3N2FmYjY3MzdlMDQzZTUyMDZlMWMyYTE0MTM0MGY4NGNhODI4NGY3YTkyM2IxYzQ2ZGMwZTA0OTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVhODJiMjU5OTIxYmM1NzhmMDhmY2UzOWJhMmJhNWNkMzhjYWNkZTY0OGNmYWQwODlmYmQzNWJkYWZiY2Q0MmMifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/citations.py#L76-L77",
+          "version": "repo-lines-v1:sha256:d1d15dc081896b41b0bd220bf5e07a104363f2626cecf9b78f6ee840df199163:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYjJkNzlhNzBlOGZhNGQwNzYyNTJjMDdhMDIxYTI4YWY1Njc4MmYyNDBlNzk3ZDYwNzk2NmJjNTk0MGUyYTFmZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMTdlNTczZmZmYTlhMTFiNzY5NzMyOGI3YzJlNzQ0OWE0MzMwYTczMWVmYjcyNDMwOWI1ZDQ5M2JkMzliZTc5MiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTJkMmJjMzcwYjgzY2RiMTEyMGEwNTdjNGY1ZjFkZGZmYjkxNTBhZDE0NTA2ZGRjODIyYmY1YmZhMWZkZDJhYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYThkYWUwZWI0NGFkNmYzYmUwYzE4NTcyZmJlMDJhM2FhMjA3YThiNDZhNGQ1OGY2MjZjZjNiNWRiZDAyOGYwNCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_2be540289aa6486683b118ebe21c400d",
+      "statement": "RustSmithWatermanAligner validates the extension at construction time, requiring align_pair_details and align_batch_details for standard use, and additionally align_pair_blocks_details and align_batch_blocks_details when return_match_blocks=True. Missing exports cause RuntimeError.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/aligner_rust.py#L42-L64",
+          "version": "repo-lines-v1:sha256:ea71315319e5c1e46a9bdff0a72d8bb7acc99662c528fffdb73dac7ad4359db5:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI1NjljYjA5MjgwZWUwNzgxOTQ1ZTQ4ZDQwNDFiZDJkZmFhZTY5MWFkMmVhYmY1ZDNjYmEwODQ2YzcyMTZjYWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MDMyZTk2NGQwOTMyMzUxZTVkMTg1MjY5MjgxYjE3MWEzYTA5YjA4YjI4NmU2NjFlYTQ3MDMyM2M4MmViNGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJkYzEzN2UwODdlNmQ0MWQ5OTAzYmE0MDNkOTU0NGZlYzg5MDkzYjM4Njc5YjAyZGI4N2U1Y2Q5ZmJhYTgyNmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMwMjc5MDA3YTlmMWI0NGM5ZDE5YmY3ZjA5Y2ZiZmU4MzQ0ZGZlMzQxNGU4ZWM4NTZlOTk0NzI1OTBkYTIzZGQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e43ea25f81224344813ef2ce95fd21ba",
+      "statement": "The PreparedCorpus fast path is used only when SimpleTokenizer and SimpleSegmenter are in use, checked via isinstance() guards in PreparedCitationCorpus.from_sources().",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/prepared_corpus.py#L144-L149",
+          "version": "repo-lines-v1:sha256:c9b0dd4adafc238d9a1a6b9283704b21f2734e3ea837aef6d5fe5224a31aa486:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOGJlYjdmZTQ1M2Y4NDNkYzBjMWFkYjNlZmMxZjhhNzkyMDk1ZDFjMWQzOTNlYTVhYTA1MWFkNjk0ZTYyNjVkOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNWU3NzAwNjk0ZjFlNjc1OWFiNWY5ZTUxZjMwN2VjNjFjYWM2ZTg5OTM3Mzg1OWRhNDA3MzgyNjVhMTgzODgxMiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNmJjY2E3OGNhYTk0ZDUzMWVkNDZlYWViNDU5Mzk4YWY1MmNiNDkxYzFhMWMwOTRjYWJmYTA0ZjIyZDZhZDIzOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDVmMjE3YzM4NWViM2RjYzJjOWQ5ZjE1Y2EwNmM1YTIzM2QzNzFkZDQ4ZjA4OWM3MWRhOTNkOWUxNDkzZGUyYSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_a775befa13cf4f238515b81e6cb63f41",
+      "statement": "rust_tokenize_and_prepare() orchestrates the entire preparation phase in Rust: sequential tokenization, parallel segmentation and passage generation via Rayon, sequential index building, and IDF/vocabulary computation.",
+      "evidence": [
+        {
+          "resource": "repo://rust_core/src/lib.rs#L241-L323",
+          "version": "repo-lines-v1:sha256:23f624b3d06fad842bf5a00929886dcedc4a7522442aa75276c83caa33f8b94b:eyJzZWxlY3RlZExpbmVDb3VudCI6ODMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQwNTA2MjQzYjM5NjI4YjRiZDlhNWZlZDU3MmIzOGI2M2QzOTAyZDI4ZTU3ZmRmOTRhM2Q3ZDZkNDAwZmJhZGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY0NzVlOTRhOTA0YWM0OWIzMTU0ZDQ2NzJhNjZlODYyOWI4NmRhYzc0ZTNlMjkzN2JlNjkyN2FlM2RhMTFjNTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIzZDBjYTgyMjk2YzNjZThjMjhkMDM3OWFhNGIxZTc3OWQxMDhmNGM1ZGFlN2QxMzE0N2JiZDZlM2Q1NjYxOTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEzYmM3Y2Y4MTE4MjM1M2YzYWFjM2Q4MmE1M2E4NDAwYTI5YzU4Zjg4MmU5Y2JmMjdhNTUwNjI3YTA4MzAzNzQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_769aecabfd8246758266ab7845315a1a",
+      "statement": "When the Rust prepare fast path succeeds, PreparedCitationCorpus holds the Rust PreparedCorpus object but Python Candidate objects with empty token_ids/token_spans. Token data is fetched on-demand at alignment time via get_candidate_tokens() and get_candidate_metadata().",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L296-L330",
+          "version": "repo-lines-v1:sha256:a40bafce9ed5d99b5bc904f193e632e7037840756e0031eca5e7796cd28be480:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjczODg1NDBlNDk0ODFhNzYzNjk3Yzk5OTIyMWY5MGM4MDJlNzQ5MTZkM2VlNThmMmYxOTU3NWM0MjMwYTRhODkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE0ZmMwM2RmODViMTU3MjdkODRkZDRiYWY2OTViYzYxNjllODE5MTQ3Y2Y5NDc3YzRiNGFlNjM2YjZmZmY3YjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUxMzJjMjZjZjI1NjBmNjU1ODE1MzY3Y2Q1YTNlZWI1MzEyMGQwZGMzNDY5NWVlYzIwZGEwZTNkODczODUwM2QiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFjZmQyNjUwODY3ODE0YjllODZhZDYwZTEzMmYzNDZlODBhZmVjZmQzZjE2YjM5OWNlYmEzMzExODc1OGY3ZDcifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/core/prepared_corpus.py#L219-L260",
+          "version": "repo-lines-v1:sha256:7932744b6052d673205a0653ecb593d590e56dc1f73ae04f1fbe118c45ac1b80:eyJzZWxlY3RlZExpbmVDb3VudCI6NDIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY2NGU2OGIzZmQ0M2ZmODkxZDMwODIwMWRkNjAwMjljM2FjMzUwMDgyZmUwYjI2NGNiMTIwMzNhZWU5NjRlM2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MDMyZTk2NGQwOTMyMzUxZTVkMTg1MjY5MjgxYjE3MWEzYTA5YjA4YjI4NmU2NjFlYTQ3MDMyM2M4MmViNGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImExMjJmZjdiNDUwMDEwMTJiMDc2NDA4ZTUyZjliNzE5NDQxZGY0ZTkxZDVhMDYwY2JiOGJkMDgzZDRhODg1ZDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFmMzRkMjM3NTlhNTgxYzg5MmRmMjdmZGIxMmQwMDM2YjZiNjE3NmM2MThjNWM1YWM0ZWUzOTdlNGNiYzllZGUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ac86c4ad119c45b3a4c7ea2212d02cfd",
+      "statement": "Candidate selection with a rust_corpus uses tiered strategy: Rust-side index query for seeding, on-demand lexical scoring via get_candidate_tokens(), and embedding fallback.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L1196-L1232",
+          "version": "repo-lines-v1:sha256:39fb6bd639b2cc0f3d832632dee31b1135b53aa1cd2a03202a5fa13f303ed488:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc2MGFjZGMyOTg1NjM0OTVmMDljODFjZmQxNjU4MjhiNGJmYmJkZGQ3YjFjNzkxOWExYTc3Y2Q2MTZlNDBhZjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE2NjYzZjIxZjVjOTNiNTU3MTZjOGYwODhlYmU3OTQyNzYxMTlhZmVmODhmZjQ1NjhkZjk5MTc3NjkzNmFiOTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU0MDUyMWEwNGI1YTc0Y2QzM2FkNjY5NjNiZjI1NzFkZGU4NmE0YWJlMjE3NmQ0NzkwYTQ3Y2ZlMzhmNDVlMTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZlNTg2ZmYxNDM3ZjgyMGEzOTI2NzBjZjc2YzU5YmFiMjhiNjhjOWMwMGRkY2M5ZGI0NDViNTc5YWIyODk5OTYifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/citations.py#L1235-L1260",
+          "version": "repo-lines-v1:sha256:5fece426c002b4d8b46050b281b64e842a1f258634271b2db3b7a6ad13ccbd5f:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjczZWI3MDU4YjA5YTcyMmYxYTljOTEyNDFhMGFlYTNiYTUzMzI1MWU0ZTQ3MjYyOTIzMGEyMjI1MjdiMWU1MDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFlMTczMjE3ODQzOTZlZWViZTU1YjQzMDY3OWU1Y2VjNzM3YzBhYzM5ZDZkZjJmNWFkM2VmN2QzNDhmZmUxMmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE3MjJlZGJkMGYyMDEyM2QzYWEyNjM2YmZiNGMyMmMzY2RkZmJiZTBmYjZlYmYyYmI5MjE4ZjM4NTVmY2IwNmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMwZGQwMjg5MWIwZjE5YzZkYmMxYmNhZTQ0N2FhZjljYTNiMTNlNGJjNzQ2NTM1OGJhNDQwZjZjMmY1MDE0YTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e3b1031fa07c43eb8975ef78f2a4c47a",
+      "statement": "Three citation-building paths exist: corpus fast path (rust_corpus.build_citations, no marshalling), legacy Rust fast path (rust_build_citations_fast with JSON return, marshalled data), and standard Python path (aligner.align_batch + _build_exact_citation).",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L285-L294",
+          "version": "repo-lines-v1:sha256:ce22c864b4f247b86bfcf93558f33b4cd09d4c4fae4e782ab5a68570e7a3d552:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM0ZjUzZjU0ZDkyNGM3NzBlYTkxNGVhNmE0YTRmZDJmZTZjZjRhNzRiZDMzMWQ4Y2M4NWNlM2Q0ZWEyYmY3MmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ2NWQ5OWEyZDFmMTg0MWFkMTEyMmQ0NGRkNGNjOTU0ZDMzZWJmZTlhMGRlMGRhMmUyY2RlYmViMmI0NWU4ZDQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUxNTgwMzM1NmNjNGZiMTY2OTYyNzJhMGRhYmI4MTBiZjI4MDNiZjJmZTk3NWYzOTc5NTM5NzhiYjhjOTQxNWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUwNDM4N2NjYmM3MWYxMmVmMTNkZmM1NjdmOWRmNTVmYThjNmFkNTljM2EzZTljYzBkOTlkZjc1NDMxM2RmNmQifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/citations.py#L332-L443",
+          "version": "repo-lines-v1:sha256:2571e1d454e346f094ca59e1cfcc4e97965322120d7aa386d1ee48d8ff339bd5:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEyLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIzMDYyODczMTAyYTQwNzJhODE1MDlhMjRiZmRmOGIxYzQwZWNiNTg2OTkxMmExOGI2MjY1MzE3NjA1MDRiNzE3IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJkYjJhZDM3ZTk4NGYxMDJhMzBiMzg0YTI0OGY2MzE2YmIwMzQ2NTVlNmViYmM4YTE4Nzk0ZTM0MGEzMDQ1MzViIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlMzIzMTJmYzYyNzEwMWFiMjRhNzdkNGVjMjBlYWQ5ZGExZDZhZWUxYzAzZGEyOTQwYTRkY2ZjNWEwYTYyZDliIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJhMzc4OTFiMjg0MDU4NDM0MmFiMzFhNzI3NmMyYWJhZjdhZGJmZGYyOTg1ZDZiMTlmMWI1OTcyODg5MGNjMjBiIn0"
+        },
+        {
+          "resource": "repo://src/cite_right/citations.py#L445-L584",
+          "version": "repo-lines-v1:sha256:5c2cfc144038df480a8976bf0bbce54c0be89daf548444f41542eac9eced5ffd:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIxZjU1NDMwNjM5MTM3ZGRmNWEwM2FkZjdkNGI0YWYwM2MzMDE5ZDJlMmNkZWUwYzg5MDE3NGQ5Y2MzYmY4MzI0IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJjNjlkMmM5YWI3ZDc2NGNmYzQ2ZDJkYmJiYjVlYzM2NDgzNDliNGI4ZTNmNmZmODJiZjQyYmFkMTY2NjZjMDMxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJjYzE2Y2Q4N2ZjNWFlNjQwNGY2N2VkMTI4ODE0NDY4MWUxNTI1YTJiNmJjMGEwNTlhZTMzYTUzZTYyY2IwYjhjIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJmZmZiMTc5YjBiNTFlYjQ3MGJlYzM3ODZmM2ViODAyYTU0YTNjYzA1MWViYTE4ZWRkMDM4Yzc0NjJlYjAwMGJhIn0"
+        },
+        {
+          "resource": "repo://src/cite_right/citations.py#L586-L641",
+          "version": "repo-lines-v1:sha256:436f14a815188b8fd4dafd6be8405f177d2b9fb11e1d11d3541241b440a419d0:eyJzZWxlY3RlZExpbmVDb3VudCI6NTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVkOWUwZWRmNzgzOTY4ODBiZGIxYTdlMTAxNTYzZjhmYTExYmYzZGZjYWE2ZmFjYTI4OGE2ZjE5OWI3NmE2MzMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM2NWVhMTE1NjdmYWM0OGY1MGRiN2JhMmNkNzQ5NzcxYThkZjY1YjUxMjI0YWRlNzIxMjhiNTUwYjljNTFkNTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ0MTdiZDI3YWE3ZGI3ODU0YjU1YjEyODA3M2Y0MTA0NDk3ZDg2ZDU4MzRlOTI4NzdkNzI0YWI2ZWMxY2VlNmQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1ce98a2a2aca4f2bafc79777eed37e88",
+      "statement": "With backend='auto', missing or invalid Rust extension causes silent fallback to Python. With backend='rust', the same conditions raise RuntimeError from RustSmithWatermanAligner.__init__.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L1122-L1135",
+          "version": "repo-lines-v1:sha256:3482e9574c00c380048fcde02e44b26f56b94fbd846858b2ed070cf3b46080bf:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFkYTVjNjZlMTdiMTQ1Mzk3ODM0YjhjODU0ZGM0MTkzZTIxMjUxODBhODk5NmExNGMzMTg4MzMyNmIyZWZiY2YiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MDlhNTNhNjE4ZDAyOGUxZDMwMDBjMGE3YWJjZWVjYmU1ZmIzN2Y0ZTUxMWVmZTQ2NjQzZmFkNmU2Njg3MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBhNzEzY2EzMzA1OTViZmUzOTU4NzFjMjhmNWY2MThjY2IzMGM4ZmEzM2YwNmY5YjEzM2Y2MWEyYjE2MmZmNzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVhODJiMjU5OTIxYmM1NzhmMDhmY2UzOWJhMmJhNWNkMzhjYWNkZTY0OGNmYWQwODlmYmQzNWJkYWZiY2Q0MmMifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/core/aligner_rust.py#L42-L47",
+          "version": "repo-lines-v1:sha256:61bffe28290165d2209bb2d067c3ad8e40e11aec4fc77cfe6b6ef0f4382cc885:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYjU2OWNiMDkyODBlZTA3ODE5NDVlNDhkNDA0MWJkMmRmYWFlNjkxYWQyZWFiZjVkM2NiYTA4NDZjNzIxNmNhYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiY2EzNzAyNTdjOWVkN2VhMjE4MjZjZThhZTUyNTQ5ZDE4NWVkYTdjZTVlMmMzN2QwYzdiMmIwY2NlNTFiNjU4MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMmRjMTM3ZTA4N2U2ZDQxZDk5MDNiYTQwM2Q5NTQ0ZmVjODkwOTNiMzg2NzliMDJkYjg3ZTVjZDlmYmFhODI2YSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjZjODhjOTY5OTcwYzJhODU4YzczZmYzZDBkMThkYzA5NTE1MjZjYzk4YjdhZTA2Yjk2MTE5MWNlZDliMmI1NyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_9c36e10b0a80495fb458aea283ff7810",
+      "statement": "The Rust extension is built as a cdylib via maturin, producing cite_right._core, with PyO3 0.27.2 and ABI3-py311 as configured in rust_core/Cargo.toml.",
+      "evidence": [
+        {
+          "resource": "repo://pyproject.toml#L41-L46",
+          "version": "repo-lines-v1:sha256:ab6a145bd55d53fad1343476976d61ac4bbe419b9d27bfc0a50e4720acdd280b:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYjc0ZjZlNmE2Mjg0OTBmMDdmYWVlYTk4ZDgzZTU3ODRmZmE3ZDM1MjU5NzVhYmI5NTNjMDQ0NjU3N2I0NjQxYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTVlOGE2NTQ3MmMwYmY3MmEwNjM3YTNiMzkzZjlkZGFhOWRkNjI3ZDZlOWY2ZjdiMDhiY2NkNjc1ZWFhNzg0ZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiM2JlOGVjNDgzZmI1ODQzNjE5MzJlN2U1YWE3NTRkZjc4MTVjZDNmN2IzYzM3MGNkOWVjZDA4OTIwNDhkNTdjMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYTFiNzQ0NWI1MDM3MDhjMTRjNmNlY2YwZjU4MjQ4N2U3ZmVmZTI0Nzc0Mzc2YmFkNDJlN2QyMTk0MjNkYmY3OCJ9"
+        },
+        {
+          "resource": "repo://rust_core/Cargo.toml#L1-L16",
+          "version": "repo-lines-v1:sha256:7624cfdebb94a5757a882917d8295c13b17233d19627f9590ee0af377c6d9bad:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhhM2NkNWE4MWIzZjlhNjIxYWE0OTNkOTBjNDVmNDJhYjU3MWQ0ZTQyYjhhZTVhZmYzNTFjYjBhMDJkMDZkODIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZkMmE2Yjc3MjFhZTBkZDdjYzA5YWQ1OTdkNzJjN2RkODczNjUzOWQ3NTJiNzUxMzJlMzdmNWU2ZWRkM2Q1NWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.4.0",
+    "at": "2026-08-25T18:44:12.628Z"
+  }
+}

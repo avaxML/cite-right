@@ -1,0 +1,184 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:b1d037ef4d708763124490acf3caae215ebb2bb6ee51e80828746fa3be8238d9",
+  "claims": [
+    {
+      "id": "claim_95bef3405b794a47918b6db0b0e04238",
+      "statement": "SmithWatermanAligner contract tests in test_alignment_py.py pin core correctness (exact/partial match, tie-breaking by earlier start), edge cases (empty sequences, single-element match), and match-block traceback behavior for equal-score predecessor exploration.",
+      "evidence": [
+        {
+          "resource": "repo://tests/test_alignment_py.py#L6-L173",
+          "version": "repo-lines-v1:sha256:b5b6cf3a97d24a5fe250607163a23712a14cd0634db609008721af61caf0f621:eyJzZWxlY3RlZExpbmVDb3VudCI6MTY4LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJlZTJjNTU1NzQ2NGI5NDQyNzY2YTlkNDIzMjU2YjhmNzVjZDZlMGFhMTRkNmY0NWQ1Y2I2YjY3Y2I5NjJmYzc2IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJmNzc0NGIyMmRhYjRmNGM0ZTlkNTgzOTFhMjkyYThkN2JmMzBhYTY4YTlkZmU4OGQ0NGNjNDc0OGEzNTQxMThiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIxYzNjMGNmYjRkNWJiNGM0Yzk0MmM1MjdjNzAxNTAzZDRiNjdiZmEwOWFhNDZlZDMwN2EyODI4ZjJlMzJjZjBlIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_98c63c3626c94e008c5e53dcc715b8c8",
+      "statement": "The reduced-state fill path and full-state fill path produce identical alignment spans for the same input; batch alignment preserves input order.",
+      "evidence": [
+        {
+          "resource": "repo://tests/test_alignment_py.py#L119-L153",
+          "version": "repo-lines-v1:sha256:66c776d93146f8c9d3bf090e8b6963e5f060342ed8e3b1280b94cff96df3627e:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY4YTdiYmExNTYxZmExOGEzMzFmMTRmZTU4ZWQzMzcwYjcwNDMyZDhhZGFlNDUyMGI3Y2FkYzdkYmU5MmIzNjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNjMWRmZDNjOGU5NTFmOTc5Y2E4MzQ5NmJkNzNlMjhjMjAzZjA5OTM2NmQzYmVmMzE1YmJmZTkwNzBhMTkxNTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdkNGU1OTc1YjdjZTBmMDA0YTE4MDc1MTIyOTYyZGI3ZTAzZDM5MWQ4YzkzYjBlMTEwYmU4NTkzMDRjYWYxOGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFlNzBmZGIyNTk5Y2NiOGY3NjNjODJiMDQyM2E3YzczZjk2MGQyMGRmZTBkMDEzMWEyZjljNTcxYjI3ODEyMjYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_c4c80c4c276645d5acb27771ecf22794",
+      "statement": "Rust/Python parity tests in test_alignment_rust_parity.py verify that align_pair_details, align_pair_blocks_details, align_best_details, and batch operations produce identical score, token boundaries, query boundaries, and match counts across both backends.",
+      "evidence": [
+        {
+          "resource": "repo://tests/test_alignment_rust_parity.py#L34-L199",
+          "version": "repo-lines-v1:sha256:2238a8bbf7d612b61345977c6101c07aac0a3bd4ee8061d2db2e7ed2ec5bb984:eyJzZWxlY3RlZExpbmVDb3VudCI6MTY2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJiMGY2ZTQxOWRkMWQ5ZDY1OTFlMGE1NDExNzIwODIzNWEyMzcyYjViNWRjZDkwYTcwNDg4MGIyMmM1Y2U2ZjEwIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI1MDNmMDgwMjM2NTM5NjZiODA3ZjI1ZjEwMjRjZmRjMWNkNjg3MDUwNmJkMGFhOTQ0MGI5ODBhZjUyNTc5ODFjIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI0N2YzNTIzZDQxZGM5YmFjNGY3NDJmMWExZjRhYTJjZDk3Mjg2NjkwMThhNmI5Y2VjZTMwZmM5OTFlNGY1MDY5In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_a85095a1cab649b187f2dc8261407ba0",
+      "statement": "test_how_it_works_describes_status_using_answer_coverage pins the documentation to the correct status rule by asserting that docs use 'best citation\\'s answer coverage' and not 'best citation score'.",
+      "evidence": [
+        {
+          "resource": "repo://tests/test_citations_api.py#L33-L38",
+          "version": "repo-lines-v1:sha256:f08b3766e12ab4a5002fa533e974f15a58855254ebfcd444f674e6452340d35f:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTBjZWUwNDkwZGE3OTQ5ODZiM2ZmMmI0MmQ1MWRhYTg4MTYxNDNhMWUxZmM2YjAwNjFkNmExZDcyMTA4Nzk5NCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTk2ZTc3NDAyOGRhYjA3MjMwMmM2MGFjZmUzZjMxZWVkYzkzNzdjMGYwNmEyM2EzNWJjNDJkMTY2ZTc2NDA1MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNTczMGY5NzMxYjFjZDcxODg1ODZhZmRmNjc5NjRlNzk3NGRlNDUzZjVkNjVkZGUwYmY1ZTg4NjEyNjY0MTVkNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTIzM2Y0M2IyZWQxZjQ1MTMwNzk4ZTI4YWYzMzQ2M2NjNzZiZWNjZDIxM2ZlYmY0OTIzZDcyN2UwODQ2NDVlMSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_3342f43263534ab2aaaf58c912d13cbe",
+      "statement": "test_align_citations_auto_falls_back_when_rust_core_lacks_details and test_align_citations_rust_backend_requires_detailed_core verify backend selection behavior: auto falls back to Python when detailed alignment API is absent; rust backend raises RuntimeError.",
+      "evidence": [
+        {
+          "resource": "repo://tests/test_citations_api.py#L123-L158",
+          "version": "repo-lines-v1:sha256:54d4b995c38948e472b899e967a9991d6b67c5df33af6bff6e7a1a0a31109524:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZhOGY2MWFiMmY0NmI4MmE2ZDQ2NDc3ZTFjN2EzYzY0YTJlN2QyZjRiN2Q3YmY3ZTk2NzRiMmM0N2YwN2Q4NDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MDlhNTNhNjE4ZDAyOGUxZDMwMDBjMGE3YWJjZWVjYmU1ZmIzN2Y0ZTUxMWVmZTQ2NjQzZmFkNmU2Njg3MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhjYzRhN2QxY2M3OTZhYmEzZTQ2NzIzMzI3ZjUxN2U5ZjgxMTk4MmQyNTBmMDcwMjk4NmU0YjU3NjRhZDk1ODkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVmNDM5M2NiYmVlYzFiZGMzMDQ1M2I2YWQ0Njg1NTMyY2FiMWY1Nzk5Y2M0OWFmYWQzM2M5ZjNjY2JhN2Y5ZDcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_40227628872940159b12a4d1da7c7920",
+      "statement": "Batch alignment dispatch tests verify that aligners with align_batch method receive one batch call, and legacy aligners with only align method are accepted and called per-candidate.",
+      "evidence": [
+        {
+          "resource": "repo://tests/test_citations_api.py#L161-L202",
+          "version": "repo-lines-v1:sha256:2be7db7d01af1086b0413e582328701c4f509de93329046ba415b6d8ad0d9906:eyJzZWxlY3RlZExpbmVDb3VudCI6NDIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRkM2RjZjg2MzVkYTE4YzM4ZmY3YjE3MzU2NzMzN2NlOWZjNWM5MTM3OTJjZGRhNDk5MmE0OWY4NWQyNmJhMjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMyYTRiZTM4ZjVmZDBhOGM0YTFlZjJkYzkyYmZhMDdhZWEyYTQyOGE3NWUxOTdiM2IyZmI1NmM5ZjViNmMyYjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIzZGYyYWNmMDZlOGMzZjAzYzcxMzVjNmU4YWM1YTljYTU0MzJhYmUwNmE3NGFjYTBmZGQ5YTUzYTAwOGY5ODciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI3NTU2N2NhMWI3ZWU2OWY4MmU1MGU0ZGUzNjE0MWI1NDQ5ZWQ5YTAzMGQzN2Y1MjU3MTM0YTQyZDZjMDhmMDEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1405d7aabd214feebca8c7e26ecbb5a5",
+      "statement": "Citation ranking tie-breaking tests verify that prefer_source_order=True breaks equal-score ties by source_index ascending, while disabled breaks ties by earlier char_start.",
+      "evidence": [
+        {
+          "resource": "repo://tests/test_citations_api.py#L235-L305",
+          "version": "repo-lines-v1:sha256:766480ab5e99a9bc912750bec9b0ee89149af98bddedf81583436f159b59ae8a:eyJzZWxlY3RlZExpbmVDb3VudCI6NzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNkYzdlNWVlODk5ZThhNTNhNjkzY2IyYzllNjMyZDlmYWJmYzE3ZDMwNWJmZjI0ZjRhY2VkOWY2YzE0NDRjNWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk0MzNkMGVhOWVjZjJmMzljOWE1MDQwNzM5NWVlNDExNzJmZTY4MmM5Yzg4NWEzNTA4Zjc1YmRlZTE1MWVmZmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRhYmY2ZjY0ZjdlYmYwYjgzNjMyMjJkY2E4YmQ4MzQ5MDc3ZjZmMGYxODY5YzNiMjhjYzQ3NDQyZjE5NWU0MTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ5MWUyMmQyMjllOGQ1ODRhMDFjOWVjOTczNmVhOTJlMWQ5MGUyNGJmZmIwZTgyYmUxMTZkNjdmOGYwNGQ1ZDUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1cdd75d74fc84e0a8758946f6a1fe163",
+      "statement": "Embedding-only and lexical-only paths return status='unsupported' with retrieval_support populated; retrieval_support never upgrades status to supported.",
+      "evidence": [
+        {
+          "resource": "repo://tests/test_citations_embedding_only_edge_cases.py#L30-L154",
+          "version": "repo-lines-v1:sha256:620df884d2b9dbe10a05d062903837d41f34132cda0cab7f0f5cdd9a5abd073f:eyJzZWxlY3RlZExpbmVDb3VudCI6MTI1LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI0M2NhOTczYjdkN2QzNzY3OTAyMDlkNzkzODc1MWVkOGVmMDg5YjAwMjBlOTgzYTUwZDU3MzQ1ZTUzMzhjZGM5IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0ZGE5ZTA3YjVhZjM3OWI3MzcwM2Y4M2FmOTc0NDJiOGI1MDgyNWM5NGI4OTcxZmZkNmVmOTY0ZDI1ZWU2ZTI2IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIzYzgwOWM2Mzk5Y2UwODM0ZTUzYjBiMmEwYzc1YTRiZmNiNzM4MzkzOWVjN2IxOTAwOWJhMmUzNDZiY2VjNzVhIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        },
+        {
+          "resource": "repo://tests/test_citations_retrieval_support.py#L22-L61",
+          "version": "repo-lines-v1:sha256:3b7c0a434493da6c0b680d86bdd6c66c8ea0dd12fc8d50093f8584fd559d3cf9:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUxNGEwYWY0YjA1ZDQ3OGFiYzY5MjEwYjRmM2Y2M2FhNzhiMTU4OTU3NzRkMDQ3MjI3ODI4YTYwZTY3YTliN2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIzZGYyYWNmMDZlOGMzZjAzYzcxMzVjNmU4YWM1YTljYTU0MzJhYmUwNmE3NGFjYTBmZGQ5YTUzYTAwOGY5ODciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNhNzg5MWI3ZmJjOTgyODBjMTBkMjkwOGQ4YTc2OGQwMTA2MzUyNGE1NzNlNDc0YTNiNmNiODkyM2Q2OTQ3MTIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0ad151c2073140fda302ec0f9ef4e0c3",
+      "statement": "Token guard tests verify that strict mode (require_all_answer_tokens_in_evidence) prevents false positives from alignment with mismatched slot counts, bypassing Counter allocation for exact lists and trusting complete exact alignment.",
+      "evidence": [
+        {
+          "resource": "repo://tests/test_citations_retrieval_support.py#L63-L129",
+          "version": "repo-lines-v1:sha256:d8850ac74ad103860296153e20c725089f135dfdf7ee07dea24d858be17f99ca:eyJzZWxlY3RlZExpbmVDb3VudCI6NjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZlNmZlNjc4MGE2Y2MyNWU2Yjg0ODgwNzNiZGNlODdjZjNmOGJhODI5MWRkOTBlMWQ3NmJmZTY1OWQ0OWY4OTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJhYzcxYTk2ZTQxYmFhMjk1Yjk0NDQ5ZjBmYzEwZTUzMzdmZGY5Y2ZkNjQyNjM4NDBjNDVhM2JmYjA4ODMyMzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJiNjlhOTdiZTdmMWUzYjkxOTEyYmQ4MzkxYTc1ODI1YzllMzY5NGY2YTUyYTNjOGZhZTM3ZTVkNzE2ZDUzMmEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f01818852ff64b58b54f34429a3d2b9b",
+      "statement": "Numeric and negation strictness tests verify that '125 days' vs '124 days' and 'make every law' vs 'make no law' produce unsupported status under strict mode.",
+      "evidence": [
+        {
+          "resource": "repo://tests/test_citations_retrieval_support.py#L131-L210",
+          "version": "repo-lines-v1:sha256:31cbf047a2b2e7bb540489787d16c014fc0652d35544b0d124f6298b55de70da:eyJzZWxlY3RlZExpbmVDb3VudCI6ODAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNhMDg0YTNhYzUzYjc5Mjg5MmY2NGQzNDk4Yzc5NWY4YmI5ZGM1NjE4MDZmNTc2MDljNzQxNTFkNjBhYjU4MjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkNDU2MDE5YzI3MTMyYTQyNWY0ZmVjYjhmOTY2MGMyMzYzZDE2YWI5ZDE0ZDJjZDM0YzQ5MTJhNGZkMGExNGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk5ZmQxNGQwZjRkNzQwZmQxMGE5NzA2NzVmNWExN2IwODFmMWI4MjkyZTkyZTFjY2FlODY3Y2ExNzdjNGM4MDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6fdfd55fd8724c508ebc6d8a07c7baa3",
+      "statement": "Contradiction detection tests verify that negation, number, entity, temporal polarity, and number-context mismatches downgrade status to partial; matching affirmatives and numbers remain supported.",
+      "evidence": [
+        {
+          "resource": "repo://tests/test_contradiction_detection.py#L7-L67",
+          "version": "repo-lines-v1:sha256:b7a517cdc273f5249fcd653eae34585a791e0af3e047318f52eff4f017e0c314:eyJzZWxlY3RlZExpbmVDb3VudCI6NjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdlOTYwZGU0ODM2YjMxMTY1NjM1ZDlkODQ2OGI5NWMyZTdhMmM4MTVlYjZkYjdlZDhiYzUwZWE4YjBjMmE5YWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhiZWY3ZWNmYjE4YjNmZTRkZTk2ODg0MDJkN2I1YzEwMjY0MjEwYTYyNDYyYjE1NzU2MjJjMjQ1MWFjYWQ1MjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjNjMjlmYjVhMDQ5MDUxZTRhNmY2Y2U1ZDQ2N2U3YTNiNTFkOWUwNDNiNWYzZjY2ZDMyY2Q2MzUyYTI4NTlkMmIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_effb942b8c124b29bdfd23f3212fb6e8",
+      "statement": "Issue #48 regression fixtures verify that Smith-Waterman truncated spans do not hide contradictions: '10 rebounds' vs '10 of which came in the first half', India/France entity swap, BC/ago temporal polarity, and oppose/urged polarity flip all produce partial status.",
+      "evidence": [
+        {
+          "resource": "repo://tests/test_contradiction_detection.py#L70-L173",
+          "version": "repo-lines-v1:sha256:c70355b0e5b6b0d22bd8e28666143a09c4356c1c042ff79320edbe4a6483ff5e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTA0LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJhOWQyYTUwZjdkZWFkYzRkMzk4NThhM2VjODg0NTZlZDI4NmRmZDQ2ZGFjY2UzNWExMThjYzU2ZGYyNWM2ZTQ5IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI3MDE5NjdlY2Y4NTYwMTNkM2Y5NWJjZWM3NWI3N2M3MzkwZTNlOGU0MjlhMDIwNThkYjIxZmM0ODJjMzZhZjk5IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIxMjUyMTQ1NmIxMTFkNzNiZDg0NGMxMjlhNGQ0OGEzNzU2NzU4NDUzOTc2OGJmZjE1NGQ5MjcwNWU2ZDExZTkzIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_0389e2a30a584ce4a05571e8cd67c087",
+      "statement": "test_check_contradiction_uses_passage_not_truncated_span verifies that contradiction checking uses the full candidate passage rather than the truncated Smith-Waterman evidence span, so hidden tokens (e.g. 'BC') are visible to the contradiction checks.",
+      "evidence": [
+        {
+          "resource": "repo://tests/test_contradiction_detection.py#L163-L173",
+          "version": "repo-lines-v1:sha256:90fb6809b62ec25c52ae7049799e1187308e82573350e641710f4edbebdccb2d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY5MWM4MjFhOTdjMzhjM2ZiZDI3YzQzOTNhNWQ3OWU2YzBmNzVmMTMwNDJkOTFlYTg2OTdmZTY5MWE5N2E3YzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcwMTk2N2VjZjg1NjAxM2QzZjk1YmNlYzc1Yjc3YzczOTBlM2U4ZTQyOWEwMjA1OGRiMjFmYzQ4MmMzNmFmOTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM0NTc5ZDFiMDBiNWFjNjRkOTlkZmM2OWIzNGI1NjhmNDI1NzUxMWIzYTY3NGYwM2E3YTU0ZTg5MDEyODlkODQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_751752afd32a458392dd5e59b7cbc677",
+      "statement": "Data2txt tests verify that structured field:value lines are paraphrased faithfully: business_stars/wifi/hours rewrites produce supported or partial status, null values prevent invented amenities from being supported, and structured leniency does not relax prose coverage requirements.",
+      "evidence": [
+        {
+          "resource": "repo://tests/test_data2txt_support.py#L7-L105",
+          "version": "repo-lines-v1:sha256:b4497ed1df2c66962a651c109ba01f2d1dc253cac8ab344141b6c4451a453cad:eyJzZWxlY3RlZExpbmVDb3VudCI6OTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJhMDE1OTZkYTc3NjYyYzY0NDYwY2M3OTQ0OTk0OTgwNDc0YzI4MmRkYzhhODBkZGI5ZTAyNWI0NjZkZDkxMTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIwNGY2YWI3MGFlNWU1YjA4ODljNjM0NjIwMTQ4MDE1MDQ5YWYwZTQ3YWVjZWNkMTAxYmJhYjIxODgyZjBkNWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUzNWE5NDA1OGMwNjIzM2RiMTUwMWNjOTlmMmFhMDU5NjliZGVmMGNhZDEzZTVjNTY0YjFiNzNlNmMzYzk1YmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5056cadb3f4541ad90ece2f5df2fee47",
+      "statement": "Inverted index tests verify that Rust preparation creates a query_index method, never returns empty seeds when tokens exist, uses token intersection for rare-token queries, and that the rust_corpus persists across queries without per-query rebuild.",
+      "evidence": [
+        {
+          "resource": "repo://tests/test_inverted_index.py#L8-L151",
+          "version": "repo-lines-v1:sha256:8c88a281669aaf1820306014b4eb8f73f7baf54e4b7e5c63965699ea5818e378:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQ0LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJlZGFlNTg2YTUxNzEwMTMyYTU0NDg1OTVkNjA5ZmJjNTkxNTdkMWI4N2RmMWEzZmJkM2RmNmQ5OGYxMWI5N2JkIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI1NzMwZjk3MzFiMWNkNzE4ODU4NmFmZGY2Nzk2NGU3OTc0ZGU0NTNmNWQ2NWRkZTBiZjVlODg2MTI2NjQxNWQ1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIzYWZmMzM0NWFmOTZhNjMyODNhODhlYTcwMDBmMmM4NGQ3ZThiMzgwNGIzZmI2MmI1NDU0NDVmNmI3NjQyYjE3In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_e53ae1a2e8bd4e338690c95ebf03ead3",
+      "statement": "Token lazy-loading test verifies that candidates have empty token_ids, token_spans, and token_set at prepare time; tokens are fetched on-demand during alignment.",
+      "evidence": [
+        {
+          "resource": "repo://tests/test_inverted_index.py#L198-L228",
+          "version": "repo-lines-v1:sha256:4d078210662cb577a680c87fc60d4da6e2855954a5cfca7ae5ad7b3b9c8e9072:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVkYWU1ODZhNTE3MTAxMzJhNTQ0ODU5NWQ2MDlmYmM1OTE1N2QxYjg3ZGYxYTNmYmQzZGY2ZDk4ZjExYjk3YmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRiNjhhODgzNjA1ZTc1OWM2ZjlhZjZmNmVjN2NkMzA3MTY2MWJkMTRjNjIzZjJlZjhmNjA0YTIxNGViZGVhMDEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU5Mzk2ZjI0N2MzNzI3YmQ4NmVjY2FjNzM3YjEyODhjNzA1MmUxOTczZTQzYTBlZGFlMzkxM2ZmZTc0MTE3ODAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f7a8cd1d55984a4a8389b96927f1d84d",
+      "statement": "Rust prepare with embeddings tests verify that combined Rust-inverted-index + embedding-index path succeeds with multiple embedder dimensions, that candidate counts stay within 20% of Python prepare, and that custom tokenizers (non-simple) trigger Python fallback.",
+      "evidence": [
+        {
+          "resource": "repo://tests/test_rust_prepare_with_embeddings.py#L25-L163",
+          "version": "repo-lines-v1:sha256:2af59e866842626c9247e10cb0e16137b5d2bccf0da7a554dcab2bca74d529c4:eyJzZWxlY3RlZExpbmVDb3VudCI6MTM5LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJlZGFlNTg2YTUxNzEwMTMyYTU0NDg1OTVkNjA5ZmJjNTkxNTdkMWI4N2RmMWEzZmJkM2RmNmQ5OGYxMWI5N2JkIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJlMDRlODMzNzJhNmM5ZTdjMWM1ZDAyNDJiMTdlYjZmNmY0MWQ4MzEyMGRmYTBjZDE2ZjVlN2VjOGE3YTJlYzYyIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJhYWJjNmRjNmIwOThjZTkwZTZmM2E4ODM2NDVhZjVlM2RkNjc2MzYxMWYyYzc0NWY3YmRjZjdiOWYwZDA4OTJjIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI1MDNmMDgwMjM2NTM5NjZiODA3ZjI1ZjEwMjRjZmRjMWNkNjg3MDUwNmJkMGFhOTQ0MGI5ODBhZjUyNTc5ODFjIn0"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.4.0",
+    "at": "2026-08-25T18:44:12.628Z"
+  }
+}
