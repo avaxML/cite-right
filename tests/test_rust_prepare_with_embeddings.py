@@ -38,6 +38,7 @@ def test_rust_prepare_with_dummy_embedder_dim8() -> None:
 
     assert corpus.embedder is embedder
     assert corpus.embedding_index is not None
+    assert corpus.rust_corpus is not None
     assert len(corpus.candidates) > 0
     assert len(corpus.idf) > 0
 
@@ -57,6 +58,7 @@ def test_rust_prepare_with_dummy_embedder_dim384() -> None:
 
     assert corpus.embedder is embedder
     assert corpus.embedding_index is not None
+    assert corpus.rust_corpus is not None
     assert corpus.embedding_index.vectors.shape[1] == 384
 
 
@@ -79,6 +81,9 @@ def test_rust_prepare_candidate_count_close_to_python() -> None:
     corpus_python = PreparedCitationCorpus.from_sources(
         sources, embedder=embedder, use_rust=False
     )
+
+    assert corpus_rust.rust_corpus is not None
+    assert corpus_python.rust_corpus is None
 
     # Candidate counts should be close (Rust and Python segmentation may differ slightly)
     rust_count = len(corpus_rust.candidates)
@@ -153,11 +158,9 @@ def test_custom_tokenizer_falls_back_to_python() -> None:
 
     # Should still produce valid corpus
     assert corpus.embedder is embedder
+    assert corpus.rust_corpus is None
     assert len(corpus.candidates) > 0
     assert len(corpus.idf) > 0
-
-    # Should NOT have used Rust path (custom tokenizer), so no special message expected
-    # We just verify the corpus is valid
 
 
 @requires_rust
@@ -175,6 +178,8 @@ def test_rust_prepare_embedding_build_time_tracked() -> None:
     )
 
     # Should track embedding build time
+    assert corpus.rust_corpus is not None
+    assert corpus.embedding_index is not None
     assert corpus.embedding_build_time_ms >= 0.0
 
 
@@ -190,6 +195,7 @@ def test_rust_prepare_without_embedder_still_works() -> None:
 
     assert corpus.embedder is None
     assert corpus.embedding_index is None
+    assert corpus.rust_corpus is not None
     assert len(corpus.candidates) > 0
     assert len(corpus.idf) > 0
 
