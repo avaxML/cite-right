@@ -1,6 +1,7 @@
 use pyo3::prelude::*;
 
 mod citation_fast;
+mod content_coverage;
 mod contradiction_check;
 mod inverted_index;
 mod prepare;
