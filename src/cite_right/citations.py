@@ -38,6 +38,7 @@ from cite_right.core.prepared_corpus import (
     NormalizedSource,
     PreparedCitationCorpus,
     report_empty_metrics,
+    slice_tokenized_text,
 )
 from cite_right.core.results import (
     Alignment,
@@ -146,24 +147,6 @@ def align_citations(
     if cfg.top_k <= 0:
         report_empty_metrics(on_metrics)
         return []
-
-    # Detect if any sources are structured field:value data
-    # For structured sources, use a lenient gap penalty to handle token reordering
-    has_structured_sources = any(
-        _looks_like_structured_source(_extract_source_text(src)) for src in sources
-    )
-
-    # If we have structured sources and no custom aligner, adjust gap_score
-    if has_structured_sources and aligner is None and cfg.gap_score < 0:
-        # Use gap_score=0 for structured sources to allow token reordering
-        # Also lower min_answer_coverage since field:value tokens may be sparse
-        cfg = CitationConfig(
-            **{
-                **cfg.model_dump(),
-                "gap_score": 0,
-                "min_answer_coverage": min(cfg.min_answer_coverage, 0.15),
-            }
-        )
 
     start_time = time.perf_counter()
     corpus = PreparedCitationCorpus.from_sources(
@@ -667,7 +650,22 @@ def _process_answer_span(
                 )
                 if support is not None:
                     retrieval_support.append(support)
-            alignment_time = (time.perf_counter() - align_start) * 1000
+
+        citations, retrieval_support, extra_alignments = (
+            _retry_structured_field_citations(
+                citations=citations,
+                retrieval_support=retrieval_support,
+                selected=selected,
+                selected_candidates=selected_candidates,
+                answer_span_text=answer_span.text,
+                tokenizer=tokenizer,
+                cfg=cfg,
+                aligner=aligner,
+                lexical_scores=lexical_scores,
+            )
+        )
+        num_alignments += extra_alignments
+        alignment_time = (time.perf_counter() - align_start) * 1000
 
     citations = _rank_and_limit_citations(citations, cfg)
     status = _span_status(citations, cfg, answer_span.text)
@@ -921,55 +919,161 @@ def _extract_evidence(
 
 
 def _looks_like_structured_source(text: str) -> bool:
-    """Detect if a source looks like structured field:value data.
+    """Return True when a source is mostly flattened field:value lines.
 
-    Data2txt sources often contain flattened field:value lines like:
-    - business_stars: 4.5
-    - attributes.WiFi: free
-    - hours.Monday: 9:0-17:0
-
-    These structured sources need more lenient gap penalties in alignment
-    because faithful rewrites may reorder the field values.
+    Data2txt sources look like ``business_stars: 4.5`` / ``hours.Monday: 9:0-17:0``.
+    Faithful rewrites reorder those values, so Smith-Waterman needs a zero gap
+    penalty on those candidates only.
     """
     lines = text.strip().split("\n")
     if len(lines) < 2:
         return False
 
-    # Count lines that look like field:value pairs
     field_value_lines = 0
-    for line in lines[:10]:  # Check first 10 lines
-        line = line.strip()
-        if not line:
+    non_empty_lines = 0
+    for raw_line in lines[:10]:
+        stripped = raw_line.strip()
+        if not stripped:
             continue
-        # Pattern: word characters (including dots/underscores) followed by colon and value
-        if ":" in line:
-            parts = line.split(":", 1)
-            if len(parts) == 2:
-                field = parts[0].strip()
-                value = parts[1].strip()
-                # Field should look like an identifier (letters, dots, underscores)
-                # Value should be non-empty and not look like prose (short or simple)
-                if (
-                    field
-                    and value
-                    and all(c.isalnum() or c in "._-" for c in field.replace(" ", ""))
-                    and len(value.split()) <= 10  # Short values, not prose
-                ):
-                    field_value_lines += 1
+        non_empty_lines += 1
+        if _is_field_value_line(stripped):
+            field_value_lines += 1
 
-    # If >50% of lines are field:value pairs, treat as structured
-    non_empty_lines = sum(1 for line in lines[:10] if line.strip())
-    return non_empty_lines > 0 and field_value_lines / non_empty_lines >= 0.5
+    return (
+        non_empty_lines > 0
+        and field_value_lines >= 2
+        and field_value_lines / non_empty_lines >= 0.5
+    )
 
 
-def _extract_source_text(source: str | SourceDocument | SourceChunk) -> str:
-    """Extract text from different source types."""
-    if isinstance(source, str):
-        return source
-    elif isinstance(source, SourceDocument):
-        return source.text
-    else:
-        return source.text
+def _is_field_value_line(line: str) -> bool:
+    if ":" not in line:
+        return False
+    field, value = line.split(":", 1)
+    field = field.strip()
+    value = value.strip()
+    if not field or not value:
+        return False
+    field_ok = all(char.isalnum() or char in "._-" for char in field)
+    return field_ok and len(value.split()) <= 10
+
+
+def _field_reorder_aligner(aligner: Aligner) -> Aligner | None:
+    """Copy a Smith-Waterman aligner with gap_score=0 for field rewrites."""
+    gap_score = getattr(aligner, "gap_score", None)
+    if not isinstance(gap_score, int) or gap_score >= 0:
+        return None
+    match_score = int(getattr(aligner, "match_score", 2))
+    mismatch_score = int(getattr(aligner, "mismatch_score", -1))
+    return_match_blocks = bool(getattr(aligner, "return_match_blocks", False))
+    if isinstance(aligner, RustSmithWatermanAligner):
+        return RustSmithWatermanAligner(
+            match_score=match_score,
+            mismatch_score=mismatch_score,
+            gap_score=0,
+            return_match_blocks=return_match_blocks,
+        )
+    if isinstance(aligner, SmithWatermanAligner):
+        return SmithWatermanAligner(
+            match_score=match_score,
+            mismatch_score=mismatch_score,
+            gap_score=0,
+            return_match_blocks=return_match_blocks,
+        )
+    return None
+
+
+def _split_range_dashes(text: str) -> str:
+    """Turn en/em range dashes into spaces so Monday–Friday tokenizes as two days.
+
+    ASCII hyphens stay put (Wi-Fi, state-of-the-art).
+    """
+    return text.replace("\u2013", " ").replace("\u2014", " ").replace("\u2212", " ")
+
+
+def _python_tokens_for_candidate(
+    candidate: Candidate,
+    tokenizer: Tokenizer,
+) -> Candidate:
+    """Retokenize a field source with the same tokenizer as the answer.
+
+    Rust prepare keeps identifiers like ``business_stars`` intact. Python
+    splits on underscores, which is what field rewrites need.
+    """
+    tokenized = tokenizer.tokenize(candidate.source.text)
+    sliced = slice_tokenized_text(tokenized, candidate.passage)
+    return Candidate(
+        global_index=candidate.global_index,
+        source=candidate.source,
+        passage=candidate.passage,
+        token_ids=sliced.token_ids,
+        token_spans=sliced.token_spans,
+        token_set=frozenset(sliced.token_ids),
+    )
+
+
+def _retry_structured_field_citations(
+    *,
+    citations: list[Citation],
+    retrieval_support: list[RetrievalSupport],
+    selected: CandidateSelection,
+    selected_candidates: list[Candidate],
+    answer_span_text: str,
+    tokenizer: Tokenizer,
+    cfg: CitationConfig,
+    aligner: Aligner,
+    lexical_scores: LexicalScores,
+) -> tuple[list[Citation], list[RetrievalSupport], int]:
+    """Re-run Smith-Waterman with gap_score=0 on structured-field misses.
+
+    Caller thresholds stay unchanged. Prose candidates keep the default gap
+    penalty. Invented values that are not in the field lines still fail.
+    """
+    reorder_aligner = _field_reorder_aligner(aligner)
+    if reorder_aligner is None:
+        return citations, retrieval_support, 0
+
+    answer_tokens = tokenizer.tokenize(_split_range_dashes(answer_span_text)).token_ids
+    if not answer_tokens:
+        return citations, retrieval_support, 0
+
+    cited = {citation.candidate_index for citation in citations}
+    extra_alignments = 0
+    newly_cited: set[int] = set()
+    trusted = type(reorder_aligner) in {SmithWatermanAligner, RustSmithWatermanAligner}
+
+    for (candidate_index, embed_score, lexical_score_orig), candidate in zip(
+        selected, selected_candidates, strict=True
+    ):
+        if candidate.global_index in cited:
+            continue
+        if not _looks_like_structured_source(candidate.source.text):
+            continue
+        candidate = _python_tokens_for_candidate(candidate, tokenizer)
+        if not candidate.token_ids:
+            continue
+        alignment = reorder_aligner.align(answer_tokens, candidate.token_ids)
+        extra_alignments += 1
+        citation = _build_exact_citation(
+            candidate=candidate,
+            alignment=alignment,
+            answer_tokens=answer_tokens,
+            trusted_alignment_match_counts=trusted,
+            embed_score=embed_score,
+            lexical_score=lexical_scores.get(candidate_index, lexical_score_orig),
+            cfg=cfg,
+        )
+        if citation is not None:
+            citations.append(citation)
+            newly_cited.add(candidate.global_index)
+
+    if newly_cited:
+        retrieval_support = [
+            support
+            for support in retrieval_support
+            if support.candidate_index not in newly_cited
+        ]
+    return citations, retrieval_support, extra_alignments
 
 
 def _default_aligner(cfg: CitationConfig, *, backend: str) -> Aligner:
