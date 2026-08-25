@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:8e2ee5c2a6acc6cbf5a2055f977539b633c0c7137cc8567999114e9a268c098e",
+  "claims": [
+    {
+      "id": "claim_37e40375fc064778aa0ef496b37c526e",
+      "statement": "_select_candidates follows strict stage ordering: index seeding (rust_corpus.query_index preferred, then inverted_index.query), then lexical fallback, then embedding top-k. Each stage is independently gated and can add new candidates to the merged set.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L1180-L1232",
+          "version": "repo-lines-v1:sha256:e18b9435c09451ad7703bcd6bb8063ffcc95e181a0304c3020ac77b65daa476b:eyJzZWxlY3RlZExpbmVDb3VudCI6NTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhiYTA1ZDkwZWViYmRhMmRhYmU0NTUxZmFkYjhmMTVhYzE4OWRlNjQ1ZDQ2OWVlYTY0OWQ3OTQwYzc5ZWI3ZDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE2NjYzZjIxZjVjOTNiNTU3MTZjOGYwODhlYmU3OTQyNzYxMTlhZmVmODhmZjQ1NjhkZjk5MTc3NjkzNmFiOTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM3MWQwNjhkYmQwOWZkNDM2NzQxOWJkYjM3ZWMwNTNlMjFhNjhjODQ5NDA0NzNmNGE5NTdkMmIwZGI0NmE0YWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZlNTg2ZmYxNDM3ZjgyMGEzOTI2NzBjZjc2YzU5YmFiMjhiNjhjOWMwMGRkY2M5ZGI0NDViNTc5YWIyODk5OTYifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/citations.py#L1338-L1355",
+          "version": "repo-lines-v1:sha256:b24523708f44449e5ba683fdfde3882e1bf96df1b8c710c52966ee67d5099bc5:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YTIwNTgyYjRlZmEyMDI0NTllNzRmYzk5ZTM0OWY2MjAyZTIzZjgwMDg2Y2E3Y2M1ZWM4OWRhZDkxNGY2ODgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJiZjc1MjkwZWYxZmM5OTM2Yzk3ZGVjMzc0ZmIzOGI5ZGEzYWQxMWVkZjNiMzYxMGJhNzNkNzM2ODEyMzIyOTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijg5YjkyOGEwMTU0M2YxYTM0ZTE2Njg0MjE2OTJiMGRhNzBmNzZmMzk3ZDU3ZTA4YTUwZDgzYmZhNTg0Nzc3ZTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_00bc3c6431b94a3282cd61ef19f090b3",
+      "statement": "rust_corpus.query_index implements a conjunctive (AND) query that sorts tokens by rarity (ascending posting count), intersects from the rarest token outward, and OR-expands when intersection is tiny or candidate count is below 32.",
+      "evidence": [
+        {
+          "resource": "repo://rust_core/src/inverted_index.rs#L75-L148",
+          "version": "repo-lines-v1:sha256:0b84980f4a46644e515ac8d7f55afb20d302d69dd6c614634e2d7bab5f7bd7c7:eyJzZWxlY3RlZExpbmVDb3VudCI6NzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFkMmNjNmM0YmNlYjBjMjdjMWQyNWYyYzBhN2I2NTYxNzdhNmQyODY2ZTUyOTRmZWI5YmNlMTM5OTY4Y2QyYjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJiOWU5MzgyMjMwZmY4YWIzYTdlYzI0ZDY1NGJiMmJkZGNkNDg2ZDI3ZjA1ZjllN2QzYTgyMGM0ODc5MzAyMDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE2OGY4Mjk0ZmIyOWI4YjBiNmViNTQ3MTlkNjFjZGZmYjNhMGQ1NTg3NjdkMWE1ZWRjYTIwNWM5NWMxZDY3YTcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e1ce0c16271d40369b3ed628f5d28cc3",
+      "statement": "When the index returns no candidates, _add_lexical_candidates computes IDF-weighted overlap scores across all candidates and takes the top max_candidates_lexical entries.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L1159-L1177",
+          "version": "repo-lines-v1:sha256:3ab735791520a95a870404f6b92a5994df6edcdc372ad08544dc37d36fbd62e2:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFkMGIyMzhjOWI5ZDA0OTQyMzMxNGNkN2NiYWJmZjAyMDkxYzVjYWRhOWZlMjM1NTJkNmRiNzI0MzRjMDY2ZTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNmYjc0ZDNmYzc3MmI2NmViYWQ3YjBkNjVhYjlkN2MzZWYzOGYyMDkzYzIzYzAyOGIwOWVhMzdiODZkZDE2YTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU3Y2YxMzJhZTkxNDIxNDA1MGNlN2M4ZDE0ODNmOWI5MTFhMTMxZmEyMmQ4MzdlYTUzZDIxODhhZmNkYWQwMTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEwMTA1YmFhZmQ4ZDBjOWJjODU0ZjAxYmE4MzQ1NDllOWY1YTk4ZWU5YzRhN2E0ZjA5M2E0MzI4Y2Y1YTEwNTgifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/citations.py#L1292-L1336",
+          "version": "repo-lines-v1:sha256:1ef98cda4ed03f2f6ea9aad4380972b81c8daaee2f6f2865317be59222a7dbe4:eyJzZWxlY3RlZExpbmVDb3VudCI6NDUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdhZWZkYjgwZjRlZDI1NTU3ZDEwNjY1Y2ZkNGQwZWU5ZDU4ZWFiNDQzYzQwMWNhYmRlNzM1ODg0ZTlmNGU1NDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk3OWEyNjQ3OGY4ZmM5MGQ3YmQwZDNjYmQzYTY3NDEwZWZkNjQwNzIwNThmMWE0YTUzMmZkNzcwODQ4YzUxM2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQyN2I4Y2VkZjBkNDVjODdhOWJjOGNlYmI4YWJhMmZlMmJiM2EyNjc0NTBiNWZjZmQ1YWM4ODlhNWY4NWIyNjUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_c97bc5150bc6476ab388a0373d13d143",
+      "statement": "When index seeds are found but lexical_scores is empty (prefilter skipped), _fill_rust_lexical_scores computes IDF overlap only for the selected seeds, not all candidates.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L1138-L1157",
+          "version": "repo-lines-v1:sha256:0e2b460ec4c06e7a65c77d997a4e0ebd58e91f4f3f95b28a8082954f5441e370:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE1OGMxODI0OWZiMDc5ZDA3MjkyOGQ3M2NmMWE0OWExMjkyM2Y5OTlkYzAwNTQ3OTU1ODIzYTBkMTdhNjlhMDgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIzZGYyYWNmMDZlOGMzZjAzYzcxMzVjNmU4YWM1YTljYTU0MzJhYmUwNmE3NGFjYTBmZGQ5YTUzYTAwOGY5ODciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU1MTljZDEwMDM3MDQ0ODI2YjFhNWVkYmRiNTM2NGUwNDQ3NTgwZmJlMWVjNjQxNzJjYjQ5ZjIzOGY4M2I4MzMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_c1b4565449ee4cfeb220dccc136df217",
+      "statement": "Embedding extras merge with existing entries by preserving the existing lexical score; new embedding-only candidates get lexical_score=0.0.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L1352-L1354",
+          "version": "repo-lines-v1:sha256:7b0377c804dac2f7deee5e44673405232d350463f98f55ec9f8299a6194feaa4:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMmQzNDkyMDY1ODJiMjgzMjQwNWYyOTQ4NzM2NzI0MDY2NmY5OWVhY2JmNTM3Yzc4MjViZmEyNzhiY2E0NzM2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzc1N2EwYWQ3YzEwODUyNDU3ZjI5MDU2MTI3ODE2MjZkMWRjMTJmZWNlM2FjNjg2OWUyYmI2OTkxOGU4OTE1OSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNzlkMGI5MjRlMTUyOWUxYTlmYmRhMDE2MDRmMWUyZmFmZDNhNmFlZGYyMzE4M2E2NjkyYTcyZWIyNGRhZmQyYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzc5M2Y3ODNhNGM5N2U2ODJiN2RjNTNmMWVhZTEzZmI3N2FmMDNkZjRhNmQ0YjNjZGQ1NzY0NWJiYTkwZjU5YyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_12caf8f9592b491da131410a6e1cc33e",
+      "statement": "Embedding-only candidates (lexical_score=0.0) still undergo Smith-Waterman alignment to localize char_start and char_end. Without successful localization, they become RetrievalSupport entries rather than Citations.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L1352-L1354",
+          "version": "repo-lines-v1:sha256:7b0377c804dac2f7deee5e44673405232d350463f98f55ec9f8299a6194feaa4:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMmQzNDkyMDY1ODJiMjgzMjQwNWYyOTQ4NzM2NzI0MDY2NmY5OWVhY2JmNTM3Yzc4MjViZmEyNzhiY2E0NzM2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzc1N2EwYWQ3YzEwODUyNDU3ZjI5MDU2MTI3ODE2MjZkMWRjMTJmZWNlM2FjNjg2OWUyYmI2OTkxOGU4OTE1OSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNzlkMGI5MjRlMTUyOWUxYTlmYmRhMDE2MDRmMWUyZmFmZDNhNmFlZGYyMzE4M2E2NjkyYTcyZWIyNGRhZmQyYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzc5M2Y3ODNhNGM5N2U2ODJiN2RjNTNmMWVhZTEzZmI3N2FmMDNkZjRhNmQ0YjNjZGQ1NzY0NWJiYTkwZjU5YyJ9"
+        },
+        {
+          "resource": "repo://src/cite_right/citations.py#L728-L747",
+          "version": "repo-lines-v1:sha256:b796d0760ae0c438fe024db98e1a585236d0c9b775b8b1258494b97d82c004c7:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNjYzM5YTM0YjIwM2MwYjc4NWMwZWRlZWU2M2RkNWFmYWFlNDE0YjI5NjJkZDY2ZjIwYmY0NzNjZDE0MjJhNjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhjYzRhN2QxY2M3OTZhYmEzZTQ2NzIzMzI3ZjUxN2U5ZjgxMTk4MmQyNTBmMDcwMjk4NmU0YjU3NjRhZDk1ODkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM1YTE3NzkxN2I1MGQ4MDZmMTMxMDBkMWFjZjJjNjE5MTJhYmZmMGU1MmM4NjZjMWY3NTE5NjhhNjU1ZWViZjkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_4db015f0c8d3417289ee1891cd5b2097",
+      "statement": "Three independent limits control candidate pool size: max_candidates_lexical=200, max_candidates_embedding=200, max_candidates_total=400 (defaults); fast() preset reduces to 50/50/100.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/citation_config.py#L175-L182",
+          "version": "repo-lines-v1:sha256:a7f78e6a5c8c4324b8b1c6fd82f0e69d2901e92c84e3cc7e2832db7d5ef14d38:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYTU1YzlkMDRhM2NjYTBjODEyNTc2ZDNiNDdhMGRkNmVlOWYzYjRiMmI0Yzk5NTYwNzVkZjZkMDZjNGNiZGQwYSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTkwOWE1M2E2MThkMDI4ZTFkMzAwMGMwYTdhYmNlZWNiZTVmYjM3ZjRlNTExZWZlNDY2NDNmYWQ2ZTY2ODcyZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjdkYTNmNjc1NWNmMGNiMWQyNzY5Njk1MTIyYWMyN2VmMGFmNTQ1YzZmMWMxNjNiNmM2YWUwZTMzOGUzMzdjNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjE4MzhkNTNiOGIyNGVjN2JiY2UxNjg0OGU1MDc2MDQ4YzFiY2Y1NWQ4Y2E1NjkyZGE2ZTM2N2RiYzBhYTU3NSJ9"
+        },
+        {
+          "resource": "repo://src/cite_right/core/citation_config.py#L65-L67",
+          "version": "repo-lines-v1:sha256:0ab658f2abbecb4bf0b019668ea3b31cd7d637b8c7a9a89bd2d91fd96af7d75b:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiY2VjMDIxYmViYWQ1MDc5ZTgxMmM1MTUyZDRhNTFiYWNkN2VkNzkzYWExOWJmYzU3Zjc4YTdkMTExMzE2NWNlNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjlkY2ZhMGRjMWNlYjg3YzQ0ZjZkMTk4ZDcyMTdiNjZiYWEzMzE5YjFhY2VmZTAzMzY3Mjk5Njk3MmVjOWRhOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDBjZGJkMGQxYjkxMjRiYTE3NmQ0NDNmOWI0MzQ3MmY1NmE5ZmEwOGU0ZjdmNzFlYjk3NGI3ZjdkZGU5MTU4YiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDZmNzE1NmU4ZDQ3MThmN2U0NzdmM2NiMTRlMGU5NDFiNjZiMmZkNDRiZDU0NzQwZDE5NjVmNGJlMDA4YzBjMiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_aeb9be5ecf2f487e8c5c9686c28116f4",
+      "statement": "_rank_selected_candidates sorts by max(embedding_score, lexical_score) descending, then source_index ascending, then candidate_index ascending, and applies max_candidates_total as a hard cap.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L1357-L1373",
+          "version": "repo-lines-v1:sha256:6e9b2a144007f78dfb1e5d84fcb798493f5d28266a443fbb5140500b617a9414:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUzYmU1M2FjNDY2M2YzNTZjM2QxNjIzNDQ1ZjY2YjEwNjVlNjI2ZTk0OGM5ZTMxZTljZjU2NzY0MDFkZDRjNWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFlMjNiNTZiOWUxZDFiMzgyOGRiOGU0ZWMyMzc1YWZlNTBmNTg1ODc5ZjU2YjU1NGRhNmNiNmExNzZlYjFiNjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA3MWFiMTMzMWZkOTljZmQzYzdjNTI4Y2VmNTUzMDk5MWRiMzc3NmQxYmQwZWQzOGU5MDBiNmFjY2ZkYzEwZjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM4MTJkZDg1YWMyMGNiY2E2YjQ2MzY1YWYzZWEwMTEwYjViMzAxZWUwODI2ODdjMzVhYWI3MTY3MDc4YjcxOWQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3080fd7d307845adb51e15e28a921111",
+      "statement": "Lexical scores are filled only for inverted-index seeds; embedding-only candidates retain lexical_score=0.0 unless they were also picked up by the index or lexical stage.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L1211-L1219",
+          "version": "repo-lines-v1:sha256:b2eebdea329a38b3e07d4b5d3cf0873c97218e3a691ab067ff58f1f50cd0aa0b:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMmZlZjNjMjVjNjQ2ODBkMjFjNjI0Y2E5YmMzMjJlMjc2MjhmN2U4YjZlODVhNDgzZTE2N2M5Mjg0OGNiNjc0YyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNGMzNzBkMWNiOGZjMDkwYWU3MTRkM2RiNzQ0Zjc0Yjk3MDAxZmQ4ODY3NTI0MjIyN2JkNjE3NzI1ZGYyZDFiZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZmNjMzBlNTVhMzJkM2E3NDk0ZGYyZWNkNjRkOWUwODBhMGI4NWE5ZTRhNjdmMzc3ODUzMTMwM2NiZDc0MTJiMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYWI1MTlhNGNmOWQ1YmQxYjc0Y2YzODUzNDkzY2MwMzAzM2MzN2ExMmMxOTQ0ZDRkM2Q0MDhhMDM2YjFmYzY3YSJ9"
+        },
+        {
+          "resource": "repo://src/cite_right/citations.py#L1352-L1354",
+          "version": "repo-lines-v1:sha256:7b0377c804dac2f7deee5e44673405232d350463f98f55ec9f8299a6194feaa4:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMmQzNDkyMDY1ODJiMjgzMjQwNWYyOTQ4NzM2NzI0MDY2NmY5OWVhY2JmNTM3Yzc4MjViZmEyNzhiY2E0NzM2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzc1N2EwYWQ3YzEwODUyNDU3ZjI5MDU2MTI3ODE2MjZkMWRjMTJmZWNlM2FjNjg2OWUyYmI2OTkxOGU4OTE1OSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNzlkMGI5MjRlMTUyOWUxYTlmYmRhMDE2MDRmMWUyZmFmZDNhNmFlZGYyMzE4M2E2NjkyYTcyZWIyNGRhZmQyYSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzc5M2Y3ODNhNGM5N2U2ODJiN2RjNTNmMWVhZTEzZmI3N2FmMDNkZjRhNmQ0YjNjZGQ1NzY0NWJiYTkwZjU5YyJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.4.0",
+    "at": "2026-08-25T18:44:12.628Z"
+  }
+}

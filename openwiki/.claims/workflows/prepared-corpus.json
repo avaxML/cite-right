@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:a4125e304f9c1ff97567f6487b2bd308aa7a72e53d26d512bba48f87ad61298a",
+  "claims": [
+    {
+      "id": "claim_9f7f15db990247818ca3155bc98fde1b",
+      "statement": "PreparedCitationCorpus.from_sources() uses a Rust fast path when use_rust=True, RUST_PREPARE_AVAILABLE is True, the tokenizer is a SimpleTokenizer, and the source_segmenter is a SimpleSegmenter; otherwise it falls back to a Python implementation even when use_rust=True.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/prepared_corpus.py#L144-L162",
+          "version": "repo-lines-v1:sha256:39cd6b739c929e0aa5a889b8f0b95974c3ed739bc71229f7f0b09e5991a7e589:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhiZWI3ZmU0NTNmODQzZGMwYzFhZGIzZWZjMWY4YTc5MjA5NWQxYzFkMzkzZWE1YWEwNTFhZDY5NGU2MjY1ZDgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBlZWM1MGM5NjU0NDFlMGUxNWQ3ZjI3ZDc5M2QxZTg0NjhjY2M5MzczMWI5OGJiNDFhOWEwYzY2MDUxMDhjNWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZiY2NhNzhjYWE5NGQ1MzFlZDQ2ZWFlYjQ1OTM5OGFmNTJjYjQ5MWMxYTFjMDk0Y2FiZmEwNGYyMmQ2YWQyMzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjliYjk1ZjhhYzQ4ZjAyYjgzZTA3MzAzYzU3MTU5ZDljNDEyMzQ1MzdiOWY5ZmQ5ZTgxNjNjYWFkYjc0OTVkNzEifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/core/prepared_corpus.py#L31-L42",
+          "version": "repo-lines-v1:sha256:fe6754fb023f8c77f9800a25d786c51601c781a358d0aa6605976cedff14a8cc:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMxYzVhZWI1YmMwNjg0MDRhYTVmNGI1NTAxNzQ0YzMxYmUyMmQ4NWY2NTQ4ZGFmMGJiNzVlNjkxMDgzMjJjNjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNjMDJhZmI1ZGUzZWY4MzFjMTNlOWE2OGYwOGVmNzQ3MmE0MDk5MWVkNWQ0ZjZjMWVkYzBiNDI2NDE3OTc4OTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM2YzJmYjA4YTIwODg0YzkzMTNiYjViZTBlMTI2OGNhMWI0ZjcyYzU3ZTE0M2UzMDI0M2ZmMGE5ZTQzNmI4MGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFhNTA4ODczNDIwZmU4NzczZDAxMGVjMzkwN2Y4ZjM4NWRhZjMzM2E1ZDExNDVlODc4Yzc1MzhlZmUwODc2NTEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_628ce355363c40ae9c991574684fcbc4",
+      "statement": "When the Rust prepare path is used, the corpus stores token data (token_ids, token_spans, token_set) in the Rust PreparedCorpus object referenced by rust_corpus; Python-side Candidate objects are created with empty token fields and tokens are fetched on-demand at alignment time via rust_corpus.get_candidate_tokens().",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L301-L303",
+          "version": "repo-lines-v1:sha256:e5c30bd196e155e6e37c9aff4311121ad71fe8dc4a11b1037a4d197a3e79d983:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiM2FkNjQyOWU1ZGViMzM2MmM5OTA0NDM0MGRmYmI0OTAxM2M2Y2VmOTM5MTUyNjAyNWVlMzM5NzEzNjE0MTY2MSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiN2U5OTFmZTIwYzlkMDI1ZmU5YTE5OGJjNGVhNWE2MzM3NzliNTY1MTQ3NTM1OGNhMjhiNGI1OTY1ZTRhODg2OCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYWNhODdiMjNlNjBlMjg0MGE3MmE5Nzc2MTk4MDMyNTcwYTAyZGY5NjgyZDJiZmRhMWZhMjYxMWI5ZjU5OWQ2MCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMGE0OWRhNTQ1MGMzYTM1YmU2MzFlNDIxODlhYjAzZjIzYzFlZGQ2N2EzY2Q5YjNmYjBhMDcyOTc1MGE1ODRhMyJ9"
+        },
+        {
+          "resource": "repo://src/cite_right/core/prepared_corpus.py#L116-L118",
+          "version": "repo-lines-v1:sha256:0e01aa9a468fe3092b552d25a70cd29f2b11a470fce7590bafbbad4382a3b557:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTY4N2Q0MzNiNzNkNTA4MDM2MTM2MjYzZDU1ZDE5ZDRjNWJkMTRjMWE2YTA4NmVjYjdlYjFkNGM5N2ZlZGY3MyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzBjMWYxODhmMTQyZWQ3YTgyNDY4MGIyMDcxNzJjNTUxOWJjNjE0YTQ4ZmRhN2NmMTY3ZWRiOGRkZjc5OTU2YyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDU2MTVlMGFjMWYyNTZlOTUzY2ZlYTA3OWVmYTQ4MjM4ZmNjZDU1YzRkODM0MDRkNTU1ZWZkZmRlYWYwODJkYiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjE1ZDc3OTgyNWE2ZDUxOWFlODU0ZGY3N2I4MWZkMjNjMWFiZDEzMGM2OTEzNmNjMmVhZjA5MWU5OWE1MTdjMCJ9"
+        },
+        {
+          "resource": "repo://src/cite_right/core/prepared_corpus.py#L249-L260",
+          "version": "repo-lines-v1:sha256:f17770b627e1d02d3fbd6b11de0b1385543b6059e0509aab1bac4520d69ab1ef:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJmZTEyNjY5NjZmMTNiMWMyZDViNGYwNzA3MTYzOTRkZjQ5MGU2ZDI5Mjc3ZDgwODA2YmJlNDkzMjQ0MjIzYjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MDMyZTk2NGQwOTMyMzUxZTVkMTg1MjY5MjgxYjE3MWEzYTA5YjA4YjI4NmU2NjFlYTQ3MDMyM2M4MmViNGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ1NzFiNTBlMWZmZTUxZDg2NjUwNjRiMzlkOTBmYzY4ZjlmZTliNzA0OWRmZTAwM2FjMjE3ZDMxY2MzYmFjMmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFmMzRkMjM3NTlhNTgxYzg5MmRmMjdmZGIxMmQwMDM2YjZiNjE3NmM2MThjNWM1YWM0ZWUzOTdlNGNiYzllZGUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6409d6d333c848fe89fc07005e4277cc",
+      "statement": "embedding_build_time_ms tracks wall-clock time spent building the source embedding index during from_sources; it is not included in per-span alignment metrics but is reported separately in the total embedding time passed to the on_metrics callback.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L180-L182",
+          "version": "repo-lines-v1:sha256:065858e0364d4c382199ac8807c08bc1c6daa11af4a79ae39fc9fad64cc46c70:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiY2YzMzM5MjJlYWIzZmQxMWEzY2UzNGYxZGE5YzE0NDRjZTNkMTc2YzAxN2QzMDBlNjExYzA1ZGUzOTM2ZDQ0YyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZjBkOWY3MzRiZTVhYTAzOTM1YzQ5OWI3MTQxMTM1NWNlZmFjMmEyYmY1Nzk4OWUxMjQ2ZDM1YTczNTJjN2U5YSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZWZlYTRlYzNjMzZiM2NlNDIyZDIwZGY3N2QxNzdiYWE1NjdkYjVlMmY4YWRhZWQwZmEwMzc4YThkYmI5MmY2YiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNWMyNjhkZjhiMWVhMGRhNGU5ZDExOTZiN2UwMGVmMDRlYTZjYTBlNjdmYWZhYjk0MGJjMzAyODZjNDkzMTY5YiJ9"
+        },
+        {
+          "resource": "repo://src/cite_right/core/prepared_corpus.py#L119-L124",
+          "version": "repo-lines-v1:sha256:99adbffd412b90ad0848ab14e0a1b1aa0c78fe5a710c742d6b0e878c8accf3d3:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiM2NmNDhiOTk5ZTQyYzZjYzU2NDQ3MmVjNWJlNmM1ZjhlNmViMGEyNjExMzI0YmY0YWMwMWFmMzQxMjJhMzMzZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMGQ0OTIwYTYyYmY4YzUzYzg0MzdiMWMxMmI2ODFmZWQ2NzFmM2M1ODJjZTQzOWQ0NWM1MTc1NjgyY2NjM2M1NSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMGUwMWFhOWE0NjhmZTMwOTJiNTUyZDI1YTcwY2QyOWYyYjExYTQ3MGZjZTc1OTBiYWZiYmFkNDM4MmEzYjU1NyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiM2JmYWEwMGJjYWEwNDZkNGEwYjA5OWYwZGNjYTliZDZjYjI2ZDQ2NTA5NDc0ZGY0YzNjYzk5ODlhZTMyZjJmZCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_b1899eb2a72a4d3a84c66a3876fadbb9",
+      "statement": "An Embedder passed to from_sources is compatible with the Rust prepare path: the embedder is applied after Rust prepare completes, and the embedding_index is always built in Python from candidate passage texts regardless of the prepare path used.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/prepared_corpus.py#L270-L276",
+          "version": "repo-lines-v1:sha256:18c931f7b3046d8328669c037b3704e3f24956f008f5a10a58237f66e380d868:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjhhOWZjNGVhZjMzZmE0ZjNlMzgyMjZjYjU1MjlmNDliYzg4YzUzZDhmZmJhZTE5MTRiZTYxMjQ1ZmE3ZGMzYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjg3OTQ0ZWJmYjQzZGIwNGZmYjg1NTJmY2NhY2M5Y2UwZjdiZDQ2ZjNiMWE0NzY1Y2U4MDY0YmMxM2U1M2I3NiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMmVhMDA3M2M4MmRmZGVkNmY5MDQxMDYxYjc5MDI5ZDNkZWZjMmFlYTI1MWE5YWNmMmU2MmJmMjQxODZjZWFkNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNDljNGY5NGUzNDFkMjhhMDM2NDk4ODUzYTE1MTQ5N2FhNGYyMmI0YWVkZjZhNDFjYWVlODY0NWRhY2ZjZjk3MCJ9"
+        },
+        {
+          "resource": "repo://tests/test_inverted_index.py#L175-L196",
+          "version": "repo-lines-v1:sha256:637d56b7c086fd145ab4a36b415a0f15be8cc24fff8c752618f549b972581aaa:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI4NjYxZjU2MGJlM2Q2ZDBkYWIyNDY1ODRhMzFhZGI3Yjg2NzhkMmU2MThiYmQ4NjlkMjE4OWY1NGY3ZjRiOGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUwM2YwODAyMzY1Mzk2NmI4MDdmMjVmMTAyNGNmZGMxY2Q2ODcwNTA2YmQwYWE5NDQwYjk4MGFmNTI1Nzk4MWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ3YmVjYmM5ZDc4OGViNWU4MjI2Zjk5NGIxOTNiMDI5NDJkYjE1NmViZTMwYzlmNGI3NzAwMzk0ZWVjZmE1ZDMifQ"
+        },
+        {
+          "resource": "repo://tests/test_rust_prepare_with_embeddings.py#L35-L42",
+          "version": "repo-lines-v1:sha256:39ed1f26b28e5f5ff2b21e1f0d02324e6295733c7841d20236ca02c61e329e06:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMWEwMDI0MTQ5ODQ2ZWNlYmQyNWUzNzBhMjk3OTlkZTJjNmM3MDcyNTQ5ZmY2N2EzNzBmYzhjZDg2ZWY0ZjIxYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTc4MmFkODc4MzI5YTE2MTlkOTYzMTU0ZjFiNDc2NmNhZDY0NWJjOThmOGYwZjZiOWU3MzQ4ODQ1NzJmMDI3MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTM2YjA4ZDY3NDRjNTM1MTZjYjZjNmY1MjcxYWNmNjMyOWI0NDk5NmIwYWUyYTIxMzlkZmRlZDVjYjY2YThlOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZWRjMGYzNTExOGMwZTgzODExMTViYTc0Y2I0ZDNkZGIwMGRmYTFiNzBjZmE2ZjEwMmFjY2M1NDQxMzEzMjljNyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_f19253162fb24346b3a2167d26e0a430",
+      "statement": "PreparedCitationCorpus stores normalized_sources, source_passages, candidates, idf, embedding_index, and rust_corpus as reusable state across multiple align() calls; only the per-call EmbeddingCache, answer tokenization, and alignment scoring are recomputed.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/prepared_corpus.py#L106-L118",
+          "version": "repo-lines-v1:sha256:a02c65b2ce696e8cd0d408d94ef0d01c87d48210354b46b9f0c3a0d58609709e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE5Y2RjNWRmOTIwZGFjMGU5ZGQ2ZjhlYzdhMzM2NTkwYWIwM2NlZjhkY2MxODQyZDY0NmJjMTkzMTllMWFhNmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE3ZGUwNmQxNGQ2YzA2MTBmY2M0NDZkMTU4MWQ4MmFjMmFlYzA0M2JjNzM4MzAyY2U3ODY5YzZjZTkxMWY5OTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYxNWQ3Nzk4MjVhNmQ1MTlhZTg1NGRmNzdiODFmZDIzYzFhYmQxMzBjNjkxMzZjYzJlYWYwOTFlOTlhNTE3YzAifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/core/prepared_corpus.py#L317-L318",
+          "version": "repo-lines-v1:sha256:daf6fd563ce012b7f61540ac1d34a1123fd3c7e63b0a9236e33ccf3c82641c3e:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOGQ0OTFmMzYwYjQwZmRmYzEwYmIzYzk5NTRmYWZmZTUzY2EzNDYxN2QzM2UzMmU2NDIxOTIzMjRjYTM0ZjZjNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiM2E2ZjljMDdmZjRjZDQ0NGY1OTkwOGYxMDZjMTU1MWM3ZjM3ODM2ZGM3YzgxMzQ4MGM5NjlhMmM3MWI0ZjY4MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNGEzOTUwZjVmY2I5OTM2MmUyMDdmZGVhNGY2ZjVmZjc2YTlkOTlhZjUzZDUyNjBhOWVhZjc1NjNmNTA5MWM4ZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDNhNzllMWYwYzkxMzAwYWU3M2E5MzAzNWMxZjljMjg0MGJlMGQ5YmJlZDZlZmVlZGRmN2ZkMDlkM2ZlOWU3OCJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.4.0",
+    "at": "2026-08-25T18:44:12.628Z"
+  }
+}

@@ -1,0 +1,138 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:961b0d0f1411afc8fa75e93150a5badcd5a6b99b600f14dc150b68ad4a742f38",
+  "claims": [
+    {
+      "id": "claim_2177fe5544ad464e94736a62da8dec50",
+      "statement": "Groundedness checking in cite-right operates at two distinct levels: span-level (is_grounded, is_hallucinated, check_groundedness) evaluates whole answer segments, while claim-level (verify_facts) decomposes answers into atomic claims and verifies each independently.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/convenience.py#L23-L173",
+          "version": "repo-lines-v1:sha256:4b31aa4c7901d91c430b9a2085ee1157397f0364ce8e6c52972c42eae23c28bd:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUxLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIxMmU5NDFlNWVmNjgyNjcxZTFhOWVjM2M1NzAzY2ExY2RlYzMzNDk0NzI2MzNhNjg0MWMxZDM3NmRlZjk4YTFkIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI4MmYwYTdmMzc3NDY2NTc3Y2RjYTY5ZWNhMDRjYjJmMTVkZDBjODZmNWRkMmY3Y2E3N2M3YzRjYjIxYmE5OGNlIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI4YjJkNGYyM2E2YzdmMjljODBlY2Y3Y2M2OGIwZjA3Njk2ZTNiZDdmOGE2Mzc0MDM4ODI1MDVlMjk3NmM5OTkzIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIzYzcwMTI0YTI5ZDgyNTU1ZDgyN2IyMjI1N2EwOWZlNjg4MDg5ODJlMzU2NWJiNjAwN2E1ZmJlOTRiN2EwMDVhIn0"
+        },
+        {
+          "resource": "repo://src/cite_right/fact_verification.py#L103-L140",
+          "version": "repo-lines-v1:sha256:b3a0ec51de73d3561f5ebeef5512923c74e7ade1ca2fc726b9f7850494fdce27:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ0NGVmNTM4ZjYzMTM4NjM1MzRmMzZjMzc2YzhkZjAyYjA5MGU0ODMxNmY0MzE3ZDM1MzRkOWQ3NTIxYWE4MGEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgyZDcyM2E4OGRjOTE2ZTcxYWM5YjNkMDYyNzEzMjNjNmJkMmE1NWU2MzgzYzk4YjAyZDFmNDA3ZDJmMDA0Y2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM2YmEzMGM1ZGMyZTczOTIzYTQ3MzJmZTlkNjBlMTQ3NzUyMWI4YzdiNzRiMjEwZGIzZWQyN2Y3MjIxNDhlN2UifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_08c0f5ebaf254ef38d5bb6c2393240a9",
+      "statement": "is_grounded() and is_hallucinated() share the same default threshold of 0.5, meaning at least 50% of the answer (by character count) must be grounded. They are complementary inverses where is_grounded(t) equals not is_hallucinated(t).",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/convenience.py#L23-L120",
+          "version": "repo-lines-v1:sha256:ce22015e65e61d75315afffbb337672461500589ae6f440eec62572231f7224c:eyJzZWxlY3RlZExpbmVDb3VudCI6OTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEyZTk0MWU1ZWY2ODI2NzFlMWE5ZWMzYzU3MDNjYTFjZGVjMzM0OTQ3MjYzM2E2ODQxYzFkMzc2ZGVmOThhMWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJkNDllNjNmZGY3ODY0ODNjZTg1ZDk1MDJlZDgwNzllN2M5YjhmY2I4NjJiZTBhODA4ZDZiMzg2ODdlZTkwNTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhiMmQ0ZjIzYTZjN2YyOWM4MGVjZjdjYzY4YjBmMDc2OTZlM2JkN2Y4YTYzNzQwMzg4MjUwNWUyOTc2Yzk5OTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE3ODU4M2U4N2JmNDI4M2I4MzE0OWVjNjFiMTY5Yzk3NDdjODJlZmFiNjA4MDc2ZGNlMjU2MTkzMDc5NGQ2MzcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_fb754957c2f44df98293e1a404d288ef",
+      "statement": "HallucinationMetrics provides groundedness_score (length-weighted average of per-span confidence), hallucination_rate (always 1.0 - groundedness_score), ratio fields (supported/partial/unsupported by character count), and unsupported_spans list.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/hallucination.py#L57-L103",
+          "version": "repo-lines-v1:sha256:d5c21fc1e64820fcfa78e94d7fdc3b931499dc5945a17edb7370247ce0168551:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBiNmI4NzZhMTE5MDJlNmM0OWI5NzhmMDYyOGFhYzZiNDNhODM0ZDExZDdkOTVjODgzNmQzOGU0OWYwMjVkNDgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyOWYyYzkzYzAxMzM0OWY2NmU5YjhkNjg0YzdmNmFlMzI3Y2YxNDg4NTgwMTQ4ZDc0NzI0ZjRiNDRlNWMzODUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE2YWZlODk4NDUwMTA2ZGYwYjBmNGVkZGI1YzEzNWRhZjdiY2Y0MjlmN2QzMTI2NDIwMmE0NTRlNjlhYzkxYTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQwYzk3OGIzNGU3N2JmYjA4YmY2NTM5MDgwNjE0N2IzNjg4MGNmMjExNzhhYjgzYTE1ZTFkNjBmYmIyOTQzNTgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5ca695205eff49beb22a4d7ed9d59645",
+      "statement": "Span status is determined by the best citation's answer_coverage component: supported when coverage >= 0.6, partial when 0.0 < coverage < 0.6, and unsupported when no citations exist or coverage equals 0.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/hallucination.py#L214-L229",
+          "version": "repo-lines-v1:sha256:3a222acc63d01d0024c7472adf60dfd18cc833a191d46bb698811a05fdeb301a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1NDRjZTFjMGNlYzBhZGU4OWJkMzIzM2E2NGUyNGQxZmVkMTNkNmViOGQ0Y2Q3OTZhOTkxODVmNzE5M2IzYmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI5N2M3MTI0N2FmM2NkMWVkZjU1NWE3ZDEwNzU5MzE1N2Y2ZGMyYTIyYWYwZGU4MmU3Nzc0YWJmMTBmOGFkZTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVlZWJmYTVkN2Q5YmZhMDA0NGJiODNmMTMyZDExMTBhNzdkMDJlZDM3YTZiZTBiOTdiMDg3Njg2YTI3OWUzZmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFmOWVjM2E2ZjFiYmI1M2FkMDllNTdiZDIwNTNkZWFlYjJlYmFkNjJjNzYwOGQyZTc5ZWViMzQxMzViNWExYjEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_dc13a37207954ffcbc2750ce117dd723",
+      "statement": "For each span, confidence is extracted from the citation's answer_coverage component, meaning semantic-only citations with no lexical match contribute 0.0 to the groundedness score even if the citation score is high.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/hallucination.py#L189-L207",
+          "version": "repo-lines-v1:sha256:d8aeb1e40211891f842af017903191a277fa7ce51da92b5e1367bf8d79144379:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYwNDk0OGEyNjhlOWM0MTAxNmJkMjQ0ZjlhYmI3NTNjYWY5Yzk3MTIzNDM1NTA1YzQwM2FiYjBkNzA4OWYxYzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMzNGZlMDNlOWI3NjIxODY5YmQ0ODQ1ZTczNTA0NWFkNjQ3MTkyZjY3MWE0OTY5MDZkYmYzYzlmZTEyYzQ2YzgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI5NjAzNmViYTY2MmI0MGUwNTBjNDI0YTJlZjIwNDRiNmQ1NTY0YzVlMmM0YzE3OTk1YmVlZTExYzFhZTA3MDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY2NTlkOWU3OTk5NTIxOTFmMjIyMjRmN2QzM2FjM2Y0ZDgyMDRjNDAzNGVjZTViNjgyM2RjNTI0NTJlNWQ4ZWIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a677147d624f4f3080ee793731acd4cb",
+      "statement": "FactVerificationConfig uses explicit coverage thresholds: verified_coverage_threshold=0.6 (>= 60% coverage) and partial_coverage_threshold=0.3 (>= 30% coverage for partial, below is unverified).",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/fact_verification.py#L27-L43",
+          "version": "repo-lines-v1:sha256:e56abac4c0d00136af708ffad26c69b48d1ad0cdb048815989213d9416c5c766:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMxOTFlOGM5NTM5NDRhZjBmYzhhMjIzZWRlOWFmNTZmODZhNzZmM2ZiNzY4MzBiNmRmMGI0OGJjZmEwYTgxYjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFiNzVkMzViMTM3NTVjNjllYjE5Mjc3MzU1YzE1YTU2Nzc2ZWY1MTk4ZjJkYjFhM2FhNjJlNTgwYmQwZjc1YTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ0NDQyY2I0MmExZGY2OWNhM2U4YzIzYjIzM2RiMDUxY2ZjMWFjMGRlOWFjOGUyN2VlNDZhNzk0YmEyM2E5NzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdiMzg1M2RiNjFjNzJiODFmMDA0NWUxNTMwYTVkOTY4YjA0OWU3NTRhNzEyODViZjg0MGU1NmEwMGU3MjY3YjYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ee28b4bdef1d4857abc60dc0b1f871e0",
+      "statement": "SpacyClaimDecomposer decomposes compound sentences at conjunction boundaries, enabling independent verification of each clause. For example, 'Revenue grew and profits increased.' splits into 'Revenue grew' and 'profits increased'.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/fact_verification.py#L143-L151",
+          "version": "repo-lines-v1:sha256:edcaae915a8e612e4b1e56bc5a9f9b2e420b53b7cedb3ef51ae5508c7ea592cc:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZmU3M2E0MjY3ZThmYjU3ZWVlN2MxNjE0ZWJiZjNlZDY1ZjUwYTU2YjdiODJhNTAzZTIwNzIzNTQ5MDZiYmMwOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMWE3MGMyOWYyNjYzYzFjNDk5NjQ2MGM4ODkxMGE4NmUzNTdiMmUyNGNlMTY1Yjk2NTVmYzBmZjBmMThkMDE1MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOGNjNGE3ZDFjYzc5NmFiYTNlNDY3MjMzMjdmNTE3ZTlmODExOTgyZDI1MGYwNzAyOTg2ZTRiNTc2NGFkOTU4OSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNWYzZDY5NTU4NmFhNTI0NzJkZjkyYTBmYjM3NjlkNzUwZmRlNmYzMGEzMWYwMjZhYzExYWI5MDYyNjkwMjE3ZCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_899acabcde784406a37f0790638ea668",
+      "statement": "verify_facts() returns FactVerificationMetrics with num_claims, num_verified, num_partial, num_unverified counts, verification_rate as the proportion of verified claims, and categorized claim lists (verified_claims, partial_claims, unverified_claims).",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/fact_verification.py#L71-L100",
+          "version": "repo-lines-v1:sha256:35d2c95eeb6aaf4ffc3e9ab587b08011740cdfc0f65eddc40fa6329c71ea455a:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImViY2YwOGMxZGIwZGVhMTllMzQwYzYyMTJjZTg0MDU3ZmE2NmU3MTU0YzE3Y2E1OGMwNDVjMzA2MWZhN2EwMTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjljNGI5NzEwNGY0YjcxODNlZmU5ZDI3ZmJhYjMyNjdkYzIwYzQ0ZDEyMTU4MjdmMjE4MjcwMmU1Yjk3YjUzNDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE2YWZlODk4NDUwMTA2ZGYwYjBmNGVkZGI1YzEzNWRhZjdiY2Y0MjlmN2QzMTI2NDIwMmE0NTRlNjlhYzkxYTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY3MWQwOTJjYjZkMjZiNmQ4OGM3MTVmYTI0MTY2ODdmYjg5ODI1NzAzMDBjMjY3YTc2OGRlMjZjOWY0OWRkYTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_24fea4db61e644d2a223cfacb2f5fe8d",
+      "statement": "The key threshold difference between approaches is that span-level is_grounded uses 0.5 default while claim-level verify_facts requires 0.6 for verified status, making claim-level more strict for verification.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/convenience.py#L27-L27",
+          "version": "repo-lines-v1:sha256:b8c6d8739a7c2f02b03df059ffba0a422ed43e20a8dd48287182220920817523:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYjhjNmQ4NzM5YTdjMmYwMmIwM2RmMDU5ZmZiYTBhNDIyZWQ0M2UyMGE4ZGQ0ODI4NzE4MjIyMDkyMDgxNzUyMyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYjhjNmQ4NzM5YTdjMmYwMmIwM2RmMDU5ZmZiYTBhNDIyZWQ0M2UyMGE4ZGQ0ODI4NzE4MjIyMDkyMDgxNzUyMyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTJkMmJjMzcwYjgzY2RiMTEyMGEwNTdjNGY1ZjFkZGZmYjkxNTBhZDE0NTA2ZGRjODIyYmY1YmZhMWZkZDJhYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjNjMGE0MWRjOTRkNDA3MTYzOTI1ZDEzMzRhOTQ0MzE5MjQxZDgzN2E4ZmM5ZTI5YmY3ODUyOTY4MGQ4MTA1YSJ9"
+        },
+        {
+          "resource": "repo://src/cite_right/fact_verification.py#L41-L42",
+          "version": "repo-lines-v1:sha256:54baa4ffff57a17d3d63d3a90c22ac026e69d933ec16c79b053df32960b89ec7:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZGY3NjgxMzQ4NGEwNmZlN2I5ODU5ZWNmNDA5NTFlY2Y1MzdjOGM0YjI2ZWFkOWJjNTY3MDYyODdkMmQ0OWQwYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZGRkOWExOGI3NjhkYjExMzI0OWU3ODE2ZDFiNTdjMGViMmU3NWZkZGJjZjFhNTViNjFjNzEzNzllZjYzZjIxZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjlkYzEyMzUxODQxYzhhYjAwZmI2MDBlZTkzYTAyYTEyZDEzZjYyNzIyMTBhMzIzZGZiY2NlZDE0N2RjMTJkMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjhjZmU1MDFmZmU3Njk4N2MwZTFkODk5YTRmZmFmNWUzMjJiZjM1NDVhYTQ1MjliOGQzYWU4YjQ4ZjA1ZWI1YiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_5d78736fb07640f9b7417f43ad751530",
+      "statement": "HallucinationConfig includes_partial_in_grounded (default True) controls whether partial-status spans count toward groundedness_score; weak_citation_threshold (default 0.4) flags spans below this threshold in weakly_supported_spans.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/hallucination.py#L16-L30",
+          "version": "repo-lines-v1:sha256:461a53040bbb9561793cabf2e5437fe19267fa71bd094e9bdb3e7e7188c8cbfd:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ4N2I3OGRlNDM3YWExNzA5NTE2YjE3ZTRkYzEyY2E5MzZlYWE0ODg1N2U3N2Q5MTA5ZTNjNzg3MTg1Mjg0ZTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM3NGYyY2VhN2RmOGNmYzBhYzg0NTQ1ZjE3ZmQ1ODNmYzY4MDJlZjZjYjVkNzVkYmM4ZWUzMzE4YmU5M2I4ZTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE3MzkwNDNkYzg1NjhlODU4MTZiOTU2ZjI4NDA3NWFjNjExMGQ4YmIxMDJhM2U5YTFhMWMwNzE0NjMzMTIwNGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQyM2U1ZTllOTM1ZGQ4YTAwYTc5ODczZGJjMjc3ODgwMTZhODU4NTFiMmM2ODc5ZTk2M2I5YTFkOThjMjk3MDYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5a9c5f3b8bf042f79ddc104ba767e299",
+      "statement": "cite_right provides LangChain and LlamaIndex integrations through from_langchain_documents and from_llamaindex_nodes functions that convert framework-specific document types into SourceDocument sequences for use with groundedness checking functions.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/__init__.py#L85-L99",
+          "version": "repo-lines-v1:sha256:127e9b41758f99c9ad0480d8a21bbb63556cc144fb5ddb410ca070e2e75bc7fc:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVkNzI3YmI0Y2FkMWJjNTQyNzdkMmM5MWVkMzg5M2ZmZTMyZTcyNjFhMmJjODJiNTIyZjUxM2I0MGE1NTNiMzUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVlMmFjYjAwMTUzNmYwYTM3ZjczZjM5N2I3YzEyNjI0OGIxNDBmMjFjNGU2NTE4Zjg0YzFkNDA3M2FkZjNjYzciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjcxYTNhZGIyZWY2OWMxNjQ2ODc5ZTQwZjNkM2I5MmM3N2I2NTA2OTlhNDU5ZjM3OGM3MGU4NzEzYTViYTU0ZjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFhMGQxNDU1N2I0NDYwZmMyNzMyYzliMWM4NDUyOTRhNTY4YzFjYzg3MDNiMDkwZWVjMmZmMTYyNWMwYTk0OGUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_2f39c55fd1cc4b40bb33847e6ce64b58",
+      "statement": "Key invariants: groundedness_score + hallucination_rate always equals 1.0, ratio fields always sum to 1.0 when spans exist, semantic-only citations contribute 0.0 confidence, and verification_rate = num_verified / num_claims.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/hallucination.py#L249-L265",
+          "version": "repo-lines-v1:sha256:43eb9f9fafb45de8e5bdf14da345f5d00d4a510b1bc23231e48a6547cf2203d0:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY0NjAwYjg1NzhhMWMzOTE4ZTU3YjRmN2U1ODZlMDBmZTQ5N2MxNTFhMGRlZWUwMDlkNDk5YzA0NmM4ZTA5OTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MDlhNTNhNjE4ZDAyOGUxZDMwMDBjMGE3YWJjZWVjYmU1ZmIzN2Y0ZTUxMWVmZTQ2NjQzZmFkNmU2Njg3MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNlNzFjMGQ4ZDE0MzNjNDYwZDMzMjQyMDIwOTcyNTc3ZjI1YzBhNzQ0ZGQ1NjA0YjM2MzFhYTNiNDg4YmY1NjEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.4.0",
+    "at": "2026-08-25T18:44:12.628Z"
+  }
+}

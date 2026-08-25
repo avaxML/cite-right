@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:dc51a6eaa19de90e497182d89d628f8714f64db186c20d7bf87d5555214664b3",
+  "claims": [
+    {
+      "id": "claim_db4f6e4e9b6a4ad29b1c90c5aa77121d",
+      "statement": "CitationWeights has five weight fields: alignment=1.0, answer_coverage=1.0, evidence_coverage=0.0, lexical=0.5, embedding=0.5. The final citation score is a weighted sum of these components, summed directly without normalization.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/citation_config.py#L13-L22",
+          "version": "repo-lines-v1:sha256:0bade5ed1896e483b3a1e7c175965eff90ec4a835545bf5e1100c104b9df759e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM2NTcxZWE3ZmYzNGQzODA0MDIxODU4ZjM2NDZkOWZmZjUzNzVjNzJjNTU0NmZlOTgzYjdmNTU0ZjJjODE0M2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZiNzMzMzJhYTdlMzdhYTYyMDEwMTliN2E4Mzg3MDkyMjFiM2U4MTIzMDljOWVlYWQ1Yjg4NDBkZGZmODljMDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg1NDEyNzMwOWZkZTJiZWUxOWQzODY1MWRkOWU5ZmJiZmQzM2E5MGM2Yjc1ODk4NjY4MzM3N2U1YmNjNzUyOWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVhMTE2ZWMwOTI4MDczNGU0NTUwOGFkMTkxMTFlYWI2NjlmMmQ1OGM1MzA3NjAyMWE2NWNjNzExNzk1NTVhZTQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_316bf27d96a54a2db6d8a864dd58cea5",
+      "statement": "CitationConfig includes a model validator _reject_removed_embedding_only_options that raises ValueError if initialization receives either 'allow_embedding_only' or 'supported_embedding_similarity', directing callers to inspect SpanCitations.retrieval_support instead.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/citation_config.py#L85-L97",
+          "version": "repo-lines-v1:sha256:d1b7e8c479b76b6466bb32646c345bb8514993301fa097043ce924e509150e27:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk1NWQzZjRmNmJlNzRjOTY4MjViZmUxZTVkZGZjMTk2MjI1ZWRlZTBiM2FkZDU4YzYzMjhjMTQ4YWNiNmUyMTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhjMjVlM2FlYzFiMTNmOTBhMzhjYjJjY2NiZjlkZjgzYmM1ZmU2NjAyODE3OTJlYzczMDc0MjcwMjMwYzcyYjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgyMTNlZjgzZDExNGUxNTRhNzhiZDkzODcxZjQ3ZWNiMmZkYWUwZWE0ZDUwMTM2ZGU4MzkwZjc5OGEwODg2MjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE0ZjI0NDkxNGQwNDgyMzBhM2I3NWU3MTk1NDliZjdhZjk0NDJkYTY2MGY1OWQwYjkwODAxZjNmOGMyOTM2NjAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a7accbe42a834d64ba6f866222b9f943",
+      "statement": "CitationConfig has threshold fields: top_k=3 (max citations per span), min_final_score=0.0 (minimum weighted score), min_alignment_score=0 (minimum Smith-Waterman), min_answer_coverage=0.2 (minimum answer token coverage), supported_answer_coverage=0.6 (coverage threshold for 'supported' status), min_embedding_similarity=0.3 (minimum embedding similarity for retrieval support), max_citations_per_source=2, max_retrieval_support=3, and require_all_answer_tokens_in_evidence=False.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/citation_config.py#L25-L83",
+          "version": "repo-lines-v1:sha256:d0efb8731a7c4f15466c007a885166c612ef2e964877a33c8ac488efbdc366f0:eyJzZWxlY3RlZExpbmVDb3VudCI6NTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUzZDBlOWZlYmIzOWJhYmUwNjJjOTViY2ViZTdlMTMzNzhjNjJjMjZkMmY2YjhhODMwZDc5OGM3Y2Y5NDIxNmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2MzQ5MzkxM2MxZWMxYmFkZmRmNDBhOTIzYWY5YjNlMmM4N2JjZmZhMDM0OWZhNGYzYzlkY2M4MmE3YzUyMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY1NzRkOWM3MmIyNWYyYjVkOGIyM2VjNmRmZDM5ZDJjZWY0MTgxNTVlODBiNGFhNGFmMjI4ODE3NGIyNmZiY2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZmMGQ5MjMzM2ExNDBiZDU0NTQ3MDhiYjRkOTA2MzZmZTc4Y2RhYTMyOTAwODA3NzQxM2I5NDlmMWVlMmU4OGUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ed2bcacbe10746ab88287b2e5d9157ab",
+      "statement": "CitationConfig has passage windowing fields: window_size_sentences=1 and window_stride_sentences=1, controlling sentences per window and step between consecutive windows.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/citation_config.py#L62-L63",
+          "version": "repo-lines-v1:sha256:9ab21960b2a97d1d0548c02415be2edab8ceb35033d536fc91d5f8cc60bc18e2:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOGZlNzQ3ZTUxMGQzY2NjZDZmZWY3YjQyNjM3MmNlZTdmZWZjN2MyMTFmOWJkOTdiYTNhOThiM2QyYmNkY2RkNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNWYzOWQ0NDM3MWZlYjdjYTlhODk1NzRkYjg2NDRjYTg5NDQ4NjJjZjY4ZTUxYjA2MGYzNmYxNjU1NTkyNDVlNSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDU5NjIxNDVkNDMwNGUzYWNkMzBkZWRhMDk2YTQwM2I4ZTg3MTA3N2ZhMDQwNzJkZmE5ZTBjNjQxNThkYWQ4MSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMjYzYzY3MmRlMmU0MGNiMWU3MzU4Y2VkMzM0MTJiYzZiZDg3NjFiZWYwMDEyMmJkZGNjYTg3MzQ2MGRlYTE1OCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_2c8f21209509407fbbd954f358416fbc",
+      "statement": "CitationConfig has candidate selection limit fields: max_candidates_lexical=200, max_candidates_embedding=200, and max_candidates_total=400, capping lexical candidates, embedding candidates, and combined candidates before Smith-Waterman alignment.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/citation_config.py#L65-L67",
+          "version": "repo-lines-v1:sha256:0ab658f2abbecb4bf0b019668ea3b31cd7d637b8c7a9a89bd2d91fd96af7d75b:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiY2VjMDIxYmViYWQ1MDc5ZTgxMmM1MTUyZDRhNTFiYWNkN2VkNzkzYWExOWJmYzU3Zjc4YTdkMTExMzE2NWNlNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjlkY2ZhMGRjMWNlYjg3YzQ0ZjZkMTk4ZDcyMTdiNjZiYWEzMzE5YjFhY2VmZTAzMzY3Mjk5Njk3MmVjOWRhOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDBjZGJkMGQxYjkxMjRiYTE3NmQ0NDNmOWI0MzQ3MmY1NmE5ZmEwOGU0ZjdmNzFlYjk3NGI3ZjdkZGU5MTU4YiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDZmNzE1NmU4ZDQ3MThmN2U0NzdmM2NiMTRlMGU5NDFiNjZiMmZkNDRiZDU0NzQwZDE5NjVmNGJlMDA4YzBjMiJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_ec79204fac404b5cb6df7e78e70b4828",
+      "statement": "CitationConfig has alignment scoring fields: match_score=2, mismatch_score=-1, gap_score=-1, controlling Smith-Waterman scoring; and prefer_source_order=True controlling tie-breaking preference.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/citation_config.py#L69-L79",
+          "version": "repo-lines-v1:sha256:4076c05932d585efae500494e1b5ffac6deb33928316f7b9772c6aadd77c3f1c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg1ODExZTM2ZDNmY2MxMjBiZWZjNWJhODgwNmQ4NjZlMzkyMDgxMWI1OWE0OTZhNThmZjgzMjhlNGI4NDUwNjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI0ODdhZjJhZGFjNmFjYTQ4N2VlNDE1OGFhZjIxMmI5YTUzZWE3NDY1ZjNmNzg1MzlhYzJhZTQxMDJlNzZiMmEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM5YjU3NzYxNTkxYzRmODJjYWI1ZmI3Y2Y2MjkzNGNiYzdlYTkyYmUxMDFhNWQwNzk0MzU1ZGUwMjExZDlhM2QiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNlZmFhNzIyMWM4MzUwMzUyMDEyN2YwNzk2MWQyYzVjZjBlNmI5NzJhN2IyZTQ1MGZjMGFkZDcyODIxYWZmZGQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f8eaa33d861741fc8cea8216b17b958e",
+      "statement": "CitationConfig has multi-span evidence fields: multi_span_evidence=False, multi_span_merge_gap_chars=16, multi_span_max_spans=5, controlling extraction and merging of non-contiguous evidence spans.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/citation_config.py#L81-L83",
+          "version": "repo-lines-v1:sha256:306e2cd0677b8d135125441bc3ecc45b48bc5649bb53c230fbb625a89f82b195:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYTgzZDA3Nzk1YzljMzZkZGUxMzc0MjNlMWExNTk0MTFhYTNhN2I1NzQ4OWY4ZjNlYmUzZGZkYzQ1MmRiNWZmNyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTYzNDkzOTEzYzFlYzFiYWRmZGY0MGE5MjNhZjliM2UyYzg3YmNmZmEwMzQ5ZmE0ZjNjOWRjYzgyYTdjNTIyZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjdlMWRmZDRkY2QyMjhmZDlkMGZkNDY5ODYxOWZiMWVkM2VhNTgzMjFkY2I2YmM0NmFmMGIwNjc2Y2E2YmRiMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNmYwZDkyMzMzYTE0MGJkNTQ1NDcwOGJiNGQ5MDYzNmZlNzhjZGFhMzI5MDA4MDc3NDEzYjk0OWYxZWUyZTg4ZSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_8da9fbfc464645a886360025b83c7981",
+      "statement": "CitationConfig provides four named presets: strict() (top_k=2, min_answer_coverage=0.4, supported_answer_coverage=0.7, min_final_score=0.3, require_all_answer_tokens_in_evidence=True), permissive() (top_k=5, min_answer_coverage=0.15, supported_answer_coverage=0.4, min_embedding_similarity=0.25), fast() (top_k=1, reduced candidate limits max_candidates_total=100), and balanced() (identical to default constructor).",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/citation_config.py#L100-L126",
+          "version": "repo-lines-v1:sha256:d53bc121a82dbb137fdb4d1f675eeb0a571bafb41e53e0163365cbcb53652895:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIwMzM1N2ZjYWI3ODE4MzBmYzU0MGJjNGVjZjA3ZWU0MTFlOGJmNmRkNTJhYjEzYzVkOGQ1YjdmMWRhODcxYTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MDlhNTNhNjE4ZDAyOGUxZDMwMDBjMGE3YWJjZWVjYmU1ZmIzN2Y0ZTUxMWVmZTQ2NjQzZmFkNmU2Njg3MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZiM2U3Yzg2ZTQ3ZTgyMjllOTU1NDBiZTg3YTI3ZmVhZTYxZTZkM2Y3MzQzY2VlNWEzZGJjMjgzYTNjZjdjZDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImViNjgwY2ZmZWE3YjJlYWRlNDRmZDBmZWFlMzAzNzMyMDk5ODY4YWZjYzYzOWExYTZhNzgzNThjYWU0ZGIzMmIifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/core/citation_config.py#L128-L155",
+          "version": "repo-lines-v1:sha256:f6aba99e218b5c4e0c766b722171c22d54b9eb152827057b61d4fa72aa6894a9:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyMGI0NTNmNWUwYzkyZDVmNmMyNTFhNWVhMTk2MGQ3MmYzYmQwNzk1NmFlODU3ZGEyMGUzMWE4OGM1NTk2OWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MDlhNTNhNjE4ZDAyOGUxZDMwMDBjMGE3YWJjZWVjYmU1ZmIzN2Y0ZTUxMWVmZTQ2NjQzZmFkNmU2Njg3MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY5ZmMxZjI0OTlhNjQ4MWM3YWM1ZWJlMTI4YTJkNjlkNTdkNDAxOWM4MDIyODRmYTM3ODA4NzhmMTVlZmY0NjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZkM2E1NjEzY2E3MWMwZDdlMTEwNTA2YzQzOGQ3ZmVmZmE3Y2FkNWU2ODViNjc4ZjUxYWFhNGMzY2ZhYTE0NjQifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/core/citation_config.py#L157-L182",
+          "version": "repo-lines-v1:sha256:dbe360a25817970ddd50a083b5dcbc6eb679b6418c6dfc76414434f3bb38c11a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyMGI0NTNmNWUwYzkyZDVmNmMyNTFhNWVhMTk2MGQ3MmYzYmQwNzk1NmFlODU3ZGEyMGUzMWE4OGM1NTk2OWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MDlhNTNhNjE4ZDAyOGUxZDMwMDBjMGE3YWJjZWVjYmU1ZmIzN2Y0ZTUxMWVmZTQ2NjQzZmFkNmU2Njg3MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc5ZmI4NTZjNTMxNmQxOTMxZTQxYjI2NTkwZmI3N2RmYjc1ZjcwNjhkYWI5ZmRhZGEwZjNkM2FlYzQ3OTBmMWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYxODM4ZDUzYjhiMjRlYzdiYmNlMTY4NDhlNTA3NjA0OGMxYmNmNTVkOGNhNTY5MmRhNmUzNjdkYmMwYWE1NzUifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/core/citation_config.py#L184-L198",
+          "version": "repo-lines-v1:sha256:087cfa0507ae44e28401c07e4424709d5464bd3742a21c4d6439a4b24dcb9bbc:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyMGI0NTNmNWUwYzkyZDVmNmMyNTFhNWVhMTk2MGQ3MmYzYmQwNzk1NmFlODU3ZGEyMGUzMWE4OGM1NTk2OWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5NTM5NTkxOGUwMTVjOWJiYjZjNzQ0ZTYwNjM3YzcxMDI5YTVlY2I3OTg1NDIzYzZmZmY4MjgzMzU2NTc5MjEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ1MDAxZjNlNGE0YzY1OWQxZTZkZDQzYmEzYjgzYWVmNzk2MDcwZjAyYWJmY2UzOGEyMDAwYjliMDEwZWNjYmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7ea53dc7fa0e455aad7bb281b96229a3",
+      "statement": "CitationConfig and CitationWeights are frozen Pydantic models exported from cite_right.__init__, with CitationWeights nested as a field in CitationConfig.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/__init__.py#L20-L20",
+          "version": "repo-lines-v1:sha256:b7f601160ae31d4c993866569739f997b633141484d40ad58062bb906642f6bb:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYjdmNjAxMTYwYWUzMWQ0Yzk5Mzg2NjU2OTczOWY5OTdiNjMzMTQxNDg0ZDQwYWQ1ODA2MmJiOTA2NjQyZjZiYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYjdmNjAxMTYwYWUzMWQ0Yzk5Mzg2NjU2OTczOWY5OTdiNjMzMTQxNDg0ZDQwYWQ1ODA2MmJiOTA2NjQyZjZiYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMGE4MDRkMTNkMTZmMjlkMWYxZmQ3NzVkNzI3MjU5NTk2MWUwMjYwMGYzM2IzZjhhMTY4MmViNTk4ZDA5MTA1NyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMzYxYmUwYzQxNDZmNGY4ZmVjYmIzNDY0OTM2N2Q2NDFkY2MzMmE3ZTY3YWNhNDhhMWQ2OWM0YTVhNjQ2ODczMyJ9"
+        },
+        {
+          "resource": "repo://src/cite_right/core/citation_config.py#L13-L16",
+          "version": "repo-lines-v1:sha256:e98ce8526cff4ec809e4b3840b07b988eab5d349e3c85f1059ab8248b055e0ae:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzY1NzFlYTdmZjM0ZDM4MDQwMjE4NThmMzY0NmQ5ZmZmNTM3NWM3MmM1NTQ2ZmU5ODNiN2Y1NTRmMmM4MTQzZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDllODg0YTI2MzUyMmUyODJhNDc2Mjg1Mzg5ZTE4OTA5NDFiMTk2MTFlNWFhZmM5NjgxNjBlODliYzQ5MGNhMiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODU0MTI3MzA5ZmRlMmJlZTE5ZDM4NjUxZGQ5ZTlmYmJmZDMzYTkwYzZiNzU4OTg2NjgzMzc3ZTViY2M3NTI5ZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMGEyNDc1NmI4ZGRjZWVhMjRiMGQ0ODM0Y2YwZjA0MzVmNjU5ODJlYzgwOTAyMDE3ZjQ0ZjA1ZGZmYmNjNmI1ZiJ9"
+        },
+        {
+          "resource": "repo://src/cite_right/core/citation_config.py#L25-L53",
+          "version": "repo-lines-v1:sha256:fd2cbdbc427e8c070589c3d87824a5ae23738561b60a00b1d16fad7b52949cd6:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUzZDBlOWZlYmIzOWJhYmUwNjJjOTViY2ViZTdlMTMzNzhjNjJjMjZkMmY2YjhhODMwZDc5OGM3Y2Y5NDIxNmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ5ZTg4NGEyNjM1MjJlMjgyYTQ3NjI4NTM4OWUxODkwOTQxYjE5NjExZTVhYWZjOTY4MTYwZTg5YmM0OTBjYTIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY1NzRkOWM3MmIyNWYyYjVkOGIyM2VjNmRmZDM5ZDJjZWY0MTgxNTVlODBiNGFhNGFmMjI4ODE3NGIyNmZiY2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZjOGNiNTRjMjM4NTljNzNhMGU0NTczYTcwYjIxNjNlNmU3OWMwNzlhNWRlMDYzMzdhYzYzYTIwM2ViYjI0YWYifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.4.0",
+    "at": "2026-08-25T18:44:12.628Z"
+  }
+}
