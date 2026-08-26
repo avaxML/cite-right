@@ -217,6 +217,13 @@ second Smith-Waterman pass per matching candidate with `gap_score=0`. Faithful
 rewrites can be `"supported"` or `"partial"`. Invented fields stay
 `"unsupported"`.
 
+The how-it-works status section must include the exact words
+best citation's answer coverage
+as a contiguous phrase with no backticks inside it. Do not write
+best citation score. Status still comes from the top citation's
+`answer_coverage` versus `supported_answer_coverage` (default 0.6).
+Contradiction stays `"partial"`. Never `"partially_supported"`.
+
 ## Citation Alignment
 
 Maintain `concepts/citation-alignment.md` for inputs, outputs, and offsets.
