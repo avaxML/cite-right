@@ -158,7 +158,7 @@ When any of those fire against the best-ranked citation, the span status is forc
 
 **Status.** Status comes from the top-ranked `Citation`'s `answer_coverage` component, not from its overall score. The exact rule:
 
-- If the best citation's `answer_coverage` meets `supported_answer_coverage` (default `0.6`) and no contradiction fired, the span is `"supported"`.
+- If the best citation's answer coverage meets `supported_answer_coverage` (default `0.6`) and no contradiction fired, the span is `"supported"`.
 - If citations exist but `answer_coverage` is below the threshold, or a contradiction fired, the span is `"partial"`.
 - If no citations survive filtering, the span is `"unsupported"`.
 
