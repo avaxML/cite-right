@@ -4,23 +4,25 @@ This page covers how to install Cite-Right and configure optional features for y
 
 ## Requirements
 
-Cite-Right requires Python 3.11 or later. The library has been tested on Python versions 3.11 through 3.13. While the core functionality is implemented in pure Python, an optional Rust extension provides significant performance improvements for alignment operations.
+Cite-Right requires Python 3.11 or later. The library has been tested on Python versions 3.11 through 3.13. Released 0.4.0 wheels ship an abi3 Rust extension (`abi3-py311`), so one wheel per platform covers CPython 3.11+. A pure Python path remains as fallback if the extension is missing.
 
 ## Basic Installation
 
-The simplest way to install Cite-Right is through pip. This installs the core library with its minimal dependencies: NumPy for numerical operations and Pydantic for data validation.
+Install the 0.4.0 release from PyPI.
 
 ```bash
-pip install cite-right
+pip install cite-right==0.4.0
 ```
 
 If you use uv for package management, the same command works with uv's pip interface.
 
 ```bash
-uv pip install cite-right
+uv pip install cite-right==0.4.0
 ```
 
-The core installation is lightweight and suitable for most use cases where you need basic citation alignment without semantic retrieval capabilities.
+0.4.0 publishes abi3 wheels, linux/aarch64 wheels, and an sdist. Arm64 Docker installs can use the aarch64 wheel or the sdist rather than failing on a missing platform tag.
+
+The core installation includes NumPy and Pydantic. It is suitable for citation alignment without semantic retrieval.
 
 ## Optional Dependencies
 
@@ -31,17 +33,19 @@ Cite-Right provides several optional extras that add specialized functionality. 
 The embeddings extra enables semantic retrieval of candidate passages before alignment. This feature significantly improves recall when your generated text paraphrases the source material rather than quoting it directly.
 
 ```bash
-pip install "cite-right[embeddings]"
+pip install "cite-right[embeddings]==0.4.0"
 ```
 
 This extra installs the sentence-transformers library and its dependencies. The default embedding model is `all-MiniLM-L6-v2`, which provides a good balance between quality and speed.
+
+Rust prepare still runs when an embedder is set. The embedding index is built on the prepared candidates.
 
 ### SpaCy Segmentation
 
 The spacy extra provides improved sentence boundary detection and optional clause-level splitting. SpaCy's statistical models produce more accurate segmentation than the default rule-based approach, particularly for complex sentences with nested clauses.
 
 ```bash
-pip install "cite-right[spacy]"
+pip install "cite-right[spacy]==0.4.0"
 ```
 
 After installing, you must download a spaCy language model. The small English model is sufficient for most use cases.
@@ -55,7 +59,7 @@ python -m spacy download en_core_web_sm
 The huggingface extra enables tokenization using transformer models like BERT and RoBERTa. This option is valuable when you want the tokenization scheme used during alignment to match your language model's tokenization.
 
 ```bash
-pip install "cite-right[huggingface]"
+pip install "cite-right[huggingface]==0.4.0"
 ```
 
 This extra installs the transformers and tokenizers libraries from Hugging Face.
@@ -65,7 +69,7 @@ This extra installs the transformers and tokenizers libraries from Hugging Face.
 The tiktoken extra provides tokenization compatible with OpenAI's GPT models. If your application uses GPT-4 or GPT-3.5-turbo, aligning text using the same tokenization scheme can improve citation accuracy.
 
 ```bash
-pip install "cite-right[tiktoken]"
+pip install "cite-right[tiktoken]==0.4.0"
 ```
 
 ### PySBD Segmentation
@@ -73,7 +77,7 @@ pip install "cite-right[tiktoken]"
 The pysbd extra offers fast sentence boundary detection using the pysbd library. This option provides better accuracy than the simple rule-based segmenter while being faster than the full spaCy pipeline.
 
 ```bash
-pip install "cite-right[pysbd]"
+pip install "cite-right[pysbd]==0.4.0"
 ```
 
 ### Combining Extras
@@ -81,13 +85,13 @@ pip install "cite-right[pysbd]"
 You can install multiple extras at once by listing them with commas.
 
 ```bash
-pip install "cite-right[embeddings,spacy]"
+pip install "cite-right[embeddings,spacy]==0.4.0"
 ```
 
 For a full-featured installation with all optional capabilities, you can install all extras.
 
 ```bash
-pip install "cite-right[embeddings,spacy,huggingface,tiktoken,pysbd]"
+pip install "cite-right[embeddings,spacy,huggingface,tiktoken,pysbd]==0.4.0"
 ```
 
 ## Building from Source
@@ -147,8 +151,8 @@ If the Rust extension is not installed, this import will raise an ImportError, b
 
 ## Platform-Specific Notes
 
-On Apple Silicon Macs (M1/M2/M3), the Rust extension compiles natively for ARM64. No special configuration is required.
+On Apple Silicon Macs, the published wheels are abi3 for the platform. No special configuration is required.
 
-On Windows, you may need Visual Studio Build Tools with the C++ workload installed to compile the Rust extension. The pure Python implementation works without any additional requirements.
+On Windows, published wheels are also abi3. Building from source needs Visual Studio Build Tools with the C++ workload. The pure Python implementation works without any additional requirements.
 
-On Linux, the manylinux wheels are available for most common configurations. Building from source requires a C compiler and the Python development headers.
+On Linux, manylinux wheels are published for x86_64 and aarch64. The sdist covers other platforms when a wheel is not available. Building from source requires a C compiler and the Python development headers.

@@ -1,21 +1,23 @@
 # Embedding Retrieval
 
-By default, Cite-Right uses lexical matching to identify candidate passages for alignment. When source content is heavily paraphrased, semantic similarity provides a complementary signal that improves recall. The embedding retrieval feature enables this capability.
+By default, Cite-Right uses the inverted index (rare-token intersect) to identify candidate passages for alignment. When source content is heavily paraphrased, semantic similarity provides a complementary signal that improves recall. The embedding retrieval feature enables this capability.
 
 ## How It Works
 
-The citation pipeline has two stages. First, candidate selection identifies passages worth aligning. Second, Smith-Waterman alignment computes precise matches.
+The citation pipeline has two stages. First, candidate selection identifies passages worth aligning. Second, Smith-Waterman alignment localizes exact matches.
 
-Without embeddings, candidate selection relies entirely on lexical overlap. Passages with more shared words rank higher. This approach works well when the answer closely mirrors the source text but struggles with paraphrased content.
+Without embeddings, candidate selection is index-first. Prepare builds an inverted index over source windows. Rare-token intersect chooses which windows get Smith-Waterman. Smith-Waterman still localizes; the index only chooses the windows.
 
-With embeddings enabled, the pipeline encodes answer spans and source passages as dense vectors. Cosine similarity between these vectors identifies semantically similar passages regardless of exact word overlap. High-similarity passages join the candidate set even if they share few words with the answer.
+With embeddings enabled, the pipeline also encodes answer spans and source passages as dense vectors. Cosine similarity between these vectors can add semantically similar passages to the candidate set even if they were not index seeds.
+
+Rust prepare still runs when an embedder is set. The embedding index is built on those prepared candidates. 0.3.x skipped Rust prepare in this path. That skip is gone.
 
 ## Enabling Embeddings
 
 Embedding retrieval requires the embeddings optional dependency.
 
 ```bash
-pip install "cite-right[embeddings]"
+pip install "cite-right[embeddings]==0.4.0"
 ```
 
 Then provide an embedder to the alignment function.
@@ -68,7 +70,7 @@ Several configuration parameters affect how embeddings influence candidate selec
 
 ### Candidate limits
 
-Candidate selection combines lexical overlap and (optionally) embedding similarity. You can control how many of each enter the full alignment stage.
+Candidate selection starts from index seeds, then optionally adds embedding hits. You can control how many of each enter the full alignment stage.
 
 ```python
 from cite_right import CitationConfig, align_citations
@@ -78,6 +80,8 @@ config = CitationConfig(
 )
 results = align_citations(answer, sources, embedder=embedder, config=config)
 ```
+
+`max_candidates_lexical` caps index seeds. `max_candidates_embedding` caps extra embedding candidates. `max_candidates_total` caps the combined set before Smith-Waterman.
 
 ### weights.embedding and weights.lexical
 
@@ -105,6 +109,8 @@ results = align_citations(answer, sources, embedder=embedder, config=config)
 Embeddings help candidate recall, not citation localization.
 
 High-similarity passages can still be surfaced as retrieval support metadata, but Cite-Right only produces `Citation` objects after Smith-Waterman alignment localizes an exact span. This preserves the production contract that every citation has precise source offsets.
+
+Embedding-only `retrieval_support` still respects `min_embedding_similarity`. Lexical scores are filled only for index seeds. Embedding-only extras keep a lexical score of 0.0, so a weak embedding hit below `min_embedding_similarity` does not appear as retrieval support.
 
 ## Custom Embedders
 
@@ -144,6 +150,8 @@ def handle_request(answer, sources):
     return align_citations(answer, sources, embedder=embedder)
 ```
 
+The published 0.4.0 latency numbers (50-case pack p50 about 12.4ms versus 175.8ms in 0.3.1) are for the no-embedder path. Embedder load and encoding sit on top of that.
+
 ### Batch Encoding
 
 The embedder encodes all passages in a single batch operation. This is efficient for typical workloads with 5-50 passages. For very large source sets, consider pre-computing and caching embeddings.
@@ -163,7 +171,7 @@ print(f"CUDA available: {torch.cuda.is_available()}")
 
 Embeddings improve recall in several scenarios.
 
-Paraphrased content where the answer expresses source facts using different words benefits significantly. "The project was completed successfully" may match "Successfully finishing the initiative" even without word overlap.
+Paraphrased content where the answer expresses source facts using different words benefits significantly. "The project was completed successfully" may match "Successfully finishing the initiative" even without word overlap. 0.4.0 can also emit a citation from content-word overlap when sequential Smith-Waterman coverage is low, so some grounded paraphrases no longer need the embedder just to avoid `unsupported`.
 
 Synonyms and related terms are captured. "Increase" may match "growth" or "rise" through semantic similarity.
 
@@ -171,7 +179,7 @@ Domain-specific vocabulary with consistent meaning across variations benefits fr
 
 ## When Embeddings May Not Help
 
-Near-verbatim content where lexical matching already works well gains little from embeddings. The additional computation adds latency without improving results.
+Near-verbatim content where index-first retrieval already works well gains little from embeddings. The additional computation adds latency without improving results.
 
 Highly technical content with specialized terminology may not be well-represented by general-purpose embedding models. Domain-specific fine-tuning may be necessary.
 
@@ -188,6 +196,9 @@ for result in results:
         print(f"Lexical score: {components.get('lexical_score', 0):.3f}")
         print(f"Embedding score: {components.get('embedding_score', 0):.3f}")
         print(f"Alignment score: {components.get('alignment_score', 0):.3f}")
+    for support in result.retrieval_support:
+        print(f"Retrieval embedding: {support.embedding_score:.3f}")
+        print(f"Retrieval lexical: {support.lexical_score:.3f}")
 ```
 
-This breakdown reveals whether citations are driven primarily by word overlap or semantic similarity, informing configuration tuning.
+This breakdown reveals whether citations are driven primarily by word overlap or semantic similarity, and whether embedding-only retrieval support cleared `min_embedding_similarity`.

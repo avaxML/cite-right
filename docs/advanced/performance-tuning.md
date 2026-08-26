@@ -8,19 +8,21 @@ Citation alignment has several computational components, each with different sca
 
 Tokenization is linear in text length. Processing a 10,000 word document takes roughly 10x longer than a 1,000 word document, but the absolute time is typically small.
 
-Passage windowing is linear in document length and window configuration. More windows mean more candidates to consider.
+Passage windowing is linear in document length and window configuration. More windows mean more posting-list entries in the inverted index.
 
-Candidate selection computes lexical overlap or embedding similarity for each answer-passage pair. This scales with the product of answer spans and passages.
+Candidate selection is index-first. Rare-token intersect chooses which windows get Smith-Waterman. That is not a full answer-span × passage Cartesian product, and it is not Smith-Waterman over every window.
 
-Smith-Waterman alignment is quadratic in sequence length for each pair. This is typically the dominant cost for workloads with many or long passages.
+Smith-Waterman alignment is quadratic in sequence length for each selected pair. It still localizes citations. The index only chooses the windows, so the number of alignments tracks index hits (plus optional embedding extras), not the full window count.
 
-The Rust extension dramatically reduces alignment cost, making candidate selection and passage creation relatively more significant.
+On the 50-case pack with no embedder, 0.4.0 p50 wall time is about 12.4ms versus about 175.8ms in 0.3.1, roughly 14×. spp is 81.3% versus 83.4%. RAGTruth test quality on 2,675 answers matched 0.3.1.
+
+Rust prepare still runs when an embedder is set. Embedder encoding is extra cost on top of the no-embedder numbers above.
 
 ## Configuration Strategies
 
 ### Reducing Candidates
 
-The `max_candidates_lexical`, `max_candidates_embedding`, and `max_candidates_total` parameters limit how many passages undergo full alignment.
+The `max_candidates_lexical`, `max_candidates_embedding`, and `max_candidates_total` parameters limit how many passages undergo full alignment. `max_candidates_lexical` caps inverted-index seeds.
 
 ```python
 from cite_right import CitationConfig, align_citations
@@ -90,7 +92,7 @@ for answer, sources in workload:
 
 This eliminates repeated model loading and configuration parsing.
 
-When the same source set is reused across many answers, prepare the corpus once so source normalization, passage generation, tokenization, IDF construction, and optional embedding indexing are also reused.
+When the same source set is reused across many answers, prepare the corpus once so source normalization, passage generation, tokenization, inverted-index construction, IDF, and optional embedding indexing are also reused. Rust prepare still runs when an embedder is set.
 
 ```python
 from cite_right import CitationConfig, PreparedCitationCorpus, SourceDocument
@@ -109,7 +111,7 @@ for answer in workload:
     results = corpus.align(answer)
 ```
 
-This removes repeated source-side preprocessing from steady-state alignment cost.
+This removes repeated source-side preprocessing from steady-state alignment cost. The public API for this path is still `PreparedCitationCorpus`.
 
 ### Parallel Processing
 
@@ -153,7 +155,7 @@ Each worker process has its own Python interpreter and GIL, enabling full CPU ut
 
 ### Document Chunking
 
-Very long documents consume memory for tokenization and passage creation. Pre-chunk documents to limit per-call memory.
+Very long documents consume memory for tokenization, passage creation, and the inverted index. Pre-chunk documents to limit per-call memory.
 
 ```python
 def chunk_document(text, max_length=10000):
@@ -218,8 +220,10 @@ For detailed analysis, profile individual components.
 ```python
 from cite_right import SimpleTokenizer
 from cite_right.text.passage import generate_passages
+from cite_right.text.segmenter_simple import SimpleSegmenter
 
 tokenizer = SimpleTokenizer()
+segmenter = SimpleSegmenter()
 
 # Profile tokenization
 start = time.perf_counter()
@@ -228,9 +232,16 @@ print(f"Tokenization: {time.perf_counter() - start:.3f}s")
 
 # Profile passage generation
 start = time.perf_counter()
-passages = list(generate_passages(long_text, window_size=3, stride=1))
+passages = generate_passages(
+    long_text,
+    segmenter=segmenter,
+    window_size_sentences=3,
+    window_stride_sentences=1,
+)
 print(f"Passage generation: {time.perf_counter() - start:.3f}s")
 ```
+
+Steady-state cost on the published 50-case pack is dominated by index query plus Smith-Waterman on hits, not by scanning every window with Smith-Waterman.
 
 ### Memory Profiling
 
@@ -324,4 +335,4 @@ def benchmark(workload, iterations=10):
     print(f"Max:  {max(times):.3f}s")
 ```
 
-Run benchmarks before and after configuration changes to quantify impact.
+Run benchmarks before and after configuration changes to quantify impact. Compare against the published 50-case pack numbers only when the workload is that pack with no embedder.
