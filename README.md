@@ -23,7 +23,7 @@
 - Site: https://avaxml.github.io/cite-right/
 - Start here: `docs/index.md`
 - MkDocs config: `mkdocs.yml`
-- Coding agents: `openwiki/` (brief in `openwiki/INSTRUCTIONS.md`; generated pages appear after CI runs with `OPENROUTER_API_KEY`)
+- Coding agents: `openwiki/` (brief in `openwiki/INSTRUCTIONS.md`; generated pages appear after CI runs with `OPENROUTER_API_KEY`). Public site copy lives in `docs/`.
 
 
 ## Install
