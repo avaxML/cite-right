@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:030c89bfe19ae1aa50f55f33198a0fc65f44fc4eb1ffc43396e0af25454a0638",
+  "claims": [
+    {
+      "id": "claim_d7bb7138ec014b8b975ca1c8f940587c",
+      "statement": "align_citations accepts a sequence that mixes SourceDocument, SourceChunk, and plain str; the pipeline normalizes each into a NormalizedSource with a base_doc_offset (0 for whole documents and strings, doc_char_start for chunks) and a full_text before any segmentation, indexing, or Smith-Waterman runs.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/prepared_corpus.py#L399-L435",
+          "version": "repo-lines-v1:sha256:9112fab59b0aff42fa7dcf2901527a6aeebafb3becc7f42d1f80d2d23a32489b:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM3ZjQ1MThlNDFhN2FmODVjZTBlN2FiMTE4YjgyYjczMDUzY2ZjYWVlZjdmMDZiZmY0ZmQ5ZmU2OWFkNzdiYjQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAyMTI3MTViZWM1OWE0NDFmMTY4MmZmYjUyZTg5YmZhZDk5NzdmNTBmZmY3YWQzZjhhMWQxOTFkZGMzMDhkNDciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIyZDA1MDVkYTVkOGJhNDczMWY2MTYxZjQ4ZGM5ZjlkMTczNTBiNTY3Mjk1ZjFiYTU3NTk0YzZkOGIwNzE1OGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRjMjc4MTAwY2Y0Mzk0MzM2YjE3MzQ0NzI2YzcyZTQyMWEwOWQ5YmVjNTlmZThhOTM2YTI0MjA2MDRiMjZhOGIifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.4.0",
+    "at": "2026-08-26T03:32:47.432Z"
+  }
+}

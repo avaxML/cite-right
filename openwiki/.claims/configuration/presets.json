@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:293b9fbdcdc6cd15b31afad6e56823ed98b82d1faccbcbe815c13b250c174a63",
+  "claims": [
+    {
+      "id": "claim_e276ff9ee6774bf29eec5cf54a762b54",
+      "statement": "CitationConfig exposes four preset class methods in src/cite_right/core/citation_config.py: balanced(), strict(), permissive(), and fast(); CitationConfig.balanced() returns the same configuration as the default CitationConfig() constructor.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/citation_config.py#L99-L198",
+          "version": "repo-lines-v1:sha256:52447c725b8f738a8dc05b80542be95495f09ba2c85ace76200393eb239fe582:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI4MjBiNDUzZjVlMGM5MmQ1ZjZjMjUxYTVlYTE5NjBkNzJmM2JkMDc5NTZhZTg1N2RhMjBlMzFhODhjNTU5NjlmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI1OTUzOTU5MThlMDE1YzliYmI2Yzc0NGU2MDYzN2M3MTAyOWE1ZWNiNzk4NTQyM2M2ZmZmODI4MzM1NjU3OTIxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI2YTViNTZhZWI3YjdmYmEwM2M2YmI0NmI2YTc5NDFhZDg1MTI3MWJlYzBkZDNhODMyMjMwNjgzMjQ1YWM5NjI3IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_5e034edf6f204855b7ff2b849bdf3a29",
+      "statement": "CitationConfig.strict() tightens precision by setting top_k=2, min_answer_coverage=0.4, supported_answer_coverage=0.7, min_final_score=0.3, max_citations_per_source=1, max_retrieval_support=2, and require_all_answer_tokens_in_evidence=True; it does not change the candidate caps or the embedder similarity threshold.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/citation_config.py#L99-L126",
+          "version": "repo-lines-v1:sha256:a95d6143cada5ea1360d0f4f967d77ccd528ee86f94b407214a3463ec9f9eb20:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyMGI0NTNmNWUwYzkyZDVmNmMyNTFhNWVhMTk2MGQ3MmYzYmQwNzk1NmFlODU3ZGEyMGUzMWE4OGM1NTk2OWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MDlhNTNhNjE4ZDAyOGUxZDMwMDBjMGE3YWJjZWVjYmU1ZmIzN2Y0ZTUxMWVmZTQ2NjQzZmFkNmU2Njg3MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZhNWI1NmFlYjdiN2ZiYTAzYzZiYjQ2YjZhNzk0MWFkODUxMjcxYmVjMGRkM2E4MzIyMzA2ODMyNDVhYzk2MjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImViNjgwY2ZmZWE3YjJlYWRlNDRmZDBmZWFlMzAzNzMyMDk5ODY4YWZjYzYzOWExYTZhNzgzNThjYWU0ZGIzMmIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ed1bac9fdb914e348651a08bbb797ddb",
+      "statement": "CitationConfig.permissive() widens recall by setting top_k=5, min_answer_coverage=0.15, supported_answer_coverage=0.4, min_embedding_similarity=0.25, max_citations_per_source=3, and max_retrieval_support=5; it leaves min_final_score at 0.0 and does not change the candidate caps.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/citation_config.py#L128-L155",
+          "version": "repo-lines-v1:sha256:f6aba99e218b5c4e0c766b722171c22d54b9eb152827057b61d4fa72aa6894a9:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyMGI0NTNmNWUwYzkyZDVmNmMyNTFhNWVhMTk2MGQ3MmYzYmQwNzk1NmFlODU3ZGEyMGUzMWE4OGM1NTk2OWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MDlhNTNhNjE4ZDAyOGUxZDMwMDBjMGE3YWJjZWVjYmU1ZmIzN2Y0ZTUxMWVmZTQ2NjQzZmFkNmU2Njg3MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY5ZmMxZjI0OTlhNjQ4MWM3YWM1ZWJlMTI4YTJkNjlkNTdkNDAxOWM4MDIyODRmYTM3ODA4NzhmMTVlZmY0NjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZkM2E1NjEzY2E3MWMwZDdlMTEwNTA2YzQzOGQ3ZmVmZmE3Y2FkNWU2ODViNjc4ZjUxYWFhNGMzY2ZhYTE0NjQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_2bb5f9a183e2417f8f1ecfdd1f818089",
+      "statement": "CitationConfig.permissive() does not change the requirement that emitted Citation objects carry Smith-Waterman-localized char_start/char_end evidence; the lower thresholds let more candidates through, but every surviving candidate still goes through the same alignment step.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L695-L710",
+          "version": "repo-lines-v1:sha256:2b1b9cb2e16522cd0800803f2a7ca5255e1232ff4745eba2171eeb2ce8640a8e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYyNzkwODMxM2MwN2M0MDg0NjkyN2EzMTQ3MjQ5NDFiNWUxNWQ5NTY1NjU3NzdhMzMzMDcwNTNiMzgzMzIxN2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRlMzc1YmI1Y2VkNzhkZmNlOTg5NWM1MTA5OTU4YTcxMjJhYTFiMTFiM2IyMzE0OTNjYmYyZDljNzdmMGFjMjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM0YThjZjg5NjMxMzY4OTNmYjA4NmNlM2U3YjJjZDZlNzExMTQ2ODJiMmI3ZTYzMjc0NzkzZTc3OGI5YjRlMjQifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/core/citation_config.py#L128-L155",
+          "version": "repo-lines-v1:sha256:f6aba99e218b5c4e0c766b722171c22d54b9eb152827057b61d4fa72aa6894a9:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyMGI0NTNmNWUwYzkyZDVmNmMyNTFhNWVhMTk2MGQ3MmYzYmQwNzk1NmFlODU3ZGEyMGUzMWE4OGM1NTk2OWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MDlhNTNhNjE4ZDAyOGUxZDMwMDBjMGE3YWJjZWVjYmU1ZmIzN2Y0ZTUxMWVmZTQ2NjQzZmFkNmU2Njg3MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY5ZmMxZjI0OTlhNjQ4MWM3YWM1ZWJlMTI4YTJkNjlkNTdkNDAxOWM4MDIyODRmYTM3ODA4NzhmMTVlZmY0NjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZkM2E1NjEzY2E3MWMwZDdlMTEwNTA2YzQzOGQ3ZmVmZmE3Y2FkNWU2ODViNjc4ZjUxYWFhNGMzY2ZhYTE0NjQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6bfaa82c56c648808caadacd79587ded",
+      "statement": "CitationConfig.permissive() does not emit embedding-only citations; the removed allow_embedding_only and supported_embedding_similarity options are still rejected at construction, and the only supported path for embedding-driven signals that Smith-Waterman could not localize is SpanCitations.retrieval_support, which is not a Citation and never flips status.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/citation_config.py#L85-L97",
+          "version": "repo-lines-v1:sha256:d1b7e8c479b76b6466bb32646c345bb8514993301fa097043ce924e509150e27:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk1NWQzZjRmNmJlNzRjOTY4MjViZmUxZTVkZGZjMTk2MjI1ZWRlZTBiM2FkZDU4YzYzMjhjMTQ4YWNiNmUyMTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhjMjVlM2FlYzFiMTNmOTBhMzhjYjJjY2NiZjlkZjgzYmM1ZmU2NjAyODE3OTJlYzczMDc0MjcwMjMwYzcyYjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgyMTNlZjgzZDExNGUxNTRhNzhiZDkzODcxZjQ3ZWNiMmZkYWUwZWE0ZDUwMTM2ZGU4MzkwZjc5OGEwODg2MjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE0ZjI0NDkxNGQwNDgyMzBhM2I3NWU3MTk1NDliZjdhZjk0NDJkYTY2MGY1OWQwYjkwODAxZjNmOGMyOTM2NjAifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/core/results.py#L300-L336",
+          "version": "repo-lines-v1:sha256:696169d7f2130f1e8937ffd0d508a2e961d83193da1c53f6555e31ffd9b9c30b:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFkYTQ1OGE5YmUwYTQzMWJmZDllMDE5MmVlNmUyNWYzMDNlOGQ4NzI2MmQyZWE4YTMzMmMwOTJiYzFjOGY1NTAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYxYjc4MzcxMGJjNjJjZGNjNzcyOTA1YWQxZWU0NWZjYTdiYzEwZTY0MzJiMzQ5YmM5NGE0NzdkNDk5ZTA2NzMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYyYWZkODQ1YzY5ZmNlNDMwMTViMjFiMGQxODRjMGIwMjVhZWEwYzE2ODI3Yzg5OTUyMDQ4ZGY2MzhmMWMyMmMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e9156552087c4b72a4126c931819b53e",
+      "statement": "CitationConfig.fast() reduces latency by setting top_k=1, max_candidates_lexical=50, max_candidates_embedding=50, max_candidates_total=100, max_citations_per_source=1, and max_retrieval_support=1; coverage thresholds and the embedder similarity threshold stay at the balanced defaults.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/citation_config.py#L157-L182",
+          "version": "repo-lines-v1:sha256:dbe360a25817970ddd50a083b5dcbc6eb679b6418c6dfc76414434f3bb38c11a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyMGI0NTNmNWUwYzkyZDVmNmMyNTFhNWVhMTk2MGQ3MmYzYmQwNzk1NmFlODU3ZGEyMGUzMWE4OGM1NTk2OWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MDlhNTNhNjE4ZDAyOGUxZDMwMDBjMGE3YWJjZWVjYmU1ZmIzN2Y0ZTUxMWVmZTQ2NjQzZmFkNmU2Njg3MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc5ZmI4NTZjNTMxNmQxOTMxZTQxYjI2NTkwZmI3N2RmYjc1ZjcwNjhkYWI5ZmRhZGEwZjNkM2FlYzQ3OTBmMWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYxODM4ZDUzYjhiMjRlYzdiYmNlMTY4NDhlNTA3NjA0OGMxYmNmNTVkOGNhNTY5MmRhNmUzNjdkYmMwYWE1NzUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e74a065ec1b84351bfbe07da62742dd9",
+      "statement": "CitationConfig is a frozen Pydantic model, so a preset cannot be mutated in place; customization is done by returning a new config with model_copy(update={...}), which preserves every other field of the source preset.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/citation_config.py#L25-L83",
+          "version": "repo-lines-v1:sha256:d0efb8731a7c4f15466c007a885166c612ef2e964877a33c8ac488efbdc366f0:eyJzZWxlY3RlZExpbmVDb3VudCI6NTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUzZDBlOWZlYmIzOWJhYmUwNjJjOTViY2ViZTdlMTMzNzhjNjJjMjZkMmY2YjhhODMwZDc5OGM3Y2Y5NDIxNmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2MzQ5MzkxM2MxZWMxYmFkZmRmNDBhOTIzYWY5YjNlMmM4N2JjZmZhMDM0OWZhNGYzYzlkY2M4MmE3YzUyMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY1NzRkOWM3MmIyNWYyYjVkOGIyM2VjNmRmZDM5ZDJjZWY0MTgxNTVlODBiNGFhNGFmMjI4ODE3NGIyNmZiY2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZmMGQ5MjMzM2ExNDBiZDU0NTQ3MDhiYjRkOTA2MzZmZTc4Y2RhYTMyOTAwODA3NzQxM2I5NDlmMWVlMmU4OGUifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/core/citation_config.py#L99-L198",
+          "version": "repo-lines-v1:sha256:52447c725b8f738a8dc05b80542be95495f09ba2c85ace76200393eb239fe582:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI4MjBiNDUzZjVlMGM5MmQ1ZjZjMjUxYTVlYTE5NjBkNzJmM2JkMDc5NTZhZTg1N2RhMjBlMzFhODhjNTU5NjlmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI1OTUzOTU5MThlMDE1YzliYmI2Yzc0NGU2MDYzN2M3MTAyOWE1ZWNiNzk4NTQyM2M2ZmZmODI4MzM1NjU3OTIxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI2YTViNTZhZWI3YjdmYmEwM2M2YmI0NmI2YTc5NDFhZDg1MTI3MWJlYzBkZDNhODMyMjMwNjgzMjQ1YWM5NjI3IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_a6123dfd077f431cad3bf980d102291f",
+      "statement": "CitationConfig rejects the removed options allow_embedding_only and supported_embedding_similarity at construction with a ValueError that points users to SpanCitations.retrieval_support as the supported semantic-retrieval path.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/citation_config.py#L85-L97",
+          "version": "repo-lines-v1:sha256:d1b7e8c479b76b6466bb32646c345bb8514993301fa097043ce924e509150e27:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk1NWQzZjRmNmJlNzRjOTY4MjViZmUxZTVkZGZjMTk2MjI1ZWRlZTBiM2FkZDU4YzYzMjhjMTQ4YWNiNmUyMTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhjMjVlM2FlYzFiMTNmOTBhMzhjYjJjY2NiZjlkZjgzYmM1ZmU2NjAyODE3OTJlYzczMDc0MjcwMjMwYzcyYjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgyMTNlZjgzZDExNGUxNTRhNzhiZDkzODcxZjQ3ZWNiMmZkYWUwZWE0ZDUwMTM2ZGU4MzkwZjc5OGEwODg2MjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE0ZjI0NDkxNGQwNDgyMzBhM2I3NWU3MTk1NDliZjdhZjk0NDJkYTY2MGY1OWQwYjkwODAxZjNmOGMyOTM2NjAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_2a95a5a7e7cf486fb50ab909e168de2c",
+      "statement": "require_all_answer_tokens_in_evidence=True (turned on only by the strict preset) drops a citation unless every answer token is reachable in the evidence; this is the strictest single field in the strict preset and is what makes it a precision tool rather than a recall-balanced tightening.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L695-L710",
+          "version": "repo-lines-v1:sha256:2b1b9cb2e16522cd0800803f2a7ca5255e1232ff4745eba2171eeb2ce8640a8e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYyNzkwODMxM2MwN2M0MDg0NjkyN2EzMTQ3MjQ5NDFiNWUxNWQ5NTY1NjU3NzdhMzMzMDcwNTNiMzgzMzIxN2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRlMzc1YmI1Y2VkNzhkZmNlOTg5NWM1MTA5OTU4YTcxMjJhYTFiMTFiM2IyMzE0OTNjYmYyZDljNzdmMGFjMjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM0YThjZjg5NjMxMzY4OTNmYjA4NmNlM2U3YjJjZDZlNzExMTQ2ODJiMmI3ZTYzMjc0NzkzZTc3OGI5YjRlMjQifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/core/citation_config.py#L71-L71",
+          "version": "repo-lines-v1:sha256:1dbc000d8cfdf1454716926a7a9dc8fd5721b672f8ae07cad60bb5e8861823a1:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMWRiYzAwMGQ4Y2ZkZjE0NTQ3MTY5MjZhN2E5ZGM4ZmQ1NzIxYjY3MmY4YWUwN2NhZDYwYmI1ZTg4NjE4MjNhMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMWRiYzAwMGQ4Y2ZkZjE0NTQ3MTY5MjZhN2E5ZGM4ZmQ1NzIxYjY3MmY4YWUwN2NhZDYwYmI1ZTg4NjE4MjNhMSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDZmNzE1NmU4ZDQ3MThmN2U0NzdmM2NiMTRlMGU5NDFiNjZiMmZkNDRiZDU0NzQwZDE5NjVmNGJlMDA4YzBjMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTlhZTViODNjNjMxZGY2ODc3NDkzMjhhNDQwMzBhMTU5NTAzMzMyOTIzOTU1NzczYjk1MGJjNWZhY2QyOGM2OCJ9"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.4.0",
+    "at": "2026-08-26T03:32:47.432Z"
+  }
+}

@@ -1,184 +1,181 @@
+
 # Segmenters
 
-Segmentation divides text into units for citation. Answer segmentation determines the granularity of citation results, while source segmentation affects passage window construction. Cite-Right provides several segmenter options with different accuracy and performance characteristics.
+Segmenters split text into the units the alignment pipeline operates on. There are two interfaces, both defined in `src/cite_right/core/interfaces.py`:
 
-## Answer vs Source Segmentation
+- `Segmenter` for source text. `segment(text) -> list[Segment]` returns raw sentence-shaped segments with `text`, `doc_char_start`, and `doc_char_end` (absolute 0-based half-open offsets in the document).
+- `AnswerSegmenter` for the answer. `segment(text) -> list[AnswerSpan]` returns sentence or clause spans with `text`, `char_start`, `char_end`, `kind` (`"sentence"`, `"clause"`, or `"paragraph"`), `paragraph_index`, and `sentence_index` (offsets in the answer string).
 
-Two separate segmentation processes occur during citation alignment.
+The default / Rust path runs `SimpleAnswerSegmenter` on the answer and `SimpleSegmenter` on sources. The optional spaCy and pySBD segmenters swap into either role. Any class that exposes the right `segment` method conforms to the corresponding `Protocol`, so a custom segmenter is also a legal value for the `answer_segmenter` and `source_segmenter` arguments.
 
-Answer segmentation splits the generated text into spans that receive individual citations. Each span becomes a `SpanCitations` result with its own status and citation list.
+This page covers the four built-in segmenters and what changes when you swap one in. For the passage-window knobs that control how segments group into candidates, see [Citation Config](./citation-config.md). For the index-first path that depends on the segmenter choice, see [How It Works](../concepts/how-it-works.md). For the embedder interaction, see [Embedding Retrieval](../advanced/embedding-retrieval.md).
 
-Source segmentation splits documents into sentences used to construct passage windows. The segmenter identifies sentence boundaries that define window positions.
+## A Small Run
 
-These can use different segmenters depending on requirements.
+You rarely construct a segmenter by hand; `align_citations` and `PreparedCitationCorpus.from_sources` default to the simple ones. Pass an explicit segmenter only when you need spaCy's clause splitting or pySBD's edge-case handling.
 
 ```python
-from cite_right import align_citations, SpacyAnswerSegmenter, SimpleSegmenter
+from cite_right import (
+    PreparedCitationCorpus,
+    PySBDSegmenter,
+    SourceDocument,
+    SpacyAnswerSegmenter,
+    SpacySegmenter,
+    align_citations,
+)
 
+answer = "Apple revenue is up and stocks are down."
+sources = [
+    SourceDocument(
+        id="earnings",
+        text="Intro filler. Apple revenue is up. Outro filler.",
+    ),
+    "stocks are down. Extra filler follows.",
+]
+
+# spaCy with clause splitting on the answer, sentence-only on sources
 results = align_citations(
     answer,
     sources,
-    answer_segmenter=SpacyAnswerSegmenter(),
-    source_segmenter=SimpleSegmenter(),
+    answer_segmenter=SpacyAnswerSegmenter(split_clauses=True),
+    source_segmenter=SpacySegmenter(),
 )
+for result in results:
+    print(result.answer_span.text, result.status, result.answer_span.kind)
 ```
 
-## SimpleSegmenter
-
-The default source segmenter uses rule-based pattern matching without external dependencies. It is defined in `src/cite_right/text/segmenter_simple.py`.
+For long-lived corpora, build the prepared corpus once with a non-default source segmenter and reuse it for many answers:
 
 ```python
-from cite_right.text.segmenter_simple import SimpleSegmenter
-
-segmenter = SimpleSegmenter()
+corpus = PreparedCitationCorpus.from_sources(
+    sources,
+    source_segmenter=PySBDSegmenter(language="en"),
+)
+for later_answer in [answer, "Stocks fell after the report."]:
+    print(corpus.align(later_answer)[0].status)
 ```
 
-### Boundary Detection
+## SimpleSegmenter And SimpleAnswerSegmenter
 
-SimpleSegmenter splits text on common sentence-ending patterns. It recognizes periods, question marks, and exclamation points as sentence terminators when followed by whitespace. Semicolons also trigger splits as they often separate independent clauses.
+`SimpleSegmenter` and `SimpleAnswerSegmenter` are the defaults. They live in `src/cite_right/text/segmenter_simple.py` and `src/cite_right/text/answer_segmenter.py` and have no extra dependencies.
 
-Paragraph boundaries (double newlines) always create splits regardless of punctuation.
+`SimpleSegmenter` is a rule-based sentence splitter. It walks the text and cuts on `.`, `?`, or `!` when followed by whitespace, on `;`, and on `\n` when `split_on_newlines=True` (default). The abbreviation list is small (`dr`, `mr`, `mrs`, `ms`, `prof`, `sr`, `jr`, `st`, `vs`, `etc`, `e.g`, `i.e`) plus any single-letter initial pattern (e.g. `U.S.`). It does not require a model and runs in a single pass. Construct one with `SimpleSegmenter()` for the default; pass `split_on_newlines=False` if you want sentences only.
 
-### Limitations
-
-The rule-based approach has known limitations. Abbreviations like "Dr." and "U.S." may trigger incorrect splits. Sentences ending with quoted material or parentheticals may be handled imprecisely. Complex academic or legal prose with nested clauses can confuse the pattern matching.
-
-For content where accurate segmentation is critical, consider the spaCy-based alternatives.
-
-## SimpleAnswerSegmenter
-
-The default answer segmenter extends SimpleSegmenter with paragraph-aware processing. It is defined in `src/cite_right/text/answer_segmenter.py`.
+`SimpleAnswerSegmenter` is the answer-side wrapper. It first splits the answer into paragraphs on two-or-more consecutive line breaks, then runs `SimpleSegmenter(split_on_newlines=False)` on each paragraph so the line break is treated as a paragraph boundary rather than a sentence cut. The output is `AnswerSpan` objects with `kind="sentence"`, the paragraph's `paragraph_index`, and a global `sentence_index` across paragraphs.
 
 ```python
-from cite_right.text.answer_segmenter import SimpleAnswerSegmenter
+from cite_right import SimpleAnswerSegmenter, SimpleSegmenter
 
-segmenter = SimpleAnswerSegmenter()
+source_segmenter = SimpleSegmenter()            # default; cuts on \n
+source_segmenter = SimpleSegmenter(split_on_newlines=False)  # sentence-only
+
+answer_segmenter = SimpleAnswerSegmenter()      # default
 ```
 
-This segmenter produces `AnswerSpan` objects with character offsets and a `kind` field indicating whether the span represents a sentence, clause, or paragraph.
+Because both are the defaults, calling `align_citations(answer, sources)` with no segmenter arguments uses them.
 
-## SpacySegmenter
+## SpacySegmenter And SpacyAnswerSegmenter
 
-The spaCy-based source segmenter provides linguistically-informed sentence boundary detection. It requires the spacy optional dependency and a downloaded language model.
+`SpacySegmenter` and `SpacyAnswerSegmenter` wrap a spaCy language model (default `en_core_web_sm`). They require the `spacy` extra and the model itself. Install both before importing:
 
-```python
-pip install "cite-right[spacy]"
+```bash
+pip install "cite-right[spacy]==0.4.0"
 python -m spacy download en_core_web_sm
 ```
 
-```python
-from cite_right import SpacySegmenter
+The constructor raises `RuntimeError` with a clear message if `spacy` is not importable or if the named model is not installed. Pass `model="..."` to use a different spaCy pipeline.
 
-segmenter = SpacySegmenter()
-```
+`SpacySegmenter` runs `self._nlp(text)` and returns sentence spans. After spaCy's sentence boundary detection, `_split_sentence` walks the dependency parse to find coordinating conjunction tokens (`and`, `or`, `but`) that connect clauses. The clause splitter only cuts at a conjunction whose head is a `VERB`, `AUX`, or `ADJ` and where the conjunction sits strictly inside the sentence, so lists like `"Apples, oranges, and pears are tasty."` stay as one segment. The result is a list of `Segment` objects that mix sentence-level and clause-level boundaries, suitable for source-side passage generation.
 
-### Statistical Boundaries
-
-SpaCy uses a statistical model trained on large text corpora to identify sentence boundaries. This approach handles abbreviations, numbers, and unusual punctuation patterns more accurately than rule-based methods.
-
-The model considers context when making boundary decisions. "Dr. Smith arrived." is correctly identified as a single sentence, while "The meeting ended. Dr. Smith arrived." is correctly split into two.
-
-### Clause Splitting
-
-SpacySegmenter supports optional clause-level splitting for more granular citations.
+`SpacyAnswerSegmenter` wraps the same logic for the answer. It splits paragraphs on two-or-more line breaks, runs spaCy per paragraph, and emits `AnswerSpan` objects with `kind="sentence"` by default. Pass `split_clauses=True` to emit clause-level `AnswerSpan` objects with `kind="clause"` and per-clause `sentence_index`. When no clauses are detected, it stays at one `AnswerSpan` per sentence, the same shape as `SimpleAnswerSegmenter`.
 
 ```python
-segmenter = SpacySegmenter(split_clauses=True)
+from cite_right import SpacyAnswerSegmenter, SpacySegmenter
+
+source_segmenter = SpacySegmenter()                       # sentence + clause
+source_segmenter = SpacySegmenter(model="en_core_web_md") # different model
+
+answer_segmenter = SpacyAnswerSegmenter()                         # sentence
+answer_segmenter = SpacyAnswerSegmenter(split_clauses=True)       # clause
+answer_segmenter = SpacyAnswerSegmenter(model="en_core_web_md")
 ```
 
-When enabled, the segmenter identifies coordinating conjunctions and splits on them. "Revenue increased and profits doubled" becomes two separate segments when split_clauses is True.
-
-This feature uses conservative heuristics to avoid over-splitting. Only top-level coordinations are split; nested or ambiguous structures remain intact.
-
-### Model Selection
-
-By default, SpacySegmenter uses the first available spaCy model. You can specify a particular model.
-
-```python
-import spacy
-
-nlp = spacy.load("en_core_web_md")  # Medium model for better accuracy
-segmenter = SpacySegmenter(nlp=nlp)
-```
-
-Larger models provide slightly better accuracy at the cost of memory and processing time.
-
-## SpacyAnswerSegmenter
-
-The spaCy-based answer segmenter combines statistical boundary detection with clause splitting for fine-grained citation. It is defined in `src/cite_right/text/answer_segmenter_spacy.py`.
-
-```python
-from cite_right import SpacyAnswerSegmenter
-
-segmenter = SpacyAnswerSegmenter(split_clauses=True)
-```
-
-### Paragraph Awareness
-
-This segmenter processes each paragraph separately, maintaining paragraph boundaries while splitting sentences within each paragraph. Double newlines always create segment breaks.
-
-### Output
-
-Each segment is an `AnswerSpan` with appropriate `kind` labeling.
-
-```python
-for result in results:
-    span = result.answer_span
-    print(f"{span.kind}: {span.text}")
-```
+Reuse one segmenter instance across calls; each constructor loads the spaCy pipeline.
 
 ## PySBDSegmenter
 
-For applications needing fast sentence boundary detection without the full spaCy pipeline, pysbd provides an efficient alternative. This segmenter requires the pysbd optional dependency.
+`PySBDSegmenter` is a rule-based sentence segmenter built on pySBD (Python Sentence Boundary Disambiguation). It handles abbreviations, URLs, emails, decimal numbers, and other edge cases that a simple rule-based splitter gets wrong. It is significantly faster than spaCy while staying rule-based, and it does not need a language model download.
 
-```python
-pip install "cite-right[pysbd]"
+Install the extra before importing:
+
+```bash
+pip install "cite-right[pysbd]==0.4.0"
 ```
 
-```python
-from cite_right.text.segmenter_pysbd import PySBDSegmenter
+`PySBDSegmenter` only implements the `Segmenter` protocol (source side). It is not used as an answer segmenter; `SimpleAnswerSegmenter` or `SpacyAnswerSegmenter` cover that role.
 
-segmenter = PySBDSegmenter()
-```
+The constructor takes `language` (default `"en"`) and `clean` (default `False`). `clean=False` preserves the original text offsets, so each returned `Segment` is re-locatable in the input string; `clean=True` asks pySBD to pre-normalize the text first, which can break offset integrity. Leave `clean=False` unless you have a specific reason to enable it.
 
-### Performance
-
-PySBD is significantly faster than spaCy as it uses optimized rules rather than neural network inference. For high-throughput applications where spaCy's accuracy is not required, pysbd offers a good middle ground between SimpleSegmenter and SpacySegmenter.
-
-### Language Support
-
-PySBD includes rules for multiple languages. Specify the language code for non-English text.
+Segmentation is wrapped in an `lru_cache(maxsize=2000)` keyed on `(text, language, clean)`, so repeated calls with the same text and configuration are effectively free.
 
 ```python
-segmenter = PySBDSegmenter(language="de")  # German
+from cite_right import PySBDSegmenter
+
+source_segmenter = PySBDSegmenter()                  # English
+source_segmenter = PySBDSegmenter(language="de")     # German rules
 ```
 
-## Choosing a Segmenter
+Use `PySBDSegmenter` when you want better sentence boundaries than `SimpleSegmenter` without paying the spaCy load cost. Pair it with `SimpleAnswerSegmenter` on the answer side.
 
-The right segmenter depends on your accuracy requirements and performance constraints.
+## The Lexical Fallback
 
-SimpleSegmenter and SimpleAnswerSegmenter work well for typical content where sentences follow standard punctuation patterns. They add no dependencies and process quickly.
+The default / Rust path runs an inverted index over source windows with a rare-token intersect; Smith-Waterman still localizes `char_start` / `char_end` on the hits. That path is gated on both the tokenizer and the segmenter being the simple defaults. If you supply a custom tokenizer **or** a custom segmenter, `PreparedCitationCorpus.from_sources` skips the Rust prepare path and leaves `inverted_index=None` and `rust_corpus=None`. `_select_candidates` then uses the lexical prefilter over `Candidate.token_set` and IDF, plus optional embedding extras. Smith-Waterman still runs on the chosen candidates; the index only chooses the windows.
 
-SpacySegmenter and SpacyAnswerSegmenter provide the highest accuracy for English text. They handle edge cases that confuse rule-based approaches. Use them when citation granularity matters and processing time is not critical.
+A practical consequence: a non-default source segmenter forces the lexical fallback on the prepared corpus. The citation pipeline still works, and offsets are still correct, but the per-candidate selection step is no longer index-accelerated. For long-lived corpora with a custom segmenter, this is usually fine; for one-shot align calls, prefer the defaults unless you specifically need spaCy or pySBD boundaries.
 
-PySBDSegmenter offers a compromise: better accuracy than simple rules, faster than spaCy, with multilingual support.
+```python
+from cite_right import PreparedCitationCorpus, PySBDSegmenter
 
-## Granularity Considerations
+# Forces the lexical fallback path: inverted_index=None, rust_corpus=None
+corpus = PreparedCitationCorpus.from_sources(
+    sources,
+    source_segmenter=PySBDSegmenter(),
+)
+```
 
-Finer segmentation produces more spans, each receiving its own citation. This enables precise attribution but may split related content. A sentence like "Revenue grew 15% because sales increased" might become two spans, with separate citations for the growth rate and the cause.
+`align_citations` and `PreparedCitationCorpus.from_sources` accept the segmenter arguments in the same place: as keyword-only `answer_segmenter` and `source_segmenter` parameters. When `align_citations` is called with non-default `source_segmenter`, it forwards the segmenter to `PreparedCitationCorpus.from_sources` so the same fallback rule applies.
 
-Coarser segmentation groups related content but may hide unsupported portions. A paragraph with one hallucinated sentence among five grounded sentences will receive a "partial" status without identifying the specific problem.
+## Passage Windows
 
-The clause splitting options in spaCy segmenters allow adjustment between these extremes.
+Segmenter output feeds `generate_passages` in `src/cite_right/text/passage.py`. A `Passage` is a window of `window_size_sentences` consecutive segments sliding by `window_stride_sentences` segments. Default `window_size_sentences=1` and `window_stride_sentences=1` mean each sentence is its own window. Larger windows group sentences for cross-sentence alignment, at the cost of more candidates; stride larger than `1` skips windows and trades recall for speed.
 
-## Performance Comparison
+A finer-grained segmenter (clauses from spaCy, sentence-level from pySBD) produces more passages per source. With the default `window_size_sentences=1`, more segments means more candidates; Smith-Waterman runs on each one. If your non-default segmenter produces many more segments than `SimpleSegmenter` would, consider `CitationConfig(window_size_sentences=2, window_stride_sentences=1)` to group them back into sentence-pair windows, or `CitationConfig.fast()` to cap the candidate pool.
 
-Approximate relative performance for typical text processing.
+## Custom Segmenters
 
-SimpleSegmenter and SimpleAnswerSegmenter are the fastest, suitable for any volume.
+Any class that implements `segment(text) -> list[Segment]` conforms to the `Segmenter` protocol, and any class that implements `segment(text) -> list[AnswerSpan]` conforms to the `AnswerSegmenter` protocol. Both are `runtime_checkable` `Protocol`s, so `isinstance(obj, Segmenter)` works as a sanity check. A custom segmenter takes the lexical fallback path described above; `PreparedCitationCorpus.from_sources` leaves `inverted_index=None` and `rust_corpus=None`, and `_select_candidates` uses the lexical prefilter. The public API is unchanged: pass the segmenter to `align_citations` or `PreparedCitationCorpus.from_sources`.
 
-PySBDSegmenter adds modest overhead, roughly 2-3x slower than simple rules.
+```python
+from cite_right import Segmenter, Segment, align_citations
 
-SpacySegmenter and SpacyAnswerSegmenter are slowest, roughly 10-50x slower than simple rules depending on model size. The overhead comes primarily from model loading, so reusing the segmenter instance amortizes this cost across many documents.
 
-For latency-sensitive applications, consider using simple segmenters with the fast configuration preset.
+class RegexSegmenter:
+    def segment(self, text: str) -> list[Segment]:
+        # Return Segment objects with absolute 0-based half-open offsets.
+        ...
+
+
+results = align_citations(answer, sources, source_segmenter=RegexSegmenter())
+```
+
+Keep offsets half-open and re-slicable from the original text (`text[seg.doc_char_start:seg.doc_char_end] == seg.text`); the citation pipeline relies on that invariant to keep `Citation.char_start` / `Citation.char_end` rebasable onto the source after chunk rebasing.
+
+## Choosing A Segmenter
+
+Reach for the simple defaults unless you have a concrete reason to change. Both `SimpleSegmenter` and `SimpleAnswerSegmenter` are dependency-free, fast, and keep the inverted-index path on.
+
+Reach for `SpacySegmenter` or `SpacyAnswerSegmenter` when you want finer-grained boundaries. The main use is `SpacyAnswerSegmenter(split_clauses=True)`, which lets a compound sentence produce one citation per clause. Source-side spaCy is useful when source sentences are long and you want clause-level passages; the cost is the spaCy model load on first call and a forced lexical fallback on the prepared corpus.
+
+Reach for `PySBDSegmenter` when you want better sentence boundaries than the simple rule-based splitter without the spaCy load cost. It is well suited to source text that mixes URLs, decimals, and abbreviations. It is source-side only; pair it with `SimpleAnswerSegmenter` on the answer.
+
+Reach for a custom segmenter when the built-in rules do not fit your domain (legal, scientific, multilingual) and you need full control. Remember the lexical fallback: a custom segmenter turns off the inverted-index path on the prepared corpus, so for very large corpora you may want to keep the simple defaults and post-process the answer instead.

@@ -1,0 +1,118 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:ce085b9d419a6c0f6f7899f1b44b850fd3abd14e6cccefe90185941d7e827af7",
+  "claims": [
+    {
+      "id": "claim_dd8f2b581f514a6e88a3cae7b3253d85",
+      "statement": "The LlamaIndex integration lives in src/cite_right/integrations.py and exposes two adapter functions: from_llamaindex_nodes (TextNode / NodeWithScore → SourceDocument) and from_llamaindex_chunks (TextNode / NodeWithScore with offset metadata → SourceChunk). Both are re-exported from the top-level cite_right package.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/__init__.py#L44-L60",
+          "version": "repo-lines-v1:sha256:3b9af0f99132e1bddbd2da59235deeb0de3d8ba3f340bf31b3f48b94dea4cdc3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk2Y2VlMWY2YmJhYmE5ODAwOWRjNDBjMTEwZTAwYTgxM2FmOGYxZDEzOGE2ZWEzMDJjMmRmODZlMTgxYmQ3NWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhZmJhMDUyN2MzOTUzYzRiNmUwZTViNTczOWJhODM2MTJmODA1M2JjZGM5NDY2NzMwMTkzY2QxZDU5MGI0MDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZjOGMyYjIyMGVlZWU2Njc0MDcwODUzZWY1MmZhZDM1NTBkYjNiYTgzZjEyMjc2NzMzMGU2NjAwMmY5MTc4ZTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcxY2U2NmYxNGIzZjg3MzAzZjY0MGU3YjA2MTQ5YWE2NTNmMTJlNWY2MjMzMmM2MDVhOGZhMTg3NGViOWIyOTUifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/integrations.py#L242-L342",
+          "version": "repo-lines-v1:sha256:758cb987e31d07e1388d08087e4b14c0c58f647d695140df0e5e382e4beaf90b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAxLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI3MDlmOGQxYmJiY2E0YjJlYjI0NDkwYjM2YjVjMGU0NTU3YTFmMzQxNTc4YTAyZjkwOTNiYjBiM2JmYjE2YTc3IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJmYTExYzA1NjdkMGE1ZjllOWIxMzVmNjVjZDI1MzcyZGZkNjI4Nzc1ZjdjMWVkMjUzZjhiYWQ0MmRkMmQ2NjY5IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJkNzIyMzEwNmZkODc0MmI3MGVhMjMzZjlkYzM1OWY0YjAyYmJiMDY5YjcyODNlZWY3NjI0OTk1MTZiZDdiOWM4IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJkNzU0YjQ1YzNmZTJjYmFhYmUyYjUxZmFkNDFkYzVjMTcwZGJkMWJiNzg2NzU0OGVhMmFkNjliYjNkMDFhZjllIn0"
+        }
+      ]
+    },
+    {
+      "id": "claim_b7ed94f0e56044ddb5656c849e9637ff",
+      "statement": "The llama-index integration is opt-in via the cite-right[llamaindex] pip extra, which depends on llama-index-core>=0.11.0 declared in pyproject.toml.",
+      "evidence": [
+        {
+          "resource": "repo://pyproject.toml#L20-L21",
+          "version": "repo-lines-v1:sha256:ddc738acc9109438fff7b90b1f10e37bfae51c876d9de17a410ca217cf92ec4c:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDUxYjllNGVhNGE2MWM0M2VhMDIwNjZjMDg5NzJmMGJjZDE1MzIxMGU2ZjJlZGEzNDVhNzljY2I2MTdjZTk2OSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZWE3YzAwYjJmYTk1ODZiMmRiNjRlNWFjZmMyMmE2ZTk2MWU0MTM3ZDRmMGI3M2EwMzlkYjcyNWUwNzhiMGRhNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNGQzNTIyMzJkNTlkMzgwMjczMWIzMzk3ZTIzMGU0MWVhYWY4YWZhMmI1Y2M5OTNlMjM1MmU3MzI1OTA3YzU5YSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjg0Yjg2YjYyMTI4YjZiYmQ0YTUyZDRkMzg2NjNhNmY3OTc1YzAwM2Y3YWZlNTc3MTAwNDc1OWY1OWVhYmZkNCJ9"
+        },
+        {
+          "resource": "repo://src/cite_right/integrations.py#L34-L43",
+          "version": "repo-lines-v1:sha256:2f42ab708929057eff37c85ec790fcc983bf4652557e02b0970c0109986ddfe7:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMxYzVhZWI1YmMwNjg0MDRhYTVmNGI1NTAxNzQ0YzMxYmUyMmQ4NWY2NTQ4ZGFmMGJiNzVlNjkxMDgzMjJjNjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU0NDVlMTdhZGVkMzA5NzQ1ZmZkYTMyOWZjZDY1ODYyZDUyOTZjNGVkN2IwZmVjZWIzMzA0NzVmNmUyNzRjNjEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU5NGM0NGI3MmRjNmU0ZGJkM2MyZWJkZjNiNzhhZjM0NTA3NGRjMjM1NzRjOGI5MWUyNjVkZmE0YmQyYjJmZjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcxN2I5YzU2MWY3ZjA1YWFhNGVjZDYwYjBhOGMzNGY1MjBlNzM2YTk5NjRiOThmZTUzMGMyY2UxYzU3NTA4MTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_1d416879b8bf488f916ace4e01692cc7",
+      "statement": "If llama-index-core is not installed, the module-level LLAMAINDEX_AVAILABLE flag is False, LlamaIndexTextNode / LlamaIndexNodeWithScore / LlamaIndexNode resolve to None, and both adapter functions raise ImportError via _require_llamaindex() with the install hint. The is_llamaindex_available() helper and the is_llamaindex_node(obj) type guard are exposed for boundary checks.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/integrations.py#L115-L135",
+          "version": "repo-lines-v1:sha256:25fc0bd7fd8352e6124fa461ca38552e3f1f185e82dd23668f9a4150fda856c9:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImExOTA3Y2YzNzcyNzQ1MWIyYWM3Y2Q5ZDg1YjY0ZmY2YTgwYjE5YThhOThjMTYwZTcyNzFjNTFiN2UwNWViMTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY1OWQ0ZGJjZDE0NmFhYjgwNTAwNDI2Y2YzODVmZmJhMzE2MGU1MDg0NjcxYzNlZWU4NjY4ZTFlNDA2MjQxMWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzNGJiMzlhYTUwMzVlODE5N2FiYTdmZDQ0NjI1ZDQyOThkN2VlNjBiM2RjZGVlZjc1MTEyZWNkODM4Njc2ODYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk0ZDZiNjI1ZDJiYzA2YzQ0ZTYxMWZjNTNmZWEwMTZjODEzYjI5NjMzY2FmMTdmYTEzNjU3NzU3NWE4YzkyODgifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/integrations.py#L19-L43",
+          "version": "repo-lines-v1:sha256:34c9ac6eb647d88b28e4fdcdbb776fa9a207bd47330eba941fcdd2de2278dee4:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE4NjNmODViMjM1NzJjYzZhMjVhZWViZDg4MzE1MmQyODc1OGIxNWVlNzdhMjQzMGVjMTM3OGQyYjM5YTRhOWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU0NDVlMTdhZGVkMzA5NzQ1ZmZkYTMyOWZjZDY1ODYyZDUyOTZjNGVkN2IwZmVjZWIzMzA0NzVmNmUyNzRjNjEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQxNDk3ODViNzc1N2MyOGU4NGVjZTllMjlhZTliZDJkZjdlMjhiMTMyMGVjMzA2Yjg1NzYzY2NmMzQwYzRkNTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcxN2I5YzU2MWY3ZjA1YWFhNGVjZDYwYjBhOGMzNGY1MjBlNzM2YTk5NjRiOThmZTUzMGMyY2UxYzU3NTA4MTUifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/integrations.py#L55-L91",
+          "version": "repo-lines-v1:sha256:064379c3e05bb67ea44a19ff90fbdeecdbb7fd6014ebd354a1383961e2b607bb:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxOWZiMGJjZTgyZjYyMzQzZDkxYmUxNjFlMmQ0ZWFjMWI5NmU2YTUzMWM3NDQ4YWFiNzlkNGVkNDBlY2FhNDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZkZThiNGIxNjEzMzAxMDgxMmNmMmIxZTRmMWM5ZWZjMWE5Mjk3ZDJhNDg0ZGQxYjIwYzM5OWEyOTRmNDljNzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIzZGYyYWNmMDZlOGMzZjAzYzcxMzVjNmU4YWM1YTljYTU0MzJhYmUwNmE3NGFjYTBmZGQ5YTUzYTAwOGY5ODciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFmMjIyNmEzMGNkMTllZTkxNjUxNzMyZjhhYTFmMjU3YTE2MWY0NDI0MzRkYTA5ZjMzMWMyMDE5ZDM1ZjgwZTYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_59773e19bb6a4ca58b5ce56be16b3628",
+      "statement": "from_llamaindex_nodes(nodes, *, id_key=\"file_name\") accepts a sequence of TextNode or NodeWithScore, unwraps NodeWithScore via getattr(node, \"node\", node), reads text from actual_node.get_content(), copies the metadata dict through unchanged, and derives the SourceDocument id from metadata[id_key] falling back to str(idx). The default id_key=\"file_name\" matches the metadata convention written by SimpleDirectoryReader and most LlamaIndex text splitters.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/integrations.py#L242-L284",
+          "version": "repo-lines-v1:sha256:b928d50699b060566f5c620a61d46722d35339d1870ed9cd6bb96287a66e3d59:eyJzZWxlY3RlZExpbmVDb3VudCI6NDMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcwOWY4ZDFiYmJjYTRiMmViMjQ0OTBiMzZiNWMwZTQ1NTdhMWYzNDE1NzhhMDJmOTA5M2JiMGIzYmZiMTZhNzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhMTFjMDU2N2QwYTVmOWU5YjEzNWY2NWNkMjUzNzJkZmQ2Mjg3NzVmN2MxZWQyNTNmOGJhZDQyZGQyZDY2NjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ3MjIzMTA2ZmQ4NzQyYjcwZWEyMzNmOWRjMzU5ZjRiMDJiYmIwNjliNzI4M2VlZjc2MjQ5OTUxNmJkN2I5YzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEyZmMwNzFiNTk5YmViZWU3ODIzOWQ1OGUzZjNmZjMwMTRkZTZiM2ExODE5N2Q0NWU2MDZhY2Y3MTk2NjI0NDYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_31ad7a2087744672b9ae3bff5a80b352",
+      "statement": "from_llamaindex_chunks(nodes, *, id_key=\"file_name\", start_key=\"start_char_idx\", end_key=\"end_char_idx\") accepts a sequence of LlamaIndex nodes with offset metadata, unwraps NodeWithScore, reads start and end offsets from metadata[start_key] / metadata[end_key] (falling back to 0 and start + len(content) when missing), and produces SourceChunk objects whose doc_char_start and doc_char_end point at the parent document so citation offsets rebase onto the original. The adapter does not set document_text because LlamaIndex nodes do not always carry the full parent text.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/integrations.py#L287-L342",
+          "version": "repo-lines-v1:sha256:54cafe5a5dc29816c9f9c564f5ee266e605d8e5aa61f8cf0de44319934bf98da:eyJzZWxlY3RlZExpbmVDb3VudCI6NTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc4ZDNjZTlmZTM0Y2YzMzk3ODdjYTdiNWMyNjFmMmFiZTJlZWNjNTI0OTJjODRjZTlmYTFlOTM3OGU2Y2RkNGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhMTFjMDU2N2QwYTVmOWU5YjEzNWY2NWNkMjUzNzJkZmQ2Mjg3NzVmN2MxZWQyNTNmOGJhZDQyZGQyZDY2NjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ3MjIzMTA2ZmQ4NzQyYjcwZWEyMzNmOWRjMzU5ZjRiMDJiYmIwNjliNzI4M2VlZjc2MjQ5OTUxNmJkN2I5YzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ3NTRiNDVjM2ZlMmNiYWFiZTJiNTFmYWQ0MWRjNWMxNzBkYmQxYmI3ODY3NTQ4ZWEyYWQ2OWJiM2QwMWFmOWUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_008f11b6f84d4d49bd967d2fa46bab6e",
+      "statement": "The LlamaIndex adapters do not copy the retrieval score from a NodeWithScore wrapper into the resulting SourceDocument. The unwrap reads content and metadata from the inner node but discards the score attribute. Retrieval scores must be copied into metadata by the application if they need to round-trip to the citation payload.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/integrations.py#L270-L284",
+          "version": "repo-lines-v1:sha256:599e163454836b7d562d92cbff2eccdb8581ad27cbd5c57655e7c3deab75a47e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU0N2M5YzIzZDM0OWU0ODAxNDY4NTZmNGJiYzRjZjI4MDE2MDJjNjg4ZmM5MGY3ZmI3MmZiNWFiYTdmNTMzODYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhMTFjMDU2N2QwYTVmOWU5YjEzNWY2NWNkMjUzNzJkZmQ2Mjg3NzVmN2MxZWQyNTNmOGJhZDQyZGQyZDY2NjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI5YjY4NzU3Y2RlZmI2MWQ4OGRkYTRlMzkyYzA0ZmMzYzBlY2Q3OGY3YTkzMzQ5ZmQ3NDZlMWY1MDJmMmFiY2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEyZmMwNzFiNTk5YmViZWU3ODIzOWQ1OGUzZjNmZjMwMTRkZTZiM2ExODE5N2Q0NWU2MDZhY2Y3MTk2NjI0NDYifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/integrations.py#L322-L342",
+          "version": "repo-lines-v1:sha256:85f5ccd11603e44c12a8d581a1a15fc5388c73ca3e8d8e307d0ed68e02c3ca68:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY1ZmJkNTVlNGE4NjAyMjE0OTRkZDE0ZmY3M2ZmYTdiMWZhN2M4YTI5MGM1NDEzM2YzOGRiOWI4ZGU0YmQ4NGEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhMTFjMDU2N2QwYTVmOWU5YjEzNWY2NWNkMjUzNzJkZmQ2Mjg3NzVmN2MxZWQyNTNmOGJhZDQyZGQyZDY2NjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI5YjY4NzU3Y2RlZmI2MWQ4OGRkYTRlMzkyYzA0ZmMzYzBlY2Q3OGY3YTkzMzQ5ZmQ3NDZlMWY1MDJmMmFiY2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ3NTRiNDVjM2ZlMmNiYWFiZTJiNTFmYWQ0MWRjNWMxNzBkYmQxYmI3ODY3NTQ4ZWEyYWQ2OWJiM2QwMWFmOWUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_27a6166b78314b6bacb721b0afb9afe5",
+      "statement": "SourceDocument.metadata and SourceChunk.metadata are opaque to the alignment pipeline. Cite-Right does not index them, does not score on them, and does not surface them on Citation or SpanCitations; they are the application's handle for round-tripping retrieval scores, file paths, and page numbers back to the user.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/integrations.py#L270-L284",
+          "version": "repo-lines-v1:sha256:599e163454836b7d562d92cbff2eccdb8581ad27cbd5c57655e7c3deab75a47e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU0N2M5YzIzZDM0OWU0ODAxNDY4NTZmNGJiYzRjZjI4MDE2MDJjNjg4ZmM5MGY3ZmI3MmZiNWFiYTdmNTMzODYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhMTFjMDU2N2QwYTVmOWU5YjEzNWY2NWNkMjUzNzJkZmQ2Mjg3NzVmN2MxZWQyNTNmOGJhZDQyZGQyZDY2NjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI5YjY4NzU3Y2RlZmI2MWQ4OGRkYTRlMzkyYzA0ZmMzYzBlY2Q3OGY3YTkzMzQ5ZmQ3NDZlMWY1MDJmMmFiY2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEyZmMwNzFiNTk5YmViZWU3ODIzOWQ1OGUzZjNmZjMwMTRkZTZiM2ExODE5N2Q0NWU2MDZhY2Y3MTk2NjI0NDYifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/integrations.py#L322-L342",
+          "version": "repo-lines-v1:sha256:85f5ccd11603e44c12a8d581a1a15fc5388c73ca3e8d8e307d0ed68e02c3ca68:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY1ZmJkNTVlNGE4NjAyMjE0OTRkZDE0ZmY3M2ZmYTdiMWZhN2M4YTI5MGM1NDEzM2YzOGRiOWI4ZGU0YmQ4NGEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhMTFjMDU2N2QwYTVmOWU5YjEzNWY2NWNkMjUzNzJkZmQ2Mjg3NzVmN2MxZWQyNTNmOGJhZDQyZGQyZDY2NjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI5YjY4NzU3Y2RlZmI2MWQ4OGRkYTRlMzkyYzA0ZmMzYzBlY2Q3OGY3YTkzMzQ5ZmQ3NDZlMWY1MDJmMmFiY2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ3NTRiNDVjM2ZlMmNiYWFiZTJiNTFmYWQ0MWRjNWMxNzBkYmQxYmI3ODY3NTQ4ZWEyYWQ2OWJiM2QwMWFmOWUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_aeffab96809941afb5192c6568ea52d0",
+      "statement": "The SourceChunk chunk-rebase contract holds for the LlamaIndex chunk adapter: after the pipeline adds base_doc_offset to the alignment result, source.text[citation.char_start:citation.char_end] == citation.evidence is satisfied even without document_text, because the alignment pipeline's slice helper falls back to chunk-local slicing when the parent text is not supplied.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/results.py#L111-L162",
+          "version": "repo-lines-v1:sha256:af562243ab05fb1a0ca7bdfbd1bb27de39bf7e78d2b5353e48125ef2070f3231:eyJzZWxlY3RlZExpbmVDb3VudCI6NTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc5ODFiYTU0NjYzZWU3YTZmYjYyMGQ0YTY3MjU3MmI1NmIzMDkxNjg3OTc4NGI2YzZmNDMxNzg0MWYxYWRjOTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEyYWIwOTBiY2QxNjIwZmE2MmVhZWUxNTdhNzRmY2E2MzVhYTI5ZTEyY2JmZmQ2MThiNTc5MmQ4N2JjMDNhM2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZiZDFhOGU4YWI3NGY2NWU3MDU4MDNlM2RkZjMwZThmZWM0NDRlMmYwMWM2MzNiM2M4ZTRkOGZkOWM0MDcwZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc3MWY3MDIwMWRkY2U2MTI2Y2ExNWFhZTZiOGY5ZGZkZmZhM2RiNGFlOTY4YzQ1OTAwZGQxZTk5N2NmMTI4MWMifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/integrations.py#L287-L342",
+          "version": "repo-lines-v1:sha256:54cafe5a5dc29816c9f9c564f5ee266e605d8e5aa61f8cf0de44319934bf98da:eyJzZWxlY3RlZExpbmVDb3VudCI6NTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc4ZDNjZTlmZTM0Y2YzMzk3ODdjYTdiNWMyNjFmMmFiZTJlZWNjNTI0OTJjODRjZTlmYTFlOTM3OGU2Y2RkNGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhMTFjMDU2N2QwYTVmOWU5YjEzNWY2NWNkMjUzNzJkZmQ2Mjg3NzVmN2MxZWQyNTNmOGJhZDQyZGQyZDY2NjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ3MjIzMTA2ZmQ4NzQyYjcwZWEyMzNmOWRjMzU5ZjRiMDJiYmIwNjliNzI4M2VlZjc2MjQ5OTUxNmJkN2I5YzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ3NTRiNDVjM2ZlMmNiYWFiZTJiNTFmYWQ0MWRjNWMxNzBkYmQxYmI3ODY3NTQ4ZWEyYWQ2OWJiM2QwMWFmOWUifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.4.0",
+    "at": "2026-08-26T03:32:47.432Z"
+  }
+}

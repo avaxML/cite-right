@@ -1,308 +1,161 @@
 ---
-type: testing
-title: Contract and parity tests
-description: High-signal tests that pin status semantics, char-span invariants, Rust↔Python parity, and edge cases across the cite-right pipeline.
-tags: [testing, citation-alignment, rust, python, parity, smith-waterman]
+type: testing-reference
+title: Rust/Python Contract Tests
+description: Agent-only reference for the Python vs Rust parity contract enforced by tests/test_alignment_rust_parity.py. Compares status, offsets, scores, matches, match_blocks, and best-candidate selection between SmithWatermanAligner and the cite_right._core extension. Points at src/cite_right/core/aligner_py.py and src/cite_right/core/aligner_rust.py.
+tags: [contract-tests, rust, python, smith-waterman, parity, alignment, _core, match-blocks, best-match, tie-breaking, skip, fixtures]
 verified:
   - by: openwiki/0.4.0
-    at: 2026-08-25T18:44:12.628Z
+    at: 2026-08-26T03:32:47.432Z
 sources:
-  - id: openwiki-source-326c42b0fd50f852cd59c6ad
-    resource: repo://tests/test_alignment_py.py
+  - id: openwiki-source-0b1b3279f2fdef17b4081691
+    resource: repo://src/cite_right/_core.pyi
+  - id: openwiki-source-565dc547e636f5aa89fb94bd
+    resource: repo://src/cite_right/core/aligner_py.py
+  - id: openwiki-source-edff227b75f84c03f46d0ad0
+    resource: repo://src/cite_right/core/aligner_rust.py
+  - id: openwiki-source-f0a6e7dc03522b2682f88655
+    resource: repo://tests/conftest.py
   - id: openwiki-source-811d84c9631d27a47d6421e0
     resource: repo://tests/test_alignment_rust_parity.py
-  - id: openwiki-source-cce21eea781802cf8abb7d2e
-    resource: repo://tests/test_citations_api.py
-  - id: openwiki-source-1413c674e60d538eeaadf96c
-    resource: repo://tests/test_citations_embedding_only_edge_cases.py
-  - id: openwiki-source-c126bef8ff7e71bc028699de
-    resource: repo://tests/test_citations_retrieval_support.py
-  - id: openwiki-source-80f294a40e89a55a58070064
-    resource: repo://tests/test_contradiction_detection.py
-  - id: openwiki-source-f65a7e483f703a2b163781db
-    resource: repo://tests/test_data2txt_support.py
-  - id: openwiki-source-61cbfe170d8c82a627f10456
-    resource: repo://tests/test_inverted_index.py
-  - id: openwiki-source-5ddf2e3b4fca9c3c6270fdcf
-    resource: repo://tests/test_rust_prepare_with_embeddings.py
-generated: {by: "openwiki/0.4.0", at: "2026-08-25T18:44:12.628Z"}
+generated: {by: "openwiki/0.4.0", at: "2026-08-26T03:32:47.432Z"}
 ---
 
-## Overview
+# Rust/Python Contract Tests
 
-Contract tests in cite-right validate the behavioral contracts that the rest of the system depends on: correctness of the Smith-Waterman algorithm, byte-for-byte parity between Rust and Python backends, status determination semantics, contradiction downgrades, retrieval support boundaries, and structured field parsing. These tests are deliberately sensitive — they fail loudly when invariants drift, making them the first line of defense against regressions.
+This page is the agent-only reference for the parity contract that `tests/test_alignment_rust_parity.py` enforces between the pure-Python `SmithWatermanAligner` and the Rust-backed `RustSmithWatermanAligner` (which calls into the `cite_right._core` extension module). Cite-Right ships the Rust extension as an optional acceleration of the same pipeline; the contract is that the two backends return identical alignment tuples, so `align_citations(answer, sources, backend="auto")` can substitute one for the other without behavior change.
 
-## Smith-Waterman alignment (`tests/test_alignment_py.py`)
+If you change either backend and any test on this page fails, the contract has regressed. Fix the change so the Python and Rust outputs match, do not weaken the test.
 
-Pure-Python implementation tests that pin the contract for local sequence alignment.
+## What The Contract Requires
 
-### Core correctness
+The tests assert that for the same query sequence, the same candidate sequence, and the same scoring parameters, the Rust entry point returns exactly the same tuple the Python aligner returns. The two aligners are interchangeable on the same prepared corpus; status, offsets, and `evidence_spans` are the same.
 
-| Test | What it pins |
-|------|-------------|
-| `test_alignment_basic` | Exact subsequence match returns correct score, token boundaries |
-| `test_alignment_prefers_earlier_start` | Equal-score tie-breaking favors earlier `token_start` |
-| `test_alignment_no_match` | Zero-score return when no alignment exists |
-| `test_alignment_exact_match` | Perfect match on identical sequences |
-| `test_alignment_partial_match` | Subspan extraction within a longer candidate |
-| `test_alignment_single_element_match` | Single-token alignment boundary handling |
+The contract is enforced on three different entry points, in increasing order of detail:
 
-### Edge cases
+- `align_pair_details` — pair alignment, six integers plus a match count.
+- `align_pair_blocks_details` — pair alignment with per-alignment `match_blocks`, the tuple expected by `CitationConfig(multi_span_evidence=True)`.
+- `align_best_details` — best-candidate selection across a list, with deterministic tie-breaking.
 
-| Test | What it pins |
-|------|-------------|
-| `test_alignment_empty_query` | Empty query produces zero score, zero-length span |
-| `test_alignment_empty_target` | Empty target produces zero score, zero-length span |
-| `test_fill_matrix_tracks_single_best_endpoint` | Fill phase returns one winning endpoint, not all max cells |
-| `test_reduced_state_fill_tracks_best_endpoint_for_default_path` | Reduced-state matrix dimensions match full-state expectations |
-| `test_align_batch_preserves_single_alignment_results_in_order` | Batch results are ordered identically to sequential `align` calls |
+The contract also requires:
 
-### Match block traceback
+- Empty candidate lists return `None` from `align_best` and `align_best_details`.
+- The `RustSmithWatermanAligner` wrapper exposes the same `align_best_details` tuple shape as the raw extension.
+- The `RustSmithWatermanAligner` `align_batch` returns alignments in input order.
+- Collecting `match_blocks` does not change which alignment is chosen; the first six tuple elements of `align_pair_blocks_details` must equal the `align_pair_details` tuple on the same input.
 
-| Test | What it pins |
-|------|-------------|
-| `test_alignment_prefers_more_matches_across_equal_score_endpoints` | Traceback explores all equal-score predecessor cells, selects path with most matches |
-| `test_alignment_prefers_more_matches_within_single_optimal_endpoint` | Same-cell equal-score neighbors resolved by match count |
-| `test_default_path_matches_detailed_path_without_match_blocks` | Reduced-state and full-state paths agree on span boundaries |
+The scoring parameters used by every parity test are `match_score=2`, `mismatch_score=-1`, `gap_score=-1`. Those are the defaults exposed by both `SmithWatermanAligner` and `RustSmithWatermanAligner`. The `match_blocks` test uses `return_match_blocks=True` on both sides.
 
-## Rust↔Python parity (`tests/test_alignment_rust_parity.py`)
+## Tuple Shape
 
-Parity tests that verify both backends produce identical results for every variant of every operation. These are the tests that would break if the Rust implementation diverged from the Python reference.
+The tuple shape is the same on both backends and is what the tests compare element-for-element.
 
-### `requires_rust` and `requires_rust_blocks` markers
+- `align_pair_details` returns `(score, token_start, token_end, query_start, query_end, matches)`. Six integers. `token_start` / `token_end` are the half-open span in `seq2`; `query_start` / `query_end` are the half-open span in `seq1`.
+- `align_pair_blocks_details` returns the same six integers followed by `match_blocks: list[tuple[int, int]]` — a list of `(token_start, token_end)` runs in `seq2` for the exact matches that participated in the selected alignment.
+- `align_best_details` returns `(score, index, token_start, token_end, query_start, query_end, matches)`, where `index` is the position in the input candidate list, or `None` for an empty candidate list.
 
-The `conftest.py` fixtures gate these tests on Rust extension availability:
+The `Alignment` dataclass returned by the Python `SmithWatermanAligner.align` has the same field names: `score`, `token_start`, `token_end`, `query_start`, `query_end`, `matches`, and optionally `match_blocks`. Tests unpack the Rust tuple and the Python `Alignment` and assert element-wise equality.
 
-```python
-requires_rust = pytest.mark.skipif(not _rust_available(), reason="Rust extension not built")
-requires_rust_blocks = pytest.mark.skipif(
-    not _rust_has_blocks_details(),
-    reason="Rust extension missing align_pair_blocks_details",
-)
-```
+## Tie-Breaking Contract
 
-### Core parity contracts
+When two alignments score the same number of points, the Python and Rust backends must agree on which one is best. The Python tie-breaker is implemented in `_fill_matrix_reduced_state` (and the block-collecting `_fill_matrix`) in `src/cite_right/core/aligner_py.py` and is encoded into a key in `test_alignment_rust_parity.py` for the `align_best_details` parity test.
 
-| Test | What it pins |
-|------|-------------|
-| `test_rust_parity` | `align_pair_details` output matches Python `align()` on score, token boundaries, query boundaries, match count |
-| `test_rust_parity_for_equal_score_more_matches_case` | Equal-score traceback regression fixture: Rust block collector matches Python match-block output |
-| `test_rust_wrapper_align_best_details_matches_extension` | `RustSmithWatermanAligner.align_best_details` wrapper returns correct tuple |
-| `test_rust_align_pair_blocks_details_matches_python_blocks` | Rust block entrypoint output matches Python `match_blocks` field |
+The key, in priority order, is:
 
-### Best-match selection parity
+1. Higher `score` wins.
+2. Higher `matches` wins.
+3. Smaller `token_start` wins (earlier start in `seq2`).
+4. Larger span length (`token_end - token_start`) wins — longer coverage first.
+5. Smaller `query_start` wins.
+6. Original `index` in the candidate list wins.
+7. `token_end` and `query_end` are the final tie-breakers for the single-pair case.
 
-| Test | What it pins |
-|------|-------------|
-| `test_rust_align_best_matches_python_selection` | Rust `align_best_details` picks the same candidate as Python's full sort-key comparison across all candidates |
-| `test_rust_align_best_empty_returns_none` | Empty candidate list returns `None` in Rust (not a crash or empty tuple) |
+The equal-score coverage regression test (`test_rust_parity_for_equal_score_more_matches_case`) targets rule 2 in particular: when two cells have the same score, the one with more matches must win, and the Rust traceback must agree. The sequences `[0, 1, 0]` against `[0, 1, 1, 1, 0]` is the canonical regression case for that rule.
 
-### Batch operations
+## Skip Decorators And Fixtures
 
-| Test | What it pins |
-|------|-------------|
-| `test_rust_wrapper_align_batch_matches_python_ordered_results` | Rust batch wrapper preserves input order and returns full `Alignment` objects |
-| `test_rust_block_and_non_block_entrypoints_share_alignment` | Block-collection mode does not alter the chosen span vs. non-block mode |
+Tests skip cleanly when the Rust extension is missing or out of date. The skip mechanism lives in `tests/conftest.py`.
 
-## Citation API (`tests/test_citations_api.py`)
+- `requires_rust` — skips the test if `cite_right._core` cannot be imported. Reason: "Rust extension not built".
+- `requires_rust_blocks` — additionally skips if `cite_right._core` does not expose `align_pair_blocks_details`. Reason: "Rust extension missing align_pair_blocks_details".
 
-High-level API contract tests for `align_citations` and `PreparedCitationCorpus`.
+Two fixtures return the imported module, skipping the same way:
 
-### Status semantics docstring check
+- `rust_core` — returns the `cite_right._core` module, skips on `ImportError`.
+- `rust_core_with_blocks` — returns the same module, additionally skips if `hasattr(_core, "align_pair_blocks_details")` is false, with reason "Rust extension is missing align_pair_blocks_details (rebuild required)".
 
-`test_how_it_works_describes_status_using_answer_coverage` is the single test that pins the documentation to the correct behavioral rule:
+`requires_rust` tests call the raw extension entry points directly. `requires_rust_blocks` tests call `align_pair_blocks_details` and the `RustSmithWatermanAligner(return_match_blocks=True)` wrapper. The wrapper also checks for `align_pair_blocks_details` and `align_batch_blocks_details` at construction time and raises `RuntimeError` with a rebuild message if either is missing.
 
-```python
-def test_how_it_works_describes_status_using_answer_coverage() -> None:
-    docs_path = Path(__file__).resolve().parents[1] / "docs/concepts/how-it-works.md"
-    docs_text = docs_path.read_text(encoding="utf-8")
+## Test Map
 
-    assert "best citation score" not in docs_text
-    assert "best citation\'s answer coverage" in docs_text
-```
+Each test below lives in `tests/test_alignment_rust_parity.py`. The headline tests are documented in the page brief (`test_rust_parity`, `test_rust_parity_for_equal_score_more_matches_case`, `test_rust_align_best_matches_python_selection`); the remaining tests are part of the same contract and are documented here for completeness.
 
-This test fails if documentation ever refers to "best citation score" — the correct concept is `answer_coverage` of the best citation. See [`/openwiki/concepts/status-semantics.md`](/openwiki/concepts/status-semantics.md) for the full semantics contract.
+### `test_rust_parity`
 
-### Backend selection
+Verifies that the six-element `align_pair_details` tuple from Rust equals the Python `Alignment` tuple element-for-element on a small set of representative cases.
 
-| Test | What it pins |
-|------|-------------|
-| `test_align_citations_auto_falls_back_when_rust_core_lacks_details` | `backend="auto"` falls back to Python when Rust extension lacks detailed alignment API |
-| `test_align_citations_rust_backend_requires_detailed_core` | `backend="rust"` raises `RuntimeError` if detailed API is missing |
+Skips via `requires_rust`. The three cases cover a clean repeat, a match embedded in a longer candidate, and a no-overlap case:
 
-### Batch alignment dispatch
+- `([1, 2], [1, 2, 1, 2])` — both tokens of `seq1` appear twice in `seq2`. The best alignment covers all of `seq1` and the first two tokens of `seq2`.
+- `([1, 2, 3], [0, 1, 2, 3, 4])` — a contiguous sub-match at positions 1..4 in `seq2`.
+- `([1, 2], [3, 4])` — no match, score is 0 and the aligner returns the empty alignment.
 
-| Test | What it pins |
-|------|-------------|
-| `test_align_citations_uses_batch_alignment_api` | Aligner with `align_batch` method is called once for a batch, not per-candidate |
-| `test_align_citations_accepts_legacy_single_alignment_api` | Aligner with only `align` method is accepted and called per-candidate |
+The comparison is element-wise on the six-tuple: `score`, `token_start`, `token_end`, `query_start`, `query_end`, `matches`. Any mismatch on any of those six is a contract failure.
 
-### Prepared corpus alignment
+### `test_rust_parity_for_equal_score_more_matches_case`
 
-| Test | What it pins |
-|------|-------------|
-| `test_prepared_corpus_align_resolves_default_aligner_once` | Default aligner is resolved once and reused across spans |
+Verifies the equal-score coverage regression. Skips via `requires_rust_blocks`. The Python aligner is constructed with `return_match_blocks=True` so its `Alignment` includes `match_blocks`; the Rust call uses `align_pair_blocks_details`. Both must return the same seven-tuple plus the same `match_blocks` list.
 
-### Citation ranking tie-breaking
+The sequences are `seq1 = [0, 1, 0]` and `seq2 = [0, 1, 1, 1, 0]`. The traceback must follow the rule "more matches wins on equal score". The regression that this test pins down: a previous Rust version picked the lower-coverage endpoint on equal-score cells, producing a different `token_start` / `token_end` / `match_blocks` from the Python side. The test fails the build if that regression returns.
 
-| Test | What it pins |
-|------|-------------|
-| `test_rank_and_limit_citations_prefers_source_order_in_equal_score_ties` | `prefer_source_order=True` breaks equal-score ties by source index ascending |
-| `test_rank_and_limit_citations_prefers_earlier_position_when_source_order_disabled` | Default: equal-score ties broken by earlier `char_start` |
-| `test_rank_and_limit_citations_dedupes_by_source_and_evidence_span_tuple` | Duplicate citations from the same source with identical evidence spans are deduplicated |
+### `test_rust_align_best_matches_python_selection`
 
-## Retrieval support and embedding-only edge cases (`tests/test_citations_retrieval_support.py`, `tests/test_citations_embedding_only_edge_cases.py`)
+Verifies that `align_best_details` on the Rust side picks the same candidate the Python selector would pick, applying the eight-element sort key from `_python_alignment_sort_key`. Skips via `requires_rust`.
 
-### Retrieval support does not flip status
+The Python side iterates every candidate, calls `SmithWatermanAligner().align`, builds the key, and keeps the minimum key (i.e. the best alignment under that key). The Rust side calls `align_best_details` directly. The test asserts the seven-tuple Rust returns matches the seven-tuple the Python selector built.
 
-These tests confirm the invariant: `retrieval_support` is surfaced for transparency but never upgrades status to `supported`.
+The candidate set is `[[3, 4], [1, 2, 1, 2], [1, 2], [0, 1, 2, 3]]` and the claim is `[1, 2]`. The expected winner is index 1 with score 4, span `[0, 2)` in `seq2`, span `[0, 2)` in `seq1`, and 2 matches — the same value the `test_rust_wrapper_align_best_details_matches_extension` test pins with the `RustSmithWatermanAligner` wrapper.
 
-| Test | What it pins |
-|------|-------------|
-| `test_align_citations_embedding_only_returns_retrieval_support_only` | Embedding-only path (zero lexical candidates) returns `status="unsupported"` with `retrieval_support` populated |
-| `test_align_citations_embedding_support_does_not_upgrade_exact_status` | Semantic match to a document still marked `unsupported` when no lexical alignment succeeds |
-| `test_align_citations_retrieval_support_respects_own_limit` | `max_retrieval_support` caps the list independently of citation count |
-| `test_align_citations_lexical_only_returns_retrieval_support_when_alignment_fails` | Failed lexical alignment falls back to retrieval support with `lexical_score > 0` |
+### `test_rust_align_best_empty_returns_none`
 
-### Token guard for strict mode
+Verifies that the Rust entry points return `None` (not an empty tuple, not a crash) when the candidate list is empty. Skips via `requires_rust`. Both `align_best` and `align_best_details` are checked.
 
-Strict mode enforces that all answer tokens appear in evidence. The token guard prevents false positives from alignment with a mismatched slot count.
+### `test_rust_wrapper_align_best_details_matches_extension`
 
-| Test | What it pins |
-|------|-------------|
-| `test_answer_token_guard_stops_after_all_required_tokens_are_found` | Token iterator is not exhausted after all answer tokens are matched |
-| `test_answer_token_guard_exact_sequence_avoids_frequency_map` | Exact token lists bypass `Counter` allocation |
-| `test_answer_token_guard_exact_lists_use_native_comparison` | `NoPythonIterationList` subclasses are compared natively, not via Python iteration |
-| `test_answer_token_guard_trusts_complete_exact_alignment` | Full exact alignment does not rescan tokens (optimization) |
-| `test_answer_token_guard_does_not_trust_custom_match_count` | Custom aligner claiming high match count does not bypass token guard |
+Verifies the `RustSmithWatermanAligner.align_best_details` wrapper exposes the same tuple shape and the same selection as the raw `cite_right._core.align_best_details`. Skips via `requires_rust`. The expected value is `(4, 1, 0, 2, 0, 2, 2)` for the same `claim = [1, 2]` and `candidates = [[3, 4], [1, 2, 1, 2], [1, 2], [0, 1, 2, 3]]` used in the raw-extension test.
 
-### Numeric and negation strictness
+### `test_rust_wrapper_align_batch_matches_python_ordered_results`
 
-| Test | What it pins |
-|------|-------------|
-| `test_strict_exact_citation_rejects_numeric_token_mismatch` | "125 days" vs. "124 days" produces `unsupported`, not `supported` |
-| `test_strict_exact_citation_rejects_negation_token_mismatch` | "shall make every law" vs. "shall make no law" produces `unsupported` |
-| `test_strict_exact_citation_does_not_split_u_s_abbreviation_into_supported_stub` | U.S. abbreviation is not split into partial tokens that could incorrectly support unrelated claims |
+Verifies the `RustSmithWatermanAligner.align_batch` wrapper preserves input order. Skips via `requires_rust_blocks`. The Python side builds a list of `Alignment` objects in the same order as the candidate list; the Rust side calls `align_batch_blocks_details` and rebuilds `Alignment` objects from the returned tuples. The test asserts the two lists are equal element-for-element.
 
-## Contradiction detection (`tests/test_contradiction_detection.py`)
+Both aligners are constructed with `return_match_blocks=True`. The candidate set is `[[0, 1, 2, 3, 4], [1, 2, 9, 3], [8, 9, 10]]` against the claim `[1, 2, 3]`.
 
-Tests for the five contradiction checks that downgrade `supported` to `partial` when the cited passage contradicts the answer. See [`/openwiki/concepts/contradiction-detection.md`](/openwiki/concepts/contradiction-detection.md) for the full architecture.
+### `test_rust_align_pair_blocks_details_matches_python_blocks`
 
-### Contradiction downgrades
+Verifies that `align_pair_blocks_details` matches the Python blocks output on a clean two-block case. Skips via `requires_rust_blocks`. Sequences are `seq1 = [1, 2, 3, 4]` and `seq2 = [1, 2, 9, 9, 3, 4]`. The expected `match_blocks` are two runs: `[0, 2)` and `[4, 6)` in `seq2`. Any divergence on `match_blocks` is a contract failure even when the six-tuple matches.
 
-| Test | What it pins |
-|------|-------------|
-| `test_negation_mismatch_marked_unsupported` | Negation mismatch → `status="partial"` (not `supported`) |
-| `test_affirmative_match_is_supported` | Matching affirmative → `status="supported"` |
-| `test_number_mismatch_not_supported` | Number mismatch → `status="partial"` |
-| `test_matching_numbers_are_supported` | Matching numbers → `status="supported"` |
-| `test_entity_mismatch_not_supported` | Entity swap → `status="partial"` |
+### `test_rust_block_and_non_block_entrypoints_share_alignment`
 
-### Issue #48 regression fixtures
+Verifies that the choice of alignment does not depend on whether `match_blocks` are being collected. Skips via `requires_rust_blocks`. The test calls `align_pair_details` on the non-blocks entry point and `align_pair_blocks_details` on the blocks entry point on the same input, then asserts `with_blocks[:6] == without_blocks`. The first six elements of the blocks tuple must equal the non-blocks tuple; only the `match_blocks` element is allowed to differ.
 
-Issue #48 discovered that Smith-Waterman truncation can leave behind n-gram "leftovers" that attach to the wrong semantic slot. The contradiction check must operate on the full passage, not the truncated span.
+This pins the invariant that the traceback choice is independent of the traceback-collection flag. A regression in that invariant would change the chosen alignment when `multi_span_evidence` is enabled, which would silently change citation offsets.
 
-| Test | What it pins |
-|------|-------------|
-| `test_issue48_number_leftover_rebounds` | "10 of which came in the first half" vs. "10 rebounds": leftover "10" must not bless the mismatch; status remains `partial` |
-| `test_issue48_entity_swap_india_france` | Shared "opposed" / "involvement" must not bless India↔France entity swap; status is `partial` |
-| `test_issue48_temporal_polarity_bc_vs_ago` | Truncated span "300 years" vs. full passage "300 years BC" must catch "ago" vs. "BC" polarity flip via contradiction check |
-| `test_issue48_polarity_flip_oppose_vs_urged` | "oppose laws" vs. "urged laws": leftover "laws" + "prohibit" must not bless the flip |
-| `test_issue48_extractive_near_copy_stays_supported` | Extractive near-copy remains `supported` |
-| `test_issue48_extractive_subset_stays_supported` | Faithful subset ("18 points" from "18 points, 10 of which...") remains `supported` |
+## What This Test File Does Not Cover
 
-### Passage vs. truncated span contract
+The contract here is the Smith-Waterman local aligner contract, not the full pipeline contract. Things that other files cover:
 
-| Test | What it pins |
-|------|-------------|
-| `test_check_contradiction_uses_passage_not_truncated_span` | `check_contradiction` with truncated evidence flags `ago` vs. `BC`; full passage check returns `True`; truncated check on truncated span also returns `True` |
+- Status assignment (`"supported"`, `"partial"`, `"unsupported"`) is checked end-to-end in `tests/test_citations_api.py`, `tests/test_hallucination.py`, and `tests/test_dspy_paper_scenarios.py`. They use `align_citations(answer, sources, backend="python")` and `backend="rust"` and compare the resulting `SpanCitations` lists, which is the public-API form of the same parity guarantee.
+- Inverted index parity is in `tests/test_inverted_index.py`.
+- Embedder interaction with Rust prepare is in `tests/test_rust_prepare_with_embeddings.py`.
+- The `match_blocks`-using citation path is in `tests/test_citations_multi_span.py`. That test also uses `requires_rust_blocks` because `multi_span_evidence=True` routes through `align_pair_blocks_details`.
 
-## Data2txt structured field support (`tests/test_data2txt_support.py`)
+## Pointers
 
-Tests for paraphrase support of field:value lines in structured sources. The `_looks_like_structured_source` heuristic detects structured input and relaxes tokenization for field-value rewrites.
-
-### Field:value paraphrase contracts
-
-| Test | What it pins |
-|------|-------------|
-| `test_business_stars_and_wifi_field_rewrite_is_supported` | "business_stars: 4.5" + "attributes.WiFi: free" rewritten as "4.5 stars" + "free WiFi" → `supported` or `partial` |
-| `test_hours_field_rewrite_is_supported` | "hours.Monday: 9:0-17:0" rewritten as "Monday–Friday 9:00 AM–5:00 PM" → not `unsupported` |
-| `test_null_wifi_with_invented_amenity_stays_unsupported` | `attributes.WiFi: null` + invented "free Wi-Fi" → `unsupported` |
-| `test_platform_mismatch_not_fully_supported` | Star value grounded; "on Google" invented → not `supported` |
-| `test_mixed_field_source_with_review_text` | Structured fields + prose review → field content cited correctly |
-| `test_field_rewrite_still_works_beside_unrelated_prose` | Correct source selected when structured content coexists with unrelated prose |
-| `test_structured_leniency_does_not_relax_prose_coverage` | Structured source leniency does not reduce prose coverage requirements |
-
-### Heuristic boundary
-
-| Test | What it pins |
-|------|-------------|
-| `test_field_value_heuristic_requires_multiple_field_lines` | Two `key: value` lines → structured; "Headline: X\nBody text" → prose |
-
-## Inverted index (`tests/test_inverted_index.py`)
-
-Tests for the Rust-based inverted index used to seed lexical candidate selection efficiently.
-
-### Index construction and persistence
-
-| Test | What it pins |
-|------|-------------|
-| `test_inverted_index_is_built_with_rust_prepare` | `PreparedCitationCorpus` with `use_rust=True` creates `rust_corpus` with `query_index` method |
-| `test_rust_corpus_stays_in_rust` | The same `rust_corpus` Python object is reused across queries (no per-query rebuild) |
-
-### Index behavior
-
-| Test | What it pins |
-|------|-------------|
-| `test_inverted_index_improves_retrieval` | Index-seeded retrieval finds relevant candidates among 100 similar candidates |
-| `test_inverted_index_never_returns_empty_when_tokens_exist` | Query with tokens present in corpus never produces empty seeds |
-| `test_inverted_index_uses_intersection` | Rare-token query returns fewer candidates than full corpus; unique-token passage is in results |
-
-### Rust/Python fallback
-
-| Test | What it pins |
-|------|-------------|
-| `test_python_fallback_without_index` | `use_rust=False` produces `rust_corpus=None`; alignment still works |
-
-### Token lazy-loading
-
-| Test | What it pins |
-|------|-------------|
-| `test_rust_corpus_with_embedder` | Rust prepare runs even when an embedder is provided; embeddings built afterward |
-| `test_prepare_does_not_fetch_all_tokens` | Candidates have empty `token_ids`, `token_spans`, `token_set` at prepare time; tokens fetched on-demand during alignment |
-
-## Rust prepare with embeddings (`tests/test_rust_prepare_with_embeddings.py`)
-
-Tests for the combined Rust-inverted-index + embedding-index prepare path.
-
-### Embedding dimension compatibility
-
-| Test | What it pins |
-|------|-------------|
-| `test_rust_prepare_with_dummy_embedder_dim8` | Rust prepare succeeds with 8-dimensional embedder; `embedding_index` and `idf` populated |
-| `test_rust_prepare_with_dummy_embedder_dim384` | Rust prepare succeeds with 384-dimensional embedder; vector shape matches |
-
-### Rust vs. Python prepare parity
-
-| Test | What it pins |
-|------|-------------|
-| `test_rust_prepare_candidate_count_close_to_python` | Rust and Python prepare produce candidate counts within 20% (segmentation may differ slightly) |
-| `test_rust_prepare_citation_fixture_still_works` | Full fixture: finance source cited as `supported` or `partial`; irrelevant source excluded |
-
-### Tokenizer fallback
-
-| Test | What it pins |
-|------|-------------|
-| `test_custom_tokenizer_falls_back_to_python` | `TiktokenTokenizer` (non-simple) triggers Python fallback; `rust_corpus=None` |
-
-### Build-time tracking
-
-| Test | What it pins |
-|------|-------------|
-| `test_rust_prepare_embedding_build_time_tracked` | `embedding_build_time_ms >= 0.0` when Rust prepare runs with embedder |
-
-### Backward compatibility
-
-| Test | What it pins |
-|------|-------------|
-| `test_rust_prepare_without_embedder_still_works` | Rust prepare without embedder produces `rust_corpus` with candidates and IDF weights |
+- `tests/test_alignment_rust_parity.py` — the test file.
+- `tests/conftest.py` — `requires_rust`, `requires_rust_blocks`, `rust_core`, `rust_core_with_blocks`.
+- `src/cite_right/core/aligner_py.py` — `SmithWatermanAligner`, the matrix fill, the tie-breaker, the traceback that produces `match_blocks`.
+- `src/cite_right/core/aligner_rust.py` — `RustSmithWatermanAligner`, the wrapper that picks the right `_core` entry point based on `return_match_blocks` and the construction-time check that the `*_details` entry points exist.
+- `src/cite_right/_core.pyi` — the type stub for the `cite_right._core` extension: `align_pair`, `align_pair_details`, `align_pair_blocks_details`, `align_best`, `align_best_details`, `align_topk_details`, `align_batch_details`, `align_batch_blocks_details`.
+- `rust_core/` — the Rust extension source. `Cargo.toml` and `rust_core/src/`.
+- `openwiki/advanced/rust-acceleration.md` — the public-facing Rust extension guide, including the `backend="auto" | "python" | "rust"` switch and the fallback when `_core` is missing.
+- `openwiki/concepts/how-it-works.md` — where Smith-Waterman sits in the pipeline.
+- `openwiki/testing/pytest-markers.md` — the other testing reference page, covering the optional-dependency markers (`rust`, `spacy`, `embeddings`, `tiktoken`, `huggingface`, `pysbd`, `slow`).

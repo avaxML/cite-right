@@ -1,45 +1,55 @@
+
 # Citation Alignment
 
-Citation alignment is the core operation in Cite-Right. This page provides a detailed look at the algorithm, its configuration options, and the structure of its output.
+Citation alignment is the operation that takes a generated answer and a set of source documents, and returns character-accurate citations showing where each span of the answer is grounded. This page covers the public I/O contract: what you hand to `align_citations`, what comes back, and how to interpret the offsets.
 
-## The align_citations Function
+For the end-to-end pipeline (index-first retrieval, Smith-Waterman localization, contradiction checks, embedder path) see [How It Works](how-it-works.md). For the precise attribution view with non-contiguous evidence, see [Multi-Span Evidence](../advanced/multi-span-evidence.md).
 
-The primary entry point for citation extraction is the `align_citations` function defined in `src/cite_right/citations.py`. This function accepts an answer string and a collection of source documents, returning a list of `SpanCitations` objects that describe how each part of the answer relates to the sources.
+## Quick Example
 
 ```python
-from cite_right import SourceDocument, align_citations, CitationConfig
+from cite_right import SourceDocument, align_citations
 
-answer = "The study found a 30% reduction in emissions."
+answer = "The company reported record revenue in Q4."
 sources = [
     SourceDocument(
-        id="paper",
-        text="Research indicates a 30% reduction in emissions over the study period.",
+        id="earnings_call",
+        text="During the earnings call, the CEO announced that the company reported record revenue in Q4 of 2024.",
     )
 ]
 
-config = CitationConfig(top_k=3)
-results = align_citations(answer, sources, config=config)
+results = align_citations(answer, sources)
+for result in results:
+    print(result.answer_span.text, result.status)
+    for citation in result.citations:
+        print(citation.evidence, citation.char_start, citation.char_end)
 ```
 
-The function signature provides considerable flexibility through optional parameters. The public API is the same as before 0.4.0: `align_citations` and `PreparedCitationCorpus`.
+The entry point is `align_citations` in `src/cite_right/citations.py`. It returns a list of `SpanCitations`, one per answer segment, with localized citations and a per-span status.
 
 ## Input Types
 
-The `sources` parameter accepts two types of input, reflecting different retrieval patterns.
+The `sources` argument accepts three forms, reflecting different retrieval patterns: plain `str`, `SourceDocument`, or `SourceChunk`. Mixing them in one call is fine; each is normalized into the same internal candidate list.
 
-`SourceDocument` represents a complete document with an identifier and full text. Use this type when your retrieval system returns whole documents or when you want Cite-Right to handle passage creation internally.
+### SourceDocument
+
+`SourceDocument(id, text, metadata=...)` is a full document. Use it when your retrieval system returns whole documents and you want Cite-Right to handle passage creation internally.
 
 ```python
 from cite_right import SourceDocument
 
 doc = SourceDocument(
     id="annual_report_2024",
-    text="The full text of the annual report goes here...",
+    text="The full text of the annual report...",
     metadata={"year": 2024, "type": "financial"},
 )
 ```
 
-`SourceChunk` represents a pre-chunked excerpt with offsets indicating its position within a parent document. Use this type when your retrieval system already performs chunking and you want citations to reference the original document positions.
+The `id` becomes the `source_id` on every `Citation` and `RetrievalSupport` that resolves to that document.
+
+### SourceChunk
+
+`SourceChunk(source_id, text, doc_char_start, doc_char_end, ...)` is a pre-chunked excerpt. Use it when you have already chunked your documents and you want citation offsets to point at positions in the original full document, not the chunk itself.
 
 ```python
 from cite_right import SourceChunk
@@ -52,164 +62,100 @@ chunk = SourceChunk(
 )
 ```
 
-When using `SourceChunk`, the `doc_char_start` and `doc_char_end` values are added to the alignment offsets, producing character positions in the original document rather than the chunk.
+`doc_char_start` and `doc_char_end` are absolute offsets into the parent document (half-open, like every other offset in the system). Internally, Cite-Right rebases chunk-local alignment offsets back onto the original document so that `source.text[citation.char_start:citation.char_end] == citation.evidence` still holds. The rebasing only needs the chunk range — you do not have to pass the full document text. If you do pass `document_text`, `SourceChunk` validates that the slice matches `text` at construction time.
+
+### Plain Strings
+
+A bare `str` is treated as a `SourceDocument` with an auto-assigned id (`"source_0"`, `"source_1"`, ...). Use it for ad hoc tests and quick experiments. Real pipelines should pass named `SourceDocument` or `SourceChunk` objects so citations carry stable `source_id` values.
 
 ## Output Structure
 
-The function returns a list of `SpanCitations` objects, one for each segment of the answer. The structure is defined in `src/cite_right/core/results.py`.
+`align_citations` returns `list[SpanCitations]`, one entry per answer segment. The structure is defined in `src/cite_right/core/results.py`.
 
 ### SpanCitations
 
-Each `SpanCitations` object contains three fields.
+A `SpanCitations` has four fields.
 
-The `answer_span` field is an `AnswerSpan` object describing the text segment being cited. It includes the text itself along with `char_start` and `char_end` offsets within the original answer string.
+`answer_span` is the `AnswerSpan` this set of citations belongs to. It carries the segment text plus `char_start` / `char_end` in the full answer string, and a `kind` of `"sentence"`, `"clause"`, or `"paragraph"`.
 
-```python
-for result in results:
-    span = result.answer_span
-    print(f"Text: {span.text}")
-    print(f"Position: {span.char_start} to {span.char_end}")
-    print(f"Kind: {span.kind}")  # "sentence", "clause", or "paragraph"
-```
+`citations` is a list of `Citation` objects, ranked best first. Empty when no citation met the minimum thresholds. Each `Citation` is exact and localized: a `source_id`, a half-open `char_start` / `char_end` into the source, and an `evidence` string that slices cleanly from the source.
 
-The `citations` field is a list of `Citation` objects, ranked from best to worst match. Each citation represents exact localized evidence. The number of citations depends on the `top_k` configuration parameter.
+`retrieval_support` is a list of `RetrievalSupport` objects. These are passages the candidate selector picked up (by inverted index, lexical prefilter, or embedding similarity) that did not localize into a `Citation`. They are evidence-of-interest, not a grounded citation.
 
-The `retrieval_support` field is a list of retrieval-only support candidates. These are passages selected during index, lexical, and/or embedding candidate search that did not produce an exact localized citation.
+`status` is one of `"supported"`, `"partial"`, or `"unsupported"`. It comes from the best exact `Citation`, never from embedding similarity. A high embedding score that never localizes is a `RetrievalSupport`, not a `Citation`, and it does not flip the status. The model validator on `SpanCitations` enforces that `"unsupported"` requires an empty `citations` list, and that `"supported"` or `"partial"` requires at least one.
 
-The `status` field is a string indicating overall support level. It takes one of three values based on the best citation's answer coverage after contradiction checking.
+### Status Rules
 
-A status of `"supported"` means the best citation has `answer_coverage >= supported_answer_coverage` and the cheap contradiction check did not fire.
+`"supported"` means the top-ranked `Citation` has `answer_coverage >= supported_answer_coverage` (default 0.6) and the cheap contradiction check did not fire.
 
-A status of `"partial"` means at least one citation was produced but the supported thresholds were not met, or a contradiction (negation, number, leftover n-gram slot, or entity swap) downgraded the span. This often occurs with paraphrased or only partly covered content. The literal is `"partial"`, never `"partially_supported"`.
+`"partial"` means citations exist but the supported threshold was not met, **or** the contradiction check fired. The literal is `"partial"`, never `"partially_supported"`. Contradiction (negation, number mismatch, leftover n-gram slot, entity swap) downgrades to `"partial"`, not `"unsupported"`, because the evidence exists — it just conflicts with the claim.
 
-A status of `"unsupported"` indicates no citations met the minimum thresholds. This may indicate hallucination or content derived from knowledge outside the provided sources. Contradiction does not produce this status when evidence exists.
+`"unsupported"` means no citation survived filtering. The span may be hallucinated, or it may be content from outside the provided sources. `"unsupported"` is "no localized citation survived," not a high-precision hallucination label.
 
 ### Citation
 
-Each `Citation` object contains detailed information about the match.
+Each `Citation` carries the matched text and where it came from.
 
 ```python
 for result in results:
     for citation in result.citations:
-        print(f"Source: {citation.source_id}")
-        print(f"Index: {citation.source_index}")
-        print(f"Score: {citation.score}")
-        print(f"Evidence: {citation.evidence}")
-        print(f"Char range: {citation.char_start} to {citation.char_end}")
-        print(f"Components: {citation.components}")
+        print(citation.source_id, citation.evidence)
+        print(citation.char_start, citation.char_end)
+        print(citation.score, citation.components)
 ```
 
-The `source_id` field identifies the source document by its ID string. The `source_index` field provides the integer index in the original sources list, useful for array access.
+`source_id` is the document identifier. `source_index` is the position in the input list. `char_start` and `char_end` are the half-open offsets of the legacy contiguous evidence view in the source. `evidence` is the text sliced by that range. `score` is a weighted sum of `components` (`alignment_score`, `normalized_alignment`, `matches`, `answer_coverage`, `evidence_coverage`, `lexical_score`, `embedding_score`).
 
-The `score` field is a floating-point value indicating match quality. Higher values indicate better matches. The score combines multiple components according to the configured weights.
-
-The `evidence` field contains the matched text extracted from the source document. The `char_start` and `char_end` fields specify the exact character offsets in the source.
-
-The `components` dictionary breaks down the score into its constituent parts.
-
-## How Candidates Are Chosen
-
-0.4.0 does not run Smith-Waterman over every passage window.
-
-Prepare builds an inverted index over source windows. For each answer span, rare-token intersect selects which windows are worth aligning. Smith-Waterman still localizes; the index only chooses the windows.
-
-When an embedder is provided, high-similarity passages can join that set. Rust prepare still runs. The embedding index is built on the prepared candidates. Embedding-only `retrieval_support` still respects `min_embedding_similarity`.
-
-See [How It Works](how-it-works.md) for the full pipeline and [Embedding Retrieval](../advanced/embedding-retrieval.md) for the embedder path.
-
-## Paraphrase, Fields, and Contradiction
-
-Grounded how-to and news paraphrases can emit a citation from content-word overlap on the candidate passage when Smith-Waterman sequential coverage is low. They are no longer overflagged as `unsupported` for reordered content words.
-
-Data2txt field:value paraphrases get a second Smith-Waterman pass per structured-field candidate with `gap_score=0`. Faithful rewrites of hours, amenities, and similar fields can be `"supported"` or `"partial"`. Invented fields stay `"unsupported"`.
-
-Leftover n-gram conflicts check contradiction against the full candidate passage, not only the truncated Smith-Waterman evidence span. Cheap contradiction (negation, number, leftover n-gram slot, entity swap) downgrades to `"partial"`, not `"unsupported"`.
+When `CitationConfig(multi_span_evidence=True)`, `evidence_spans` carries the precise non-contiguous regions and `exact_evidence` joins them with `" ... "`. The legacy `char_start` / `char_end` / `evidence` stay a contiguous enclosing span in that mode. See [Multi-Span Evidence](../advanced/multi-span-evidence.md).
 
 ## Character Offset Convention
 
-All character offsets in Cite-Right follow Python's standard half-open interval convention. The start position is inclusive and the end position is exclusive.
+All character offsets in Cite-Right are Python half-open intervals: `char_start` is inclusive, `char_end` is exclusive, and `text[char_start:char_end]` is the slice the offset pair refers to. This holds for `AnswerSpan`, `Citation`, and `EvidenceSpan`.
 
-For a source document containing the text "Hello world", the word "world" would have `char_start=6` and `char_end=11`. Slicing with these offsets as `text[6:11]` produces "world".
+The rule that ties inputs and outputs together is the evidence equality invariant: after chunk rebasing, `source.text[citation.char_start:citation.char_end] == citation.evidence`. This is what makes the offsets safe to feed directly to a Python slicer, a highlighter, or an offset map in your UI. The same applies to `EvidenceSpan` in multi-span mode.
 
-This convention ensures that offsets can be used directly with Python string slicing and that adjacent spans can be identified by comparing the end of one with the start of the next.
+`SourceChunk` keeps the same rule. Internally, alignment runs against the chunk text; the chunk's `doc_char_start` is added to the resulting offsets before they are exposed on the `Citation`, so the public offsets are absolute in the parent document.
 
-## Backend Selection
+## What Status Comes From
 
-The `backend` parameter controls which alignment implementation is used.
+Status is driven by the best exact citation's `answer_coverage` and the contradiction check. Embedding similarity, lexical overlap, and the inverted index are used to **select** candidate passages; they are not what flips a span to `"supported"`. A passage that scores well on embedding but never localizes into a `Citation` lands in `retrieval_support` and does not change the status.
 
-```python
-results = align_citations(answer, sources, backend="auto")  # Default
-results = align_citations(answer, sources, backend="python")
-results = align_citations(answer, sources, backend="rust")
-```
+Concretely: the per-span logic in `_span_status` looks at `citations[0].components["answer_coverage"]`. If that coverage meets `supported_answer_coverage` and `check_contradiction` is clean, the status is `"supported"`. If contradiction fires, the status is `"partial"` (not `"unsupported"`). If coverage is below the threshold, the status is `"partial"`. If `citations` is empty, the status is `"unsupported"`.
 
-The "auto" setting uses the Rust extension if available, falling back to pure Python otherwise. The "python" setting forces the pure Python implementation even when Rust is available. The "rust" setting requires the Rust extension and raises an error if it is not installed.
+## How Candidates Get Chosen
 
-Both implementations produce identical results. The Rust extension is significantly faster for large workloads due to parallel processing. Released 0.4.0 wheels ship the extension as abi3 (`abi3-py311`), including linux/aarch64, plus an sdist.
+`align_citations` does not run Smith-Waterman over every passage window. On the default / Rust path, prepare builds an inverted index over source windows and rare-token intersect chooses the windows worth aligning. Smith-Waterman still localizes the citation; the index only chooses which windows to localize on. If the optional Rust extension is missing, or you supply a custom tokenizer or segmenter, `PreparedCitationCorpus.from_sources` leaves `inverted_index=None` and `_select_candidates` falls back to lexical selection.
 
-## Tokenizer Selection
+When an embedder is provided, `_add_embedding_candidates` can add non-index windows to the candidate set. Those extras still need Smith-Waterman to produce a `Citation`. Rust prepare still runs in that case — the embedding index is built on the prepared candidates. The full pipeline is in [How It Works](how-it-works.md). The embedder-specific behavior is in [Embedding Retrieval](../advanced/embedding-retrieval.md).
 
-The `tokenizer` parameter specifies how text is converted to token sequences for alignment.
+## When Citations Stay Exact
 
-```python
-from cite_right import SimpleTokenizer, HuggingFaceTokenizer, align_citations
+Two paraphrasing paths let spans that would otherwise overflag to `"unsupported"` still emit a `Citation`.
 
-# Default tokenizer
-results = align_citations(answer, sources)
+Content-word overlap on the candidate passage can emit a citation when sequential Smith-Waterman coverage is low. Grounded how-to and news paraphrases that share content words in different order are not dropped just because the alignment score is low.
 
-# Custom tokenizer
-tokenizer = HuggingFaceTokenizer.from_pretrained("bert-base-uncased")
-results = align_citations(answer, sources, tokenizer=tokenizer)
-```
+Structured field:value sources (Data2txt hours, amenities, and similar) get a second Smith-Waterman pass per matching candidate with `gap_score=0`. Faithful rewrites of known fields can land on `"supported"` or `"partial"`. Invented fields stay `"unsupported"`.
 
-The choice of tokenizer affects how text is compared. Using a tokenizer that matches your language model's tokenization scheme may improve alignment quality for content generated by that model.
+Both paths still require an exact, localized evidence slice. They do not produce embedding-only citations.
 
-## Segmenter Selection
+## Backend, Tokenizer, and Segmenter
 
-The `answer_segmenter` and `source_segmenter` parameters control how text is divided into segments.
+`align_citations` exposes the same backend, tokenizer, and segmenter knobs as the underlying pipeline. Defaults are Rust when available (`backend="auto"`), `SimpleTokenizer`, and `SimpleAnswerSegmenter` / `SimpleSegmenter`.
 
 ```python
-from cite_right import SpacyAnswerSegmenter, SpacySegmenter, align_citations
-
 results = align_citations(
     answer,
     sources,
+    backend="auto",            # "auto" | "python" | "rust"
+    tokenizer=HuggingFaceTokenizer.from_pretrained("bert-base-uncased"),
     answer_segmenter=SpacyAnswerSegmenter(split_clauses=True),
     source_segmenter=SpacySegmenter(),
+    embedder=SentenceTransformerEmbedder("all-MiniLM-L6-v2"),
 )
 ```
 
-Finer segmentation produces more spans with more specific citations but may split logically connected content. Coarser segmentation groups related sentences but may miss cases where only part of a segment is supported.
+A custom tokenizer or segmenter disables the Rust inverted-index fast path: `from_sources` leaves `inverted_index=None` and candidate selection falls back to lexical prefilter. Smith-Waterman still runs on whatever the fallback picks.
 
-## Embedding Retrieval
+## Custom Sources
 
-The `embedder` parameter enables semantic retrieval of candidate passages.
-
-```python
-from cite_right import SentenceTransformerEmbedder, align_citations
-
-embedder = SentenceTransformerEmbedder("all-MiniLM-L6-v2")
-results = align_citations(answer, sources, embedder=embedder)
-```
-
-When an embedder is provided, candidate selection still starts from the inverted index. Semantic similarity can add extra windows. This improves recall for paraphrased content where the answer uses different words than the source but conveys the same meaning.
-
-Rust prepare is not skipped when an embedder is set. Embedding-only `retrieval_support` still respects `min_embedding_similarity`.
-
-## Score Interpretation
-
-The `score` field is a weighted sum of several components (normalized alignment, answer coverage, evidence coverage, lexical overlap, and optional embedding similarity). Because the weights are not normalized, the absolute scale of `score` depends on your configuration. Changing `CitationWeights` or alignment scoring parameters will shift the range of scores you observe.
-
-For tuning, rely on the component values in `citation.components` (for example `answer_coverage` and `normalized_alignment`) and calibrate `min_final_score` against your own data. Comparing scores across runs is only meaningful if the configuration is unchanged.
-
-## Deterministic Ordering
-
-Citations are ordered deterministically to ensure reproducible results. When scores are equal, the following tie-breakers apply in order (with `prefer_source_order=True`, the default).
-
-Lower source index takes precedence, preserving the order in which sources were provided. This is useful when retrieval systems return sources in relevance order.
-
-Earlier character positions take precedence within the same source. This favors evidence appearing earlier in the document.
-
-Longer evidence spans take precedence when positions are equal. This provides more context for the user.
-
-If `prefer_source_order=False`, the ordering favors earlier character positions first and uses source order as a later tie-breaker.
+If you have a non-standard retrieval layer, you can build `SourceDocument` and `SourceChunk` directly from your own data, or use the dictionary adapter. The offsets you pass to `SourceChunk.doc_char_start` / `doc_char_end` are the contract that lets citation offsets rebase onto your full document. See [Custom Sources](../integrations/custom-sources.md).

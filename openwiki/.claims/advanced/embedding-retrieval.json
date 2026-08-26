@@ -1,0 +1,140 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:6c88440b8a2f893b931b46e63a6cfc3f43b63072beb698e5aea8e97be4b4d9d2",
+  "claims": [
+    {
+      "id": "claim_f59742df1cb9477488ec482b165b2820",
+      "statement": "Embedding retrieval is enabled by installing the `embeddings` extra with `pip install \"cite-right[embeddings]==0.4.0\"`, which pulls in `sentence-transformers>=2.2` and exposes `SentenceTransformerEmbedder` on the public surface.",
+      "evidence": [
+        {
+          "resource": "repo://pyproject.toml#L14-L17",
+          "version": "repo-lines-v1:sha256:f2e26f1afc48232837e6e2bb8bb518adea546d520f38faa91505ea75c199945b:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTkyMThkYzRjZTk3MWNiZTNkMzhkNzc0MzBlNjM5OTE4ODg0ZGQ3N2Q3MTg0YzdiOTNkZmRjMmU5OTg2OTFiNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZDllNGYzZWFlZGNhOGM1NzZkYmI3NmNiNzM4MzY2ZmNkNGM0YjRiOGI1NGE2MzhkMzQ2ZGQ2NDVhNTMwNDczYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTFlNTA5YTkxOTM4YWMyYmVjYWQ2ZTYzYjkyMDBmYjIwM2Y3MmJjZGQzYWEzMjE4YmU0YzU2YWY3ZDZmODUxYiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODFkY2I2NWJlNDBiNjU4YjhkOTY1OTk4ZTU0YmU1OTgyM2JkZThhZTBmODc2OTU3N2FlYTY0ZDAyYmM3MjYwOCJ9"
+        },
+        {
+          "resource": "repo://src/cite_right/__init__.py#L61-L61",
+          "version": "repo-lines-v1:sha256:45778d1f870b8e43b35ca4ef6954001b46cf3f5aea327fa69d17aeb75a3d0024:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNDU3NzhkMWY4NzBiOGU0M2IzNWNhNGVmNjk1NDAwMWI0NmNmM2Y1YWVhMzI3ZmE2OWQxN2FlYjc1YTNkMDAyNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNDU3NzhkMWY4NzBiOGU0M2IzNWNhNGVmNjk1NDAwMWI0NmNmM2Y1YWVhMzI3ZmE2OWQxN2FlYjc1YTNkMDAyNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZjY1MWJjNzIzODk2NTBhNGJkYTM2YTM5ZTE4NWM3OTYxNzg1Yzg0OTZkM2RmNzg4NTkyYjQ4OTM0ZmEzZmNhMSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNzkyM2ZkZmU4ZWY4ODg4NmY5N2Y2YmIzNjQ2ODE2YTlhNzU5YTg4ZWIxZWU2ZWQzOGNlNzU5MDUwYjU1YzQ4OSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_8970ef10d5cf4a5d8f21d64421587202",
+      "statement": "Candidate selection still starts from inverted-index seeds (or `rust_corpus.query_index` on the default Rust path), then `_add_embedding_candidates` can add non-index windows by querying the `EmbeddingIndex` with the answer-span vector, and every selected window still goes through Smith-Waterman alignment.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L1180-L1354",
+          "version": "repo-lines-v1:sha256:e5620c5b694172264e245bfca0513a87d2ce2c3c32acf629f6086c77977f16ce:eyJzZWxlY3RlZExpbmVDb3VudCI6MTc1LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI4YmEwNWQ5MGVlYmJkYTJkYWJlNDU1MWZhZGI4ZjE1YWMxODlkZTY0NWQ0NjllZWE2NDlkNzk0MGM3OWViN2QyIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIzNzU3YTBhZDdjMTA4NTI0NTdmMjkwNTYxMjc4MTYyNmQxZGMxMmZlY2UzYWM2ODY5ZTJiYjY5OTE4ZTg5MTU5IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiIzNzFkMDY4ZGJkMDlmZDQzNjc0MTliZGIzN2VjMDUzZTIxYTY4Yzg0OTQwNDczZjRhOTU3ZDJiMGRiNDZhNGFhIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIzNzkzZjc4M2E0Yzk3ZTY4MmI3ZGM1M2YxZWFlMTNmYjc3YWYwM2RmNGE2ZDRiM2NkZDU3NjQ1YmJhOTBmNTljIn0"
+        }
+      ]
+    },
+    {
+      "id": "claim_19234011cac84fb1a4f375ce74ac978c",
+      "statement": "Rust prepare still runs when an embedder is set, provided the tokenizer and segmenter are `SimpleTokenizer` and `SimpleSegmenter`; the embedding index is then built on those prepared candidates. A custom tokenizer or segmenter forces the Python prepare path.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/prepared_corpus.py#L143-L292",
+          "version": "repo-lines-v1:sha256:656cf8fb6cc607868f545c6ba8276f828d3d587ca63842d2a5f0f76600b56d09:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI2ZDE5ZDE1MTdhMmYyMzQ4MjM2ZGJjNTdhNTUzMDFhOGJiNjJmODBjY2JhNWIwMjgxN2Y0YzlkMGExZjJhY2UyIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIxNzJkN2MwMGUzMGNkZDU4NzIwNDFhNzUxMGFmNzAyYjEyM2ViZGExYzI0NjRlNGE0ZWI5ZjlmYmY2NjY0ZWZmIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJiYzJkMzhjZjJiNWJlMjZjZTYwNjgyN2I5ZjEzMmMwYTQxODc0NmZiM2I1NjkwZDlhYTMzZjc3NDI2MTM5ODlhIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI1NDY3OGI1NjM4YWUxNzY3ZGVmYmFiNDMxNGFjMTk3YTc3NTYwMzllNjc3OWEzZWUxMjJkYzUxMWYxODNhMGQwIn0"
+        }
+      ]
+    },
+    {
+      "id": "claim_05fa7acaa1e14ced87af162a2e3b7c2a",
+      "statement": "`retrieval_support` is exposed on `SpanCitations` and is not a `Citation`; it never flips `status`, so a passage that survived candidate selection but did not localize keeps the span at `\"unsupported\"`.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L1553-L1568",
+          "version": "repo-lines-v1:sha256:afc8f24be114b3b9984600846936361bea90408496d700308dd27aceb99099a1:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRhYTg1ZmUzOTdhNTk1ZjQ3OTYxN2UwMjNlMmJhNDEyNjdmZjU5ZDg1ODczODgwMGY1Zjg1NDgyOTYzNjljM2EiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU4ZDc1ODI0MzljNDI2ZTY0ZjVkOWJlZmM4YTQyN2JkMDkxYWRlNzRkZDJmMzVlZWMyMTg1ODY4NjQ3NDlmNWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQwNTNhMWZhZTU3NDExMWEwY2QxZjRmMDZjOTBhY2Y2NjM2MGJiODIxMzVmYmUzZGY1ZmVhNGRlODUxMzA4NzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY1MzgxYThjZDRiODI0YzJhYmZmYzM1OTE2Mjk1Y2NmZGU0ODNhZWZjMjIwYTEzMDhmOGI1ZGIzNzJhNmZmMDAifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/citations.py#L728-L746",
+          "version": "repo-lines-v1:sha256:2a3b570b45f3bc8e990ec2dd73950e499c12a498a9444996ce7617d411a478d6:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNjYzM5YTM0YjIwM2MwYjc4NWMwZWRlZWU2M2RkNWFmYWFlNDE0YjI5NjJkZDY2ZjIwYmY0NzNjZDE0MjJhNjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhjYzRhN2QxY2M3OTZhYmEzZTQ2NzIzMzI3ZjUxN2U5ZjgxMTk4MmQyNTBmMDcwMjk4NmU0YjU3NjRhZDk1ODkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjUzNzZjZjNiYTdiN2I3OWUwNTY2YWExNDZjOTUyNTdlYjAxMzQwYjkyMWVkZjE3N2ZiNzg2OGQ3N2ViYTc3MDAifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/core/results.py#L302-L348",
+          "version": "repo-lines-v1:sha256:06e0230233700c5999dbcd6f7b08193939225cc097a8f7c967d351d762022fe5:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZmODM2ZDdmMDdlYmZmZTRiMzJkNGRmY2QxOGYyMmYwYjhkZGRhYzZlM2UyYWM2MzczNTUyMDdhMDg1NWMxNWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEyYWIwOTBiY2QxNjIwZmE2MmVhZWUxNTdhNzRmY2E2MzVhYTI5ZTEyY2JmZmQ2MThiNTc5MmQ4N2JjMDNhM2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRiNzA1ZWNhYjIyYjFkYjRkOGNmYTE4ZjQ2Y2I2MmEwMWNlMjBhYTA4NThhYWQ2ZDNiODVlNTEzNzA3ZmE4MTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_48c73975005d401b9c72207e7f0f2042",
+      "statement": "Embedding-only `retrieval_support` entries still respect `min_embedding_similarity` (default 0.3); the check happens in `_build_retrieval_support_for_candidate` and rejects candidates whose `lexical_score <= 0.0` and `embed_score < cfg.min_embedding_similarity`.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L728-L746",
+          "version": "repo-lines-v1:sha256:2a3b570b45f3bc8e990ec2dd73950e499c12a498a9444996ce7617d411a478d6:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNjYzM5YTM0YjIwM2MwYjc4NWMwZWRlZWU2M2RkNWFmYWFlNDE0YjI5NjJkZDY2ZjIwYmY0NzNjZDE0MjJhNjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhjYzRhN2QxY2M3OTZhYmEzZTQ2NzIzMzI3ZjUxN2U5ZjgxMTk4MmQyNTBmMDcwMjk4NmU0YjU3NjRhZDk1ODkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjUzNzZjZjNiYTdiN2I3OWUwNTY2YWExNDZjOTUyNTdlYjAxMzQwYjkyMWVkZjE3N2ZiNzg2OGQ3N2ViYTc3MDAifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/core/citation_config.py#L60-L60",
+          "version": "repo-lines-v1:sha256:9b9398fa6a00420be24d88f510ae63eab470e4c887b0b4f09ea9a2506ea118c8:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOWI5Mzk4ZmE2YTAwNDIwYmUyNGQ4OGY1MTBhZTYzZWFiNDcwZTRjODg3YjBiNGYwOWVhOWEyNTA2ZWExMThjOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOWI5Mzk4ZmE2YTAwNDIwYmUyNGQ4OGY1MTBhZTYzZWFiNDcwZTRjODg3YjBiNGYwOWVhOWEyNTA2ZWExMThjOCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTQyZTFiMjFlOWIzYjA5OTg4YjhmODYzZmRkODY3M2M0NjFmZTgxYmY4ZDJjODEzZTA5ZjEwYmE5MjNmZTE1OCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiN2EyOGUyOWRhYjJhOTVlZjBmMGQ1MTdmOTQ3MzI4NTExMWUyM2E3MmRhNzNiYWFkNjEyZWYwNTkxN2E4MzBiNSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_d54f9a679c684e738afaa3cd636d3379",
+      "statement": "Lexical scores are filled only for inverted-index seeds; embedding-only extras keep `lexical_score == 0.0` so a weak embedding hit below `min_embedding_similarity` does not appear as retrieval support.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L1211-L1219",
+          "version": "repo-lines-v1:sha256:b2eebdea329a38b3e07d4b5d3cf0873c97218e3a691ab067ff58f1f50cd0aa0b:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMmZlZjNjMjVjNjQ2ODBkMjFjNjI0Y2E5YmMzMjJlMjc2MjhmN2U4YjZlODVhNDgzZTE2N2M5Mjg0OGNiNjc0YyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNGMzNzBkMWNiOGZjMDkwYWU3MTRkM2RiNzQ0Zjc0Yjk3MDAxZmQ4ODY3NTI0MjIyN2JkNjE3NzI1ZGYyZDFiZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZmNjMzBlNTVhMzJkM2E3NDk0ZGYyZWNkNjRkOWUwODBhMGI4NWE5ZTRhNjdmMzc3ODUzMTMwM2NiZDc0MTJiMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYWI1MTlhNGNmOWQ1YmQxYjc0Y2YzODUzNDkzY2MwMzAzM2MzN2ExMmMxOTQ0ZDRkM2Q0MDhhMDM2YjFmYzY3YSJ9"
+        },
+        {
+          "resource": "repo://src/cite_right/citations.py#L1338-L1354",
+          "version": "repo-lines-v1:sha256:4a2042275e7aea0ecf343b786dcfbca39e973467aebee1e7aa668ef8e67bffda:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YTIwNTgyYjRlZmEyMDI0NTllNzRmYzk5ZTM0OWY2MjAyZTIzZjgwMDg2Y2E3Y2M1ZWM4OWRhZDkxNGY2ODgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM3NTdhMGFkN2MxMDg1MjQ1N2YyOTA1NjEyNzgxNjI2ZDFkYzEyZmVjZTNhYzY4NjllMmJiNjk5MThlODkxNTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJiZjc1MjkwZWYxZmM5OTM2Yzk3ZGVjMzc0ZmIzOGI5ZGEzYWQxMWVkZjNiMzYxMGJhNzNkNzM2ODEyMzIyOTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM3OTNmNzgzYTRjOTdlNjgyYjdkYzUzZjFlYWUxM2ZiNzdhZjAzZGY0YTZkNGIzY2RkNTc2NDViYmE5MGY1OWMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_4e1939c6da964cbc8d979a0237fa3615",
+      "statement": "The `Embedder` protocol is a runtime-checkable Protocol with a single `encode(texts: Sequence[str]) -> list[list[float]]` method, so any duck-typed class that matches that signature plugs into `align_citations` and `PreparedCitationCorpus.from_sources`.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/models/base.py#L1-L29",
+          "version": "repo-lines-v1:sha256:9108e6d6e8e5f6e23dfae854123c5b44c081227e4299eade4958b4bf617c99b6:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRmMzljZGYzN2U4Zjg5YzhjNjI1ZGE1ZmNhNWQwMDUxMjdiZDljZmU0YTNkYTQwM2Q5NzBiMDIxZjllNWU5ZWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2MjBkODVkZTRlZDdhYjgwMjFiNGE4ZGQ0ZmExNWVjNTE5MjVjZGZjY2RlMTgwNTg5NWE0YzhhM2MzYmE0OGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_894be4d02a76445c8dd1a48411fc0cbd",
+      "statement": "`SentenceTransformerEmbedder` keeps a bounded LRU cache keyed on `(text, model_name)` (default cap 10,000 entries) so repeated encodings of the same text skip the underlying model.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/models/sbert_embedder.py#L1-L69",
+          "version": "repo-lines-v1:sha256:16e27e256314b6d2febdfdf4dc827e4469a8bc9491f414f8a860fc984efb5b86:eyJzZWxlY3RlZExpbmVDb3VudCI6NjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU1MmU5ODhjNDQ0ZTFjNGJiZGQ4Yjk3OTdjZjEwYjJlNGQxMWUxNTU0NjgwZjBiZmM0MDgzMDNhZDZkYjFiOGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVhNGNmM2QzMTFlMDNhMTQzYjM0NTUwYTUxMDc0YTUyMmIzOTA1ODdjNmZkMDM5MWZkODk1ZDc0NTk5NmMwOWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f532b3e98fc847e18c4b9d748afd7d55",
+      "statement": "`EmbeddingIndex` stores the embedding matrix and precomputed L2 norms; `top_k` returns the top-k indices sorted by descending cosine similarity in the [-1, 1] range, and returns an empty list when the query vector has zero norm.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/models/embedding_index.py#L1-L78",
+          "version": "repo-lines-v1:sha256:fcdd7412b55b640a7141f2f0d1d63f57a813eab7a2376a6701dae7a6cd817444:eyJzZWxlY3RlZExpbmVDb3VudCI6NzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE1NzE1YWIzOGRjNTcwNDNkY2ZmYWZkOGIzYjRjNDZmYzI2MzNiOWEzMDE4ZjA3NzY2ODQ4YmQyZDA5OGQ1ZjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjViZTI3OWNhOTNjZDYzYzU3ZTEwMjMyNzEyYjEwZTgxNjdlNjVhMWQ3NWJjYjZlMmJlZDcxNmNiNzM2MDM0NjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_374a30518cec4901980cb5ab88be7700",
+      "statement": "`CitationConfig` exposes `min_embedding_similarity` (default 0.3), `max_candidates_embedding` (default 200), `max_candidates_total` (default 400), and `CitationWeights.embedding` (default 0.5) to shape the embedder path; `permissive()` lowers the threshold to 0.25 and `fast()` drops `max_candidates_embedding` to 50.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/citation_config.py#L13-L182",
+          "version": "repo-lines-v1:sha256:23b6455ec04e3adfe7e683fced5a1d3a4f1a37691c864419b72f3d42c19451b4:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJjNjU3MWVhN2ZmMzRkMzgwNDAyMTg1OGYzNjQ2ZDlmZmY1Mzc1YzcyYzU1NDZmZTk4M2I3ZjU1NGYyYzgxNDNlIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI1OTA5YTUzYTYxOGQwMjhlMWQzMDAwYzBhN2FiY2VlY2JlNWZiMzdmNGU1MTFlZmU0NjY0M2ZhZDZlNjY4NzJmIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI4NTQxMjczMDlmZGUyYmVlMTlkMzg2NTFkZDllOWZiYmZkMzNhOTBjNmI3NTg5ODY2ODMzNzdlNWJjYzc1MjllIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJmMTgzOGQ1M2I4YjI0ZWM3YmJjZTE2ODQ4ZTUwNzYwNDhjMWJjZjU1ZDhjYTU2OTJkYTZlMzY3ZGJjMGFhNTc1In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_332a9c98219e454f9a2751d095e5264e",
+      "statement": "Selected candidates are ranked by `max(embedding_score, lexical_score)` and capped by `max_candidates_total`, so a strong embedder hit on a non-seed window can still make the cut while keeping a stable ordering with the lexical seeds.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L1357-L1373",
+          "version": "repo-lines-v1:sha256:6e9b2a144007f78dfb1e5d84fcb798493f5d28266a443fbb5140500b617a9414:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUzYmU1M2FjNDY2M2YzNTZjM2QxNjIzNDQ1ZjY2YjEwNjVlNjI2ZTk0OGM5ZTMxZTljZjU2NzY0MDFkZDRjNWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFlMjNiNTZiOWUxZDFiMzgyOGRiOGU0ZWMyMzc1YWZlNTBmNTg1ODc5ZjU2YjU1NGRhNmNiNmExNzZlYjFiNjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA3MWFiMTMzMWZkOTljZmQzYzdjNTI4Y2VmNTUzMDk5MWRiMzc3NmQxYmQwZWQzOGU5MDBiNmFjY2ZkYzEwZjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM4MTJkZDg1YWMyMGNiY2E2YjQ2MzY1YWYzZWEwMTEwYjViMzAxZWUwODI2ODdjMzVhYWI3MTY3MDc4YjcxOWQifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.4.0",
+    "at": "2026-08-26T03:32:47.432Z"
+  }
+}

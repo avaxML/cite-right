@@ -1,0 +1,138 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:b0c83c3fc37f5b64563b9f8b009935ae3a4759589472dad1e8709ea102232d6b",
+  "claims": [
+    {
+      "id": "claim_ddf43ef3c5aa4a32963e431d9aff1eb5",
+      "statement": "The `sources` argument to `align_citations` accepts three forms that are normalized into the same internal candidate list: plain `str`, `SourceDocument`, and `SourceChunk`. Mixing them in one call is allowed.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py",
+          "version": "repo-file-v1:sha256:8267869be9c1dd05cc8ca65c96add4ca1ae2188c5c69db5a071c1afc351f21cf"
+        }
+      ]
+    },
+    {
+      "id": "claim_ef81ac8135a94a038063b0e081a141e7",
+      "statement": "`SourceDocument(id, text, metadata=...)` is a full document; its `id` becomes the `source_id` on every `Citation` and `RetrievalSupport` that resolves to that document.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/results.py",
+          "version": "repo-file-v1:sha256:0878d978ab02bc6de9e42153e1eb78a7b907166460550d5ca0563289b106bb2d"
+        }
+      ]
+    },
+    {
+      "id": "claim_5c0f785fdd824e40a41b1db14379fc9a",
+      "statement": "`SourceChunk(source_id, text, doc_char_start, doc_char_end)` is a pre-chunked excerpt. Internally, alignment runs against the chunk text; the chunk's `doc_char_start` is added to the resulting offsets so that `source.text[citation.char_start:citation.char_end] == citation.evidence` still holds with offsets absolute in the parent document. `SourceChunk` validates this slice when `document_text` is provided at construction time.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/results.py",
+          "version": "repo-file-v1:sha256:0878d978ab02bc6de9e42153e1eb78a7b907166460550d5ca0563289b106bb2d"
+        }
+      ]
+    },
+    {
+      "id": "claim_8874fb77ab064c889f7a6c1dfe881f9f",
+      "statement": "Each `SpanCitations` returned by `align_citations` has exactly four fields: `answer_span` (an `AnswerSpan` with text and `char_start`/`char_end` in the answer), `citations` (a list of `Citation` ranked best first, may be empty), `retrieval_support` (a list of `RetrievalSupport`), and `status` (one of `\"supported\"`, `\"partial\"`, `\"unsupported\"`).",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/results.py",
+          "version": "repo-file-v1:sha256:0878d978ab02bc6de9e42153e1eb78a7b907166460550d5ca0563289b106bb2d"
+        }
+      ]
+    },
+    {
+      "id": "claim_444addd8381347f0bbe039b3b9df9ba9",
+      "statement": "Status is driven by the best exact `Citation`'s `answer_coverage` and the cheap contradiction check, not by embedding similarity. A high embedding score that never localizes is a `RetrievalSupport`, not a `Citation`, and does not flip the status.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py",
+          "version": "repo-file-v1:sha256:8267869be9c1dd05cc8ca65c96add4ca1ae2188c5c69db5a071c1afc351f21cf"
+        },
+        {
+          "resource": "repo://src/cite_right/core/results.py",
+          "version": "repo-file-v1:sha256:0878d978ab02bc6de9e42153e1eb78a7b907166460550d5ca0563289b106bb2d"
+        }
+      ]
+    },
+    {
+      "id": "claim_93f8f8f870f444079cd410ae0cae39a1",
+      "statement": "`\"supported\"` means the top citation's `answer_coverage >= supported_answer_coverage` (default 0.6) and contradiction did not fire. `\"partial\"` means citations exist but coverage is below the threshold, or contradiction fired. `\"unsupported\"` means no citation survived filtering. The literal is `\"partial\"`, never `\"partially_supported\"`. Contradiction downgrades to `\"partial\"`, not `\"unsupported\"`.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py",
+          "version": "repo-file-v1:sha256:8267869be9c1dd05cc8ca65c96add4ca1ae2188c5c69db5a071c1afc351f21cf"
+        },
+        {
+          "resource": "repo://src/cite_right/core/citation_config.py",
+          "version": "repo-file-v1:sha256:85c8a0da601ce7345b778f16be6217717a9d4f503de80f7c89eff32cfb66afff"
+        }
+      ]
+    },
+    {
+      "id": "claim_787f1c0cc7af499ab5e214b8ab1bdc2d",
+      "statement": "The `SpanCitations` model validator enforces that `\"unsupported\"` requires an empty `citations` list, and that `\"supported\"` or `\"partial\"` requires at least one citation.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/results.py",
+          "version": "repo-file-v1:sha256:0878d978ab02bc6de9e42153e1eb78a7b907166460550d5ca0563289b106bb2d"
+        }
+      ]
+    },
+    {
+      "id": "claim_c1e0bb630d0447c59098a15d6934cecd",
+      "statement": "All character offsets (`AnswerSpan`, `Citation`, `EvidenceSpan`) are Python half-open intervals: `char_start` inclusive, `char_end` exclusive, and `text[char_start:char_end]` is the slice the offset pair refers to. The evidence equality invariant — `source.text[citation.char_start:citation.char_end] == citation.evidence` after chunk rebasing — is what makes the offsets safe to feed directly to a Python slicer.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/results.py",
+          "version": "repo-file-v1:sha256:0878d978ab02bc6de9e42153e1eb78a7b907166460550d5ca0563289b106bb2d"
+        }
+      ]
+    },
+    {
+      "id": "claim_2b0f45cc280144d5940b27e47096ee4d",
+      "statement": "On the default / Rust path, prepare builds an inverted index over source passage windows and rare-token intersect chooses which windows get Smith-Waterman. Smith-Waterman still localizes the citation; the index only chooses the windows. If the Rust extension is missing, or a custom tokenizer or segmenter is supplied, `PreparedCitationCorpus.from_sources` leaves `inverted_index=None` and `_select_candidates` falls back to lexical selection.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py",
+          "version": "repo-file-v1:sha256:8267869be9c1dd05cc8ca65c96add4ca1ae2188c5c69db5a071c1afc351f21cf"
+        }
+      ]
+    },
+    {
+      "id": "claim_e4a0ebcdb6f6471a95d5b43dd74bdaf0",
+      "statement": "When an embedder is provided, `_add_embedding_candidates` can add non-index windows to the candidate set; those extras still need Smith-Waterman to produce a `Citation`. Rust prepare still runs with an embedder when `SimpleTokenizer` and `SimpleSegmenter` are in use, and the embedding index is built on the prepared candidates. `retrieval_support` is not a `Citation` and does not flip status.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py",
+          "version": "repo-file-v1:sha256:8267869be9c1dd05cc8ca65c96add4ca1ae2188c5c69db5a071c1afc351f21cf"
+        }
+      ]
+    },
+    {
+      "id": "claim_707b256096574e629a3599399fd4705d",
+      "statement": "Content-word overlap on the candidate passage can emit a citation when sequential Smith-Waterman coverage is low, so grounded how-to and news paraphrases are not dropped to `\"unsupported\"` for reordered content words. Structured field:value sources (Data2txt hours, amenities) get a second Smith-Waterman pass with `gap_score=0`; faithful rewrites of known fields can land on `\"supported\"` or `\"partial\"`, invented fields stay `\"unsupported\"`. Both paths still require an exact localized evidence slice and do not produce embedding-only citations.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py",
+          "version": "repo-file-v1:sha256:8267869be9c1dd05cc8ca65c96add4ca1ae2188c5c69db5a071c1afc351f21cf"
+        }
+      ]
+    },
+    {
+      "id": "claim_e35e81d368dc4c5e8ac12a3b6d32ad2b",
+      "statement": "A custom tokenizer or segmenter disables the Rust inverted-index fast path: `from_sources` leaves `inverted_index=None` and candidate selection falls back to lexical prefilter, but Smith-Waterman still runs on whatever the fallback selects.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py",
+          "version": "repo-file-v1:sha256:8267869be9c1dd05cc8ca65c96add4ca1ae2188c5c69db5a071c1afc351f21cf"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.4.0",
+    "at": "2026-08-26T03:32:47.432Z"
+  }
+}

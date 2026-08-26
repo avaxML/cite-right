@@ -1,0 +1,222 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:1238e112aff90ca1b60bad1ef9363a8f50e57aae9e0e7173e4f4c8c56675e27c",
+  "claims": [
+    {
+      "id": "claim_3d7ff36adba54f7899bd38168f21d86e",
+      "statement": "verify_facts splits the answer into atomic claims and verifies each claim independently against the same sources that align_citations uses, producing per-claim verdicts and aggregate metrics so a mixed sentence does not hide which half is unsupported.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/claims.py#L36-L70",
+          "version": "repo-lines-v1:sha256:fb9ecd2db87b56451bde96c34a8903099cd52d648f8417f99fd1786912b64971:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwMzA2OWQzZjMyN2IwY2ZkMWQwODcyNzRlYzI3NTY1ODU0ZDg1MmIzMjI1NTNkMzkwMmM4OWY1M2YwMDBlZGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJhYWU4YTBjYTc2Zjk4ZjdiN2RjNzk4NDk1MWQ2M2U1N2RiM2M2NDU1NzljYTUxYmFkNmE1MzlkNjE0ZWRiYmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJmYTUwOGZhOWI2Yzc2YWM2NjU0N2NmYmMwZjQ5NDcwNDY4ODYwZGNjMWEyOWFkYzg3YjY0MDc0MWM3NTFkNmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFjNjYwYTc3M2FkYzExMzFjMWZjOWNmOTUyMTIwNWM5NDNjZjFmOTI2NTY4MjQ2NDhiMWIxYzIxYzc3YjRmN2YifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/fact_verification.py#L103-L140",
+          "version": "repo-lines-v1:sha256:b3a0ec51de73d3561f5ebeef5512923c74e7ade1ca2fc726b9f7850494fdce27:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ0NGVmNTM4ZjYzMTM4NjM1MzRmMzZjMzc2YzhkZjAyYjA5MGU0ODMxNmY0MzE3ZDM1MzRkOWQ3NTIxYWE4MGEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgyZDcyM2E4OGRjOTE2ZTcxYWM5YjNkMDYyNzEzMjNjNmJkMmE1NWU2MzgzYzk4YjAyZDFmNDA3ZDJmMDA0Y2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM2YmEzMGM1ZGMyZTczOTIzYTQ3MzJmZTlkNjBlMTQ3NzUyMWI4YzdiNzRiMjEwZGIzZWQyN2Y3MjIxNDhlN2UifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_df7db4ce307549dd91c13f80456f19d6",
+      "statement": "verify_facts runs a fixed control flow: segment the answer with the supplied AnswerSegmenter (default SimpleAnswerSegmenter), decompose each AnswerSpan into Claim objects via the supplied ClaimDecomposer (default SimpleClaimDecomposer), call align_citations on each claim.text against the sources, and fold the per-span results into ClaimVerification objects and an aggregate FactVerificationMetrics.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/fact_verification.py#L103-L151",
+          "version": "repo-lines-v1:sha256:fa2769c314f9163fbe6a3767d3adfae6a3398f53f2a6a337c7f2bf89b7654bd0:eyJzZWxlY3RlZExpbmVDb3VudCI6NDksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ0NGVmNTM4ZjYzMTM4NjM1MzRmMzZjMzc2YzhkZjAyYjA5MGU0ODMxNmY0MzE3ZDM1MzRkOWQ3NTIxYWE4MGEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFhNzBjMjlmMjY2M2MxYzQ5OTY0NjBjODg5MTBhODZlMzU3YjJlMjRjZTE2NWI5NjU1ZmMwZmYwZjE4ZDAxNTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgyZDcyM2E4OGRjOTE2ZTcxYWM5YjNkMDYyNzEzMjNjNmJkMmE1NWU2MzgzYzk4YjAyZDFmNDA3ZDJmMDA0Y2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVmM2Q2OTU1ODZhYTUyNDcyZGY5MmEwZmIzNzY5ZDc1MGZkZTZmMzBhMzFmMDI2YWMxMWFiOTA2MjY5MDIxN2QifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/fact_verification.py#L171-L217",
+          "version": "repo-lines-v1:sha256:2d2bc506dd2442b6dedbabf49765543c898bc0a51ec21beeeafbbf305cb06d42:eyJzZWxlY3RlZExpbmVDb3VudCI6NDcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdkMTNlYjVkOWJiZmQyZDkwZjM1ODMxZjkyOTU5NDM0NTEwZGJhNDlmODBmOWNhNTJiYjJhZGFlYzVhMTBlZjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhjYzRhN2QxY2M3OTZhYmEzZTQ2NzIzMzI3ZjUxN2U5ZjgxMTk4MmQyNTBmMDcwMjk4NmU0YjU3NjRhZDk1ODkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ2NzA0NTAyNjE2MWZjNWNiNjcwZjZmZTY5ZGZjNTM1MjM1OThmMGQ3NzI5YTJiYTE4NjlkZWY0ODEzYzNjNWUifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/fact_verification.py#L236-L290",
+          "version": "repo-lines-v1:sha256:7db46c412892e68636dc9ceb4a84454b52c13bf475358a403da1586ae7fe06ef:eyJzZWxlY3RlZExpbmVDb3VudCI6NTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3ZmE0OTcyYWVlZDE0MmI3MDAyYzUwYzVhYjY0YTg5Yzg4NjdkZDIyNDBmMDQzMDc0ZmMyYjgxZWY3ZGVhODEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhiNWUwMjYyMmFjYTYyMjRjYmNjYjc4NzVhMWRkZGU0OWIwMjM0YjZhMWUyMDA3YWFlYmFjYmMzNGQ4YzA4OTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d78aa29307274c3896ad8bdecfa7a8de",
+      "statement": "SimpleClaimDecomposer is the default claim decomposer; it returns the input AnswerSpan as a single Claim with claim_index=0, has no extra dependencies, and matches sentence-level behavior when no further splitting is needed.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/claims.py#L53-L70",
+          "version": "repo-lines-v1:sha256:01532e2f125f2c2911b3f974593df924aa4265a04fc7d47207b8780c963f9b3d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZjNTk0YTEyZTgwMjdhZmQzYTExODVkNmM1ZTA5OTIxMGYxNzYzOGI1OTgzNTFkOTM5MjhmODNjOTZhODNiYzIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJhYWU4YTBjYTc2Zjk4ZjdiN2RjNzk4NDk1MWQ2M2U1N2RiM2M2NDU1NzljYTUxYmFkNmE1MzlkNjE0ZWRiYmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhlMTAyYTE5YmE2NTQwZmFhMjNhMTQ4NTZkYmM0MTMyZTQ5MjFkYjA4OWM1NjA5NThjZGQ2ZDlkYTAwZjkyODYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFjNjYwYTc3M2FkYzExMzFjMWZjOWNmOTUyMTIwNWM5NDNjZjFmOTI2NTY4MjQ2NDhiMWIxYzIxYzc3YjRmN2YifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/fact_verification.py#L117-L118",
+          "version": "repo-lines-v1:sha256:5df338abac5b95ef13b102fcc3283f168e19fccd35fe30c63e0c1e7c100b413d:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZWU1NGVkY2MwZGJmODU3NjE0Mjk5NzE4MGVmZGNkYTY1ODAyODY0ZTU4NzJjZWFhYWFlN2VmNzllNDMwODU2YyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiN2ZlYWNhODZlZjU1ZDUxYzU1MzNkNDVkZTY1YmU4ZTRlOGUyOTBjZGQ4NDI5NzZmYmYxYzcxNDM2OGJlMmMwMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDA4N2FiMzY5N2Y4OWJiYjU3MTM1ZTI1Nzk5YjFkNjFjMmZhY2RjNTg0NTRmY2ExMDcwZDEyNTVmYmIzMTc1YSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNTcxN2U1ZmUyY2NmYjFhM2Y3Y2FkMTM1YjhlYThkYzhjZDFlNTBjY2ZlNWQ2ZjI0NTk2OTg4OWNkZTI5MTlhOCJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_f5ae5da6c05345a0aca46c23f251a875",
+      "statement": "SpacyClaimDecomposer loads a spaCy model (default en_core_web_sm) and uses the dependency parse to find conj tokens; each conjunct is split into its own claim via the coordinating conjunction or the preceding comma or semicolon, with claim text below min_claim_tokens (default 2) dropped. When no conj tokens are found it falls back to a single Claim wrapping the whole span.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/claims.py#L160-L224",
+          "version": "repo-lines-v1:sha256:a6ec4484d29dae3560b4e378bf4794212cafe8715de71896ce7b882853ff3599:eyJzZWxlY3RlZExpbmVDb3VudCI6NjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc4MTVjMDEyMWVlZTBiYWFiNDYxZWViYzc3OWYwMDAwOGVlOWNjMjBmNzEwYTkwMDlmOWQ2YTU5ZTY1Y2M5NzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdkZDA3YWU1MjU3NWRiZjBhY2YzYjBlNzhiMTZlY2ZhNzM0OTkwZjM2ZmJiMjJkOWZhYzYzYTFmNDE5M2E1OWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFmNTk5NGEzZDA4Zjk0ODQ0MmMxNWIxMDQwZWEwOWI3MjY3YTQ5OThkZmE3NzhiYTVlMzY5YTRkMzNlYTY0YmYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU3ZjI5MTJiNjQzNDMxMWU2OGI2ZDg5ZTkxZWM4ZWRjMTA3OWFjN2FhZDY2ZTRhNzg1Yzg2NDljMDcwYmRjMTkifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/claims.py#L226-L282",
+          "version": "repo-lines-v1:sha256:6fb6cf091a74666ca2654eda2b63086d91a865693e0b43b927e4a692c8960d34:eyJzZWxlY3RlZExpbmVDb3VudCI6NTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZkZjY4MmI4ZmQwMWVkNTI4YmQyMjhjOTk5NDUyZTMzZDc5MmY2MmJiZTg0ZDc3Nzc5YTYwNTgzYTVlN2JhNDciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFjMzc4YzBkMjdkZGRiZjViZDgzYzU0ZjIzY2VjZjljZDcyMDgxNjJiZjYxYzUzZGRjOTc1MjI5MTk1YTJhMzEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI1MzA3ZWQ1NjIyMzVkYmJiNjNmZDMzMGQzOTIxNTE0ZDliYWRjNDg2ZjM3NDVmYjhhN2M5OTgyY2Y3NTcxMDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/claims.py#L73-L158",
+          "version": "repo-lines-v1:sha256:1156674f18c93cdcf656548b9b4246b3e2fd9d889ad506bf6adfa4dc45940bd1:eyJzZWxlY3RlZExpbmVDb3VudCI6ODYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFmOWExZGI4Y2M3MWVkZDAxZmRkNjMwOWE5MDRiMDA5MGY2ZWE3OTQwNWMxNjVhMGM0M2JmNGM1MDkwNjg3Y2QiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MDlhNTNhNjE4ZDAyOGUxZDMwMDBjMGE3YWJjZWVjYmU1ZmIzN2Y0ZTUxMWVmZTQ2NjQzZmFkNmU2Njg3MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA5ZDZkYmI0NmY3ODcyNmI2OGE5NWMwYTNkMjJiYzgxYWFhZDQ3M2FhMDNmYjZmNzk0ZDk5OGQzZTEwMzRkMjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU5NTY2MzAyMDZmYjNlMDI3MGYzMWRlYjA4OTliNDE3OGY1MjM0M2FkYTc1Yjg0ZjBjMjhmYThhM2I0ZjgyM2QifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5e2cc6ca32104575af611527d3119b96",
+      "statement": "SpacyClaimDecomposer requires the cite-right[spacy] extra and a downloaded spaCy model; construction raises RuntimeError with a clear message if spaCy is not importable or if the named model is not installed, and the default model needs `python -m spacy download en_core_web_sm`.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/claims.py#L91-L119",
+          "version": "repo-lines-v1:sha256:661bd1ca9cb8d706c40469fef2a4fce56c5f0de8bee6cedc145aa74831faf569:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlmZDdhMDdhODNkZDE5OTZmYjUxNjg0YjQyYWVjYWY0ZTkwZmI3OGJhNzIzMGU1NDJlZDdiZDAxZDQyMzAxYmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZjYjY0YWY5MmJlY2U3MTMyNDg4MTlkY2VkNjlhZjZiNmI2ZDZlYjk5NGJiMjA2MTVhYmJlMjgzZmU5MTVlMjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNkNjE1ZDIxZWZjOWYwNzUwYjczYTg1ZmVjNjgzNjA5YTUxYjJiMzAzMjM1NDU1ZDMzNDJhMzI1ZjU4NTZiYzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImMzOTY5ZGE2YmM5MWQyNTgwNmQzZjU2Y2FhNzZmZDNkNWU2MTI2ZjBlNWQ0NGMzNTJiMTliOWE1NGM0M2I2MTgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_f37fd17b13964a0c951f98a4305ccff7",
+      "statement": "ClaimDecomposer is a runtime-checkable Protocol in src/cite_right/claims.py with a single decompose(span: AnswerSpan) -> list[Claim] method, so any object implementing that signature can be passed as claim_decomposer to verify_facts, including custom LLM-based decomposers.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/claims.py#L36-L50",
+          "version": "repo-lines-v1:sha256:dc98b7750a972046f121335e20286f4edbf2f3b04d93a230b7e3b1276420d669:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwMzA2OWQzZjMyN2IwY2ZkMWQwODcyNzRlYzI3NTY1ODU0ZDg1MmIzMjI1NTNkMzkwMmM4OWY1M2YwMDBlZGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2MjBkODVkZTRlZDdhYjgwMjFiNGE4ZGQ0ZmExNWVjNTE5MjVjZGZjY2RlMTgwNTg5NWE0YzhhM2MzYmE0OGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJmYTUwOGZhOWI2Yzc2YWM2NjU0N2NmYmMwZjQ5NDcwNDY4ODYwZGNjMWEyOWFkYzg3YjY0MDc0MWM3NTFkNmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM4OWZkZmUwYTZjYWE3N2ViNzJkMmY3NzUxMjFmOTg4YzRiYjllYzAxNzdjMzJmOWUwNzcwMjdlOGVkOTdiZTcifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/fact_verification.py#L108-L117",
+          "version": "repo-lines-v1:sha256:8682c218f6a75eb78aded8691843327edcde111807657eb903d088a628854b5e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFkYjFiN2U4MTEzYTZmYzNmODQzYWVkYWY2ZDE5YmZiYzExZjU4NTZiODRlMDM4MTU0NDk0YjU1OTNmZWMyMWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVlNTRlZGNjMGRiZjg1NzYxNDI5OTcxODBlZmRjZGE2NTgwMjg2NGU1ODcyY2VhYWFhZTdlZjc5ZTQzMDg1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNmMmY4ODU3YjM2M2UzMjQwN2VmZGVjZWI2MmExMzVkMmI0YWM5NzdkZGYxYjU3NDcyZjQyOGFkMDliMmM5NGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM2ZTBjZWRjMmJmY2IwNDBiODZkM2Y0NzdmN2JmZWNiYzgyZjU0M2I2MWFhNjlhYjc1N2ViZThmMzhiZjQ5ZDgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5ffa7799ec204a68bde588b1525b203f",
+      "statement": "A Claim carries absolute 0-based half-open char_start and char_end offsets in the original answer string (same convention as Citation offsets), a text field, a source_span back-reference to the AnswerSpan it came from, and a claim_index within that span.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/claims.py#L16-L33",
+          "version": "repo-lines-v1:sha256:8b6e21c443655d1410bc4a705b11326c9b4b783c5e92d2bf5e2d3b5c766503f9:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyMDUxOGEwMWRhMmU0YTQyZjI1NTYzZTI3MjRkYWJmZTAyZTEwNjc5MDMwMDk4YWUyNzg0ODQxOWE1ZWY1NGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU4MTZiZThmMTEyYmFlNTg3OWYyOTMzMzNmZDI5NGE4ZWI5MTlkNjZkYzJlZmRiY2U3MzM3Yjk5MzNmMDRmODUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkyODlhNzNmYzI1NTU4YzVlMjc0Y2E5MDAzNDY4NmEzMWFlZjg2MDAzMDMwNmE1MWM1MTBiNDljYjY1Y2NiNmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQzYzYyNWY5MWRmYjhlNGMzZDFlYjFjN2NjNDU3NWNjOGE1NWJhOGE2N2E4ZmM1MjA1MjYwYTBiZDgyYTgyYjIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_8163351d769940eaa92ed1bf02da33d2",
+      "statement": "FactVerificationConfig is a frozen Pydantic model with verified_coverage_threshold (default 0.6, matching the default supported_answer_coverage so verify_facts and align_citations line up), partial_coverage_threshold (default 0.3), and an optional citation_config forwarded into each per-claim align_citations call.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/fact_verification.py#L120-L124",
+          "version": "repo-lines-v1:sha256:be010b756238b461a64113ca91de24115f31abb9493b5acf25612ffa7326c3d5:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZmNmYWM3ZTU5YWE0NjUyOTBiNjQ5NTZmNjIwZTcwZWFiOGE0Y2M4ZjhlOTFhMDkwYjk4NjdjYWQ3OTIzNzhiMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzBjMWYxODhmMTQyZWQ3YTgyNDY4MGIyMDcxNzJjNTUxOWJjNjE0YTQ4ZmRhN2NmMTY3ZWRiOGRkZjc5OTU2YyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjA1Yjk5MWUzYzc5YjI4ZDI0NzcwZjczNmI3YmNhMmY2NzkwMTYwNzE4ZWY5ODUzYjdlZjA5ZGQwZmUxMWZjYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjc4Y2Y2MjUwODA5NmRlMDUxZjVmY2EyYWE4ZjMwMWZkN2NkMzQ0MmRmOWExNzlkYjQ1YzMyN2EwM2VlMjEyNyJ9"
+        },
+        {
+          "resource": "repo://src/cite_right/fact_verification.py#L27-L43",
+          "version": "repo-lines-v1:sha256:e56abac4c0d00136af708ffad26c69b48d1ad0cdb048815989213d9416c5c766:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMxOTFlOGM5NTM5NDRhZjBmYzhhMjIzZWRlOWFmNTZmODZhNzZmM2ZiNzY4MzBiNmRmMGI0OGJjZmEwYTgxYjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFiNzVkMzViMTM3NTVjNjllYjE5Mjc3MzU1YzE1YTU2Nzc2ZWY1MTk4ZjJkYjFhM2FhNjJlNTgwYmQwZjc1YTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ0NDQyY2I0MmExZGY2OWNhM2U4YzIzYjIzM2RiMDUxY2ZjMWFjMGRlOWFjOGUyN2VlNDZhNzk0YmEyM2E5NzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdiMzg1M2RiNjFjNzJiODFmMDA0NWUxNTMwYTVkOTY4YjA0OWU3NTRhNzEyODViZjg0MGU1NmEwMGU3MjY3YjYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3241e7c6e97a4bb2837f71086994b574",
+      "statement": "When citation_config is not provided, verify_facts builds a CitationConfig with top_k=3, min_answer_coverage=0.2, and supported_answer_coverage=cfg.verified_coverage_threshold, so the per-claim \"supported\"/\"partial\"/\"unsupported\" semantics of align_citations line up with verify_facts's \"verified\"/\"partial\"/\"unverified\" rollup at the default threshold.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/fact_verification.py#L120-L124",
+          "version": "repo-lines-v1:sha256:be010b756238b461a64113ca91de24115f31abb9493b5acf25612ffa7326c3d5:eyJzZWxlY3RlZExpbmVDb3VudCI6NSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZmNmYWM3ZTU5YWE0NjUyOTBiNjQ5NTZmNjIwZTcwZWFiOGE0Y2M4ZjhlOTFhMDkwYjk4NjdjYWQ3OTIzNzhiMSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzBjMWYxODhmMTQyZWQ3YTgyNDY4MGIyMDcxNzJjNTUxOWJjNjE0YTQ4ZmRhN2NmMTY3ZWRiOGRkZjc5OTU2YyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjA1Yjk5MWUzYzc5YjI4ZDI0NzcwZjczNmI3YmNhMmY2NzkwMTYwNzE4ZWY5ODUzYjdlZjA5ZGQwZmUxMWZjYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjc4Y2Y2MjUwODA5NmRlMDUxZjVmY2EyYWE4ZjMwMWZkN2NkMzQ0MmRmOWExNzlkYjQ1YzMyN2EwM2VlMjEyNyJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_2c6cbc59f1704b988ad3d272934df554",
+      "statement": "Each claim's status is derived from the per-claim align_citations run: the best Citation is the one with the highest score; if its answer_coverage is at least verified_coverage_threshold the status is \"verified\", at least partial_coverage_threshold the status is \"partial\", otherwise \"unverified\"; if align_citations returns no citations at all the status is \"unverified\" with confidence 0.0 and empty source_ids.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/fact_verification.py#L236-L290",
+          "version": "repo-lines-v1:sha256:7db46c412892e68636dc9ceb4a84454b52c13bf475358a403da1586ae7fe06ef:eyJzZWxlY3RlZExpbmVDb3VudCI6NTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3ZmE0OTcyYWVlZDE0MmI3MDAyYzUwYzVhYjY0YTg5Yzg4NjdkZDIyNDBmMDQzMDc0ZmMyYjgxZWY3ZGVhODEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhiNWUwMjYyMmFjYTYyMjRjYmNjYjc4NzVhMWRkZGU0OWIwMjM0YjZhMWUyMDA3YWFlYmFjYmMzNGQ4YzA4OTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a8f8c1eb8b5246a597c2b3016df526e1",
+      "statement": "ClaimVerification.confidence is the best Citation's answer_coverage component (a coverage number in the alignment-pipeline sense, not a calibrated probability), and source_ids is the deduplicated set of source_id values across all_citations for that claim.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/fact_verification.py#L271-L289",
+          "version": "repo-lines-v1:sha256:bd937e25482a68e111ab994f2e369469c08f4292cb3b9ac955d47e0a588d7a36:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNhNDEwNzgzYjMyNWNkNDIyMmRmMDQyZjQyODgzYWFmZTFmOTAyZTc1YTQyN2ViN2YyNWQ1YWQxNzMzMGZhMjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg1YTEwZWUxNzdmZTY2MThkMjQ4NjVkZmU1Y2E2ZDU5MmEwZGY1MzBjOGU4YjJhN2E3NDQyZTQxMDEyZjg3ZDAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFmNDY4MTI2ZDE0MTdlZWJlNGQ1ZjM2MDc3YjE2OGI3MjhlNDBiNTZhMDY3YzMyMjFkNTRmY2RiZmIzMzQxNjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/fact_verification.py#L46-L68",
+          "version": "repo-lines-v1:sha256:b2f35b32a6ab1c178defc47c29b95ed35083eebad1984a9afea572f6e9a28b5a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU3NGM3NTNlMjg4MTliY2Y1NWM3NjE1NmE4ZjYzNmRhMzExYjkxZjg0MzVlYmY3ZjQ1NDkwNjBkNmZiYzY0MTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg1MzU0ZWIwYmMwNDZjNzJjZDQ4YTZkY2U4NDg0MGJmOTk5NzZlYTE0ODhhNmJmYjgxY2FlNjAxZGNlY2U3YjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY4Y2ZlNTAxZmZlNzY5ODdjMGUxZDg5OWE0ZmZhZjVlMzIyYmYzNTQ1YWE0NTI5YjhkM2FlOGI0OGYwNWViNWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhjZDBlM2NkN2YyMjA5MTU4ZmJlZWNjOGFjMGZmYzI1NjI1MDljNWUyMjNhOGQwY2I4YTBmYTU2ODcwYTE1NWQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e95be8c4d6574394a03e5ad899d684f7",
+      "statement": "FactVerificationMetrics exposes num_claims, num_verified, num_partial, num_unverified, verification_rate, avg_confidence, min_confidence, a per-claim claim_verifications list in decomposition order, and the partitioned verified_claims, partial_claims, and unverified_claims Claim lists.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/fact_verification.py#L203-L217",
+          "version": "repo-lines-v1:sha256:2b38bc90d94208a0ee701008808c6a458c39518392f4b50bdbe81177b4063c8b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlmYzZmZjVkMTAyZDg2NTVmNmU0NDNjYmUzMDk0NDQzMDNjNGZjMGEzOWYyMzA3NTExODQ5ZDVkYzA2YjMyMmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIwYWYzMjQ4MzQwNTcwODJlZGNlM2FiZTdhNDQ1NjNmMmQ4OWI5ZTUyNDRjOWYyMDcyYTU2NTFhMTZmZjgzZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ2NzA0NTAyNjE2MWZjNWNiNjcwZjZmZTY5ZGZjNTM1MjM1OThmMGQ3NzI5YTJiYTE4NjlkZWY0ODEzYzNjNWUifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/fact_verification.py#L71-L100",
+          "version": "repo-lines-v1:sha256:35d2c95eeb6aaf4ffc3e9ab587b08011740cdfc0f65eddc40fa6329c71ea455a:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImViY2YwOGMxZGIwZGVhMTllMzQwYzYyMTJjZTg0MDU3ZmE2NmU3MTU0YzE3Y2E1OGMwNDVjMzA2MWZhN2EwMTAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjljNGI5NzEwNGY0YjcxODNlZmU5ZDI3ZmJhYjMyNjdkYzIwYzQ0ZDEyMTU4MjdmMjE4MjcwMmU1Yjk3YjUzNDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE2YWZlODk4NDUwMTA2ZGYwYjBmNGVkZGI1YzEzNWRhZjdiY2Y0MjlmN2QzMTI2NDIwMmE0NTRlNjlhYzkxYTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY3MWQwOTJjYjZkMjZiNmQ4OGM3MTVmYTI0MTY2ODdmYjg5ODI1NzAzMDBjMjY3YTc2OGRlMjZjOWY0OWRkYTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_2a3da446f7374882b3b2d7567333ed7c",
+      "statement": "When the answer produces no claims, verify_facts returns an empty FactVerificationMetrics with num_claims=0, verification_rate=1.0, avg_confidence=1.0, and min_confidence=1.0; the empty path is the \"nothing to verify\" path and is not a clean bill of health for the answer.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/fact_verification.py#L128-L129",
+          "version": "repo-lines-v1:sha256:98d1f10d19e2e7a68f7614403069abbb70f372860e7345b80035ded70df66cc6:eyJzZWxlY3RlZExpbmVDb3VudCI6MiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzI3MTQwYWE3N2RhYTAyMDZlM2M1MDUzMmVkYzNiNTM2YWQ0MDgwODVhNTJjYzI4ZDVjNmRlNDViOGY1MThhMiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjZjOGI4ZDhmMGE2MWJmZGQwMmNiYzFlZWY1OThhOTY5NTgzZGVmZGIyYjQ3YzhhOWM3NDczYzQwYWUxNjcxNSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZjc4Y2Y2MjUwODA5NmRlMDUxZjVmY2EyYWE4ZjMwMWZkN2NkMzQ0MmRmOWExNzlkYjQ1YzMyN2EwM2VlMjEyNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNTQ5ZjA5NDgxNjRjMzRiZWQxMWUyZTYwNWJmNjgwNTBlMWE2ZTg2ZGZiYTc3MzI5ZDQ1MzczMTRiMDk5YTM0MyJ9"
+        },
+        {
+          "resource": "repo://src/cite_right/fact_verification.py#L154-L168",
+          "version": "repo-lines-v1:sha256:76219d93bce9407dbc139d20ee53c0610ff718efb66b613cc10b2a8870613db6:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI3YzE1M2NlM2M0MDk4NjY5MmNhODRlMjY1NWVjNzEyODg3NjNhZTYyZWIzNTQ3NWQ2YTczMTRjM2NmMzJlYmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU0MDJmNzgwZTY3MTFmMzJmOWI3Mjg2ZWY1NGNiMzYwMTc0ODNiNWVjZWYxMjRmYjgxM2IzYzcyMzQ2NDg0MGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZjNzMzNGM4OThkODc3MTAyNDI4ZDA5ZTA3NTllYTdlYWZjMDNhYTEyODRmNWZjZGMxNWE1Y2JjZTY4OTgxMDYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_8ad97907f5ed48b2b1853adb77825c21",
+      "statement": "verify_facts accepts the same backend, source_segmenter, tokenizer, and embedder knobs as align_citations, with backend using the same \"auto\" | \"python\" | \"rust\" values and the same fallback semantics when cite_right._core is missing; each per-claim call to align_citations passes through backend, source_segmenter, tokenizer, and embedder unchanged.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/fact_verification.py#L103-L140",
+          "version": "repo-lines-v1:sha256:b3a0ec51de73d3561f5ebeef5512923c74e7ade1ca2fc726b9f7850494fdce27:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ0NGVmNTM4ZjYzMTM4NjM1MzRmMzZjMzc2YzhkZjAyYjA5MGU0ODMxNmY0MzE3ZDM1MzRkOWQ3NTIxYWE4MGEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgyZDcyM2E4OGRjOTE2ZTcxYWM5YjNkMDYyNzEzMjNjNmJkMmE1NWU2MzgzYzk4YjAyZDFmNDA3ZDJmMDA0Y2YiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM2YmEzMGM1ZGMyZTczOTIzYTQ3MzJmZTlkNjBlMTQ3NzUyMWI4YzdiNzRiMjEwZGIzZWQyN2Y3MjIxNDhlN2UifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/fact_verification.py#L236-L255",
+          "version": "repo-lines-v1:sha256:5a3a30b28d5fa870e8a0b8a5ff5d6e3d4dc04191598189110cf0b7f326ce45d1:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3ZmE0OTcyYWVlZDE0MmI3MDAyYzUwYzVhYjY0YTg5Yzg4NjdkZDIyNDBmMDQzMDc0ZmMyYjgxZWY3ZGVhODEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhiNWUwMjYyMmFjYTYyMjRjYmNjYjc4NzVhMWRkZGU0OWIwMjM0YjZhMWUyMDA3YWFlYmFjYmMzNGQ4YzA4OTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYyOTZlNGI3MzdkYjZhNDM4YzZmZGI1ZWVkNDQ3MDI0NDMzNGRiMTBjMWFlMjg1NGJlOTY2OTgxOWQ5MjA0OTIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_653a208b547e4998bb0bf9e5e14e1911",
+      "statement": "verify_facts, FactVerificationConfig, FactVerificationMetrics, ClaimVerification, SimpleClaimDecomposer, SpacyClaimDecomposer, ClaimDecomposer, and Claim are exported from the cite_right package and are available with the base install; only SpacyClaimDecomposer construction needs the [spacy] extra plus a downloaded spaCy model.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/__init__.py#L1-L137",
+          "version": "repo-lines-v1:sha256:d5aee04ba747603020968cca58ba3c52dd717454f78f5fe6fbfdfd3353bb8a3c:eyJzZWxlY3RlZExpbmVDb3VudCI6MTM3LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI5OWI3NjQ0YzljODUwNjU1ZTA5ZTkzZTExZmZhNjllNDY3ZTBmNzY5N2NmYzQxMjE1Yjg1MGNjNjI1OTI1MjhmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJmOTQxNmUwOWY3OGJhMzE2YzAzMjU2ODIxM2I4NTVlZTc1NmU0MTU2NWQ5MThmMDk1MTljODFmZDYyMGY0MDYwIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MCwicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        },
+        {
+          "resource": "repo://src/cite_right/claims.py#L91-L119",
+          "version": "repo-lines-v1:sha256:661bd1ca9cb8d706c40469fef2a4fce56c5f0de8bee6cedc145aa74831faf569:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlmZDdhMDdhODNkZDE5OTZmYjUxNjg0YjQyYWVjYWY0ZTkwZmI3OGJhNzIzMGU1NDJlZDdiZDAxZDQyMzAxYmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZjYjY0YWY5MmJlY2U3MTMyNDg4MTlkY2VkNjlhZjZiNmI2ZDZlYjk5NGJiMjA2MTVhYmJlMjgzZmU5MTVlMjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNkNjE1ZDIxZWZjOWYwNzUwYjczYTg1ZmVjNjgzNjA5YTUxYjJiMzAzMjM1NDU1ZDMzNDJhMzI1ZjU4NTZiYzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImMzOTY5ZGE2YmM5MWQyNTgwNmQzZjU2Y2FhNzZmZDNkNWU2MTI2ZjBlNWQ0NGMzNTJiMTliOWE1NGM0M2I2MTgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_25e2be1ecd124d3a8d41ca285ef18e1d",
+      "statement": "verify_facts reuses the same citation-pipeline status semantics as align_citations: each per-claim call to align_citations returns a list of SpanCitations, the best Citation is picked by score, and its answer_coverage component is what determines the claim's \"verified\" / \"partial\" / \"unverified\" status, so embedding-only retrieval_support cannot flip a claim to \"verified\".",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/fact_verification.py#L236-L290",
+          "version": "repo-lines-v1:sha256:7db46c412892e68636dc9ceb4a84454b52c13bf475358a403da1586ae7fe06ef:eyJzZWxlY3RlZExpbmVDb3VudCI6NTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3ZmE0OTcyYWVlZDE0MmI3MDAyYzUwYzVhYjY0YTg5Yzg4NjdkZDIyNDBmMDQzMDc0ZmMyYjgxZWY3ZGVhODEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhiNWUwMjYyMmFjYTYyMjRjYmNjYjc4NzVhMWRkZGU0OWIwMjM0YjZhMWUyMDA3YWFlYmFjYmMzNGQ4YzA4OTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.4.0",
+    "at": "2026-08-26T03:32:47.432Z"
+  }
+}

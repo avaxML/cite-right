@@ -1,0 +1,6 @@
+# Files
+
+- [Citation Config](citation-config.md) - CitationConfig and CitationWeights knobs for the citation alignment pipeline: status thresholds, candidate selection caps, multi-span evidence, embedder interaction, contradiction behavior, and presets.
+- [Configuration Presets](presets.md) - CitationConfig preset tradeoffs — balanced() default, strict() high-precision, permissive() paraphrase-friendly, fast() latency-bound. Permissive still requires localized Smith-Waterman evidence and does not emit embedding-only citations.
+- [Segmenters](segmenters.md) - Sentence and answer segmenter options for the citation alignment pipeline — SimpleSegmenter / SimpleAnswerSegmenter default, SpacySegmenter / SpacyAnswerSegmenter, PySBDSegmenter. How segmenters shape the source passages, when the lexical fallback path is forced, and how the spaCy and pysbd extras enable the optional segmenters.
+- [Tokenizers](tokenizers.md) - Tokenizer options for the citation alignment pipeline — SimpleTokenizer (default, Unicode NFKC and case-fold with original character offsets), HuggingFaceTokenizer, and TiktokenTokenizer. The Tokenizer protocol, the TokenizedText offset contract, the optional TokenizerConfig normalization knobs, and the rule that a custom tokenizer forces the lexical fallback path with no inverted index.

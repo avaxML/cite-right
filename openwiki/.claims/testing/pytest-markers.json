@@ -1,11 +1,15 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:05c228bdda8177448fa17ff2a0371593fbc0af5aa1251b220fcdaba0f4f3e60c",
+  "pageVersion": "sha256:90fe019cabfde9b12622bff3d03e009c43a9bb58977c1f0f76a81911ce25577c",
   "claims": [
     {
-      "id": "claim_229472d42a824d409e1b98a5b5a5fb17",
-      "statement": "All custom markers (rust, spacy, embeddings, tiktoken, huggingface, pysbd, slow) are registered via pytest_configure in tests/conftest.py, not in pyproject.toml",
+      "id": "claim_cf77c45560ff470d9b89d3fab92977ff",
+      "statement": "tests/conftest.py registers seven pytest markers via pytest_configure: rust, spacy, embeddings, tiktoken, huggingface, pysbd, and slow, and pyproject.toml does not redeclare them.",
       "evidence": [
+        {
+          "resource": "repo://pyproject.toml#L65-L73",
+          "version": "repo-lines-v1:sha256:00a473c50e8f794131fb389a223c34529b24198bbc807b4401fea89d0917e7d0:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiODY3NmU2NDE0NjVhNjU1MWU5ZTljZmZkN2ZhYTFlNmE0MmY5YjcyNDgwOTgxM2M5MDNkN2VkY2I1MmYzMDA2ZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzBmMGE4OGM3YTdjMjI0OTIyNWU0MTE1YWQyZTlkNjljZmFiMDlkMmU5YmM3ZDg2ZjBkMDFlMGExZmExNDc3OCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjMzMWZjMWM0YmEzMTBjNmFkZTIxNmQ5MDE5YTY0YWJhNDk1ZjEzZDcyMmZkYmFiM2Y3ZjA1M2ExMjgyYzM1MSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOWM3MDk1NzM4ZDBiNTgzZmY1NDI0Mjk2Y2Y0NGYzMTMzMTczOGQ1ZDJmMjI4ZWI3MWJhY2JhYTQ1ODc3YmFhNSJ9"
+        },
         {
           "resource": "repo://tests/conftest.py#L23-L31",
           "version": "repo-lines-v1:sha256:650bb5833ebdb57a222b759dd56d062679b34a529dc957a44c222b6dea93419c:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNTFhODA4NzYyYTRiMDI5ZDE0ZDlmMWE5MWZmZWRlN2FhYTU5YzU3MTJjMmY2M2UwYTJkMTllZjc3NTUyZmNiMiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiY2E3ZmY3ODA4N2NlMjFlODhkNDNmZDdiNzhiYTk5YTlmNTRmY2VhMTZmYjBmZWNiNmMxZDJjZmRhYWZjOWU0MCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZWE5YjJhYjc3MzZmMjljYWI1N2RiNmIxZTMxZWU2YmEyZTFiY2EyZDQ3OWZiMTA4MTQ1N2VkMTUxZTI0ODFlNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTM3ZWQ1MjRjMzEzMDg4ODVlMTM4MjUyYjkzZjVlNWU1NTllNTQ4ZTkwODNkN2QxYzBiZDkyOTg1N2YyN2I1MiJ9"
@@ -13,90 +17,124 @@
       ]
     },
     {
-      "id": "claim_3f91e42c27e9407ea25d1b00bd4ac6b8",
-      "statement": "The requires_rust skipif decorator skips tests when cite_right._core cannot be imported",
+      "id": "claim_fb0fd898be814c6c96d2784857ff8bda",
+      "statement": "Two fixtures expose the cite_right._core module to tests: rust_core skips with \"Rust extension not built\" on ImportError, and rust_core_with_blocks additionally skips with \"Rust extension is missing align_pair_blocks_details (rebuild required)\" when hasattr(_core, \"align_pair_blocks_details\") is false.",
       "evidence": [
         {
-          "resource": "repo://tests/conftest.py#L39-L46",
-          "version": "repo-lines-v1:sha256:6be58abc4ded1aaefd1d8c5be0e509fdb58da98cd48f8e1f1fb5d0dd5833e5a4:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYmRkYmRkMThmYjhhNzczMzhkNmRiZDg1OGVlNWM3NTdiNDJhYWMzZTc0NzY0YTVlNjJlOGQ1N2RkYzI2NTM4NiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYjk3YzcxMjQ3YWYzY2QxZWRmNTU1YTdkMTA3NTkzMTU3ZjZkYzJhMjJhZjBkZTgyZTc3NzRhYmYxMGY4YWRlMSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZWE5YjJhYjc3MzZmMjljYWI1N2RiNmIxZTMxZWU2YmEyZTFiY2EyZDQ3OWZiMTA4MTQ1N2VkMTUxZTI0ODFlNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTUxOTkzYWM4NDBjZDMyNDY3ZTE2MmFhYTI5YWRlZWViOWQ0MGRlNzM2MzEwM2ViMjU2ZGZmYjVlYjc3ODgzNyJ9"
+          "resource": "repo://tests/conftest.py#L49-L81",
+          "version": "repo-lines-v1:sha256:f0c69b35f559260685cd503e1ff7ec487ccba145660d5fda7135bf997c9772e5:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI1N2U4Yjk3MTBmY2M3ZDljNTMyNTAxZmI2N2QyMDY1NDNhMmU3OTNhMzg5OGE1NjdmZGI4MmM5OTRjZjgxNjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY4NjA3MjhkYTA2M2M1OTc5OTU5OTgyMDRhYmRkMWNiNzc5OWM4NjU3MDE3YjJlM2NiZDg0YjNkOTk4NzczMjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY5OWVmZWRmZDJkOTcwNmQ4OTFjN2JhOTgzZTdmODRlMDVhZDBlMDE5MWMxMzI3OThiZTVlM2MxY2M1MzA0MjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQyOTg4ZmQ1NGM3MGFlYTYxNzg5NWQ4ZTE2M2UzZTNmY2ZhZjljNDY4YmU1ODg2OTY3MjBiOTBlOWNjNjg2ZDcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0c9e1c163425486cab320b33bc5319db",
+      "statement": "The requires_rust and requires_rust_blocks skip decorators wrap the same availability probes as the matching fixtures and emit the same skip reasons: requires_rust skips with \"Rust extension not built\" when _rust_available() is false, and requires_rust_blocks additionally skips with \"Rust extension missing align_pair_blocks_details\" when _rust_has_blocks_details() is false.",
+      "evidence": [
+        {
+          "resource": "repo://tests/conftest.py#L39-L93",
+          "version": "repo-lines-v1:sha256:79a24f0e422e8a24293c58acdd34d6faa949dd82a91d04a92144e2331ec0acdd:eyJzZWxlY3RlZExpbmVDb3VudCI6NTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJkZGJkZDE4ZmI4YTc3MzM4ZDZkYmQ4NThlZTVjNzU3YjQyYWFjM2U3NDc2NGE1ZTYyZThkNTdkZGMyNjUzODYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhZmJhMDUyN2MzOTUzYzRiNmUwZTViNTczOWJhODM2MTJmODA1M2JjZGM5NDY2NzMwMTkzY2QxZDU5MGI0MDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVhOWIyYWI3NzM2ZjI5Y2FiNTdkYjZiMWUzMWVlNmJhMmUxYmNhMmQ0NzlmYjEwODE0NTdlZDE1MWUyNDgxZTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzN2VkNTI0YzMxMzA4ODg1ZTEzODI1MmI5M2Y1ZTVlNTU5ZTU0OGU5MDgzZDdkMWMwYmQ5Mjk4NTdmMjdiNTIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_57bddf82a4a34c9c9cf0f97960d3d279",
+      "statement": "The capability check for the multi-span evidence path is hasattr(_core, \"align_pair_blocks_details\"); the same check runs at RustSmithWatermanAligner construction time when return_match_blocks=True and raises RuntimeError with a rebuild message if the entry point is missing.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/aligner_rust.py#L42-L64",
+          "version": "repo-lines-v1:sha256:ea71315319e5c1e46a9bdff0a72d8bb7acc99662c528fffdb73dac7ad4359db5:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI1NjljYjA5MjgwZWUwNzgxOTQ1ZTQ4ZDQwNDFiZDJkZmFhZTY5MWFkMmVhYmY1ZDNjYmEwODQ2YzcyMTZjYWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MDMyZTk2NGQwOTMyMzUxZTVkMTg1MjY5MjgxYjE3MWEzYTA5YjA4YjI4NmU2NjFlYTQ3MDMyM2M4MmViNGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJkYzEzN2UwODdlNmQ0MWQ5OTAzYmE0MDNkOTU0NGZlYzg5MDkzYjM4Njc5YjAyZGI4N2U1Y2Q5ZmJhYTgyNmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMwMjc5MDA3YTlmMWI0NGM5ZDE5YmY3ZjA5Y2ZiZmU4MzQ0ZGZlMzQxNGU4ZWM4NTZlOTk0NzI1OTBkYTIzZGQifQ"
         },
         {
-          "resource": "repo://tests/conftest.py#L85-L88",
-          "version": "repo-lines-v1:sha256:ba69237f5d791d872742cd802a80ffea72c0504b24901cf5e69dc9c909b187a0:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZDQ0NmExOGMxMmRlMzZlODZkNTczNGI0OTUxMTg5MzNhOGQ1ZDk1NWE2ZjJjM2MwZmQyNWRhMjBiZjdhNjNmNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZmFmYmEwNTI3YzM5NTNjNGI2ZTBlNWI1NzM5YmE4MzYxMmY4MDUzYmNkYzk0NjY3MzAxOTNjZDFkNTkwYjQwOCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDI5ODhmZDU0YzcwYWVhNjE3ODk1ZDhlMTYzZTNlM2ZjZmFmOWM0NjhiZTU4ODY5NjcyMGI5MGU5Y2M2ODZkNyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMDlmNGQ1ZWIxODU3OGVmMGVkOTIyNTkyOTE3OTJlYzhjZjVlYzEwY2E3OTc4ZTk3N2U2NTY3MTU0MGNkZTQyMCJ9"
+          "resource": "repo://tests/conftest.py#L49-L56",
+          "version": "repo-lines-v1:sha256:f081f708712794b532d4e3d48bb1e6079ac4e54bd46fd2c4eab81d5bf17afb89:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjU3ZThiOTcxMGZjYzdkOWM1MzI1MDFmYjY3ZDIwNjU0M2EyZTc5M2EzODk4YTU2N2ZkYjgyYzk5NGNmODE2MCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZjk5ZWZlZGZkMmQ5NzA2ZDg5MWM3YmE5ODNlN2Y4NGUwNWFkMGUwMTkxYzEzMjc5OGJlNWUzYzFjYzUzMDQyNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNmVmYzhmNmFkNjQ3NDFiMTBhNmJhNDJhMTg3OGU2NWY4YjhhYTBiYWE3Njg2YjFkYzRmZWQyNWZkMTNiYjFjMSJ9"
         }
       ]
     },
     {
-      "id": "claim_e02e4e1fd7094bb9bf7f4bac220d86e5",
-      "statement": "The requires_rust_blocks skipif decorator skips tests when the Rust extension lacks align_pair_blocks_details, which provides match-block traceback required for multi-span evidence",
+      "id": "claim_7624d196e42e4fad90d6724b3ee9194e",
+      "statement": "Optional-dependency skip decorators in tests/conftest.py use importlib.util.find_spec to probe for the underlying package: requires_spacy (spaCy package), requires_spacy_model (spaCy plus en_core_web_sm via spacy.load with OSError catch), requires_embeddings (sentence_transformers), requires_tiktoken (tiktoken), requires_huggingface (transformers AND tokenizers), and requires_pysbd (pysbd); each emits a concrete reason string for the skip.",
       "evidence": [
         {
-          "resource": "repo://tests/conftest.py#L49-L55",
-          "version": "repo-lines-v1:sha256:c8de8bbc9dae404f1ee46f9299c0b72ed6ff47079062f0f37dee65d71008c04d:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjU3ZThiOTcxMGZjYzdkOWM1MzI1MDFmYjY3ZDIwNjU0M2EyZTc5M2EzODk4YTU2N2ZkYjgyYzk5NGNmODE2MCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMTlhMDI0MDQ2Zjg5ZDRlMGQxMjkzMTVlNTlkNjQzYTBmOTVkMTQxMTJkY2VjNGRiMTI2ZGFhNDM2ZTEyZmFkZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZjk5ZWZlZGZkMmQ5NzA2ZDg5MWM3YmE5ODNlN2Y4NGUwNWFkMGUwMTkxYzEzMjc5OGJlNWUzYzFjYzUzMDQyNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODFjMTQyNmJlYTdmYWJhMDVhMTJjMWUxYzg2MGRhNjdjNjE3MzhmZmNjY2NhNGY2NzZlNGI5MjZkZWE2NmUwMiJ9"
+          "resource": "repo://tests/conftest.py#L101-L204",
+          "version": "repo-lines-v1:sha256:9b5f16d16010d36c2a85ecae18a4edd3f8dcc3c9f0d9b0fcd07599dd31f8cc3e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTA0LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJmMDVjOTE2ZmU3ZTViYzk0Y2IxY2YxODY1Nzc3NzcwOWU1MzY5YmY3YzJiYjI2ODkwZjJkMmZmOTBjYzQwYzlmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJmYWZiYTA1MjdjMzk1M2M0YjZlMGU1YjU3MzliYTgzNjEyZjgwNTNiY2RjOTQ2NjczMDE5M2NkMWQ1OTBiNDA4IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlYTliMmFiNzczNmYyOWNhYjU3ZGI2YjFlMzFlZTZiYTJlMWJjYTJkNDc5ZmIxMDgxNDU3ZWQxNTFlMjQ4MWU3IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlMzdlZDUyNGMzMTMwODg4NWUxMzgyNTJiOTNmNWU1ZTU1OWU1NDhlOTA4M2Q3ZDFjMGJkOTI5ODU3ZjI3YjUyIn0"
+        }
+      ]
+    },
+    {
+      "id": "claim_644263c231b24ae391fa88b73664e3c6",
+      "statement": "Some optional-dependency test files do not use the conftest decorators and instead call pytest.importorskip at the top of the module (tests/test_tokenizer_tiktoken.py for tiktoken, tests/test_tokenizer_huggingface.py for transformers and tokenizers), and tests/test_citations_embeddings.py and tests/test_multilingual_content.py add an extra CITE_RIGHT_RUN_EMBEDDINGS_TESTS=1 opt-in on top of the sentence-transformers package check.",
+      "evidence": [
+        {
+          "resource": "repo://tests/test_citations_embeddings.py#L1-L15",
+          "version": "repo-lines-v1:sha256:c3bdcd177660a4d7824ac3d4fa6105bdccf6ad351bfab1cc867d5ac3bab02cef:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM3MjdhZGZmNTI0ZTA2MTYwMjJlYWRkOGY0YWYyMWEwNzc4YjI5ZmM0Yzc3YmRmZWZkMWFmY2UyY2JmNWU0YjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZiYjY0NThmYzM1ZDhhY2U5ZTUwNTU4N2FlNTM3NTdlNWM3NGUzZGQ1ZjEzMmFhZGEyNmMwNjQxNzQ4NDQ3NmUifQ"
         },
         {
-          "resource": "repo://tests/conftest.py#L90-L93",
-          "version": "repo-lines-v1:sha256:cc7d4c64340774d265f1f0a92d0c751826dea136bc793526ef52b5c723cf1ceb:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMWQ5MDAwYTYyZjUzOGNkYzE5MTI1NTdjZTU4NGE4N2NhODRhNGFhYWM2ZDk3NTM3OTdjMTkxMDgzMjg0MDgzOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZmFmYmEwNTI3YzM5NTNjNGI2ZTBlNWI1NzM5YmE4MzYxMmY4MDUzYmNkYzk0NjY3MzAxOTNjZDFkNTkwYjQwOCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOWE5NGQ1ZGU4M2M5NDRiYWUwMDdiOGFjNzM4NDc5YjMzMTE1OTM4ZGRkNzAyOTAyMDZmZDUyNGQ2MzRhZmIzMCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTM3ZWQ1MjRjMzEzMDg4ODVlMTM4MjUyYjkzZjVlNWU1NTllNTQ4ZTkwODNkN2QxYzBiZDkyOTg1N2YyN2I1MiJ9"
-        }
-      ]
-    },
-    {
-      "id": "claim_6947c72b3c17439ab8f1da9c924cfbab",
-      "statement": "The rust_core_with_blocks fixture provides cite_right._core only when align_pair_blocks_details exists, and skips otherwise",
-      "evidence": [
-        {
-          "resource": "repo://tests/conftest.py#L70-L81",
-          "version": "repo-lines-v1:sha256:a53b1e14e1e569f7a1c55ac8cdf802165866f66d889ea21704f30a23e55798fa:eyJzZWxlY3RlZExpbmVDb3VudCI6MTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcyMzdhZjYzZWMzMDhkYWIwY2RjNmJhYTJlZGFmZmE4ZGQ0YmM4MmYwNGNmMmE5MTZlMDNmNDA1OWMyYjQyOWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY4NjA3MjhkYTA2M2M1OTc5OTU5OTgyMDRhYmRkMWNiNzc5OWM4NjU3MDE3YjJlM2NiZDg0YjNkOTk4NzczMjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgxYzE0MjZiZWE3ZmFiYTA1YTEyYzFlMWM4NjBkYTY3YzYxNzM4ZmZjY2NjYTRmNjc2ZTRiOTI2ZGVhNjZlMDIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQyOTg4ZmQ1NGM3MGFlYTYxNzg5NWQ4ZTE2M2UzZTNmY2ZhZjljNDY4YmU1ODg2OTY3MjBiOTBlOWNjNjg2ZDcifQ"
-        }
-      ]
-    },
-    {
-      "id": "claim_464226a75dfc4927ab1ca4018d665d6f",
-      "statement": "requires_rust_blocks is used in test_alignment_rust_parity.py for block-level traceback parity tests and in test_citations_multi_span.py for backend comparison",
-      "evidence": [
-        {
-          "resource": "repo://tests/test_alignment_rust_parity.py#L8-L8",
-          "version": "repo-lines-v1:sha256:258842dc41adb09d504e0e0cdb7b62e3e1986630362ca6c8f6f3f06a0567e51e:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjU4ODQyZGM0MWFkYjA5ZDUwNGUwZTBjZGI3YjYyZTNlMTk4NjYzMDM2MmNhNmM4ZjZmM2YwNmEwNTY3ZTUxZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjU4ODQyZGM0MWFkYjA5ZDUwNGUwZTBjZGI3YjYyZTNlMTk4NjYzMDM2MmNhNmM4ZjZmM2YwNmEwNTY3ZTUxZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTczOGUzN2RmMzY5Y2VhMGVhZDdjYmMyYTk3ZmYzMWJmOGYyM2YxZDM4OTcwZTdhNzAzNGYyYTZiMWI4NTA5NCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMjI4N2RlYzk4NmFlNTg4ZDQwNDU2ODhmOTM1YTgyOWM1YTdlNjE0ZDUxYjI0M2RmYzQ2MzkzNDI2ZmI4YTE3NSJ9"
+          "resource": "repo://tests/test_multilingual_content.py#L905-L915",
+          "version": "repo-lines-v1:sha256:745238350f3d7b28e65766616a3053255ca0988043aab861fc67c1680e061b5b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYxYWFkMDVmOGMzNWE3M2U4MGJiY2NmYTI1OTAxYmFjMmQ3NzBmNzVkYTE2NmI3OWIwODA2NWQ2MDkyM2IxYTMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhZmJhMDUyN2MzOTUzYzRiNmUwZTViNTczOWJhODM2MTJmODA1M2JjZGM5NDY2NzMwMTkzY2QxZDU5MGI0MDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU1M2FlZGRmYzljY2IyNmY0YmE1MTc4M2EyYTVjYjBmNThiYWE0NTE4M2E0OTMxN2YxZTdmMDA4ZTI2ZjZhYjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjczNjk5NmZmZDMwOWIyY2Q1N2I1Mzc0M2QxZTgwNzc2NTA3NWNjM2FhNmI3Mzg4NDMwZDExZTdkNjBkNTk5YzUifQ"
         },
         {
-          "resource": "repo://tests/test_citations_multi_span.py#L6-L6",
-          "version": "repo-lines-v1:sha256:ed0c6df7059036b03439af78ff7484e11fdcf12fa32c07958e2c6ebcf38060ad:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZWQwYzZkZjcwNTkwMzZiMDM0MzlhZjc4ZmY3NDg0ZTExZmRjZjEyZmEzMmMwNzk1OGUyYzZlYmNmMzgwNjBhZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZWQwYzZkZjcwNTkwMzZiMDM0MzlhZjc4ZmY3NDg0ZTExZmRjZjEyZmEzMmMwNzk1OGUyYzZlYmNmMzgwNjBhZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzliOTU2N2MzMWI3MjYyMDcyNTk5MjU5MjJiZGJjNjVhMDhmMTlmMGM5ZjY2ZDRiMjNhN2QwZGJkZjFmNmExNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTc4NWU3ZDFjY2U2YjNkZjlhOTljM2QyM2E2NDI0NzQxZjMwOGEzMTYzZGNlYTNkMmQ1OTU5NzU3NzIzMjNmZiJ9"
+          "resource": "repo://tests/test_tokenizer_huggingface.py#L1-L10",
+          "version": "repo-lines-v1:sha256:903c9f6d61fb736f07e72198fd305d98180cd7ff59232d56d807cdf426552702:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRkZjZmNGUwYzg2MzNmM2IwMzYyMjA5OWEyMTY0ZTMxNjlkZjM1YWE0NjNhNDA5YTliMDZjNzAzNGQxYTE0Y2YiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE0MjljNjgxYjViOGUxOGVhZGFmZjNhYWI5YmFjNzMyMmViYzQ5OGRiMjkwMmNiMDllZDJiMzYwMjFhZjE0ZTkifQ"
+        },
+        {
+          "resource": "repo://tests/test_tokenizer_tiktoken.py#L1-L10",
+          "version": "repo-lines-v1:sha256:901e172252047d18285b9b06dcdec858e0f0b2dbf11122c9659941fe4cf3963d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYxNzc3OTk0ZmNkMzJkYzU2NmQ0Y2ExZmVjN2EzYzA1ZTUxMjMyYWQyODgwYTE5YzE5OTEzZWFmZWM2ZGU2NTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFjMzcwODdkNmMyZTExMjMyOGMzYmUzMWI5ZTkyOTM0YWNkNjJiODUxNGE3ZjQ0NWRjMzNlYjlhNDYyMjA3MjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjdmMzY5MGJhYWVhNjczZWUxYzFhYzA5YzU0MmU0NDUxZDliMjNkNzUwYzJhNzg3MzAyYzAzOTU3MjNkOWUzYmMifQ"
         }
       ]
     },
     {
-      "id": "claim_0b5240718e0240f6b3e88619f3bcf710",
-      "statement": "pyproject.toml documents that markers are registered in conftest.py via pytest_configure, with no inline marker declarations",
+      "id": "claim_6d46f6bd764d48b591223e6e7de19e98",
+      "statement": "requires_rust is the most widely applied decorator and is used by tests/test_alignment_rust_parity.py, tests/test_inverted_index.py, tests/test_rust_prepare_with_embeddings.py, tests/test_paraphrase_support.py, and tests/test_citations_api.py; requires_rust_blocks is narrower and is used by the multi-span evidence and align_pair_blocks_details tests in tests/test_alignment_rust_parity.py and by tests/test_citations_multi_span.py.",
       "evidence": [
         {
-          "resource": "repo://pyproject.toml#L73-L73",
-          "version": "repo-lines-v1:sha256:30f0a88c7a7c2249225e4115ad2e9d69cfab09d2e9bc7d86f0d01e0a1fa14778:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzBmMGE4OGM3YTdjMjI0OTIyNWU0MTE1YWQyZTlkNjljZmFiMDlkMmU5YmM3ZDg2ZjBkMDFlMGExZmExNDc3OCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzBmMGE4OGM3YTdjMjI0OTIyNWU0MTE1YWQyZTlkNjljZmFiMDlkMmU5YmM3ZDg2ZjBkMDFlMGExZmExNDc3OCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzk4M2NkYThkMDJlMzE4YjE5YTMzYWY0ZTgxYzJmZjhkZjQ4Y2IzMmQzOGRhNWMyNzBhNDY4YmVhZTczNDQxOCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOWM3MDk1NzM4ZDBiNTgzZmY1NDI0Mjk2Y2Y0NGYzMTMzMTczOGQ1ZDJmMjI4ZWI3MWJhY2JhYTQ1ODc3YmFhNSJ9"
+          "resource": "repo://tests/test_alignment_rust_parity.py#L1-L201",
+          "version": "repo-lines-v1:sha256:53fbb8b57e85148c82bde1c431a9f0cb95aa88044c2ec02c46a37e4576a79170:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAxLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJmYWFhNmIyYjQ5NWM3NTYzM2M5NThiNThhNjUzNWJkNjU1OGE0Y2JkMGYyNDg3ODQzMGQwYzc4OWQ4NDg2ZmFjIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJlZGFlNTg2YTUxNzEwMTMyYTU0NDg1OTVkNjA5ZmJjNTkxNTdkMWI4N2RmMWEzZmJkM2RmNmQ5OGYxMWI5N2JkIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MCwicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIzYWFhZjUwMDJhOWE3Y2QzZDdmZDg3ZGUyYmE3Y2Y3OGYwNzE2NjEyYzU4YWU4Y2MzOThlOGVlMTVhNDZlYzI5In0"
+        },
+        {
+          "resource": "repo://tests/test_citations_multi_span.py#L1-L130",
+          "version": "repo-lines-v1:sha256:12f8d46501190410099185828c7d580fc6c264c8551207d77ea437c7db02e6e8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJlYzE5ODVkNmVjZjhmNzBkNmZjZGJkOTI0NDc2MGFhOWNhM2UxYzE5ZDZjN2JmNWNlYjU1NmJmMDM5ZDMwOWQ1IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIxMzFhZjc0MDQ0YTFlYWMyZmExNDJlMDgzNGU5OTIyZmRmZTMwYzliOTA0YmFjNzI0NDNhNzI3YTUwMzM4MWQ4IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MCwicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJiYTNhOWFjODMxNDkwZmM2Yjc3YmE4MjYxYTE0MGJhYWNlNWQ0NGJiZjFlNjI1MDJmNWFhZmY2ZGZhYzFhMDk0In0"
+        },
+        {
+          "resource": "repo://tests/test_inverted_index.py#L1-L200",
+          "version": "repo-lines-v1:sha256:1bfecfcb286730711620313ce5eadc9eb8c53baac8a7885b12904239b954ceaa:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJmY2YzMjBiNmU4NzAzYjgzNTM3MDFiMjA0ODY4NWNlODVlOTM5OGYwZTU0ZWZjYzZiZDY4NWEwZTQ2YWQ2OWViIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJhNjE0OGMzYzY4NmRhODMwZTVmMTI4MzQ0MzczNTE3ZTIwMmQxMGYzM2NlN2Y0YmM5YWUxOWNhMGZmODAxZDEzIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MCwicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI2YTNjYzc5OTA0Yzg5ODIzNDJiYmRhNTc2NGE4MTg0ZjU3ZDA5ODcwMWE5NmEzYTM0Y2M4NDliMGQ4Yjg5OWZlIn0"
+        },
+        {
+          "resource": "repo://tests/test_rust_prepare_with_embeddings.py#L1-L210",
+          "version": "repo-lines-v1:sha256:44906e3b8dd858ffe0e2e7141db0808b55733f854dd9e444281bb9042768e692:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI3M2I5Njg4OGE4MTRjZTg4NGJkMTk4MmQ0NzE0YzlhNjY1YmQ5YTQ4MDE2NDE3NTJhN2E4YWJkY2NiOWMxZjNlIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJhZGQyNDQ1ODJiNmZiMDNkMjNiODQxNWFiZWNkMzQ2YjBjOWY0NjZiNmY3NTJiMDY4MTg5Y2U3ZTlhMmRjMzUwIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MCwicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI1NzJlNGZhZmVjN2FiMzFkZWI1NmUyMmYxN2JhNzljMDIxOGQ3ZDA2MDc5ZGZmY2QzOTI0MDc2NzIzMGFhOWIzIn0"
         }
       ]
     },
     {
-      "id": "claim_20f54b0cd3eb4307aaeb8e3ba4df3228",
-      "statement": "The requires_spacy_model skipif checks for both spaCy availability and the en_core_web_sm model specifically",
+      "id": "claim_4b6994415001437f9598205720b19de6",
+      "statement": "The convention across the test suite is to pair the matching fixture with the matching decorator (requires_rust with rust_core, requires_rust_blocks with rust_core_with_blocks), so the skip message stays honest; tests that do not take the fixture still skip because the conftest's probe has already done the work to decide.",
       "evidence": [
         {
-          "resource": "repo://tests/conftest.py#L106-L137",
-          "version": "repo-lines-v1:sha256:2e06752f0b5bdb4ea0908c001c6fda8df4039bebdcfc0d58fb3a5c371d688df5:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFiMmIwZjQ5Y2M1MDA1NDNmNTExZjZhYWYwNTMyZDdjOTdmY2VkMDZlNjdlMWIxZDdkZWUzYWFhN2RkZWEwZDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhZmJhMDUyN2MzOTUzYzRiNmUwZTViNTczOWJhODM2MTJmODA1M2JjZGM5NDY2NzMwMTkzY2QxZDU5MGI0MDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhlMGJmMTk1OWYxNmNlNmE3ZGYyYTI4NWI4ZGQzZDM5M2M1NWI1ZGVhNWE3Y2IwNDkxYTAzOTY0MmRlZjZiMTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzN2VkNTI0YzMxMzA4ODg1ZTEzODI1MmI5M2Y1ZTVlNTU5ZTU0OGU5MDgzZDdkMWMwYmQ5Mjk4NTdmMjdiNTIifQ"
+          "resource": "repo://tests/conftest.py#L58-L93",
+          "version": "repo-lines-v1:sha256:a8056c4d299ae7efdf8f0aca481062b60d1080fe3e12f948c4acb9657d864315:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIzZjM2NmI5YmQ5YThkMGYzNDBhMmJjMGJlMWUyMmVlYTIwNTY4ZGQ3OGE0NTI4MWI3MjFiMzBmMjJkMDg3ZjAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhZmJhMDUyN2MzOTUzYzRiNmUwZTViNTczOWJhODM2MTJmODA1M2JjZGM5NDY2NzMwMTkzY2QxZDU5MGI0MDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMxMjlkMjZmYjg1NTI4ZDk5ZWY2ZmMxNWMxY2M4Y2RlZTMxNDgwMjVmYTZhMzI4ZTdlNzc3OTg3MzgxZGE4OGQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzN2VkNTI0YzMxMzA4ODg1ZTEzODI1MmI5M2Y1ZTVlNTU5ZTU0OGU5MDgzZDdkMWMwYmQ5Mjk4NTdmMjdiNTIifQ"
+        },
+        {
+          "resource": "repo://tests/test_alignment_rust_parity.py#L33-L201",
+          "version": "repo-lines-v1:sha256:1e66a235c7dd52422c772339efd31855817e11ff5f01f64ac0ac0d9d3182201d:eyJzZWxlY3RlZExpbmVDb3VudCI6MTY5LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJlZGFlNTg2YTUxNzEwMTMyYTU0NDg1OTVkNjA5ZmJjNTkxNTdkMWI4N2RmMWEzZmJkM2RmNmQ5OGYxMWI5N2JkIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJlZGFlNTg2YTUxNzEwMTMyYTU0NDg1OTVkNjA5ZmJjNTkxNTdkMWI4N2RmMWEzZmJkM2RmNmQ5OGYxMWI5N2JkIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI4Y2M0YTdkMWNjNzk2YWJhM2U0NjcyMzMyN2Y1MTdlOWY4MTE5ODJkMjUwZjA3MDI5ODZlNGI1NzY0YWQ5NTg5IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiIzYWFhZjUwMDJhOWE3Y2QzZDdmZDg3ZGUyYmE3Y2Y3OGYwNzE2NjEyYzU4YWU4Y2MzOThlOGVlMTVhNDZlYzI5In0"
         }
       ]
     },
     {
-      "id": "claim_a6034cdee4ed4dada2a9cd79e608b17d",
-      "statement": "requires_embeddings, requires_tiktoken, requires_huggingface, and requires_pysbd use importlib.util.find_spec to detect optional dependency availability",
+      "id": "claim_c963de9846434b93becb7aa339bec46e",
+      "statement": "The Rust extension entry points that tests in this repo depend on are exposed in rust_core/src/lib.rs, including align_pair, align_pair_details, align_pair_blocks_details, align_best, align_best_details, align_batch_details, align_batch_blocks_details, align_topk_details, rust_tokenize_and_prepare, and rust_build_citations_fast; the absence of align_pair_blocks_details in an older abi3 wheel is the case the rust_core_with_blocks capability check guards against.",
       "evidence": [
         {
-          "resource": "repo://tests/conftest.py#L145-L204",
-          "version": "repo-lines-v1:sha256:63e011956d418fd6179ca9a3d56b7e79b1a73f5533597bdae8731383a05fcecd:eyJzZWxlY3RlZExpbmVDb3VudCI6NjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk2M2MyYWE4YWMyMzNhZGI5ZWRhOGRkMThlZTAxNTkwODgxYWI1NWYwNWM4ODhjOWY0NTA4MzY0MzVmY2U5NGEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhZmJhMDUyN2MzOTUzYzRiNmUwZTViNTczOWJhODM2MTJmODA1M2JjZGM5NDY2NzMwMTkzY2QxZDU5MGI0MDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVhOWIyYWI3NzM2ZjI5Y2FiNTdkYjZiMWUzMWVlNmJhMmUxYmNhMmQ0NzlmYjEwODE0NTdlZDE1MWUyNDgxZTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzN2VkNTI0YzMxMzA4ODg1ZTEzODI1MmI5M2Y1ZTVlNTU5ZTU0OGU5MDgzZDdkMWMwYmQ5Mjk4NTdmMjdiNTIifQ"
+          "resource": "repo://rust_core/Cargo.toml",
+          "version": "repo-file-v1:sha256:7624cfdebb94a5757a882917d8295c13b17233d19627f9590ee0af377c6d9bad"
+        },
+        {
+          "resource": "repo://rust_core/src/lib.rs#L1-L450",
+          "version": "repo-lines-v1:sha256:07dbfb2ae43aa3478b4563e938647e02ac13cf6d4adb285429efd5fdc23cef6b:eyJzZWxlY3RlZExpbmVDb3VudCI6NDUwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI2YWRjNTNjYjljYmQwOTFhMWVjMTNmNTMxZDVmOWNjNjRiNzBjMzY1YjQ2ZWQzY2ViNjFkNjg3MmNhZTU5NmE2IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MjA3MGE2MTU3OWQ2NDA1ZWU3YjA3OGFhYjcyYTA5YzgwM2MzZjRkNWM1OTc2YWE1ZGY2NDAwMTE5ZTE1OTg2IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MCwicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI0NDQ1ZTY3MTRlOWVlYzQzMzQ4MDY4MzhmNmZkNWNmY2JhZGYwODUwODQ1NWNiMGQ1NzViMTVhMjIyYjViZDU3In0"
         }
       ]
     }
   ],
   "verification": {
     "by": "openwiki/0.4.0",
-    "at": "2026-08-25T18:44:12.628Z"
+    "at": "2026-08-26T03:32:47.432Z"
   }
 }
