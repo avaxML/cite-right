@@ -1,10 +1,13 @@
+
 # Quickstart
 
-This guide walks through building a complete citation pipeline from scratch. By the end, you will understand how to align generated text to source documents and extract actionable citation information.
+This page walks through the basic Cite-Right pattern, the shape of what `align_citations` returns, what the three status values mean, how to feed multiple sources, and how to reuse a prepared corpus when you have a fixed source set and many answers to score against it.
+
+For installation and the optional extras, see [Installation](installation.md). For the I/O contract and what each field on `SpanCitations` and `Citation` means, see [Citation Alignment](../concepts/citation-alignment.md). For the end-to-end pipeline, see [How It Works](../concepts/how-it-works.md). For tuning, see [Citation Config](../configuration/citation-config.md).
 
 ## The Basic Pattern
 
-Working with Cite-Right follows a straightforward pattern. You provide an answer (the generated text you want to cite) and a collection of source documents (the reference material that may contain supporting evidence). The library analyzes the answer, segments it into individual claims, and finds the best matching evidence in your sources.
+Cite-Right takes a generated answer and a collection of source documents, and returns character-accurate citations for each span of the answer. The default tokenizer is `SimpleTokenizer`, the default answer segmenter is `SimpleAnswerSegmenter`, and the default source segmenter is `SimpleSegmenter`.
 
 ```python
 from cite_right import SourceDocument, align_citations
@@ -14,20 +17,23 @@ answer = "Acme Corporation reported revenue of 5.2 billion dollars in 2024."
 sources = [
     SourceDocument(
         id="annual_report",
-        text="Acme Corporation reported revenue of 5.2 billion dollars in 2024, representing a 12% increase over the previous year.",
+        text=(
+            "Acme Corporation reported revenue of 5.2 billion dollars in 2024, "
+            "representing a 12% increase over the previous year."
+        ),
     )
 ]
 
 results = align_citations(answer, sources)
+print(results[0].status)
+print(results[0].citations[0].evidence)
 ```
 
-The `results` variable now contains a list of `SpanCitations` objects, one for each sentence or clause in the answer. Each object includes the answer text, its position within the full answer, and any citations found.
+`sources` also accepts plain `str` and `SourceChunk` objects; mixing forms in one call is fine. Plain strings are auto-assigned ids like `"source_0"`. Real pipelines should pass named `SourceDocument` or `SourceChunk` so citations carry stable `source_id` values.
 
-Install the matching release with `pip install cite-right==0.4.0`. The public functions you will use are `align_citations` and, for repeated source sets, `PreparedCitationCorpus`.
+## Reading The Results
 
-## Understanding the Results
-
-Let us examine what the alignment returns in detail.
+`align_citations` returns a `list[SpanCitations]`, one per answer segment. Each result carries the answer span, a ranked list of citations, optional `retrieval_support`, and a `status`.
 
 ```python
 for result in results:
@@ -42,47 +48,75 @@ for result in results:
         print(f"  Score: {citation.score:.3f}")
 ```
 
-The `status` field indicates how well the answer span is supported. `"supported"` means the alignment found strong evidence in the sources. `"partial"` indicates some support was found but it may not cover the entire claim, or a cheap contradiction check downgraded the span. `"unsupported"` means no matching evidence survived filtering. The literal is `"partial"`, never `"partially_supported"`.
+`result.answer_span.char_start` and `result.answer_span.char_end` are the half-open character offsets of the segment inside the full answer string. The same half-open convention applies to `citation.char_start` and `citation.char_end` inside the source document, and the invariant `source.text[citation.char_start:citation.char_end] == citation.evidence` always holds after chunk rebasing. The same applies to `EvidenceSpan` in multi-span mode.
 
-Each citation provides the `source_id` identifying which document contains the evidence, the `evidence` text itself, and character offsets (`char_start` and `char_end`) pointing to the exact location in that source document.
+`citation.score` is a weighted sum of components (`alignment_score`, `answer_coverage`, `evidence_coverage`, `lexical_score`, `embedding_score`, and others). `citation.components["answer_coverage"]` is the fraction of answer tokens that the alignment matched, and it is the value that drives `status`.
 
-0.4.0 still localizes with Smith-Waterman. An inverted index chooses which source windows get that alignment. Grounded paraphrases can receive a citation from content-word overlap when sequential coverage is low.
+## Status Values
 
-## Working with Multiple Sources
+`status` is one of three literals: `"supported"`, `"partial"`, or `"unsupported"`. The literal is exactly `"partial"`, never `"partially_supported"`. Status comes from the best exact citation's `answer_coverage` and the contradiction check, not from embedding similarity.
 
-Real applications often retrieve several documents that might contain relevant information. Cite-Right handles multiple sources naturally, finding the best evidence across all of them.
+`"supported"` means the top-ranked citation's `answer_coverage` is at least `supported_answer_coverage` (default `0.6`) and the contradiction check did not fire. The claim is well-grounded in sources.
+
+`"partial"` means citations exist but coverage is below `supported_answer_coverage`, **or** the contradiction check fired. The literal is `"partial"`, never `"partially_supported"`. The evidence exists; the span just does not clear the supported threshold, or the claim conflicts with what the source actually says. Source `"The vaccine is safe and effective."` paired with answer `"The vaccine is not safe."` resolves to `"partial"` with citations, not to `"unsupported"`.
+
+`"unsupported"` means no citation survived filtering. The span may be hallucinated, paraphrased beyond recognition, or simply outside the provided sources. `"unsupported"` is "no localized citation survived," not a high-precision hallucination label. On RAGTruth test (2,675 answers), unsupported precision is about 14%, so `"unsupported"` overflags relative to gold hallucination labels.
+
+The thresholds live on `CitationConfig`. The supported threshold is `supported_answer_coverage` (default `0.6`); the lower gate that decides whether a candidate even becomes a `Citation` is `min_answer_coverage` (default `0.2`).
+
+```python
+from cite_right import CitationConfig, align_citations
+
+results = align_citations(
+    answer,
+    sources,
+    config=CitationConfig(supported_answer_coverage=0.6, top_k=3),
+)
+```
+
+## Working With Multiple Sources
+
+Real applications retrieve several documents. Cite-Right scores against every source and returns the best matches across the whole list.
 
 ```python
 sources = [
     SourceDocument(
         id="earnings_call",
-        text="During the Q4 earnings call, CEO Jane Smith noted that revenue reached 5.2 billion dollars, exceeding analyst expectations.",
+        text=(
+            "During the Q4 earnings call, CEO Jane Smith noted that revenue "
+            "reached 5.2 billion dollars, exceeding analyst expectations."
+        ),
     ),
     SourceDocument(
         id="press_release",
-        text="Acme Corporation today announced fourth quarter revenue of 5.2 billion dollars, a new company record.",
+        text=(
+            "Acme Corporation today announced fourth quarter revenue of "
+            "5.2 billion dollars, a new company record."
+        ),
     ),
     SourceDocument(
         id="market_analysis",
-        text="Industry analysts had predicted Acme would report between 4.8 and 5.0 billion in revenue for the quarter.",
+        text=(
+            "Industry analysts had predicted Acme would report between 4.8 "
+            "and 5.0 billion in revenue for the quarter."
+        ),
     ),
 ]
 
 answer = "Revenue reached 5.2 billion dollars, exceeding expectations."
-
 results = align_citations(answer, sources)
 
 for result in results:
-    print(f"'{result.answer_span.text}' -> {result.status}")
+    print(f"{result.answer_span.text!r} -> {result.status}")
     for citation in result.citations:
         print(f"  From {citation.source_id}: {citation.evidence!r}")
 ```
 
-The library automatically ranks citations by quality. By default, it returns the single best match, but you can request multiple citations using the configuration object.
+By default, up to `top_k` citations are returned per answer span (default `top_k=3`). Use `max_citations_per_source` (default `2`) to cap how many citations any one source can contribute to a single span. `retrieval_support` is the list of passages the index or embedder selected that did not localize into an exact citation; it is informational and does not change the status.
 
 ## Handling Multi-Sentence Answers
 
-Generated answers typically contain multiple sentences, each potentially drawing from different sources. The library segments the answer and processes each span independently.
+Multi-sentence answers are segmented first, and each segment is processed independently. The default `SimpleAnswerSegmenter` splits on sentence boundaries; `SpacyAnswerSegmenter` can split coordinated clauses further.
 
 ```python
 answer = """Acme Corporation reported record revenue in Q4.
@@ -91,14 +125,16 @@ European sales exceeded expectations."""
 
 sources = [
     SourceDocument(
-        id="financial", text="Q4 revenue hit a record high at 5.2 billion dollars."
+        id="financial",
+        text="Q4 revenue hit a record high at 5.2 billion dollars.",
     ),
     SourceDocument(
         id="products",
         text="The new product line launched in March drove significant growth.",
     ),
     SourceDocument(
-        id="regional", text="Sales in Europe surpassed all projections by 15%."
+        id="regional",
+        text="Sales in Europe surpassed all projections by 15%.",
     ),
 ]
 
@@ -109,70 +145,62 @@ for result in results:
     print(f"  Status: {result.status}")
     if result.citations:
         best = result.citations[0]
-        print(f"  Best match from '{best.source_id}': {best.evidence!r}")
+        print(f"  Best match from {best.source_id!r}: {best.evidence!r}")
 ```
 
-Each sentence receives its own status and citation list. This granular approach allows your application to display per-sentence confidence indicators.
+Each segment carries its own `answer_span` with `char_start` and `char_end` back into the full answer, and its own status. The `kind` field on `AnswerSpan` reports whether the segmenter produced a `"sentence"`, `"clause"`, or `"paragraph"`.
 
-## Checking for Hallucinations
+## Reusing A Prepared Corpus
 
-When you need to assess the overall quality of a generated response, the hallucination detection functions provide aggregate groundedness metrics. Cite-Right is not a clean hallucination detector. It is a groundedness and citation tagger. On RAGTruth test, unsupported precision is about 14%, so `unsupported` overflags relative to gold hallucination labels.
+`align_citations` rebuilds the inverted index, IDF, and passage windows on every call. When the same source set is queried many times, build a `PreparedCitationCorpus` once and call `corpus.align(answer)` against it.
 
 ```python
-from cite_right import align_citations, compute_hallucination_metrics
-
-answer = "Revenue grew 15% year-over-year. The company will acquire its main competitor next month."
+from cite_right import (
+    CitationConfig,
+    PreparedCitationCorpus,
+    SourceDocument,
+)
 
 sources = [
     SourceDocument(
-        id="report",
-        text="Annual revenue growth was 15% compared to the previous fiscal year.",
-    )
-]
-
-results = align_citations(answer, sources)
-metrics = compute_hallucination_metrics(results)
-
-print(f"Groundedness score: {metrics.groundedness_score:.1%}")
-print(f"Hallucination rate: {metrics.hallucination_rate:.1%}")
-print(f"Supported spans: {metrics.num_supported}")
-print(f"Unsupported spans: {metrics.num_unsupported}")
-```
-
-In this example, the first sentence about revenue growth will be marked as supported because it aligns with the source. The second sentence about acquiring a competitor has no source support and will be flagged as unsupported, contributing to the hallucination rate. If `partial` counts, gold hallucinations are rarely blessed as `supported`.
-
-See [Hallucination Detection](../concepts/hallucination-detection.md) for the limits of these metrics.
-
-## Convenience Functions
-
-For common patterns, Cite-Right provides high-level convenience functions that combine multiple steps.
-
-```python
-from cite_right import is_grounded, check_groundedness, annotate_answer
-
-answer = "The project was completed on time and under budget."
-sources = [
+        id="annual_report",
+        text=(
+            "Acme Corporation reported revenue of 5.2 billion dollars in 2024, "
+            "representing a 12% increase over the previous year."
+        ),
+    ),
     SourceDocument(
-        id="status",
-        text="Project completion occurred ahead of schedule and below the allocated budget.",
-    )
+        id="press_release",
+        text=(
+            "Acme Corporation today announced fourth quarter revenue of "
+            "5.2 billion dollars, a new company record."
+        ),
+    ),
 ]
 
-# Simple boolean check
-if is_grounded(answer, sources, threshold=0.5):
-    print("Answer is well-grounded in sources")
+corpus = PreparedCitationCorpus.from_sources(
+    sources, config=CitationConfig(top_k=3)
+)
 
-# Get detailed metrics in one call
-metrics = check_groundedness(answer, sources)
-print(f"Score: {metrics.groundedness_score:.1%}")
+answers = [
+    "Acme Corporation reported revenue of 5.2 billion dollars in 2024.",
+    "Revenue increased during fiscal year 2024.",
+    "The press release announced record quarterly revenue.",
+]
 
-# Add inline citations to the text
-annotated = annotate_answer(answer, sources)
-print(annotated)  # Adds [1] markers to supported text
+for answer in answers:
+    for result in corpus.align(answer):
+        print(f"{result.answer_span.text!r} -> {result.status}")
 ```
 
-The `annotate_answer` function inserts citation markers directly into the text, producing output suitable for display in applications that use footnote-style citations.
+`PreparedCitationCorpus.from_sources` returns the same corpus whether the optional Rust extension is present or not. On the default / Rust path (with `SimpleTokenizer` and `SimpleSegmenter`), the corpus builds an inverted index and rare-token intersect chooses which source windows are worth aligning. When the Rust extension is missing, or you supply a custom tokenizer or segmenter, `from_sources` leaves `inverted_index=None` and the candidate selector falls back to lexical prefilter. In both cases, `align` returns the same `SpanCitations` shape and the same status values.
+
+If an embedder is set on `from_sources`, the corpus also builds an embedding index on top of the prepared candidates. `_add_embedding_candidates` can add non-index windows before alignment; those extras still go through Smith-Waterman, and any passage that does not localize into a `Citation` lands in `retrieval_support`. Embedding-only `retrieval_support` still respects `min_embedding_similarity`. The same prepared corpus can be reused for every answer in a session.
+
+## What Status Comes From
+
+Status is driven by the top-ranked exact `Citation` and the contradiction check, not by embedding similarity. Concretely, the per-span logic in `_span_status` looks at `citations[0].components["answer_coverage"]`. If that coverage meets `supported_answer_coverage` and `check_contradiction` is clean, the status is `"supported"`. If contradiction fires, the status is `"partial"`, never `"unsupported"` — the evidence exists, it just conflicts with the claim. If coverage is below the threshold, the status is `"partial"`. If `citations` is empty, the status is `"unsupported"`. A high embedding score that never localizes is `retrieval_support`, not a `Citation`, and it does not change the status.
 
 ## Next Steps
 
-This quickstart covered the fundamental operations. The [Citation Alignment](../concepts/citation-alignment.md) page explains the algorithm and scoring in depth. The [Configuration](../configuration/citation-config.md) section describes how to tune the alignment behavior for your specific use case.
+[Citation Alignment](../concepts/citation-alignment.md) covers the full I/O contract: `SourceDocument` and `SourceChunk` inputs, `SpanCitations` and `Citation` outputs, and the half-open offset convention. [How It Works](../concepts/how-it-works.md) walks the pipeline end to end, including the index-first candidate selector, the Smith-Waterman localizer, and the contradiction check. [Citation Config](../configuration/citation-config.md) is the reference for every knob on `CitationConfig`, including the status thresholds, candidate caps, multi-span evidence, and the `strict`, `permissive`, `fast`, and `balanced` presets. [Embedding Retrieval](../advanced/embedding-retrieval.md) and [Rust Acceleration](../advanced/rust-acceleration.md) cover the embedder path and the Rust extension that powers the default pipeline.

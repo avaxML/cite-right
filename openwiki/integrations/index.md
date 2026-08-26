@@ -1,4 +1,5 @@
 # Files
 
-- [Framework adapters](framework-adapters.md) - Utility functions that convert LangChain Documents, LlamaIndex nodes, and plain dictionaries into cite-right SourceDocument and SourceChunk objects for citation alignment.
-- [Text pipeline pluggability](text-pipeline.md) - Pluggable Tokenizer, Segmenter, AnswerSegmenter, and Embedder Protocols and their bundled implementations for the citation alignment pipeline.
+- [Custom Sources](custom-sources.md) - How to feed non-framework retrieval into Cite-Right — build SourceDocument and SourceChunk directly, use from_dicts for plain dictionaries, and pass the result to align_citations. Covers chunk-rebase offsets, the document_text validation, and the evidence equality invariant.
+- [LangChain Integration](langchain.md) - How to feed LangChain retrievers into Cite-Right — convert langchain_core Document lists to SourceDocument with from_langchain_documents, preserve chunk offsets with from_langchain_chunks, and call align_citations. Covers the id_key fallback, start_index handling, and LANGCHAIN_AVAILABLE.
+- [LlamaIndex Integration](llamaindex.md) - How to feed LlamaIndex retrievers into Cite-Right — convert TextNode and NodeWithScore lists to SourceDocument with from_llamaindex_nodes, preserve chunk offsets with from_llamaindex_chunks, and call align_citations. Covers the id_key fallback, the file_name default, start_char_idx handling, and LLAMAINDEX_AVAILABLE.

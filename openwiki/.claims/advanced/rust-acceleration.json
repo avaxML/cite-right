@@ -1,0 +1,170 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:3b8c5ec1dd3b6957d9dc27d2b220d46ea780b728bd5e8e7a02b036529a01a3c4",
+  "claims": [
+    {
+      "id": "claim_bdd136ee0dd1493c809f4a4342180383",
+      "statement": "Cite-Right 0.4.0 ships an optional native extension at cite_right._core that reimplements prepare, the inverted index, and Smith-Waterman alignment in Rust, published as abi3 wheels (abi3-py311) including linux/aarch64 plus an sdist.",
+      "evidence": [
+        {
+          "resource": "repo://rust_core/Cargo.toml",
+          "version": "repo-file-v1:sha256:7624cfdebb94a5757a882917d8295c13b17233d19627f9590ee0af377c6d9bad"
+        },
+        {
+          "resource": "repo://rust_core/src/lib.rs",
+          "version": "repo-file-v1:sha256:007205c3e5595e8f4fb446db55b9bd5b0f356a7459bfa3ce164578c34f960d85"
+        },
+        {
+          "resource": "repo://src/cite_right/_core.pyi",
+          "version": "repo-file-v1:sha256:4f437437e50ab896ab92fc0684268316d2c381116780197fab33872e576389c5"
+        }
+      ]
+    },
+    {
+      "id": "claim_ee2066beb78840f99e368fee9d7c49f5",
+      "statement": "The default / Rust path is index-first: the inverted index chooses which source windows are worth aligning, and Smith-Waterman still localizes char_start / char_end on the selected windows plus any embedding extras.",
+      "evidence": [
+        {
+          "resource": "repo://rust_core/src/inverted_index.rs",
+          "version": "repo-file-v1:sha256:2f838775b4ad0ff79fc7759c1426fcd395a8ccbafd992dbcbd596c6505637747"
+        },
+        {
+          "resource": "repo://src/cite_right/citations.py",
+          "version": "repo-file-v1:sha256:8267869be9c1dd05cc8ca65c96add4ca1ae2188c5c69db5a071c1afc351f21cf"
+        }
+      ]
+    },
+    {
+      "id": "claim_c56209a5ec9b48a5aa19dca8e63e74c7",
+      "statement": "PreparedCitationCorpus.from_sources takes the Rust prepare path only when use_rust=True (default), cite_right._core imports successfully, the tokenizer is a SimpleTokenizer, and the source segmenter is a SimpleSegmenter; otherwise the Python prepare path runs and the resulting corpus has inverted_index=None and rust_corpus=None.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/prepared_corpus.py",
+          "version": "repo-file-v1:sha256:ed1affccdd3e7e2367f6807e8e33608aaa762b17ee7e460a9266430d0463dfee"
+        }
+      ]
+    },
+    {
+      "id": "claim_4627500e37ad44efa5598e2efdff6938",
+      "statement": "Rust prepare still runs with an embedder set when SimpleTokenizer and SimpleSegmenter are in use, so the embedding index is built on the Rust-prepared candidates; the 0.3.x skip of Rust prepare on the embedder path is gone.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/prepared_corpus.py",
+          "version": "repo-file-v1:sha256:ed1affccdd3e7e2367f6807e8e33608aaa762b17ee7e460a9266430d0463dfee"
+        }
+      ]
+    },
+    {
+      "id": "claim_5b2f371af2e749039c2db20441710633",
+      "statement": "align_citations and PreparedCitationCorpus.align accept a backend argument with three values: \"auto\" (default, try Rust then fall back), \"python\" (force SmithWatermanAligner), and \"rust\" (require RustSmithWatermanAligner, raise on construction failure).",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py",
+          "version": "repo-file-v1:sha256:8267869be9c1dd05cc8ca65c96add4ca1ae2188c5c69db5a071c1afc351f21cf"
+        },
+        {
+          "resource": "repo://src/cite_right/core/prepared_corpus.py",
+          "version": "repo-file-v1:sha256:ed1affccdd3e7e2367f6807e8e33608aaa762b17ee7e460a9266430d0463dfee"
+        }
+      ]
+    },
+    {
+      "id": "claim_348fd3855c3f4cc1af616b6718392571",
+      "statement": "_default_aligner constructs RustSmithWatermanAligner first under backend=\"auto\" and falls back to SmithWatermanAligner on RuntimeError; backend=\"rust\" propagates the RuntimeError so the caller sees a missing or mismatched extension.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py",
+          "version": "repo-file-v1:sha256:8267869be9c1dd05cc8ca65c96add4ca1ae2188c5c69db5a071c1afc351f21cf"
+        }
+      ]
+    },
+    {
+      "id": "claim_97c663c819904c6e83706138b1a73eb8",
+      "statement": "When cite_right._core is missing, the same PreparedCitationCorpus API still works, but _select_candidates uses _add_lexical_candidates directly (no conjunctive rare-token intersect), max_candidates_lexical is still the cap, and pure-Python SmithWatermanAligner handles alignment including return_match_blocks for multi-span.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py",
+          "version": "repo-file-v1:sha256:8267869be9c1dd05cc8ca65c96add4ca1ae2188c5c69db5a071c1afc351f21cf"
+        },
+        {
+          "resource": "repo://src/cite_right/core/prepared_corpus.py",
+          "version": "repo-file-v1:sha256:ed1affccdd3e7e2367f6807e8e33608aaa762b17ee7e460a9266430d0463dfee"
+        }
+      ]
+    },
+    {
+      "id": "claim_5602d1a366bb4aea9813aaea6b6dceea",
+      "statement": "With an embedder on the Rust path, lexical scores are filled only for inverted-index seeds, embedding-only extras keep lexical_score == 0.0, _add_embedding_candidates may add non-index windows before Smith-Waterman, those extras still need Smith-Waterman, and retrieval_support is not a Citation and does not flip status.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py",
+          "version": "repo-file-v1:sha256:8267869be9c1dd05cc8ca65c96add4ca1ae2188c5c69db5a071c1afc351f21cf"
+        }
+      ]
+    },
+    {
+      "id": "claim_cb8b6c2b8515447fb463372691d7c304",
+      "statement": "The Rust inverted index uses conjunctive rare-token intersect: query tokens are sorted by posting count, the intersection of the rarest tokens is taken first, and the result is capped at max_candidates, implemented by both InvertedIndex.query and PreparedCorpus.query_index.",
+      "evidence": [
+        {
+          "resource": "repo://rust_core/src/inverted_index.rs",
+          "version": "repo-file-v1:sha256:2f838775b4ad0ff79fc7759c1426fcd395a8ccbafd992dbcbd596c6505637747"
+        },
+        {
+          "resource": "repo://src/cite_right/citations.py",
+          "version": "repo-file-v1:sha256:8267869be9c1dd05cc8ca65c96add4ca1ae2188c5c69db5a071c1afc351f21cf"
+        }
+      ]
+    },
+    {
+      "id": "claim_3aa60a7fddb64668b149bcae5427324d",
+      "statement": "Rust entry points release the Python GIL via py.detach(...) during alignment, query, and citation building, and use rayon to parallelize across candidate windows and across candidates respectively, so a Python ThreadPoolExecutor can use multiple cores on the alignment hot path.",
+      "evidence": [
+        {
+          "resource": "repo://rust_core/src/inverted_index.rs",
+          "version": "repo-file-v1:sha256:2f838775b4ad0ff79fc7759c1426fcd395a8ccbafd992dbcbd596c6505637747"
+        },
+        {
+          "resource": "repo://rust_core/src/lib.rs",
+          "version": "repo-file-v1:sha256:007205c3e5595e8f4fb446db55b9bd5b0f356a7459bfa3ce164578c34f960d85"
+        },
+        {
+          "resource": "repo://rust_core/src/prepared_corpus.rs",
+          "version": "repo-file-v1:sha256:3f781f66dcada1e2b69e592dc252fca60569e7888679c6341666356efe4382d1"
+        },
+        {
+          "resource": "repo://rust_core/src/smith_waterman.rs",
+          "version": "repo-file-v1:sha256:8262734201dfec43c6b2c4333cf542432d433300b240f31b2aacc585c370a5e1"
+        }
+      ]
+    },
+    {
+      "id": "claim_b5d73ad7f3b647e8af219c83e2913cb5",
+      "statement": "Multi-span evidence requires align_pair_blocks_details and align_batch_blocks_details on the extension; a RustSmithWatermanAligner built with return_match_blocks=True raises at construction time on an extension that does not expose them, rather than silently producing empty evidence_spans.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/aligner_rust.py",
+          "version": "repo-file-v1:sha256:2dd58bb3adeccf04d2f9ec4e7a5e247ade4043ab8b0f405cbefaf279ca0fc001"
+        }
+      ]
+    },
+    {
+      "id": "claim_7455d446094f454f841f68e76788a483",
+      "statement": "The Rust aligner is required to match the Python aligner exactly: same status, same char_start / char_end, same evidence, same evidence_spans when multi_span_evidence is on, same components, and same retrieval_support; deterministic tie-breaking and identical score normalization are part of the contract.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/aligner_py.py",
+          "version": "repo-file-v1:sha256:a395842946ce7e9c8860e0160d54ce76ce0d81d1721916f6fcfdebfc6552715c"
+        },
+        {
+          "resource": "repo://src/cite_right/core/aligner_rust.py",
+          "version": "repo-file-v1:sha256:2dd58bb3adeccf04d2f9ec4e7a5e247ade4043ab8b0f405cbefaf279ca0fc001"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.4.0",
+    "at": "2026-08-26T03:32:47.432Z"
+  }
+}

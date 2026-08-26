@@ -1,0 +1,166 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:e98c74e73b7c86dbe210c6f48a1a332a740e5e1fdc69c371b542ae6c56b4a967",
+  "claims": [
+    {
+      "id": "claim_2649e1d1dd774de583cc38df96dc94de",
+      "statement": "Cite-Right's tokenizer surface is a single `Tokenizer` protocol in `src/cite_right/core/interfaces.py` that exposes `tokenize(text) -> TokenizedText`, is `@runtime_checkable`, and is implemented by `SimpleTokenizer` (default), `HuggingFaceTokenizer`, and `TiktokenTokenizer`.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/__init__.py#L65-L67",
+          "version": "repo-lines-v1:sha256:c312a5eb8ff3088a04948d2dc89c7cb4c8a6aab7731a54ca0bc7db1cf5a052ee:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYTY5OTlhNzM4YThkMDQzN2M1NmVmMGZkMGJhOGFiODEyMmIyMjA5ZWRlYzYzMmZjMWNkN2E3YmE1MDEwZDk1OSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTUxYzk5ZTg2ZGNmMDljYzU2YmRhODI2ZTY5NDA1N2ZiYTZmMDg3OTA0Zjc5NTk2MzhkMTMzYjkwZTFiNGQ2MSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNzkyM2ZkZmU4ZWY4ODg4NmY5N2Y2YmIzNjQ2ODE2YTlhNzU5YTg4ZWIxZWU2ZWQzOGNlNzU5MDUwYjU1YzQ4OSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTQzMWUyZjVmYzgyN2ZlMDlmNWZhZTI4MDJjMzZhOWE0NDc2ZWQ2NDU0N2FkMjIwZjhkN2NmOGE3ZDEwMjgxYyJ9"
+        },
+        {
+          "resource": "repo://src/cite_right/core/interfaces.py#L10-L31",
+          "version": "repo-lines-v1:sha256:4645809795e84f5fae19001d5c4794cca3280c086d9ab7c8f0789ec651542e78:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwMzA2OWQzZjMyN2IwY2ZkMWQwODcyNzRlYzI3NTY1ODU0ZDg1MmIzMjI1NTNkMzkwMmM4OWY1M2YwMDBlZGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2MjBkODVkZTRlZDdhYjgwMjFiNGE4ZGQ0ZmExNWVjNTE5MjVjZGZjY2RlMTgwNTg5NWE0YzhhM2MzYmE0OGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU2Nzk0YjgyZWZiZmU0NmZhZDk2MTNjM2RmM2E5YWE4YmM2NDU0ZWFlYWE0ZDcxNTA4YTRhOGEzOGJjOThlZWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQzYzYyNWY5MWRmYjhlNGMzZDFlYjFjN2NjNDU3NWNjOGE1NWJhOGE2N2E4ZmM1MjA1MjYwYTBiZDgyYTgyYjIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_95c86dd248404522a70197000419eeab",
+      "statement": "The `TokenizedText` Pydantic model in `src/cite_right/core/results.py` validates, via `_validate_token_spans`, that `token_ids` and `token_spans` have equal length, that every span stays within `text` bounds with `start < end`, and that spans are monotonic and non-overlapping.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/results.py#L10-L45",
+          "version": "repo-lines-v1:sha256:51a2336af6eab8886895cc657834fb67ae818a3d597450d23eec8a567cf1ac90:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk3YjcyNWY2NjBkMjE0YzRjMWE1ZDhhNjJiMDE0NDQ2MjQxMjI4MDk5OGY0MjFkYjQ5ODhjZTg4YTc4Y2M3MWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEyYWIwOTBiY2QxNjIwZmE2MmVhZWUxNTdhNzRmY2E2MzVhYTI5ZTEyY2JmZmQ2MThiNTc5MmQ4N2JjMDNhM2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYyYmUwZWQwNmVkODZhMWJiZWZlOTRkZjk2MWIxNzQzYTFkZTgwODAwYzE1MjA3NzY5OTdmMTUxZmM3YjIyMzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE1YzMzM2U2OThlZWI2YTg5MGQzYjAzYTkzYjFkMWRjZjBkZjY5Y2JkNTBhZGZlMTE5MTQ4YzVjZjcxNjliM2IifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ab5b6e2208754e4f8aa1499982963e7e",
+      "statement": "`SimpleTokenizer` in `src/cite_right/text/tokenizer.py` is a dependency-free, rule-based default tokenizer that tokenizes by walking the text once, applies Unicode NFKC and case-folding, folds curly-quote and dash variants to ASCII, and returns `TokenizedText` with `token_spans` pointing into the original (unnormalized) text so the citation rebase stays correct.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/text/tokenizer.py#L231-L298",
+          "version": "repo-lines-v1:sha256:003848b9b073650a9ce3b8407ab467b3e028bf2c472bafff0d259e232b31b5fb:eyJzZWxlY3RlZExpbmVDb3VudCI6NjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjljZWFlMTU3YmQ1YjU4NzllNjFlMzUwZjVkZjgwZDc3NjkzMzZkNGVhMWYwM2JiYjFlNGZjNjhlY2M5MTM5YWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAyMTI3MTViZWM1OWE0NDFmMTY4MmZmYjUyZTg5YmZhZDk5NzdmNTBmZmY3YWQzZjhhMWQxOTFkZGMzMDhkNDciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAwMmVhNTQ4MjNlYTk1OGJlZmFmZjc0ZTdmNDcyN2JjZmRjYzM0YzQ3NTQ3MGZiMDY2OTkzNmRmNTIxNDMyNmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/text/tokenizer.py#L66-L147",
+          "version": "repo-lines-v1:sha256:988594c206b140dd71c4fa2933d4e50b614bd3f884b224e3ee67c7c686fe5d55:eyJzZWxlY3RlZExpbmVDb3VudCI6ODIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg2NTFiZWZjMzEyODQ4ZDViMDU2ODg1MmU4Yjc3MjNmYzdjMjI1YzJlODJhM2NlYmFlY2ExZGE1ZTMwYTA4MzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBlZjA4ZDczNmE5ZjJjYmFiYmRhM2RjYjQ1ZDRmOTVjOGY0Y2RhNzI1M2Y3MzZiNjIyMTFkYmU1ODE0ZWIzZGIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIzZGYyYWNmMDZlOGMzZjAzYzcxMzVjNmU4YWM1YTljYTU0MzJhYmUwNmE3NGFjYTBmZGQ5YTUzYTAwOGY5ODciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM0OTc4MTdiYzBiNDRmZTJiZjAyMDJhNzg1ZjZlMjY5MmNlOTlkYTQ2MGYyYjg4Zjg2ZDRhY2Q5ZDQ3NGZlZDMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_20167034e17241cc98711f21f6f5348d",
+      "statement": "`TokenizerConfig` in `src/cite_right/text/tokenizer.py` provides three optional normalization knobs on top of `SimpleTokenizer`: `normalize_numbers` (strip `,` from number tokens), `normalize_percent` (map standalone `%` to the word `percent`), and `normalize_currency` (map `$`, `€`, `£` to `dollar`, `euro`, `pound`); all three default to `True`.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/text/tokenizer.py#L11-L63",
+          "version": "repo-lines-v1:sha256:46094847b2ba3ce4f5bb14f66c94063ccb4b9ca99477ce39b56e192c3b32cb60:eyJzZWxlY3RlZExpbmVDb3VudCI6NTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAzMDRmMDM5N2RlZDE0ZDc1MDQ0YjFmYWJlYTRkMWFmZjNjMmRmNjIzZTgwYzE4YjQ1Nzg3MzMwZThmNmNhMjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MDlhNTNhNjE4ZDAyOGUxZDMwMDBjMGE3YWJjZWVjYmU1ZmIzN2Y0ZTUxMWVmZTQ2NjQzZmFkNmU2Njg3MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE4YWU3N2ZmNzExMjg3OGY4NGNhNjAxMWE5NjY1YzQ0MDMzNWIwZTFkMjkwNjQxMDZmOGZhODBmNTc3OGE4YWYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcyNzAyYTc1YTBlYzA4OGVkZjAzMjcyMGNlNDU4MGMwZDNkMjdjOWFhZGIzZWE5ZjI0MzY3NjFlZmQzNGU5MjYifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/text/tokenizer.py#L268-L298",
+          "version": "repo-lines-v1:sha256:36cde12652dea2fffa0dbc5c42da7e311d15af01ca7c3691d1e1e258d1f8447f:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ2YWE0MjhiMWFlYjU1ODFmOWZhY2IwMzk1MDlkNTViNmJmNDhmMDdkNzY2ZmNjZTljMmI1YzIzMDkzZTRiNTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAyMTI3MTViZWM1OWE0NDFmMTY4MmZmYjUyZTg5YmZhZDk5NzdmNTBmZmY3YWQzZjhhMWQxOTFkZGMzMDhkNDciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEzNzhmNmI2NTQyMTZkMWRjMjZlMzNkZDEwYTNmY2FhNTZmMjgyMDMzM2U2M2RiNDk2NDliZGRkZmJhZDdiMjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_11a6fbd650cb412c8a4e759c57cffdb7",
+      "statement": "`SimpleTokenizer` builds its vocabulary lazily in `_vocab` and assigns each new normalized token the next `_next_id`; the Rust prepare path overwrites `_vocab` and `_next_id` from `rust_corpus.get_vocab()` so the Python tokenizer's IDs match the inverted index that prepared the corpus.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/prepared_corpus.py#L198-L217",
+          "version": "repo-lines-v1:sha256:c1bea82c400b56317c5f3a0e9b93db7164e3ac0581e7fab475e625127e30552c:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY0MmMzNWZjOGIzM2ZhNTAzOWEzYjI3YWVjNTA0ZTVjYzYyOTNkZWE5ZDBkOGYyNmRjNjc4NTAyOGRjNjk3ZTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MDlhNTNhNjE4ZDAyOGUxZDMwMDBjMGE3YWJjZWVjYmU1ZmIzN2Y0ZTUxMWVmZTQ2NjQzZmFkNmU2Njg3MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjcwNWJiZTkzYzFlOTY1N2UxNmM1ZDM1OTBlNGVhMGNlMjMwOWNmMTQyYTk3OGMwNTU3YjJiMmYzNGI0ZGRkZDgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIwZDA0NzdkZjY1MTAwMWQ2YzRjZGY5MGIxMDRlYjM1ZWI3ZWNlMzY1MTM0MGRiMWYwZjM1OGJmNzk2NzdkMzMifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/text/tokenizer.py#L75-L112",
+          "version": "repo-lines-v1:sha256:d8d451aded5daaa858f15f38943bfd0d63f82345fda90d3ccd340598c42a036a:eyJzZWxlY3RlZExpbmVDb3VudCI6MzgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImMxZDA5YTFhZmQ1NTU1Njg0MzNmY2ZlNGRhYjE1ZDg3NTkxM2UzYjEyNmMwMGFmMDJlN2EzYmY0OGM5MDEwNjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjczMjVkZTUxMzEyMWUwODljNDVhZGRlNzE3NDRhMzI5YWYwZDEyN2EwZmVjZWU2NzdmZmM3ZmUwYTM5MzBlNTQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJhNzhhZWExNzkxMjcxOTg1ZDhmMjYwNjVlOTgxNTE0NTk3ZTVlNjBkZjdjYzBiYWY5ZjMwMmM0MzY0NmM0NGIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZiMzFlNTc1MzA4ODU3MmI4YWEyN2E1OWRlY2NhYTJlNzgwY2UxOWVjOTJiMDJjNmE5MzFlMzliYTFhZDkxMTQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_4e800259c29b4566b285260bc9126745",
+      "statement": "`HuggingFaceTokenizer` in `src/cite_right/text/tokenizer_huggingface.py` wraps either a `tokenizers.Tokenizer` or a `transformers.PreTrainedTokenizerBase` (discriminated by `_check_tokenizer_type`, raising `TypeError` otherwise), filters out empty-span special tokens, and exposes `from_pretrained` which raises `ImportError` pointing at `cite-right[huggingface]` when `transformers` is not installed.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/text/tokenizer_huggingface.py#L142-L240",
+          "version": "repo-lines-v1:sha256:fe85fd36b0daf25ea88ce7df530585d95f9aefd026a4672abd54d165df0d825a:eyJzZWxlY3RlZExpbmVDb3VudCI6OTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIyMzg2YjQ2NzZmNzI3M2FmZjBkNzg1ZmNiNWRiYmFmZDQwYmYxOWRmNWVmYzQ4ZmE0NTAxZTg5NTI1MTk2NTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MDlhNTNhNjE4ZDAyOGUxZDMwMDBjMGE3YWJjZWVjYmU1ZmIzN2Y0ZTUxMWVmZTQ2NjQzZmFkNmU2Njg3MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM0YmIzZDA1MDgxZWVhMmRmZjQ3ZGNkYTU0NjU4ZGY1OTMzYjE4YjhkMWJlMmQ2NTdhYzkxZTMwYjMyN2EyNTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNkYzk0MTZkZTdhZmZjNGRhZDFiNzc5MDYzYjkyMjY0OGJkMTM2YmQzZjM1YjhhZDEwYWRhMzZiZGUyOGJmZTYifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/text/tokenizer_huggingface.py#L26-L140",
+          "version": "repo-lines-v1:sha256:92134f187569f8bbc32846a0d745202711d676498f9dc9ea4779da1f4859465e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTE1LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwYjg5YjRiMWNkMTUyZGQ0NzA5ZDgwZGUwNTI4ODlhNTdjNTM5ODk1OTJhMDg1Y2NkZWQzOTJlZGRmNGRmYWIxIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI2MjJlZmU5NTU3MTVlYzc1ZjFlZWI1MzNkY2ZiYTJjNjY5ODQxYjdlNDI3OGQwOWY2NjEzMGRlNGFhNWYwMjA0IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJjMmU5NDM4Y2FjMTdlMDFlOGYzYmFlYzJlN2VhN2NhNWJiN2ZhY2VmMjUzNzRhZDBkNTMzYmQzYTI5MzRmMGM0IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI3OTY1ZTg3MGM2OTUwMjg3NzFjZTZiYTZlMzZjY2EyYWIxZWFkMDE2N2M3NWI4Y2UzYWViMzYyZTU3ZjFhODI0In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_17435925ceee45a7aa6bd860325c99f9",
+      "statement": "`HuggingFaceTokenizer` defaults to `add_special_tokens=False` because `[CLS]`, `[SEP]`, and similar markers have empty character spans and would fail the `TokenizedText` invariant that `start < end`; the fast-tokenizer path also defaults to `use_fast=True`.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/text/tokenizer_huggingface.py#L101-L140",
+          "version": "repo-lines-v1:sha256:76f2b908379a9a69aa3e9717cb0bbf0c4fd66eb8c5256f3af6260adac0bf2342:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyMGI0NTNmNWUwYzkyZDVmNmMyNTFhNWVhMTk2MGQ3MmYzYmQwNzk1NmFlODU3ZGEyMGUzMWE4OGM1NTk2OWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYyMmVmZTk1NTcxNWVjNzVmMWVlYjUzM2RjZmJhMmM2Njk4NDFiN2U0Mjc4ZDA5ZjY2MTMwZGU0YWE1ZjAyMDQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU2MGFhMmZmZWQ3MTUzZTY5MjJmZTcyNDg1M2FhYTM3NWQwYTU4ZmVjMDFiMGM2YWE0YWU0ZmNiNGUwNDY4NmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc5NjVlODcwYzY5NTAyODc3MWNlNmJhNmUzNmNjYTJhYjFlYWQwMTY3Yzc1YjhjZTNhZWIzNjJlNTdmMWE4MjQifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/text/tokenizer_huggingface.py#L45-L66",
+          "version": "repo-lines-v1:sha256:66e79d0719b5746c97636d5ade05066098cf31a6850e4323b44424192593815d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlmZDdhMDdhODNkZDE5OTZmYjUxNjg0YjQyYWVjYWY0ZTkwZmI3OGJhNzIzMGU1NDJlZDdiZDAxZDQyMzAxYmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRiNTQ0YjQ5MTNkMzkzMTNkYTA3NmY3NDc0Mjc5ZTg0NTIzMmIzZjNjOWUyNTVlMzAxNjEyYjAzN2NmYjljYzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRlYTRjNDE3NTk0OWY5ZGY0M2VhYTQ3ZTg5NDE4MmMwZGM2ZjFlODA4ZTVmMjc0Y2NlNzFkZWViY2I5N2Q4ZmQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_3cd206fb35e445d6a1ee58ec2d9e1582",
+      "statement": "`TiktokenTokenizer` in `src/cite_right/text/tokenizer_tiktoken.py` defaults to the `cl100k_base` encoding (GPT-4, GPT-3.5-turbo, `text-embedding-ada-002`), accepts `p50k_base` (Codex) and `r50k_base` (GPT-3 davinci/curie), and raises `ImportError` pointing at `cite-right[tiktoken]` when `tiktoken` is not installed.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/text/tokenizer_tiktoken.py#L42-L75",
+          "version": "repo-lines-v1:sha256:cd415dbff3ef842f79e682e8a6ac16685c88f4d0f0f2867543401430cf22ddec:eyJzZWxlY3RlZExpbmVDb3VudCI6MzQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlmZDdhMDdhODNkZDE5OTZmYjUxNjg0YjQyYWVjYWY0ZTkwZmI3OGJhNzIzMGU1NDJlZDdiZDAxZDQyMzAxYmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM0NzI0NmVlZmU5OTkwMzkwZGNiYzI5MDc3YjQyYTZlMWRmODgxYWJmYjBmM2U4NGEyZmY5MmQwMmE4YTM3ODQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNkZjFhMGFlZTk0MDYyMjMyOWM4NmFjNDYyZGZiNDIzZTFhNTA4ZTJkZGY0NWM4Mzg5NThjNTVkMzJlMTZlM2UiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJjZGNhMjI5ZjRlYjM5MWQ5ZTdiYjZlNGYzOTg5NTAyNzUxNGJjZGU3NjRmNTFkNjVlYTFmZjU5ZTJhOTE2OTMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_727009f6e2ae421c989e0cf790c29be1",
+      "statement": "`TiktokenTokenizer` produces character-accurate spans by building a `byte_to_char` lookup from the UTF-8 byte stream once, then mapping each BPE token's byte range to a character range through that table; it raises `ValueError` if a token maps to a zero-width character span.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/text/tokenizer_tiktoken.py#L77-L155",
+          "version": "repo-lines-v1:sha256:0a70cbe7fb30969d022d300061aa2b237391416c3d115a9be00106d0ea9114ca:eyJzZWxlY3RlZExpbmVDb3VudCI6NzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIyMzg2YjQ2NzZmNzI3M2FmZjBkNzg1ZmNiNWRiYmFmZDQwYmYxOWRmNWVmYzQ4ZmE0NTAxZTg5NTI1MTk2NTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MDlhNTNhNjE4ZDAyOGUxZDMwMDBjMGE3YWJjZWVjYmU1ZmIzN2Y0ZTUxMWVmZTQ2NjQzZmFkNmU2Njg3MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjVlNjVlNzQxMGJjOTgxYTc4NjYwNzE4ZDhlZTBhMWY2NDQ5ZjYxODdlNWIxZDRkOTQwNGFlMGRkYjZlMDZmZTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk5NmUwNjNmNzVlMzM0NjNmYTUzNDNjZjEyNzU0ZGEzOGIxMzFiMjU5MWVmYWFhOTQwZmMzYzM4ZjQzYWIwZjkifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_ec193e877e0643059800b0fd9142853a",
+      "statement": "A custom tokenizer (anything other than `SimpleTokenizer`) forces the lexical fallback path: in `PreparedCitationCorpus.from_sources`, the Rust prepare path is skipped, `inverted_index` and `rust_corpus` are left as `None`, and `_select_candidates` uses the lexical prefilter over `Candidate.token_set` plus optional embedding extras; Smith-Waterman still localizes on the chosen candidates.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/prepared_corpus.py#L126-L190",
+          "version": "repo-lines-v1:sha256:8d2c530df4ff885b3461ca48d574ae56bbd77f733a5f5968df48af05ab689192:eyJzZWxlY3RlZExpbmVDb3VudCI6NjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyMGI0NTNmNWUwYzkyZDVmNmMyNTFhNWVhMTk2MGQ3MmYzYmQwNzk1NmFlODU3ZGEyMGUzMWE4OGM1NTk2OWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE3MmQ3YzAwZTMwY2RkNTg3MjA0MWE3NTEwYWY3MDJiMTIzZWJkYTFjMjQ2NGU0YTRlYjlmOWZiZjY2NjRlZmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY3Nzg2NTgzZGMwMWNiN2U2OWJjMDVjNmEzMjZjY2VkY2VhMjMzNzc2MWI0MzBiZTY2Y2VlYzQwZTgyNDc3MDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRiOWVjNjIzMGJhMjc4NWIxMmQ4YzJjZDE4ZWI2OTM5MzY2Y2JmNGNjMjJmMjA2N2NlZDk2MTgzYzAxZjJjYzQifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/core/prepared_corpus.py#L187-L187",
+          "version": "repo-lines-v1:sha256:ebc8b2396396a57f50ce1bbb5c2c56dd456c4fd04fc5fc1c2c74f75a980f1743:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZWJjOGIyMzk2Mzk2YTU3ZjUwY2UxYmJiNWMyYzU2ZGQ0NTZjNGZkMDRmYzVmYzFjMmM3NGY3NWE5ODBmMTc0MyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZWJjOGIyMzk2Mzk2YTU3ZjUwY2UxYmJiNWMyYzU2ZGQ0NTZjNGZkMDRmYzVmYzFjMmM3NGY3NWE5ODBmMTc0MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZjI4ZWZmMmQ1ZTFjOTBhNDVjOWMwOWExMDQ3OTQ5NmZhMDdkNDBiNWUzMDMyNjUwYjkwNTYxMWFiNDI0ODgyZiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTFkODc0ZWJkZTRhNDQ2ZjA3MDkyODdiOGUzNTkzNzVkNGI2NWUwNDAyNTJlNmYzMTYxOGRlNjJkYjUxMjkwOSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_a0c6e33c69814334a9f09ce153a522e3",
+      "statement": "`PreparedCitationCorpus.from_sources` and `align_citations` accept a `tokenizer` keyword argument in the same place; `align_citations` forwards the tokenizer to `PreparedCitationCorpus.from_sources`, so a non-default tokenizer in `align_citations` triggers the same lexical fallback.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L72-L160",
+          "version": "repo-lines-v1:sha256:8f18addfd72cfa7d4e34677f5e3f485ed2b217e6f119ed2239a42099a3cbbba7:eyJzZWxlY3RlZExpbmVDb3VudCI6ODksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQzYjI4NWNiODZjYjMwNjUwMTRlZWQxNzk5ZWZlZTI5MGY4ZjczZWM3Mzc1ZTU5YmRhNGJmMTY3OTMyM2JmZjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ3MGM2MmMxYzAxZGIyMzk0ZjQ0YTYwMGY0MTQxODdiZGNiMTQ1MmZhZDMwNzgwNjM1Mzg4Y2M3NTNiNTlkMzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImFmNTNhOTVkOTBhZjBmZjlhZjcxYjY4OTFmMmE3ZmZjNjNjY2FjYzAwN2U0ODdlMTUwZDczNGRkNzcxMTVlNmYifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/core/prepared_corpus.py#L126-L190",
+          "version": "repo-lines-v1:sha256:8d2c530df4ff885b3461ca48d574ae56bbd77f733a5f5968df48af05ab689192:eyJzZWxlY3RlZExpbmVDb3VudCI6NjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyMGI0NTNmNWUwYzkyZDVmNmMyNTFhNWVhMTk2MGQ3MmYzYmQwNzk1NmFlODU3ZGEyMGUzMWE4OGM1NTk2OWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE3MmQ3YzAwZTMwY2RkNTg3MjA0MWE3NTEwYWY3MDJiMTIzZWJkYTFjMjQ2NGU0YTRlYjlmOWZiZjY2NjRlZmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY3Nzg2NTgzZGMwMWNiN2U2OWJjMDVjNmEzMjZjY2VkY2VhMjMzNzc2MWI0MzBiZTY2Y2VlYzQwZTgyNDc3MDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRiOWVjNjIzMGJhMjc4NWIxMmQ4YzJjZDE4ZWI2OTM5MzY2Y2JmNGNjMjJmMjA2N2NlZDk2MTgzYzAxZjJjYzQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0babe4845b7c4ef981a5c37168a230f3",
+      "statement": "The HuggingFace and Tiktoken tokenizers require their respective extras: `pip install \"cite-right[huggingface]==0.4.0\"` and `pip install \"cite-right[tiktoken]==0.4.0\"`.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/text/tokenizer_huggingface.py#L124-L140",
+          "version": "repo-lines-v1:sha256:a91236a6d79b5ede7a1a9d43606b72f72a69f245cccaa49b082333db1492da7a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg4N2JmNjUxNzViZjVhMTQ0ODI3NzY0M2U5OGYxNjBhM2IyZTRiMGNiMDc0ZmJmODA1MDU0NWQwNDM3OTExZWEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjYyMmVmZTk1NTcxNWVjNzVmMWVlYjUzM2RjZmJhMmM2Njk4NDFiN2U0Mjc4ZDA5ZjY2MTMwZGU0YWE1ZjAyMDQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ5YTM4NGFlMmFkODUwYTgxNTgyOTA5YjM1MjVlODA2Y2E5OWM5MWI4YTc1YzY3MTM3YTNjOTVkMTMwODAyNTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc5NjVlODcwYzY5NTAyODc3MWNlNmJhNmUzNmNjYTJhYjFlYWQwMTY3Yzc1YjhjZTNhZWIzNjJlNTdmMWE4MjQifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/text/tokenizer_tiktoken.py#L60-L70",
+          "version": "repo-lines-v1:sha256:87b9ffe84af3b9c7d8e85f99c0a805c9151dc67fd56a42faa806b07f99aa1187:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlhYTYyOTZiZmNkMDJmMGU5ODJiOWUwODQ3MzUzM2VkZDczODczMzEwNTVlYWIwYjkyZGQxNmE0ZmI3YzA3YjUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU1NjE1OTBmMDQ3MzQyODQ1YmJkZGEyYzUxMjQ0MmNhNDRkMTg4OTY0YjM4YWZjMzllMzM1OWVmYjdjNzMxNzIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQxZGUzOWU1MzQxZjYwYzYzMWYxZmY2OTQxODRkMDdhYWY4ZDA2N2Q1OWQzNGM0ZTBlOTQ5ODFjMGU1MDAyNGMifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.4.0",
+    "at": "2026-08-26T03:32:47.432Z"
+  }
+}

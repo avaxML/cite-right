@@ -1,0 +1,128 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:ff83832755ae2cd7ee74cafbcd37aebe3424d7580c5d829b347cf203b19ff593",
+  "claims": [
+    {
+      "id": "claim_4fa7f1ad2d7241f0b0297b504cf49e2e",
+      "statement": "Cite-Right is a groundedness and citation tagger, not a clean hallucination detector; on RAGTruth test (2,675 answers) 0.4.0 quality matched 0.3.1, false-supported on gold hallucinations is about 1.6%, and unsupported precision is about 14%, so the tagger overflags relative to gold hallucination labels.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/hallucination.py",
+          "version": "repo-file-v1:sha256:0762e20170b6120c218cf889d91a30a2a6f4717df39f0c44a220debf4c93beeb"
+        }
+      ]
+    },
+    {
+      "id": "claim_6853091ef9424121a7a63794c9dfc9c3",
+      "statement": "Cite-Right analyzes citation alignment results rather than running a trained detector: answer spans with surviving citations are \"supported\" or \"partial\", spans with no surviving citation are \"unsupported\", and cheap contradiction (negation, number, leftover n-gram slot, entity swap) downgrades to \"partial\" (not \"unsupported\"); the status literal is \"partial\", never \"partially_supported\".",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/results.py",
+          "version": "repo-file-v1:sha256:0878d978ab02bc6de9e42153e1eb78a7b907166460550d5ca0563289b106bb2d"
+        },
+        {
+          "resource": "repo://src/cite_right/hallucination.py",
+          "version": "repo-file-v1:sha256:0762e20170b6120c218cf889d91a30a2a6f4717df39f0c44a220debf4c93beeb"
+        }
+      ]
+    },
+    {
+      "id": "claim_47e64767f32f43e6b888365ac8d7adc3",
+      "statement": "compute_hallucination_metrics(span_citations, *, config=None) takes a sequence of SpanCitations and returns a HallucinationMetrics aggregate; an empty input returns a degenerate metrics object with groundedness_score=1.0 and hallucination_rate=0.0, which represents the \"nothing to verify\" path rather than a clean bill of health.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/hallucination.py",
+          "version": "repo-file-v1:sha256:0762e20170b6120c218cf889d91a30a2a6f4717df39f0c44a220debf4c93beeb"
+        }
+      ]
+    },
+    {
+      "id": "claim_68280cd0eb6041018aa4040d8b5bb0d2",
+      "statement": "HallucinationMetrics is a frozen Pydantic model with groundedness_score (character-weighted, computed as weighted_confidence_sum / total_chars), hallucination_rate (1 - groundedness_score), supported_ratio, partial_ratio, unsupported_ratio (sum to 1.0 by character count), avg_confidence and min_confidence (unweighted across spans), num_spans, num_supported, num_partial, num_unsupported, num_weak_citations, span_confidences, unsupported_spans, and weakly_supported_spans.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/hallucination.py",
+          "version": "repo-file-v1:sha256:0762e20170b6120c218cf889d91a30a2a6f4717df39f0c44a220debf4c93beeb"
+        }
+      ]
+    },
+    {
+      "id": "claim_00fec62b28514274afc2aacc0255f5f9",
+      "statement": "Per-span confidence is taken from the best citation only (max by (citation_confidence, citation.score) where citation_confidence is float(citation.components.get(\"answer_coverage\", 0.0))); spans with no citations get confidence 0.0 and is_grounded False, and the groundedness numerator only accumulates weighted confidence for spans counted as grounded.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/hallucination.py",
+          "version": "repo-file-v1:sha256:0762e20170b6120c218cf889d91a30a2a6f4717df39f0c44a220debf4c93beeb"
+        }
+      ]
+    },
+    {
+      "id": "claim_5962da40142a460ab232dcdfc5fdd784",
+      "statement": "A span counts as grounded when its status is \"supported\", or when its status is \"partial\" and HallucinationConfig.include_partial_in_grounded is True; \"unsupported\" never counts as grounded, and grounding is character-weighted while avg/min confidence are unweighted.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/hallucination.py",
+          "version": "repo-file-v1:sha256:0762e20170b6120c218cf889d91a30a2a6f4717df39f0c44a220debf4c93beeb"
+        }
+      ]
+    },
+    {
+      "id": "claim_69a293d8f8034e24b204f5217574d87d",
+      "statement": "HallucinationConfig is a frozen Pydantic model with weak_citation_threshold (default 0.4, the minimum answer_coverage below which a citation is counted as weak) and include_partial_in_grounded (default True, controls whether \"partial\" status contributes to the groundedness score; setting it False produces a stricter metric that only counts fully supported spans).",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/hallucination.py",
+          "version": "repo-file-v1:sha256:0762e20170b6120c218cf889d91a30a2a6f4717df39f0c44a220debf4c93beeb"
+        }
+      ]
+    },
+    {
+      "id": "claim_48a2c222c2174ae3bc892bd8c6bfd787",
+      "statement": "SpanConfidence is a frozen Pydantic model exposing span (the AnswerSpan), status, confidence, is_grounded, best_citation_score, and source_ids (the deduplicated set of source_id values across the span's citations).",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/hallucination.py",
+          "version": "repo-file-v1:sha256:0762e20170b6120c218cf889d91a30a2a6f4717df39f0c44a220debf4c93beeb"
+        }
+      ]
+    },
+    {
+      "id": "claim_041bf2b2472741949dc2ba1962e2d22a",
+      "statement": "is_grounded, is_hallucinated, and check_groundedness are convenience helpers in src/cite_right/convenience.py that all internally call align_citations followed by compute_hallucination_metrics; is_grounded returns metrics.groundedness_score >= threshold (default 0.5), is_hallucinated returns metrics.hallucination_rate > threshold (strict greater-than, default 0.5), and check_groundedness returns the full HallucinationMetrics object.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/convenience.py",
+          "version": "repo-file-v1:sha256:79499da8ef1e0760a185d2aefe5fac4597a790f01a58ab8ca4778e3fb4f2ec8e"
+        }
+      ]
+    },
+    {
+      "id": "claim_2126ded6134f4f709a4049175d644967",
+      "statement": "compute_hallucination_metrics and verify_facts are complementary surfaces over the same align_citations output: compute_hallucination_metrics rolls alignment into a single groundedness score and hallucination rate for quality gates and dashboards, while verify_facts splits the answer into atomic claims and exposes per-claim status for highlighting the specific claim that failed.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/convenience.py",
+          "version": "repo-file-v1:sha256:79499da8ef1e0760a185d2aefe5fac4597a790f01a58ab8ca4778e3fb4f2ec8e"
+        },
+        {
+          "resource": "repo://src/cite_right/hallucination.py",
+          "version": "repo-file-v1:sha256:0762e20170b6120c218cf889d91a30a2a6f4717df39f0c44a220debf4c93beeb"
+        }
+      ]
+    },
+    {
+      "id": "claim_48d21d35288243e1adcc7aa8c1034dcd",
+      "statement": "Hallucination detection identifies content that lacks localized source support and does not verify factual accuracy beyond the provided sources; content derived from an erroneous source is still marked as grounded, and logical inferences that are correct but not stated in sources are often marked unsupported, so applications needing inference verification require additional techniques beyond citation alignment.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/hallucination.py",
+          "version": "repo-file-v1:sha256:0762e20170b6120c218cf889d91a30a2a6f4717df39f0c44a220debf4c93beeb"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.4.0",
+    "at": "2026-08-26T03:32:47.432Z"
+  }
+}

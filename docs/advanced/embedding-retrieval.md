@@ -1,26 +1,39 @@
+
 # Embedding Retrieval
 
-By default, Cite-Right uses the inverted index (rare-token intersect) to identify candidate passages for alignment. When source content is heavily paraphrased, semantic similarity provides a complementary signal that improves recall. The embedding retrieval feature enables this capability.
+By default, Cite-Right uses an inverted index (rare-token intersect) to pick source windows for alignment, then runs Smith-Waterman to localize the exact citation. When source passages are heavily paraphrased or use vocabulary that does not match the answer, the index alone can miss the right window. Embedding retrieval adds a semantic-recall channel on top of the lexical index so those windows are not silently dropped.
 
-## How It Works
+## How It Fits The Pipeline
 
-The citation pipeline has two stages. First, candidate selection identifies passages worth aligning. Second, Smith-Waterman alignment localizes exact matches.
+Candidate selection still starts from the index. With an embedder set, `_add_embedding_candidates` then queries an `EmbeddingIndex` of every source passage and may add non-index windows to the candidate set before Smith-Waterman runs. Smith-Waterman still localizes `char_start` / `char_end`. Embeddings change recall, not the contract that every `Citation` has a precise source span.
 
-Without embeddings, candidate selection is index-first. Prepare builds an inverted index over source windows. Rare-token intersect chooses which windows get Smith-Waterman. Smith-Waterman still localizes; the index only chooses the windows.
+```mermaid
+sequenceDiagram
+    participant Answer as Answer span
+    participant Index as Inverted index / Rust corpus
+    participant Lex as _add_lexical_candidates
+    participant Emb as _add_embedding_candidates
+    participant SW as Smith-Waterman
+    participant Res as SpanCitations
 
-With embeddings enabled, the pipeline also encodes answer spans and source passages as dense vectors. Cosine similarity between these vectors can add semantically similar passages to the candidate set even if they were not index seeds.
+    Answer->>Index: rare-token intersect
+    Index-->>Lex: index seeds
+    Lex-->>Emb: merged candidate set
+    Emb-->>SW: top-k by embed score
+    SW-->>Res: Citation + retrieval_support
+```
 
-Rust prepare still runs when an embedder is set. The embedding index is built on those prepared candidates. 0.3.x skipped Rust prepare in this path. That skip is gone.
+`retrieval_support` is a separate channel. A passage that the index or embedder selected but Smith-Waterman could not localize is emitted as `RetrievalSupport`, not as a `Citation`, and it never flips `status`. A span with no localized evidence is `"unsupported"` even when the embedder is confident.
 
-## Enabling Embeddings
+## Installation And First Run
 
-Embedding retrieval requires the embeddings optional dependency.
+Embedding retrieval is an optional extra on top of the default install.
 
 ```bash
 pip install "cite-right[embeddings]==0.4.0"
 ```
 
-Then provide an embedder to the alignment function.
+Then point `align_citations` at an embedder.
 
 ```python
 from cite_right import SentenceTransformerEmbedder, align_citations
@@ -29,92 +42,24 @@ embedder = SentenceTransformerEmbedder("all-MiniLM-L6-v2")
 results = align_citations(answer, sources, embedder=embedder)
 ```
 
-The embedder encodes all answer spans and passages on first use, caching the results for subsequent comparisons.
+The first call encodes every source passage and the answer spans. `PreparedCitationCorpus.from_sources(..., embedder=embedder)` returns a corpus with `embedding_index` already populated, so the same embedder can be reused across many answers without re-encoding the source side.
 
 ## SentenceTransformerEmbedder
 
-The included embedder wraps the sentence-transformers library, which provides access to many pre-trained models.
-
-### Model Selection
-
-Different models offer tradeoffs between quality and speed.
+`SentenceTransformerEmbedder(model_name)` is a thin wrapper over the `sentence-transformers` library. It exposes the single `encode(texts) -> list[list[float]]` method that the `Embedder` protocol expects, plus an in-process LRU cache keyed on `(text, model_name)` so repeated queries for the same passage do not re-encode.
 
 ```python
-# Fast, good for most English content
+from cite_right import SentenceTransformerEmbedder
+
+# Fast, good default for English
 embedder = SentenceTransformerEmbedder("all-MiniLM-L6-v2")
-
-# Higher quality, slower
-embedder = SentenceTransformerEmbedder("all-mpnet-base-v2")
-
-# Multilingual support
-embedder = SentenceTransformerEmbedder("paraphrase-multilingual-MiniLM-L12-v2")
 ```
 
-The default model `all-MiniLM-L6-v2` provides a good balance for general English content. For specialized domains, fine-tuned models may perform better.
-
-### Embedding Dimensions
-
-Model output dimensions affect memory usage and similarity computation speed. Smaller dimensions are faster; larger dimensions capture more semantic nuance.
-
-| Model | Dimensions |
-|-------|------------|
-| all-MiniLM-L6-v2 | 384 |
-| all-mpnet-base-v2 | 768 |
-| all-distilroberta-v1 | 768 |
-
-For high-volume applications, smaller models reduce memory and latency with modest quality impact.
-
-## Configuration Interaction
-
-Several configuration parameters affect how embeddings influence candidate selection.
-
-### Candidate limits
-
-Candidate selection starts from index seeds, then optionally adds embedding hits. You can control how many of each enter the full alignment stage.
-
-```python
-from cite_right import CitationConfig, align_citations
-
-config = CitationConfig(
-    max_candidates_lexical=200, max_candidates_embedding=100, max_candidates_total=250
-)
-results = align_citations(answer, sources, embedder=embedder, config=config)
-```
-
-`max_candidates_lexical` caps index seeds. `max_candidates_embedding` caps extra embedding candidates. `max_candidates_total` caps the combined set before Smith-Waterman.
-
-### weights.embedding and weights.lexical
-
-These weights affect the final citation score (after alignment), not candidate selection.
-
-```python
-from cite_right import CitationConfig, align_citations
-from cite_right.core.citation_config import CitationWeights
-
-config = CitationConfig(
-    weights=CitationWeights(
-        alignment=1.0,
-        answer_coverage=1.0,
-        evidence_coverage=0.0,
-        lexical=0.3,
-        embedding=0.7,
-    )
-)
-results = align_citations(answer, sources, embedder=embedder, config=config)
-```
-
-
-### Retrieval support vs citations
-
-Embeddings help candidate recall, not citation localization.
-
-High-similarity passages can still be surfaced as retrieval support metadata, but Cite-Right only produces `Citation` objects after Smith-Waterman alignment localizes an exact span. This preserves the production contract that every citation has precise source offsets.
-
-Embedding-only `retrieval_support` still respects `min_embedding_similarity`. Lexical scores are filled only for index seeds. Embedding-only extras keep a lexical score of 0.0, so a weak embedding hit below `min_embedding_similarity` does not appear as retrieval support.
+`all-MiniLM-L6-v2` (384 dimensions) is the documented default. Larger models like `all-mpnet-base-v2` (768 dimensions) trade speed for nuance. Model load is one-time per process; allocate the embedder at startup and reuse it.
 
 ## Custom Embedders
 
-You can implement custom embedders by following the `Embedder` protocol.
+Anything that implements `Embedder.encode(texts) -> list[list[float]]` plugs in. The protocol is runtime-checkable, so a duck-typed class works.
 
 ```python
 from typing import Sequence
@@ -122,83 +67,75 @@ from typing import Sequence
 from cite_right.models.base import Embedder
 
 
-class OpenAIEmbedder:
-    def __init__(self, client, model="text-embedding-ada-002"):
-        self.client = client
-        self.model = model
-
+class HashEmbedder:
     def encode(self, texts: Sequence[str]) -> list[list[float]]:
-        response = self.client.embeddings.create(input=texts, model=self.model)
-        return [item.embedding for item in response.data]
+        return [[hash(t) % 997] for t in texts]
 ```
 
-Custom embedders allow integration with any embedding service or locally-hosted model.
+Custom embedders are useful for tests (deterministic vectors), for vendor APIs, or for domain-tuned models.
 
-## Performance Considerations
+## Reading Retrieval Support
 
-### Startup Cost
-
-Sentence transformer models load on first use, adding several seconds to initial latency. For server applications, initialize the embedder at startup.
-
-```python
-# Initialize at server startup
-embedder = SentenceTransformerEmbedder("all-MiniLM-L6-v2")
-
-
-# Reuse across requests
-def handle_request(answer, sources):
-    return align_citations(answer, sources, embedder=embedder)
-```
-
-The published 0.4.0 latency numbers (50-case pack p50 about 12.4ms versus 175.8ms in 0.3.1) are for the no-embedder path. Embedder load and encoding sit on top of that.
-
-### Batch Encoding
-
-The embedder encodes all passages in a single batch operation. This is efficient for typical workloads with 5-50 passages. For very large source sets, consider pre-computing and caching embeddings.
-
-### GPU Acceleration
-
-Sentence transformers automatically use GPU when available. For high-throughput applications, GPU acceleration significantly reduces embedding latency.
-
-```python
-# Check if GPU is being used
-import torch
-
-print(f"CUDA available: {torch.cuda.is_available()}")
-```
-
-## When Embeddings Help
-
-Embeddings improve recall in several scenarios.
-
-Paraphrased content where the answer expresses source facts using different words benefits significantly. "The project was completed successfully" may match "Successfully finishing the initiative" even without word overlap. 0.4.0 can also emit a citation from content-word overlap when sequential Smith-Waterman coverage is low, so some grounded paraphrases no longer need the embedder just to avoid `unsupported`.
-
-Synonyms and related terms are captured. "Increase" may match "growth" or "rise" through semantic similarity.
-
-Domain-specific vocabulary with consistent meaning across variations benefits from the contextual understanding embeddings provide.
-
-## When Embeddings May Not Help
-
-Near-verbatim content where index-first retrieval already works well gains little from embeddings. The additional computation adds latency without improving results.
-
-Highly technical content with specialized terminology may not be well-represented by general-purpose embedding models. Domain-specific fine-tuning may be necessary.
-
-Very short passages may not contain enough context for meaningful embeddings. Single-word or very brief excerpts produce less reliable similarity scores.
-
-## Observability
-
-When debugging citation quality, examine both lexical and embedding scores.
+High similarity alone is not a citation. A passage that survived candidate selection but did not localize is exposed on `SpanCitations.retrieval_support`.
 
 ```python
 for result in results:
-    for citation in result.citations:
-        components = citation.components
-        print(f"Lexical score: {components.get('lexical_score', 0):.3f}")
-        print(f"Embedding score: {components.get('embedding_score', 0):.3f}")
-        print(f"Alignment score: {components.get('alignment_score', 0):.3f}")
     for support in result.retrieval_support:
-        print(f"Retrieval embedding: {support.embedding_score:.3f}")
-        print(f"Retrieval lexical: {support.lexical_score:.3f}")
+        print(support.source_id, support.embedding_score, support.lexical_score)
+        print(support.passage_text)
 ```
 
-This breakdown reveals whether citations are driven primarily by word overlap or semantic similarity, and whether embedding-only retrieval support cleared `min_embedding_similarity`.
+`retrieval_support` is only emitted when a candidate is selected and has either a positive lexical score or an embedding score at or above `min_embedding_similarity`. Embedding-only extras carry `lexical_score == 0.0`; lexical seeds carry the IDF overlap. This split lets you see at a glance which channel found the passage.
+
+## Configuration
+
+Several `CitationConfig` and `CitationWeights` fields shape the embedder path.
+
+- `min_embedding_similarity` (default `0.3`) is the cosine-similarity threshold for embedding-only `retrieval_support` entries. Anything below it is dropped.
+- `max_candidates_embedding` (default `200`) caps the number of extra windows `_add_embedding_candidates` can add.
+- `max_candidates_total` (default `400`) caps the merged candidate set after lexical seeds and embedding extras are combined.
+- `weights.embedding` (default `0.5`) and `weights.lexical` (default `0.5`) are added into the final citation score, not the candidate-selection step. The page-level pipeline at `../concepts/how-it-works.md` covers that score.
+- `CitationConfig.permissive()` lowers `min_embedding_similarity` to `0.25` for paraphrase-heavy content.
+
+```python
+from cite_right import CitationConfig, SentenceTransformerEmbedder, align_citations
+from cite_right.core.citation_config import CitationWeights
+
+embedder = SentenceTransformerEmbedder("all-MiniLM-L6-v2")
+config = CitationConfig(
+    max_candidates_lexical=200,
+    max_candidates_embedding=100,
+    max_candidates_total=250,
+    min_embedding_similarity=0.4,
+    weights=CitationWeights(lexical=0.3, embedding=0.7),
+)
+results = align_citations(answer, sources, embedder=embedder, config=config)
+```
+
+`CitationConfig.fast()` reduces `max_candidates_embedding` to `50` and pairs it with a small `max_candidates_total` for latency-bound workloads.
+
+## How Candidates Are Combined
+
+`select_candidates` merges three sources in order: inverted-index seeds (or `rust_corpus.query_index` on the default Rust path), lexical prefilter, and the embedding top-k. The first two feed each other because lexical scores are filled only for the index seeds; embedding-only extras keep `lexical_score == 0.0`. Ranking uses `max(embedding_score, lexical_score)`, so a strong embedder hit on a non-seed window can still make the cut.
+
+Once the merged set is in hand, every selected window still goes through Smith-Waterman. A weak Smith-Waterman pass on an embedding-only window can still produce a `Citation` if the same passage also has enough content-word overlap with the answer (the sequential-coverage rule, not paraphrase-only), and otherwise degrades into `retrieval_support` with the embedding score attached.
+
+## Rust Prepare With An Embedder
+
+Rust prepare still runs with an embedder when `SimpleTokenizer` and `SimpleSegmenter` are in use. The embedding index is built on those prepared candidates. The 0.3.x skip of Rust prepare on the embedder path is gone. A custom tokenizer or segmenter takes the Python fallback path, and the embedding index is then built on the Python candidates instead. The public API is unchanged: `align_citations(answer, sources, embedder=...)` and `PreparedCitationCorpus.from_sources(..., embedder=...)`.
+
+## When Embedding Retrieval Helps
+
+- Paraphrased claims where the answer shares meaning with the source but little vocabulary, so the index returns nothing and the span is otherwise `"unsupported"`.
+- Domains with stable synonyms (revenue / earnings / sales) where the source uses one term and the answer uses another.
+- Long source corpora where recall on the first-pass index drops citations a human reader would expect.
+
+Note that on the 50-case pack with no embedder, 0.4.0 p50 wall time is about 12.4ms versus about 175.8ms in 0.3.1. Embedder encoding is extra cost on top of the no-embedder numbers. Initialize the embedder once per process and pass the same instance into `align_citations` for repeated queries; `PreparedCitationCorpus` will keep the encoded source index for the lifetime of the corpus object.
+
+## When It Is Not Worth It
+
+- Near-verbatim content where index-first already finds the right window.
+- Very short passages or single sentences: there is too little context for a stable embedding.
+- High-throughput workloads where the embedder is the dominant cost and the index alone is good enough; consider `CitationConfig.fast()` to cap the candidate pool instead.
+
+For background on the index-first default, see [Rust Acceleration](./rust-acceleration.md) and [How It Works](../concepts/how-it-works.md). For tuning knobs, see [Citation Config](../configuration/citation-config.md). For install combinations, see [Installation](../getting-started/installation.md).

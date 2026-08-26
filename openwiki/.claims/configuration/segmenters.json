@@ -1,0 +1,150 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:9cfda742a3be288882dc83f7ccfc05f995a10024cecc1f5a24397f8d8ba5abc6",
+  "claims": [
+    {
+      "id": "claim_911927ae79a84c20bc5a9f69895d7642",
+      "statement": "SimpleSegmenter and SimpleAnswerSegmenter are the default segmenters; they live in `src/cite_right/text/segmenter_simple.py` and `src/cite_right/text/answer_segmenter.py` and have no extra dependencies.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/prepared_corpus.py#L126-L190",
+          "version": "repo-lines-v1:sha256:8d2c530df4ff885b3461ca48d574ae56bbd77f733a5f5968df48af05ab689192:eyJzZWxlY3RlZExpbmVDb3VudCI6NjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyMGI0NTNmNWUwYzkyZDVmNmMyNTFhNWVhMTk2MGQ3MmYzYmQwNzk1NmFlODU3ZGEyMGUzMWE4OGM1NTk2OWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE3MmQ3YzAwZTMwY2RkNTg3MjA0MWE3NTEwYWY3MDJiMTIzZWJkYTFjMjQ2NGU0YTRlYjlmOWZiZjY2NjRlZmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY3Nzg2NTgzZGMwMWNiN2U2OWJjMDVjNmEzMjZjY2VkY2VhMjMzNzc2MWI0MzBiZTY2Y2VlYzQwZTgyNDc3MDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRiOWVjNjIzMGJhMjc4NWIxMmQ4YzJjZDE4ZWI2OTM5MzY2Y2JmNGNjMjJmMjA2N2NlZDk2MTgzYzAxZjJjYzQifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/text/answer_segmenter.py",
+          "version": "repo-file-v1:sha256:e4a4fe08a22f01609253468b9f2399b91d39c183e71bf1c3afda61acb9a12b67"
+        },
+        {
+          "resource": "repo://src/cite_right/text/segmenter_simple.py",
+          "version": "repo-file-v1:sha256:b3444d7378f615fd431d5a0ecd2482371fb8e4f4cb70301fc947bcbd3473fd1e"
+        }
+      ]
+    },
+    {
+      "id": "claim_41d10d93625f4846bca5e04315f3a71d",
+      "statement": "SimpleSegmenter is a rule-based sentence splitter that cuts on '.', '?', or '!' when followed by whitespace, on ';', and on '\\n' when split_on_newlines=True; it recognizes a small abbreviation list and any single-letter initial pattern, and requires no model.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/text/segmenter_simple.py#L12-L74",
+          "version": "repo-lines-v1:sha256:896499380d2938cbcfb03aa98315d8eadc433a32c6f8601dc482001667171009:eyJzZWxlY3RlZExpbmVDb3VudCI6NjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgzMGM5Y2ViNjQyYWYyODQ4ZmVkNDQ2NjEwNWNjYzhkNzQxNzNhZWM4NTQ1NjNkNDcyNDU5NGIwYTgzOTdmYTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBiODA5MDVlNjQxZjg1MGNhNTgzZDM1MmY2NThiZmVlZjRjOWI4ZGUyNTA2MzI3NzdlOTdiYmVhZWMxYzUwMjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE5OGIwNjNkOWI0N2U2NTM3OTYyNTU3MmNjZTE5NzY2OWQ1NzY3ZTEyYzE4YmUwNzU2NTJiOGNkOTgxY2U4ZDUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE2MWY0ODBmODBiZmQzZWFlNWZiOGMwYjU3NGNhZDFkMGJhNzA0OWEwOGRiYzdlYzBhYjk4MDRkZDNlNDhhMzIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_e5f24243415e47f99daceab1f44f213a",
+      "statement": "SimpleAnswerSegmenter splits the answer into paragraphs on two-or-more consecutive line breaks, then runs SimpleSegmenter(split_on_newlines=False) per paragraph and emits AnswerSpan objects with kind=\"sentence\", paragraph_index, and a global sentence_index.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/text/answer_segmenter.py#L11-L92",
+          "version": "repo-lines-v1:sha256:e7ea6d0794224c3e650704fa2413f8a28aa410ab32d57c5eb465cd8f22fd25af:eyJzZWxlY3RlZExpbmVDb3VudCI6ODIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI2YTRiOGQzMWU4ZTJlNzMxZGNhYThiYTcxYmFkYTVmNjMzOTcwM2RhZmM5MWYzZmRlMGNjM2U5Y2VlM2MyZTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBlZjA4ZDczNmE5ZjJjYmFiYmRhM2RjYjQ1ZDRmOTVjOGY0Y2RhNzI1M2Y3MzZiNjIyMTFkYmU1ODE0ZWIzZGIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRlYmNmNWJkZDI3MDYzMzE0NThiMzVkZjRmOTgxMmQzMmJjZjQ4MmJlYTcxYTU4N2M5YzAyZDRiMjg2MTc5MGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRiOGUzZDQ0NzQzMmVkNmVkYjNlZDM0NWFkZjA4YjQ1Mzg0ZTEzMmNiN2Q3M2QxZWJhYWQzZTRiMDkyODg3MzEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_fbb83cc2da77490ebf66340b82e370eb",
+      "statement": "SpacySegmenter and SpacyAnswerSegmenter wrap a spaCy language model (default en_core_web_sm) and require the `spacy` extra plus `python -m spacy download en_core_web_sm`; the constructor raises RuntimeError with a clear message if spaCy or the named model is not installed.",
+      "evidence": [
+        {
+          "resource": "repo://pyproject.toml#L14-L21",
+          "version": "repo-lines-v1:sha256:7e485f696d5aafbd50748264efc678cea8821390c68009d7ca1056fee3acd756:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTkyMThkYzRjZTk3MWNiZTNkMzhkNzc0MzBlNjM5OTE4ODg0ZGQ3N2Q3MTg0YzdiOTNkZmRjMmU5OTg2OTFiNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZWE3YzAwYjJmYTk1ODZiMmRiNjRlNWFjZmMyMmE2ZTk2MWU0MTM3ZDRmMGI3M2EwMzlkYjcyNWUwNzhiMGRhNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTFlNTA5YTkxOTM4YWMyYmVjYWQ2ZTYzYjkyMDBmYjIwM2Y3MmJjZGQzYWEzMjE4YmU0YzU2YWY3ZDZmODUxYiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjg0Yjg2YjYyMTI4YjZiYmQ0YTUyZDRkMzg2NjNhNmY3OTc1YzAwM2Y3YWZlNTc3MTAwNDc1OWY1OWVhYmZkNCJ9"
+        },
+        {
+          "resource": "repo://src/cite_right/text/answer_segmenter_spacy.py#L11-L52",
+          "version": "repo-lines-v1:sha256:7e17391b02fe48e705d9d32bb1b17e55ea4e021367e0b3669420cb3f12b746fb:eyJzZWxlY3RlZExpbmVDb3VudCI6NDIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxYTlmNzZlOTJlYmFhY2I4OTMyMGExMGM2YTdiYWM3NmQ1NzU1ODA3ZmU2Y2Q2YjJiYWE1NTE5ODJlMWMwM2EiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkwN2UzYjMzNTZjODUwZmU1M2MwY2RhOGVjZWQ3Mjc3NjQwN2FjMjg3YjYyMDA4YjBiZjJmZDA5NDcwNTdkZjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImViMWUzYjFmZmUzYWIzNGQ5OTA1Yjk2MzI4YzFiMDYzYzBhYzI5M2I3OTc4OThiYWVhYjU3ZWExNjJiN2VmOWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM2MDU5ZTEwOWI5MjJlNzE1YTk2YzZmYjZhZGIyZjFjOTBkY2YwZTUwMGRjMTBhYTA0YmJkM2UwZDhhMGE2YzAifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/text/segmenter_spacy.py#L10-L39",
+          "version": "repo-lines-v1:sha256:aff62f1302497ab716fd698d5ff401484a73e2800833cf2c20e54dbf9877e36b:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc2MDE1YTI0MDEyMTA2NGM4M2QyYTQwZWYxNDM5ODBhZGIxNWYwNDlmNTZjN2VmMDFhODNiYmU4NDZhMDc5NmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNhMzcwMjU3YzllZDdlYTIxODI2Y2U4YWU1MjU0OWQxODVlZGE3Y2U1ZTJjMzdkMGM3YjJiMGNjZTUxYjY1ODEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJkMzg4NGJlMDllODU2Y2ViZjQzYTcxNDAzNTk0NDg0ZDEzMGNjZDRhNTY5NTIyNzJiZmJmZWY5NDQ1MTBiYTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRhYjk5YWFmOWQ4MThkYzE4Y2FkZjU3NWEwMzg1NTM2YTc0MmNiYzUwZjVjNTUyOTg1OWEyZjA5ZmE0YjdkZTcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a0dc95e9e2ab46398712f68594680d93",
+      "statement": "SpacySegmenter additionally splits sentences at coordinating conjunctions (and, or, but) whose head is a VERB, AUX, or ADJ and that sit strictly inside the sentence, so lists like \"Apples, oranges, and pears are tasty.\" stay as one segment.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/text/segmenter_spacy.py#L41-L115",
+          "version": "repo-lines-v1:sha256:4b32a755e82ab46b9bc2b3a1c5ea3a5117856a2a27aa6cbacf76e89eaf21f231:eyJzZWxlY3RlZExpbmVDb3VudCI6NzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRjMzY0Y2EwNjcwMTRlNjE3MjBiY2VkYmY1ZDVkZjYyZmZkYWE4ZTE5MWUwOGM2N2RhNTJiYmFlZGNlZDNhMTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU1YmM0NzExZWNjYTA0NTBhZmM4MzI3NzlhODg2NzZhN2M2OTYwZmEzZGE1YWY0MTBlZTAyZDFlMDE1MTU5MWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRmMGExYTY4MzM5MzMzYTgyMjM0ZTI2YjUxMjNhYzNjOWZmNzcyOTdkOTY5NDA4YjMwMzU0Yjg0NWRlYTg5ZTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjYzMDQ5ZThhNmYyMzhmNzNiNDBiZDg0MjFhNmM2YTM5OTUyYTVlNWE2NjJhYmVlOGVjMjlkN2MwMjg4NTJmZjIifQ"
+        },
+        {
+          "resource": "repo://tests/test_segmenter.py#L32-L46",
+          "version": "repo-lines-v1:sha256:3c0713811e5e30e60bd871d12c6201c6ffdd591d403001a0a34ef63c8570c3f3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZmYWZhNWJlYzNmZjAzMGNkYjZjOTIwMmQ1MGNhYmM2MDg3YTRhNjM4YmEwZWU1ZjViNDQ3MDJjZjc4MTk5NTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNiZmNhNzE4ZTkyYTU1N2I1ZDQyYTZjMjZkYjM0MjBmOTg0YjRhM2M5MzlmMmNhNDJkY2E4YjU3NjdjZGU1ZDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImVhOWIyYWI3NzM2ZjI5Y2FiNTdkYjZiMWUzMWVlNmJhMmUxYmNhMmQ0NzlmYjEwODE0NTdlZDE1MWUyNDgxZTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzN2VkNTI0YzMxMzA4ODg1ZTEzODI1MmI5M2Y1ZTVlNTU5ZTU0OGU5MDgzZDdkMWMwYmQ5Mjk4NTdmMjdiNTIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_19c13db6429d40ee894df233dce967c3",
+      "statement": "SpacyAnswerSegmenter emits clause-level AnswerSpan objects with kind=\"clause\" when constructed with split_clauses=True, and falls back to one AnswerSpan per sentence (kind=\"sentence\") when no clauses are detected.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/text/answer_segmenter_spacy.py#L54-L111",
+          "version": "repo-lines-v1:sha256:588db98386714967023c2c05d6277299eb3832f69705cbda1703674a31c769ac:eyJzZWxlY3RlZExpbmVDb3VudCI6NTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgwZTZmM2ZjZjg2MTU1ZTYzMjgxODY1NGM3OGE3YzVhNzk5YWI5MmE1ZDM0NWFmZThjMmJiMzZjZGEwZWE0OTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNlOTczNTQyYzMxMWE1NTRmNjQ0ZDZmNmM5ZWJkNzdiNjFlYWJjYmQzODE1OGVhMDcxNmNjMDQxOWI3ZGFjYjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE3MzhiYjk4YWEzY2RhMGQ3NDc3YTI3ZjZiOWE0OTg2NWQ3ODFkZjBiMjRhYTU5NWM5NjE2YWRjMDBkNWJjZjQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcyYzRkOTQyZTY5NDZmNmYxYjdiOTk2ODU5YzdmYWQ0MGQ0YTIyZTIxMWQ4MGFlMmU1MTg4YzhlYTQwZmE5MDYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_fd16f214eddf493ba0c8e37782cbc0ae",
+      "statement": "PySBDSegmenter is a rule-based sentence segmenter built on pySBD; it requires the `pysbd` extra, accepts language (default \"en\") and clean (default False, preserves original text offsets), and wraps segmentation in an lru_cache(maxsize=2000). It is source-side only and is not used as an answer segmenter.",
+      "evidence": [
+        {
+          "resource": "repo://pyproject.toml#L14-L21",
+          "version": "repo-lines-v1:sha256:7e485f696d5aafbd50748264efc678cea8821390c68009d7ca1056fee3acd756:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTkyMThkYzRjZTk3MWNiZTNkMzhkNzc0MzBlNjM5OTE4ODg0ZGQ3N2Q3MTg0YzdiOTNkZmRjMmU5OTg2OTFiNCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZWE3YzAwYjJmYTk1ODZiMmRiNjRlNWFjZmMyMmE2ZTk2MWU0MTM3ZDRmMGI3M2EwMzlkYjcyNWUwNzhiMGRhNCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTFlNTA5YTkxOTM4YWMyYmVjYWQ2ZTYzYjkyMDBmYjIwM2Y3MmJjZGQzYWEzMjE4YmU0YzU2YWY3ZDZmODUxYiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjg0Yjg2YjYyMTI4YjZiYmQ0YTUyZDRkMzg2NjNhNmY3OTc1YzAwM2Y3YWZlNTc3MTAwNDc1OWY1OWVhYmZkNCJ9"
+        },
+        {
+          "resource": "repo://src/cite_right/__init__.py#L62-L65",
+          "version": "repo-lines-v1:sha256:451a1a638c9a4c488a3c0346cb12c29826f3b6ad47716d873fca39e5af8ba861:eyJzZWxlY3RlZExpbmVDb3VudCI6NCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMTJkNTdmMWZjYmQ5NzE5Yzg0Zjk3YjgyZjUwODYxYTI5YWZkYzIwNmRlMDMzNmMzMDIyNjA1YTg4NjFiMWI3NSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTY5OTlhNzM4YThkMDQzN2M1NmVmMGZkMGJhOGFiODEyMmIyMjA5ZWRlYzYzMmZjMWNkN2E3YmE1MDEwZDk1OSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTg1YTMyYWEzYjdiMTZhNDI0MjgzZTNhMTA2YWI3Yjg2MzgyMTdmMGE4ZGRiOGM3MGExZTBjNTQyYzU3ZjM0NyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMDEyNWQ5NmQ5ZmU0MmVjZmY4MTBlZmFhMzI0YzkxZTI3ZTAyMjAzMDJjYjAxM2ZmNDc4YWUxOGM1YWE1YWQ1YiJ9"
+        },
+        {
+          "resource": "repo://src/cite_right/text/segmenter_pysbd.py#L1-L111",
+          "version": "repo-lines-v1:sha256:2a128d30496108d894440538a527e3fe3aa098766cffae6623877b80cfc9f7f9:eyJzZWxlY3RlZExpbmVDb3VudCI6MTExLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJkNzViZjFjNGU3ZmEwMTg4NGM5YjlmYTdkYzM2OWZhODJkZTUwMTc5YmE3MWRmYTMxYzg2YTk1OWMyZDQ3YTgyIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiJiYWFlOGEwY2E3NmY5OGY3YjdkYzc5ODQ5NTFkNjNlNTdkYjNjNjQ1NTc5Y2E1MWJhZDZhNTM5ZDYxNGVkYmJlIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MCwicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
+        }
+      ]
+    },
+    {
+      "id": "claim_039f44f4ef8c485d80f9750af3eaa61a",
+      "statement": "A custom segmenter (or a non-default built-in segmenter) takes the lexical fallback path: PreparedCitationCorpus.from_sources leaves inverted_index=None and rust_corpus=None, and _select_candidates uses the lexical prefilter over Candidate.token_set and IDF plus optional embedding extras. Smith-Waterman still localizes char_start and char_end.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L1180-L1232",
+          "version": "repo-lines-v1:sha256:e18b9435c09451ad7703bcd6bb8063ffcc95e181a0304c3020ac77b65daa476b:eyJzZWxlY3RlZExpbmVDb3VudCI6NTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhiYTA1ZDkwZWViYmRhMmRhYmU0NTUxZmFkYjhmMTVhYzE4OWRlNjQ1ZDQ2OWVlYTY0OWQ3OTQwYzc5ZWI3ZDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE2NjYzZjIxZjVjOTNiNTU3MTZjOGYwODhlYmU3OTQyNzYxMTlhZmVmODhmZjQ1NjhkZjk5MTc3NjkzNmFiOTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM3MWQwNjhkYmQwOWZkNDM2NzQxOWJkYjM3ZWMwNTNlMjFhNjhjODQ5NDA0NzNmNGE5NTdkMmIwZGI0NmE0YWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZlNTg2ZmYxNDM3ZjgyMGEzOTI2NzBjZjc2YzU5YmFiMjhiNjhjOWMwMGRkY2M5ZGI0NDViNTc5YWIyODk5OTYifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/core/prepared_corpus.py#L126-L190",
+          "version": "repo-lines-v1:sha256:8d2c530df4ff885b3461ca48d574ae56bbd77f733a5f5968df48af05ab689192:eyJzZWxlY3RlZExpbmVDb3VudCI6NjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyMGI0NTNmNWUwYzkyZDVmNmMyNTFhNWVhMTk2MGQ3MmYzYmQwNzk1NmFlODU3ZGEyMGUzMWE4OGM1NTk2OWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE3MmQ3YzAwZTMwY2RkNTg3MjA0MWE3NTEwYWY3MDJiMTIzZWJkYTFjMjQ2NGU0YTRlYjlmOWZiZjY2NjRlZmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY3Nzg2NTgzZGMwMWNiN2U2OWJjMDVjNmEzMjZjY2VkY2VhMjMzNzc2MWI0MzBiZTY2Y2VlYzQwZTgyNDc3MDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRiOWVjNjIzMGJhMjc4NWIxMmQ4YzJjZDE4ZWI2OTM5MzY2Y2JmNGNjMjJmMjA2N2NlZDk2MTgzYzAxZjJjYzQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_2f5f738509d9414582f14b926363c276",
+      "statement": "Segmenter output feeds generate_passages in src/cite_right/text/passage.py; a Passage is a window of window_size_sentences consecutive segments sliding by window_stride_sentences segments (both default 1, so each sentence is its own window).",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/citation_config.py#L62-L62",
+          "version": "repo-lines-v1:sha256:8fe747e510d3cccd6fef7b426372cee7fefc7c211f9bd97ba3a98b3d2bcdcdd5:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOGZlNzQ3ZTUxMGQzY2NjZDZmZWY3YjQyNjM3MmNlZTdmZWZjN2MyMTFmOWJkOTdiYTNhOThiM2QyYmNkY2RkNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOGZlNzQ3ZTUxMGQzY2NjZDZmZWY3YjQyNjM3MmNlZTdmZWZjN2MyMTFmOWJkOTdiYTNhOThiM2QyYmNkY2RkNSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDU5NjIxNDVkNDMwNGUzYWNkMzBkZWRhMDk2YTQwM2I4ZTg3MTA3N2ZhMDQwNzJkZmE5ZTBjNjQxNThkYWQ4MSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMjZhZDE3MmJjMWM3NzMwMGRhZTQzNDY5ZjY1NmRjZTE2YjQzZTJjZTVlMjQzNzRiMzg5YWRiMWVkNjQwNTU0MiJ9"
+        },
+        {
+          "resource": "repo://src/cite_right/text/passage.py#L36-L97",
+          "version": "repo-lines-v1:sha256:bd9b9b9b3f9fe84df290521822fa8d0b5003bfa02ea225ca02392d1bbd6b51ef:eyJzZWxlY3RlZExpbmVDb3VudCI6NjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVhMDI1MjI5YjNjYTk1M2YxOTU5ODkyMzc4NTEzMTI1ZDU1MGZkYzQ2NDlkNjBhOGQ3MDBlYWQ4NTc2MzI5ZDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdmMTAzNDU5MzdiYzY4ZmRkYTZkNWY5YWU3Njg1MjVlNDY0NzFlZmZlZTViNDlhZmY1YTVjOGQxMTg5YzA4ZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_04ee7ee102fb468d948d937c698cdcc1",
+      "statement": "Both `Segmenter` and `AnswerSegmenter` are runtime_checkable Protocols in src/cite_right/core/interfaces.py; Segmenter.segment returns list[Segment] with text, doc_char_start, doc_char_end (absolute 0-based half-open), and AnswerSegmenter.segment returns list[AnswerSpan] with text, char_start, char_end, kind, paragraph_index, sentence_index (offsets in the answer string).",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/interfaces.py#L34-L79",
+          "version": "repo-lines-v1:sha256:08fd005dc3217af7a9bd644f7baf861d7c3e6526786a65215e6934c196eea7c7:eyJzZWxlY3RlZExpbmVDb3VudCI6NDYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwMzA2OWQzZjMyN2IwY2ZkMWQwODcyNzRlYzI3NTY1ODU0ZDg1MmIzMjI1NTNkMzkwMmM4OWY1M2YwMDBlZGMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2MjBkODVkZTRlZDdhYjgwMjFiNGE4ZGQ0ZmExNWVjNTE5MjVjZGZjY2RlMTgwNTg5NWE0YzhhM2MzYmE0OGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhlMTAyYTE5YmE2NTQwZmFhMjNhMTQ4NTZkYmM0MTMyZTQ5MjFkYjA4OWM1NjA5NThjZGQ2ZDlkYTAwZjkyODYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQzYzYyNWY5MWRmYjhlNGMzZDFlYjFjN2NjNDU3NWNjOGE1NWJhOGE2N2E4ZmM1MjA1MjYwYTBiZDgyYTgyYjIifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/core/results.py#L48-L190",
+          "version": "repo-lines-v1:sha256:d12e79a1c07374bed88e3e79aa0957420777956320542f0f456a2c08e95c97f3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQzLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIyZDJlOWE1NDM3ZGFiZTczNjFjNGM4YmQ1OWU1MWQ2Mzk3MmRlNzMwZDdiY2M0NTM1YmY1NTc0NWI3ZjMwNmQ3IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIxZTRhYmJmMTdiNDk3ODYzMzM4NmI1OTExMGQwOTBlYTk1YTc2NDljZWFiZGQyYzUzNDAyYmUyMzdkNjFhMzYwIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI0YjUzMGVkZTRmM2U4ODJkNmU4NWU5ZTZhNzdiYmEyOTU5OTk5NzFlNjU5OTRlNGUwNDFiYzAwM2IxNTc4ZDJmIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiJmNGIzYzE0ZmJjOGVlNDJiYWY2ZWYxNzI1MDEwNWVlMWEyOWZmZDJjMzA0ODIxYjVkMTBiNzNmOWI3MjRhZjg2In0"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.4.0",
+    "at": "2026-08-26T03:32:47.432Z"
+  }
+}

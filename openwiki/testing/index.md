@@ -1,4 +1,4 @@
 # Files
 
-- [Contract and parity tests](contract-tests.md) - High-signal tests that pin status semantics, char-span invariants, Rust↔Python parity, and edge cases across the cite-right pipeline.
-- [Test Markers and Fixtures](pytest-markers.md) - Custom pytest markers and skipif helpers that gate tests to optional dependencies, the Rust extension, and specific feature availability.
+- [Rust/Python Contract Tests](contract-tests.md) - Agent-only reference for the Python vs Rust parity contract enforced by tests/test_alignment_rust_parity.py. Compares status, offsets, scores, matches, match_blocks, and best-candidate selection between SmithWatermanAligner and the cite_right._core extension. Points at src/cite_right/core/aligner_py.py and src/cite_right/core/aligner_rust.py.
+- [Pytest Markers and Optional Dependencies](pytest-markers.md) - Agent-only reference for tests/conftest.py. Documents the seven registered markers (rust, spacy, embeddings, tiktoken, huggingface, pysbd, slow), the rust_core and rust_core_with_blocks fixtures, and the requires_rust / requires_rust_blocks skip decorators used to gate tests on the optional Rust extension and optional dependency extras.

@@ -1,0 +1,228 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:a36704e33b3dc5dce60be686bcc1b797ff7d2aaf7f04d8a3af1ce36094b5e8c6",
+  "claims": [
+    {
+      "id": "claim_4152fee4ccbd45c3b79c8f925ccc40ec",
+      "statement": "The public entry point align_citations in src/cite_right/citations.py orchestrates a multi-step pipeline that segments the answer, prepares a PreparedCitationCorpus from the sources, selects candidate windows, runs Smith-Waterman to localize citations, ranks the survivors, runs the contradiction check, and assigns a per-span status; the public API surface (align_citations and PreparedCitationCorpus) is unchanged in 0.4.0.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py",
+          "version": "repo-file-v1:sha256:8267869be9c1dd05cc8ca65c96add4ca1ae2188c5c69db5a071c1afc351f21cf"
+        },
+        {
+          "resource": "repo://src/cite_right/citations.py#L72-L187",
+          "version": "repo-lines-v1:sha256:f951b3e77d98a52114d2e7c251e6763abf4de2ebfeb7198c2bdaeaf08e58282e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTE2LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiJkM2IyODVjYjg2Y2IzMDY1MDE0ZWVkMTc5OWVmZWUyOTBmOGY3M2VjNzM3NWU1OWJkYTRiZjE2NzkzMjNiZmY5IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI3MGU0ZmI0ZDQyM2VjM2U2MGExZDAzZGIwODhlNTdlOGIzNTIyMWQ5MTM4NDkzNmE4OGZkOTM4OTc5ZWQ5ZDk2IiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI0NzBjNjJjMWMwMWRiMjM5NGY0NGE2MDBmNDE0MTg3YmRjYjE0NTJmYWQzMDc4MDYzNTM4OGNjNzUzYjU5ZDMxIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI2NTAwOWY1YzQ0NzI5NTc2NGMxNGFkYzI1NzcyMGQzNzdhNzg5Yzc1ZjdhZmVhN2I3YTQ0NzEzYWMyZTllYjNjIn0"
+        }
+      ]
+    },
+    {
+      "id": "claim_9d4de5fcba7041a491cdb267d6f402e4",
+      "statement": "On the default Rust path (SimpleTokenizer + SimpleSegmenter with cite_right._core importable) PreparedCitationCorpus.from_sources delegates to _from_sources_rust, which uses rust_tokenize_and_prepare to build passage windows, IDF, and the inverted index in one Rust call, synchronizes the Python tokenizer's vocabulary from Rust, and keeps per-passage token data on the Rust PreparedCorpus for on-demand fetches; the candidate selector then calls rust_corpus.query_index for the conjunctive rare-token intersect, and Smith-Waterman still localizes each surviving candidate.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L1180-L1232",
+          "version": "repo-lines-v1:sha256:e18b9435c09451ad7703bcd6bb8063ffcc95e181a0304c3020ac77b65daa476b:eyJzZWxlY3RlZExpbmVDb3VudCI6NTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhiYTA1ZDkwZWViYmRhMmRhYmU0NTUxZmFkYjhmMTVhYzE4OWRlNjQ1ZDQ2OWVlYTY0OWQ3OTQwYzc5ZWI3ZDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE2NjYzZjIxZjVjOTNiNTU3MTZjOGYwODhlYmU3OTQyNzYxMTlhZmVmODhmZjQ1NjhkZjk5MTc3NjkzNmFiOTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM3MWQwNjhkYmQwOWZkNDM2NzQxOWJkYjM3ZWMwNTNlMjFhNjhjODQ5NDA0NzNmNGE5NTdkMmIwZGI0NmE0YWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZlNTg2ZmYxNDM3ZjgyMGEzOTI2NzBjZjc2YzU5YmFiMjhiNjhjOWMwMGRkY2M5ZGI0NDViNTc5YWIyODk5OTYifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/core/prepared_corpus.py#L126-L292",
+          "version": "repo-lines-v1:sha256:eb8bc3d264d0e4082bf0e6ad4269b1818c1f8cee451dd5cc456b7ca2e6c75d11:eyJzZWxlY3RlZExpbmVDb3VudCI6MTY3LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI4MjBiNDUzZjVlMGM5MmQ1ZjZjMjUxYTVlYTE5NjBkNzJmM2JkMDc5NTZhZTg1N2RhMjBlMzFhODhjNTU5NjlmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIxNzJkN2MwMGUzMGNkZDU4NzIwNDFhNzUxMGFmNzAyYjEyM2ViZGExYzI0NjRlNGE0ZWI5ZjlmYmY2NjY0ZWZmIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJmNzc4NjU4M2RjMDFjYjdlNjliYzA1YzZhMzI2Y2NlZGNlYTIzMzc3NjFiNDMwYmU2NmNlZWM0MGU4MjQ3NzAwIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI1NDY3OGI1NjM4YWUxNzY3ZGVmYmFiNDMxNGFjMTk3YTc3NTYwMzllNjc3OWEzZWUxMjJkYzUxMWYxODNhMGQwIn0"
+        }
+      ]
+    },
+    {
+      "id": "claim_36ea4def7eb74958933df268e26d5c26",
+      "statement": "The fallback path runs when the Rust extension is missing or a custom tokenizer/segmenter is supplied: PreparedCitationCorpus.from_sources leaves inverted_index=None and rust_corpus=None on the corpus, the Python prepare path builds source passages and candidates with the SimpleTokenizer, and _select_candidates falls back to _add_lexical_candidates instead of the inverted-index intersect; Smith-Waterman still localizes via SmithWatermanAligner.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L1220-L1228",
+          "version": "repo-lines-v1:sha256:d3cb953ef165bc3dbbaee1da579b46056813cdffb9e6642c3c27c428f00a7bf5:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMWZkMDNiYWYyYjc0M2RmNTgzNDg2NzNmNGQxNGUyYmI4MWNkZDQ4ZjllZDY1Njc0NDRmZmY0NTc4MjBjNzFlYiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYmIxOWU3NTA3N2ZmZTUwZTRjMjZjZWI4YzVlMjIzYmJjZmViNTRkNzI1NTQ1MzYzZjk1NDU1ZDFkNDc2ZTZlYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZjAyMzE3MzEyN2VmMTc2N2NkNWM1NzVmYzIyZGFjNzY4NGUzNWI2OTUwYTU1ZDhmNjg0YzI5ZmYwZDI5NGM2OSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNjBhMzFjMjE2NzMxMjcyZmNhM2FjNDFmMGRiM2Q0YzdiMWE4MWRlN2ZlZjdiMjgyZmI1NDk3MmVhZWJmYTFhNCJ9"
+        },
+        {
+          "resource": "repo://src/cite_right/core/prepared_corpus.py#L126-L190",
+          "version": "repo-lines-v1:sha256:8d2c530df4ff885b3461ca48d574ae56bbd77f733a5f5968df48af05ab689192:eyJzZWxlY3RlZExpbmVDb3VudCI6NjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyMGI0NTNmNWUwYzkyZDVmNmMyNTFhNWVhMTk2MGQ3MmYzYmQwNzk1NmFlODU3ZGEyMGUzMWE4OGM1NTk2OWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE3MmQ3YzAwZTMwY2RkNTg3MjA0MWE3NTEwYWY3MDJiMTIzZWJkYTFjMjQ2NGU0YTRlYjlmOWZiZjY2NjRlZmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY3Nzg2NTgzZGMwMWNiN2U2OWJjMDVjNmEzMjZjY2VkY2VhMjMzNzc2MWI0MzBiZTY2Y2VlYzQwZTgyNDc3MDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRiOWVjNjIzMGJhMjc4NWIxMmQ4YzJjZDE4ZWI2OTM5MzY2Y2JmNGNjMjJmMjA2N2NlZDk2MTgzYzAxZjJjYzQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_53953fd5989f4b9b8f32682dcc4c9910",
+      "statement": "When an embedder is provided, _add_embedding_candidates can add high-cosine-similarity windows to the candidate set even when they were not inverted-index seeds, and those non-index extras still need to be aligned by Smith-Waterman to become a Citation; lexical scores are filled only for inverted-index seeds, so embedding-only extras keep lexical_score == 0.0, retrieval_support is the channel for passages that the index or embedder selected but Smith-Waterman could not localize, and retrieval_support is not a Citation and never flips status. Rust prepare still runs in this case when SimpleTokenizer and SimpleSegmenter are in use; the 0.3.x skip of Rust prepare on the embedder path is gone.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L1180-L1232",
+          "version": "repo-lines-v1:sha256:e18b9435c09451ad7703bcd6bb8063ffcc95e181a0304c3020ac77b65daa476b:eyJzZWxlY3RlZExpbmVDb3VudCI6NTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhiYTA1ZDkwZWViYmRhMmRhYmU0NTUxZmFkYjhmMTVhYzE4OWRlNjQ1ZDQ2OWVlYTY0OWQ3OTQwYzc5ZWI3ZDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE2NjYzZjIxZjVjOTNiNTU3MTZjOGYwODhlYmU3OTQyNzYxMTlhZmVmODhmZjQ1NjhkZjk5MTc3NjkzNmFiOTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM3MWQwNjhkYmQwOWZkNDM2NzQxOWJkYjM3ZWMwNTNlMjFhNjhjODQ5NDA0NzNmNGE5NTdkMmIwZGI0NmE0YWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZlNTg2ZmYxNDM3ZjgyMGEzOTI2NzBjZjc2YzU5YmFiMjhiNjhjOWMwMGRkY2M5ZGI0NDViNTc5YWIyODk5OTYifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/citations.py#L1338-L1354",
+          "version": "repo-lines-v1:sha256:4a2042275e7aea0ecf343b786dcfbca39e973467aebee1e7aa668ef8e67bffda:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YTIwNTgyYjRlZmEyMDI0NTllNzRmYzk5ZTM0OWY2MjAyZTIzZjgwMDg2Y2E3Y2M1ZWM4OWRhZDkxNGY2ODgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM3NTdhMGFkN2MxMDg1MjQ1N2YyOTA1NjEyNzgxNjI2ZDFkYzEyZmVjZTNhYzY4NjllMmJiNjk5MThlODkxNTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJiZjc1MjkwZWYxZmM5OTM2Yzk3ZGVjMzc0ZmIzOGI5ZGEzYWQxMWVkZjNiMzYxMGJhNzNkNzM2ODEyMzIyOTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM3OTNmNzgzYTRjOTdlNjgyYjdkYzUzZjFlYWUxM2ZiNzdhZjAzZGY0YTZkNGIzY2RkNTc2NDViYmE5MGY1OWMifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/core/prepared_corpus.py#L270-L292",
+          "version": "repo-lines-v1:sha256:8073ec1f2de16e634015215dc4850475f986fd614cf982d9162501d16c01f47b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY4YTlmYzRlYWYzM2ZhNGYzZTM4MjI2Y2I1NTI5ZjQ5YmM4OGM1M2Q4ZmZiYWUxOTE0YmU2MTI0NWZhN2RjM2IiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE3MmQ3YzAwZTMwY2RkNTg3MjA0MWE3NTEwYWY3MDJiMTIzZWJkYTFjMjQ2NGU0YTRlYjlmOWZiZjY2NjRlZmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJlYTAwNzNjODJkZmRlZDZmOTA0MTA2MWI3OTAyOWQzZGVmYzJhZWEyNTFhOWFjZjJlNjJiZjI0MTg2Y2VhZDYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU0Njc4YjU2MzhhZTE3NjdkZWZiYWI0MzE0YWMxOTdhNzc1NjAzOWU2Nzc5YTNlZTEyMmRjNTExZjE4M2EwZDAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_14cbc729591e4927a97874018296a0ac",
+      "statement": "Index-first retrieval in 0.4.0 means an inverted index is built over source passage windows and a conjunctive rare-token intersect is used to pick candidate windows for each answer span, capped by max_candidates_lexical (default 200); Smith-Waterman still localizes the citation on the index hits — the index only chooses which windows to align, it does not skip alignment and it does not scan every window.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L1180-L1232",
+          "version": "repo-lines-v1:sha256:e18b9435c09451ad7703bcd6bb8063ffcc95e181a0304c3020ac77b65daa476b:eyJzZWxlY3RlZExpbmVDb3VudCI6NTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhiYTA1ZDkwZWViYmRhMmRhYmU0NTUxZmFkYjhmMTVhYzE4OWRlNjQ1ZDQ2OWVlYTY0OWQ3OTQwYzc5ZWI3ZDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE2NjYzZjIxZjVjOTNiNTU3MTZjOGYwODhlYmU3OTQyNzYxMTlhZmVmODhmZjQ1NjhkZjk5MTc3NjkzNmFiOTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM3MWQwNjhkYmQwOWZkNDM2NzQxOWJkYjM3ZWMwNTNlMjFhNjhjODQ5NDA0NzNmNGE5NTdkMmIwZGI0NmE0YWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZlNTg2ZmYxNDM3ZjgyMGEzOTI2NzBjZjc2YzU5YmFiMjhiNjhjOWMwMGRkY2M5ZGI0NDViNTc5YWIyODk5OTYifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/citations.py#L1263-L1289",
+          "version": "repo-lines-v1:sha256:5e553be91396a745c07cf07cc69dfd51002ae63a4c592b905e08ee1382e1d2ec:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZlY2YzYWZkMDhmNjg5YTBmNTU2MzE1ZDYwMjkzYmFmNGVlZWMzYjIyN2MwYjVhMmU4NzY2ZjI0MGRlNjIwNzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI0ZGU3ZGNlMjE1NjdmM2JmMTM1NmYwNWZjMGFlMWQyMmZkZjg4YTFjNjE5MGFjMDEwNDUzNTRiODYxZmY2NDAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjEzYzZiNGRkZTZmZWFjY2EwOTNkZWUzNDBlYzE0ZjZiYmY2NzYyYjhjNzZiMTJjMjczNzVlNjdkMWY1OWQ3NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY2ZGJlYWQwOTA4YjgwOTZiODg4ZTg4MDQ0MzFkYzBmMDNmZmUzMmFhYTAxM2E0NzVkNzI5YTI1OTRlMDVjOTEifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/core/citation_config.py#L55-L83",
+          "version": "repo-lines-v1:sha256:2415ac4a547a7ce7eb1517a7a4aae4322d1ecd04b6e61a60764310d78f59a4c5:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUzNTI0ZjQ3NGEwOTVlZWU3NjdkMGUyNWUxNWZkMDUwMzUxN2U0M2M4MGIwYzgyMzZmZTEwMTFiMTc3YjNhODAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2MzQ5MzkxM2MxZWMxYmFkZmRmNDBhOTIzYWY5YjNlMmM4N2JjZmZhMDM0OWZhNGYzYzlkY2M4MmE3YzUyMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY5ZGMxMjM1MTg0MWM4YWIwMGZiNjAwZWU5M2EwMmExMmQxM2Y2MjcyMjEwYTMyM2RmYmNjZWQxNDdkYzEyZDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZmMGQ5MjMzM2ExNDBiZDU0NTQ3MDhiYjRkOTA2MzZmZTc4Y2RhYTMyOTAwODA3NzQxM2I5NDlmMWVlMmU4OGUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_d7057a5343604254b1ab0f821440b49f",
+      "statement": "Both answer spans and source passages are tokenized with a single shared tokenizer instance (default SimpleTokenizer) that applies Unicode NFKC normalization and case-folding, and every token carries a (start_char, end_char) span in the original text so Smith-Waterman match positions can be re-expressed as character offsets in the source document; on the Rust prepare path the Python SimpleTokenizer's vocabulary is synchronized from rust_corpus.get_vocab() so answer-side tokens map to the same IDs as source-side tokens.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/core/prepared_corpus.py#L210-L217",
+          "version": "repo-lines-v1:sha256:0e828b9a0d5f60f701e9e1022735df025f4b91ab7902c9809e49e4ec53723d15:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTlmNzY3NjFkMGI1YTc5ZTczNzVlYzZjMzM2ODQzMmI1YjhkY2QyODZkMjg0NDYzODk1OWNhYmFhNjBiNTM5ZSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNTkwOWE1M2E2MThkMDI4ZTFkMzAwMGMwYTdhYmNlZWNiZTVmYjM3ZjRlNTExZWZlNDY2NDNmYWQ2ZTY2ODcyZiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTVjYmFhZjZiODZhOTQ3ZWY2ZDAzYzEwOWYyNzUwZTMxNzgwMDJmZmM5OGZmZmUzNjIyZWRiMzcyMDRmNTNkNiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMjBkMDQ3N2RmNjUxMDAxZDZjNGNkZjkwYjEwNGViMzVlYjdlY2UzNjUxMzQwZGIxZjBmMzU4YmY3OTY3N2QzMyJ9"
+        },
+        {
+          "resource": "repo://src/cite_right/text/tokenizer.py#L66-L100",
+          "version": "repo-lines-v1:sha256:bd6cb88745f4d3a1e28502f294c360e38303047de8fe044c0e6a4f58a4f6f2da:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg2NTFiZWZjMzEyODQ4ZDViMDU2ODg1MmU4Yjc3MjNmYzdjMjI1YzJlODJhM2NlYmFlY2ExZGE1ZTMwYTA4MzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRkNzdmMTQ3OGFhYjlmNzQ5ZmY0OGQzOWVjZGFmNTg0MDZjNjU3MWZiMGQ3OTczYjE3NWUxNmY2ZmZlMmEwZmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIzZGYyYWNmMDZlOGMzZjAzYzcxMzVjNmU4YWM1YTljYTU0MzJhYmUwNmE3NGFjYTBmZGQ5YTUzYTAwOGY5ODciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY0OTFmNWFiOWJjMzhkYzU1OThiNTUwOGVhYmMwNDdjMGVmOGMxMmE1ZmYzMzhiY2ViOTMyNjVhYWQ3ZThmN2QifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_246810d7950b4c1fad7c36fc351419f0",
+      "statement": "A citation is emitted from a candidate when the Smith-Waterman score clears min_alignment_score, the alignment token range is non-empty, and either the sequential answer coverage or the content-word coverage on the same passage clears min_answer_coverage; content-word coverage uses the tokenizer vocabulary to exclude stopwords, so a Smith-Waterman hit on only stopwords is not enough, and content-word overlap on the same candidate passage can emit a citation when sequential Smith-Waterman coverage is low so that grounded how-to and news paraphrases are not tagged \"unsupported\" just because shared content words are reordered.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L769-L782",
+          "version": "repo-lines-v1:sha256:ee65f08a3559fdb90597cdfcc957a5a0e8df9ea8e2024379756014e35cd4a8c8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4NDg1YmY1M2M2ZjVmMmQ2NTlkNzdkYzhjZDg3OTk1Y2MwMjcxNjc1Y2RlNjNiODU5YzNkYzQ3YmExM2M3MDMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRmYmQwMDkzMTRiYzI3MDg0MTY3MzRhMDJhZTVmZjM5YTFlNDhhMDUwYmU5MWY0M2IyZmFhOTIwMDJjNjJiZmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjljYjljNjMyODZlZTlkMTQ1Zjg4NmE5NDcyZDJmZjQzNjYzNmZmZThlZWZhYTU2OTU3Nzg5OWZhZDliOGM4ZmIifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/citations.py#L785-L805",
+          "version": "repo-lines-v1:sha256:b2d994ba7eb8cb1b5340067c352cb856502f3133365828f8727e5d51dd237309:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRhZTk3MjliY2RmOTZiNzY3Nzk1MDZiYTAyM2IzOGFkYjMyNDA4N2ExYTU5NDcxNWJkNTgzOGJkZjE3MTlmYjEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRiNTUzZjYwNzM5NTUzMTBkNDI0Yzg5NTkyNDdjMGE1ODk3OTNlZDEwOTM2MDZkZTdkM2Y3YTU5ODdhYjNlYmQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhjYzRhN2QxY2M3OTZhYmEzZTQ2NzIzMzI3ZjUxN2U5ZjgxMTk4MmQyNTBmMDcwMjk4NmU0YjU3NjRhZDk1ODkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM5MzU5ZTdhMmUzMzZkNTJjMmIzZWE2NTVhYmZhM2JlNWJhZjg5NGQ0NGYxNDE5NjU4ZjViMjMzMWMyYjEyMTIifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0852d07a836048a29804394851276101",
+      "statement": "For structured field:value sources (Data2txt hours, amenities, business attributes) the pipeline runs a second Smith-Waterman pass per matching candidate with gap_score=0 on the answer text alone; faithful rewrites of hours, amenities, and similar fields can then be \"supported\" or \"partial\" while invented fields that do not match any field line stay \"unsupported\", and range dashes in fields are split into spaces so \"Monday-Friday\" tokenizes as two day names.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L1040-L1102",
+          "version": "repo-lines-v1:sha256:6e0a7850c6ef6b49c369035b3f883f790dd73aa2b2738fae5160f44d67c5e9e6:eyJzZWxlY3RlZExpbmVDb3VudCI6NjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM1Y2JkZTU3NjZjYmVmNmVlZTYxZTViMzgxYzI3YjBjNmIxNmE3M2RjYWUzZWVmNjFlMWFlNzg4NmVjM2RkNzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVlMzMwNjA2OWZjYzc1MjJiNmUyODAwOTllZjU3MzJlMGRlNDM1ZTE4NDliNzNhMmVhMzkwZDhlZjI0N2E1NDQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhjYzRhN2QxY2M3OTZhYmEzZTQ2NzIzMzI3ZjUxN2U5ZjgxMTk4MmQyNTBmMDcwMjk4NmU0YjU3NjRhZDk1ODkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk5NzcwNzNkZmVmNTRhNGNjZGMyOGQxMmQ3MzFhYTYyOGY4NTFmZTAyMDU1MjE2MDg5ZDQyNmY2YjUyMTc3MWEifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/citations.py#L986-L1016",
+          "version": "repo-lines-v1:sha256:868a1020e52aac0733fcd2936e17687ddf83aca6ec96f212737453568a4f4350:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU0YTA0MmZiYjEyZDM2NWE4ODU2ZWYzNTVkODZiZTBiOTU0ODc4ZWUwZTU0OTgwZGMwOTY2MGM0M2I0YjNlNGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFhYTc4ZDc0NTFlZTBhYTFhODlhZTQxMjhjNzNkNjFhN2FhMDUxMDExYjk1ZDQ5NDVkMmJiZjMyYWE4ZTA4MGUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQyMWMyMjgyMzI1YWYzMmQwM2MyMjQwYThkNzE5MzNjODk4OGFlMTBiZGM5MDg4NmMwNDI3ODAyZWI3ZTAyMmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjkzZTdkNWIxOGFjOGFkMjdhNTdmNDMzNGFlM2IwZDJhZDk5NDdkNTQ3NmYwYWI4MzExYjRhMmQzMDg0OGQzNjUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_74b27ed3216d45d69a2a8c1ba55b8810",
+      "statement": "Citation char_start and char_end are absolute half-open character offsets into the source document, computed as the sum of the candidate source's base_doc_offset (for SourceChunk rebasing), the passage's doc_char_start/doc_char_end, and the token-level offset inside the passage; evidence is the slice of source text at that exact range, so source.text[citation.char_start:citation.char_end] == citation.evidence holds, and the same rebase logic is implemented by _slice_source_text.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L1376-L1381",
+          "version": "repo-lines-v1:sha256:381a97f49f96a995bb156510a3acf6588642911cb50acaa6424525e376b57be7:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTNjM2I3MGM2NTIzNWQxZmVkYzVjODE5Y2VmZGUzZDMwOGU2ZmVmODVjNDliM2UwMTBmZGE5ODlkZmIxODIyOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTViZjFiZTQyMzgxNDIxZDdiNzBjNmI0ZDUxOTc0MDAyNjkzZjMwZGZjYjc0ZDRlOTA0MzFiODY1YmM5NTkzMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOGY5NThhZmI0NzdiMTMxOWFmZDU0MmZjNTkxOGFlMDcyNzU4NDdlMzQ0MzczNzhjMmE0OGNlYzFhNzhlMDY2MiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODI3NDg3ZTNjZDNlY2M3MDJmZmZhMTVhYzlhZmQxZWRmOGUwN2E0MDM3YjU4MDk1YTUxYjZjOTJhZDY5NjVkNSJ9"
+        },
+        {
+          "resource": "repo://src/cite_right/citations.py#L1441-L1468",
+          "version": "repo-lines-v1:sha256:ef179f5ef63d81e7c30c59b10691cc25c6fafad92acb14b518cfc94891bdcce4:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjliYTRhMDFhNDBiMzA4YjRiZmNiNWZjN2I5OTM5NjVmNGUwZDAwOGUxOWYyZjFlMjk2NTZlNWJjZTE1MWU4NGYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRkZjQxNTk4OGNhNmIzZTUyNDY1M2M2ZWFiM2UyMjFjNjJhYzg5ZGIyODYyMzM4ZjAzNThkYTc0NTg5YTFhYzYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYyYTEyYWNmN2VkOGVkMmUzZjdmNzcwYjRjODBkZmYxMGU0ZWVhYWEwNWNmNGRiN2Y5YTg0MzBkM2I5MWU3ZDgifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_0ff248e2e88648cf965da93bf7ee2bed",
+      "statement": "Citations are ranked deterministically by -citation.score with tie-breaking that depends on prefer_source_order: when True the tie-break order is earlier source_index, then earlier char_start, then longer evidence span, then candidate_index; when False the order is earlier char_start, then longer evidence span, then source_index, then candidate_index; after sorting, citations from the same source with the same evidence-span tuple are deduped, max_citations_per_source caps per-source contributions, and the list is trimmed to top_k.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L1523-L1550",
+          "version": "repo-lines-v1:sha256:0941c75e7229f912c66590a2dc6339900ad275856f1c5643f833589af8453761:eyJzZWxlY3RlZExpbmVDb3VudCI6MjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUxYTRmMWU0MDQxYWI5YWY4YWIwNzZhMGE2MDNiMDA2ODYzOTg0NWMxNzJiOGUwNmFkNzcwNGI4ZWFjZWZhZTQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImExNDNiNDM5YmYwYTQ5MTFkYjVlYWFjNzcwNTBjMDYwMGIyMDgwNDAwNGM0OGNjNzJmZDIwNDZhMzJiZTgyMTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlmM2JiZGM3NWQxYmY3OTU2YzMzNzIzYWQzOTkyNTMxZDZlYTc2NzA4YTBlNzgxYzAyZTA3YjFjMTdiYzFiNTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU3NGYwYTI2ZGJmYWZlYWI5NjM2YWI4MDIyZTViYWQ3ODgzMDYyMjdjMWRkNTViMThjNjQwMzY2ZWRmYWM1YWUifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/citations.py#L1571-L1589",
+          "version": "repo-lines-v1:sha256:7be18404e98e140082e00926d646303903b631097e54aca10b438e135a54dea4:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE1NzQ4NGJhODE5OWZkMTE2Mzg3NDQxNTliYjEzMGYwZDdmNDFiNTVlMGE0MjFhYjFkNWYxNjhlYmI4MWNmYjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjNiZDk5ODA3ODQ5ZWQ2ODMyZjc2MTRjYTY3ZDY3NDM2YjU5ZmUwY2VjNjMwMDZlYmJmYmNjZWJjNTFlNTUxYjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImM4MzhlMWZmZGFkODBmZDA1MTRiMDMyMjM3MTg4NDE3YTMxYzAyODA0MzU1M2JiNGEzZWQxMWU2MjVhNTgxYzQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_60f6a27d0f7e4d8eb9095f9749a44e74",
+      "statement": "The contradiction check in src/cite_right/contradiction.py runs over the full candidate passage (via _contradiction_context), not the truncated Smith-Waterman evidence, and fires on negation mismatch, number mismatch, leftover n-gram slot mismatch (shared number attached to different content words), entity swap, and temporal/polarity marker pairs; when it fires against the best-ranked citation the span is downgraded to \"partial\" with citations and never to \"unsupported\", so source \"The vaccine is safe and effective.\" and answer \"The vaccine is not safe.\" resolves to \"partial\" with citations.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L1592-L1632",
+          "version": "repo-lines-v1:sha256:1090c77a209e9b5f7bad7e5480de6bc30f43058cb3de0f52a6709b37e91ebc0e:eyJzZWxlY3RlZExpbmVDb3VudCI6NDEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZmNDYxM2VhMzFmZjNiOTAwODIzNjYxNmZlNTVjNjRmZWIyYzJkMDJkMjJjZjQxZTgxY2UzNDk0ZmIwY2I1ZWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3YWI5NzFjYzFjYjIwZTdhY2RmNWQ0MzY4ZDU1ZjcwNmU4YzYyMzA4ZTdmMTE5YTg4YTJjNzFmODc4N2VlNDAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhjYzRhN2QxY2M3OTZhYmEzZTQ2NzIzMzI3ZjUxN2U5ZjgxMTk4MmQyNTBmMDcwMjk4NmU0YjU3NjRhZDk1ODkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI1YzNlYzMyMWRkZDgzYTU5YWViZmFlYzU2MjQ4NDMxNTI3Zjc2Njk5MGY3ODU4YjI3YjYwMGUyYjYzMjFkNGMifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/contradiction.py#L67-L86",
+          "version": "repo-lines-v1:sha256:f70aeaf2f9d9f4e2f042b29bb063e7ef3ba662211de4d1a1f39750ba682d6f09:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNlZTQ4ZDBmMWU3ZDhjYWFmMzFjY2Q2YWQyZDczYTAyYTk3YjVhMTE3MTk1NzQ4Y2ZmZmE4ZDYyZTAwYzkyZTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQxMDQyNGJkZTNhZDkxZmY4ZGFlYTgxYTRhYTUwNGIyZmU5ZDM3OTIzZjU5Mzc5MTUyZDU0M2Q3YjRkZWFmNzEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA5ZjkzMDgzYzE5NzEyMWI5ODI3MDBiYThhZmFiZDE3MjJjZjFkM2U3NDA0NTA5ZTgwZWZhMjcyNDdmNjJmMDciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUwYjIxYmY4OTVmYWUyZDczOTIwZDkzMTc4Y2ZkNTg0MWNkZjhmOTUyNDUxNmM4YTU2NTg0MzZhNGFjNDhmM2IifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_375ae2f471de4a68a826d9444b1755c4",
+      "statement": "Span status is one of exactly \"supported\", \"partial\", or \"unsupported\" and is assigned from the top-ranked Citation's answer_coverage component, not its overall score: \"supported\" requires answer_coverage >= supported_answer_coverage (default 0.6) and no contradiction fired, \"partial\" means citations exist but coverage is below threshold or contradiction fired, and \"unsupported\" means no citations survived filtering; the literal is \"partial\", never \"partially_supported\", and retrieval_support is intentionally outside the status decision.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L1610-L1633",
+          "version": "repo-lines-v1:sha256:0546591f2ac5ef2ec8353fa6d983babe6920c357814b4eae7d76a64a8120f7ff:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRmN2M5NjczZmU0NGEwOWMzM2UxZmM0Njk1YzQwOGNhNDFlZjkwZTEzMzIzYTQwZTM5NzhkMjZhOWE4Yjk3NjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI1YzNlYzMyMWRkZDgzYTU5YWViZmFlYzU2MjQ4NDMxNTI3Zjc2Njk5MGY3ODU4YjI3YjYwMGUyYjYzMjFkNGMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjgzMDFkODExNWRlZjc2NzNjNDI0OWZhZGQ3MmJjMWE0OTljMDJkYzI0ZTQ5MDhkMTc0OGY3YzE3OTc0MTBlMGEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/core/citation_config.py#L55-L83",
+          "version": "repo-lines-v1:sha256:2415ac4a547a7ce7eb1517a7a4aae4322d1ecd04b6e61a60764310d78f59a4c5:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUzNTI0ZjQ3NGEwOTVlZWU3NjdkMGUyNWUxNWZkMDUwMzUxN2U0M2M4MGIwYzgyMzZmZTEwMTFiMTc3YjNhODAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2MzQ5MzkxM2MxZWMxYmFkZmRmNDBhOTIzYWY5YjNlMmM4N2JjZmZhMDM0OWZhNGYzYzlkY2M4MmE3YzUyMmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY5ZGMxMjM1MTg0MWM4YWIwMGZiNjAwZWU5M2EwMmExMmQxM2Y2MjcyMjEwYTMyM2RmYmNjZWQxNDdkYzEyZDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZmMGQ5MjMzM2ExNDBiZDU0NTQ3MDhiYjRkOTA2MzZmZTc4Y2RhYTMyOTAwODA3NzQxM2I5NDlmMWVlMmU4OGUifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_7c11542924c0402aa54932e98e30cec8",
+      "statement": "The final citation score is a weighted sum of normalized_alignment, answer_coverage, evidence_coverage, lexical_score, and max(0, embedding_score) under CitationWeights (defaults: alignment=1.0, answer_coverage=1.0, evidence_coverage=0.0, lexical=0.5, embedding=0.5); per-citation components are also exposed on Citation.components for inspection and tuning.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L808-L821",
+          "version": "repo-lines-v1:sha256:deb6b66ede4dfed1022481cea9c62b7d2836d8634ca663e0c0a63dcf9059d82a:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNiZmZjNzJmYmYzZTViMjI1ZDExMjA4MDIxOTIyMjViNDc5MGI1ZGJlNjQ0Y2VmNGVjNmM1N2ZlYTI3M2ZhYzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFhMzg3YjVkZTEzNDNlNjQ2ZmE5ZjJiNzlhYjcwYjU4MjI5MWEyYmEyMWRmYWUwZWU2ZDk2MDQ1OTRjYWRlZTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjQ5Y2IwNzU5Y2VmOWE4NzYzZmJlMzA5NTUyMzg2YTZlNTU5MTlmZThkN2FmNThlYmY3YTIxZTgyYWM4ZmI4ZmEifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/citations.py#L890-L904",
+          "version": "repo-lines-v1:sha256:7572cd8e130133423267d6e56675e6de06ae6ded680af6b23a4e46bfa583abc9:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImViZjFhNDkyNTI5YjcxZWYxMmFhYWRjNDM5NDRkODM3NjgwYzgxYzM2ZDAwZWUyZmU2ZWY4ZjkzMmQ2MjJkYWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFlNjczYWJkNDU3YTk3ZWVhMTdhNjAwNjJlYjBmYWVhNmJkZjA5NDg2OGNjNmI4ZjhjMGViZGEyZjYxZWQ0MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImY5M2Q1ZDdmMTI0MWE2NWM5ZjA1NDdlMzg2MGZkODkxYzk5NjhhMGYxN2E3MWZiMDJkYzY2MGZjNzJlYmM5MjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhjYzRhN2QxY2M3OTZhYmEzZTQ2NzIzMzI3ZjUxN2U5ZjgxMTk4MmQyNTBmMDcwMjk4NmU0YjU3NjRhZDk1ODkifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/core/citation_config.py#L13-L22",
+          "version": "repo-lines-v1:sha256:0bade5ed1896e483b3a1e7c175965eff90ec4a835545bf5e1100c104b9df759e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM2NTcxZWE3ZmYzNGQzODA0MDIxODU4ZjM2NDZkOWZmZjUzNzVjNzJjNTU0NmZlOTgzYjdmNTU0ZjJjODE0M2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZiNzMzMzJhYTdlMzdhYTYyMDEwMTliN2E4Mzg3MDkyMjFiM2U4MTIzMDljOWVlYWQ1Yjg4NDBkZGZmODljMDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg1NDEyNzMwOWZkZTJiZWUxOWQzODY1MWRkOWU5ZmJiZmQzM2E5MGM2Yjc1ODk4NjY4MzM3N2U1YmNjNzUyOWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVhMTE2ZWMwOTI4MDczNGU0NTUwOGFkMTkxMTFlYWI2NjlmMmQ1OGM1MzA3NjAyMWE2NWNjNzExNzk1NTVhZTQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_558c709ce93742439a568ad263979f37",
+      "statement": "Cite-Right is deterministic: given the same inputs and configuration it produces identical outputs across runs; the pure-Python SmithWatermanAligner is the reference implementation and the RustSmithWatermanAligner backend reproduces its behavior exactly, including tie-breaking order and floating-point rounding, with contract tests comparing the two backends for status, offsets, and evidence_spans.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L1105-L1135",
+          "version": "repo-lines-v1:sha256:7643e5fb077d3df99c2310c24e87a7d597b65de1fd99f141e384e79df4f73ff6:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJhYzIxNWIyZGE1MTFhNzk4N2RjNzM3OTQzZTc0MmJlM2RhZGEyMDk1ZTRmYTEwMzAwMGMxZjhmZjg0ZjlmZDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MDlhNTNhNjE4ZDAyOGUxZDMwMDBjMGE3YWJjZWVjYmU1ZmIzN2Y0ZTUxMWVmZTQ2NjQzZmFkNmU2Njg3MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFjMmM2OTQ3N2FmYjY3MzdlMDQzZTUyMDZlMWMyYTE0MTM0MGY4NGNhODI4NGY3YTkyM2IxYzQ2ZGMwZTA0OTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVhODJiMjU5OTIxYmM1NzhmMDhmY2UzOWJhMmJhNWNkMzhjYWNkZTY0OGNmYWQwODlmYmQzNWJkYWZiY2Q0MmMifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_5cf292c487584de18f3a2a0b4f126067",
+      "statement": "Index-first retrieval makes candidate selection proportional to posting-list intersection on rare tokens rather than to answer_spans * passages, Smith-Waterman remains quadratic in the length of the sequences being aligned but only runs on index hits (plus optional embedding extras), and tokenization is linear in text length (SimpleTokenizer is a single pass); on the 50-case pack with no embedder 0.4.0 p50 wall time is about 12.4ms versus about 175.8ms in 0.3.1 (roughly 14×), spp is 81.3% versus 83.4%, RAGTruth test quality on 2,675 answers matched 0.3.1, and released wheels are abi3 (abi3-py311) including linux/aarch64 plus an sdist.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L1180-L1232",
+          "version": "repo-lines-v1:sha256:e18b9435c09451ad7703bcd6bb8063ffcc95e181a0304c3020ac77b65daa476b:eyJzZWxlY3RlZExpbmVDb3VudCI6NTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhiYTA1ZDkwZWViYmRhMmRhYmU0NTUxZmFkYjhmMTVhYzE4OWRlNjQ1ZDQ2OWVlYTY0OWQ3OTQwYzc5ZWI3ZDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE2NjYzZjIxZjVjOTNiNTU3MTZjOGYwODhlYmU3OTQyNzYxMTlhZmVmODhmZjQ1NjhkZjk5MTc3NjkzNmFiOTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM3MWQwNjhkYmQwOWZkNDM2NzQxOWJkYjM3ZWMwNTNlMjFhNjhjODQ5NDA0NzNmNGE5NTdkMmIwZGI0NmE0YWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZlNTg2ZmYxNDM3ZjgyMGEzOTI2NzBjZjc2YzU5YmFiMjhiNjhjOWMwMGRkY2M5ZGI0NDViNTc5YWIyODk5OTYifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/text/tokenizer.py#L66-L100",
+          "version": "repo-lines-v1:sha256:bd6cb88745f4d3a1e28502f294c360e38303047de8fe044c0e6a4f58a4f6f2da:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg2NTFiZWZjMzEyODQ4ZDViMDU2ODg1MmU4Yjc3MjNmYzdjMjI1YzJlODJhM2NlYmFlY2ExZGE1ZTMwYTA4MzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRkNzdmMTQ3OGFhYjlmNzQ5ZmY0OGQzOWVjZGFmNTg0MDZjNjU3MWZiMGQ3OTczYjE3NWUxNmY2ZmZlMmEwZmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIzZGYyYWNmMDZlOGMzZjAzYzcxMzVjNmU4YWM1YTljYTU0MzJhYmUwNmE3NGFjYTBmZGQ5YTUzYTAwOGY5ODciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjY0OTFmNWFiOWJjMzhkYzU1OThiNTUwOGVhYmMwNDdjMGVmOGMxMmE1ZmYzMzhiY2ViOTMyNjVhYWQ3ZThmN2QifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.4.0",
+    "at": "2026-08-26T03:32:47.432Z"
+  }
+}

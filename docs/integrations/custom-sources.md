@@ -1,91 +1,67 @@
+
 # Custom Sources
 
-Not all applications use LangChain or LlamaIndex. Cite-Right provides flexible input options for integrating with any retrieval system or custom data pipeline.
+Not every retrieval layer is LangChain or LlamaIndex. If your pipeline already produces documents, chunks, or plain dictionaries, you can hand them to Cite-Right directly. The public inputs are `SourceDocument` and `SourceChunk`; the convenience adapter for dictionaries is `from_dicts`. Once you have a list of those, you call `align_citations` as usual.
 
-## Using SourceDocument Directly
+This page covers the three integration shapes (whole documents, pre-chunked excerpts, raw dicts), the chunk-rebase offset contract that makes citation highlights point at the original document, and the validation that protects the offsets from drifting. The end-to-end pipeline and the offset convention are in [Citation Alignment](../concepts/citation-alignment.md). The data-model fields that come back are in [Citation Alignment](../concepts/citation-alignment.md) and the API reference.
 
-The most straightforward approach is creating `SourceDocument` objects directly. This class is the primary input format for citation alignment.
+## The Three Input Shapes
+
+`align_citations` (in `src/cite_right/citations.py`) accepts a sequence of any of:
+
+- `SourceDocument(id, text, metadata=...)` — a full document.
+- `SourceChunk(source_id, text, doc_char_start, doc_char_end, ...)` — a pre-chunked excerpt with offsets into a parent document.
+- plain `str` — auto-assigned an id of `"source_0"`, `"source_1"`, and so on.
+
+Mixing all three in a single call is fine. The pipeline normalizes each into a `NormalizedSource` (`base_doc_offset`, `full_text`) before any segmentation, indexing, or Smith-Waterman runs, so the candidates that come out the other side are uniform.
+
+## Building SourceDocument Directly
+
+When you have whole documents, build `SourceDocument` and call `align_citations`. This is the simplest path and the one you use for any retrieval system that already returns complete texts (a database, a search index, an object store, an in-memory list).
 
 ```python
 from cite_right import SourceDocument, align_citations
 
 sources = [
     SourceDocument(
-        id="doc_1",
-        text="The full text of the first document goes here.",
-        metadata={"author": "Smith", "year": 2024},
+        id="annual_report_2024",
+        text=(
+            "Acme Corporation reported revenue of 5.2 billion dollars in 2024, "
+            "representing a 12% increase over the previous year."
+        ),
+        metadata={"year": 2024, "type": "financial"},
     ),
-    SourceDocument(id="doc_2", text="The full text of the second document goes here."),
+    SourceDocument(
+        id="press_release",
+        text=(
+            "Acme Corporation today announced fourth quarter revenue of "
+            "5.2 billion dollars, a new company record."
+        ),
+    ),
 ]
 
+answer = "Acme Corporation reported revenue of 5.2 billion dollars in 2024."
 results = align_citations(answer, sources)
+for result in results:
+    print(result.status, result.answer_span.text)
+    for citation in result.citations:
+        print(citation.source_id, citation.evidence)
 ```
 
-The `id` field is a unique identifier used to reference the source in citation results. Choose IDs that are meaningful in your application, such as database keys, file paths, or URLs.
+`id` is the stable identifier that will be returned on every `Citation.source_id` and `RetrievalSupport.source_id` that resolves to that document. Use IDs that are meaningful in your application — database keys, file paths, URLs, or hashes — so the citation metadata can be tied back to the source row.
 
-The `text` field contains the complete document text. Citation alignment will find matching regions within this text and return character offsets pointing to specific locations.
+`text` is the full document text. The pipeline will segment it into passage windows, build the inverted index, and run Smith-Waterman against the answer.
 
-The `metadata` field is optional and can contain any additional information you want to associate with the document. This metadata is preserved through the alignment process and accessible in results.
+`metadata` is optional, defaults to `{}`, and is preserved on the `SourceDocument`. Cite-Right does not read it during alignment, but your application code can read it back off the `SourceDocument` you built, or attach it to the citation through your own lookup.
 
-## Using from_dicts
+## Building SourceChunk For Pre-Chunked Content
 
-For data coming from APIs, databases, or JSON files, the `from_dicts` function provides convenient conversion.
-
-```python
-from cite_right.integrations import from_dicts
-from cite_right import align_citations
-
-# Data from an API response
-api_response = [
-    {"id": "result_1", "content": "First document text...", "score": 0.95},
-    {"id": "result_2", "content": "Second document text...", "score": 0.87},
-]
-
-sources = from_dicts(api_response)
-results = align_citations(answer, sources)
-```
-
-### Field Mapping
-
-The function looks for content in several common field names.
-
-For the text content, it checks "text", "content", "page_content", and "body" in that order. The first non-empty field found is used.
-
-For the identifier, it checks "id", "doc_id", "document_id", and "source". If none are found, it generates IDs like "doc_0", "doc_1", etc.
-
-All other fields become metadata.
-
-```python
-docs = [{"body": "Document content", "url": "https://example.com/doc1"}]
-
-sources = from_dicts(docs)
-# sources[0].text == "Document content"
-# sources[0].id == "doc_0"
-# sources[0].metadata == {"url": "https://example.com/doc1"}
-```
-
-### Custom Field Names
-
-If your data uses different field names, you can map them explicitly.
-
-```python
-docs = [{"document_text": "Content here", "document_uuid": "abc123"}]
-
-# Rename fields before conversion
-standardized = [{"text": d["document_text"], "id": d["document_uuid"]} for d in docs]
-
-sources = from_dicts(standardized)
-```
-
-## Using SourceChunk for Pre-Chunked Content
-
-When your retrieval system already divides documents into chunks and tracks their positions, use `SourceChunk` to preserve offset information.
+If your retrieval system already divides documents into chunks and stores each chunk's position in the parent (most vector databases do this), build `SourceChunk` instead of `SourceDocument`. The pipeline uses the offsets to rebase every resulting `Citation` back onto the original document.
 
 ```python
 from cite_right import SourceChunk, align_citations
 
-# Chunks from a retrieval system that tracks positions
-chunks = [
+sources = [
     SourceChunk(
         source_id="report_2024",
         text="This is the text of chunk 1.",
@@ -100,125 +76,118 @@ chunks = [
     ),
 ]
 
-results = align_citations(answer, chunks)
+results = align_citations(answer, sources)
+for result in results:
+    for citation in result.citations:
+        # char_start and char_end are absolute in the parent document
+        print(citation.source_id, citation.char_start, citation.char_end)
+        print(citation.evidence)
 ```
 
-The `source_id` identifies the parent document that the chunk came from. Multiple chunks can share the same `source_id`.
+`source_id` identifies the parent document. Multiple chunks that came from the same parent share a `source_id`; the citation offsets will be absolute in the same parent.
 
-The `doc_char_start` and `doc_char_end` specify where this chunk appears in the original document. These offsets are added to citation character positions, so the final offsets refer to the complete document rather than the chunk.
+`doc_char_start` and `doc_char_end` are the chunk's half-open character offsets in the parent. They are added to whatever the local alignment produces so the public `Citation.char_start` / `Citation.char_end` are absolute in the parent, not in the chunk.
 
-### When to Use Chunks
+### When To Use Chunks Versus Whole Documents
 
-Use `SourceChunk` when your retrieval produces excerpts with known positions and you want citations to reference the original document. This is common with vector databases that store chunked content alongside offset metadata.
+Use `SourceChunk` when you already know each excerpt's position in the original — vector databases, text splitters that emit offsets, sliding-window retrievers. The pipeline does not re-window or re-segment, so the candidate passages are the chunks themselves, and the offsets come out already aligned with the parent.
 
-Use `SourceDocument` when you have complete documents or when chunk positions are unknown. The library will segment and window the documents internally.
+Use `SourceDocument` when you have complete texts and you want the pipeline to handle passage creation internally. The default `SimpleSegmenter` and `SimpleTokenizer` will window, tokenize, and index the document. The `PreparedCitationCorpus` built from `SourceDocument`s still works the same way; the only thing `SourceChunk` saves is the windowing step on the source side.
 
-## Database Integration Example
+## Chunk Rebase And The Evidence Equality Invariant
 
-Here is an example of integrating with a PostgreSQL database containing documents.
+The central contract when feeding `SourceChunk` is the **evidence equality invariant**: after chunk rebasing,
+
+```
+source.text[citation.char_start:citation.char_end] == citation.evidence
+```
+
+`source.text` here is the parent document's text. `citation.char_start` and `citation.char_end` are absolute in the parent, regardless of which chunk the evidence was located in. The same rule applies to each `EvidenceSpan` in multi-span mode.
+
+The rebase happens in two places. In `src/cite_right/core/prepared_corpus.py`, `normalize_sources` sets `base_doc_offset = item.doc_char_start` for chunks (and `0` for whole documents or plain strings) and stores `full_text = item.document_text` when supplied. In `src/cite_right/citations.py`, `_slice_source_text` and the alignment builders add `base_doc_offset` to every candidate's local offset before the result lands on a `Citation` or `EvidenceSpan`. `_create_evidence_span` shows the same formula:
 
 ```python
-import psycopg2
-from cite_right import SourceDocument, align_citations
+abs_start = candidate.source.base_doc_offset + candidate.passage.doc_char_start + seg_char_start
+abs_end   = candidate.source.base_doc_offset + candidate.passage.doc_char_end   + seg_char_end
+return EvidenceSpan(char_start=abs_start, char_end=abs_end, evidence=_slice_source_text(...))
+```
 
+Because `Citation.evidence` is re-sliced from `source.full_text` (when you pass it) or from the chunk text minus the chunk's `base_doc_offset`, the equality holds even though the alignment itself ran on chunk-local coordinates.
 
-def get_relevant_docs(query, connection, limit=10):
-    cursor = connection.cursor()
-    cursor.execute(
-        """
-        SELECT id, content, title, created_at
-        FROM documents
-        WHERE to_tsvector(content) @@ plainto_tsquery(%s)
-        ORDER BY ts_rank(to_tsvector(content), plainto_tsquery(%s)) DESC
-        LIMIT %s
-    """,
-        (query, query, limit),
-    )
+You do not have to pass the full parent document for the rebase to work — the chunk range alone is enough. If you do pass `document_text`, you also get a slice-equality check at construction time.
 
-    sources = []
-    for row in cursor.fetchall():
-        doc_id, content, title, created_at = row
-        sources.append(
-            SourceDocument(
-                id=str(doc_id),
-                text=content,
-                metadata={"title": title, "created_at": str(created_at)},
-            )
-        )
+### Optional document_text Validation
 
-    return sources
+`SourceChunk.document_text` is optional. When you pass it, the model validator on `SourceChunk` (`_validate_document_text_alignment` in `src/cite_right/core/results.py`) enforces three things:
 
+1. `doc_char_start >= 0` and `doc_char_end >= doc_char_start`.
+2. `doc_char_end <= len(document_text)`.
+3. `document_text[doc_char_start:doc_char_end] == text`.
 
-# Usage
-connection = psycopg2.connect(...)
-sources = get_relevant_docs("quarterly results", connection)
+If the parent text is known (you have it in memory, your retrieval API returned it, you are about to feed it back to a frontend), pass it as `document_text` to catch drift between the chunk text and the parent slice at construction. If you do not have it on hand, omit `document_text` and the rebase still produces correct absolute offsets — `_slice_source_text` falls back to chunk-local slicing.
+
+```python
+full_text = open("report_2024.txt").read()
+chunk = SourceChunk(
+    source_id="report_2024",
+    text=full_text[1500:1548],
+    doc_char_start=1500,
+    doc_char_end=1548,
+    document_text=full_text,  # enables the slice-equality check
+)
+```
+
+The LangChain and LlamaIndex chunk adapters use the same field: `from_langchain_chunks` reads `full_text_key` from metadata and passes it through as `document_text`; `from_llamaindex_chunks` omits `document_text` because LlamaIndex nodes do not always carry the parent.
+
+## Using from_dicts For Plain Dictionaries
+
+When the upstream system hands you plain dictionaries (an API response, a JSON file, a search index's wire format), `from_dicts` converts each one to a `SourceDocument`. It is exported from the top-level `cite_right` package alongside the framework adapters.
+
+```python
+from cite_right import align_citations
+from cite_right.integrations import from_dicts
+
+api_response = [
+    {"id": "result_1", "text": "First document text.", "score": 0.95},
+    {"id": "result_2", "text": "Second document text.", "score": 0.87},
+]
+
+sources = from_dicts(api_response)
 results = align_citations(answer, sources)
 ```
 
-## Elasticsearch Integration Example
+`from_dicts` is defined in `src/cite_right/integrations.py` and takes two keyword-only knobs:
 
-For Elasticsearch-based retrieval systems:
+- `text_key` (default `"text"`) — the dictionary key that holds the document text. The value is read with `doc.get(text_key, "")` and coerced to `str` before being put on the `SourceDocument`.
+- `id_key` (default `"id"`) — the dictionary key that holds the document ID. If the key is missing, the index (`"0"`, `"1"`, ...) is used.
 
-```python
-from elasticsearch import Elasticsearch
-from cite_right import SourceDocument, align_citations
-
-es = Elasticsearch()
-
-
-def search_and_cite(query, answer):
-    # Retrieve from Elasticsearch
-    response = es.search(
-        index="documents", body={"query": {"match": {"content": query}}, "size": 10}
-    )
-
-    # Convert to SourceDocument
-    sources = []
-    for hit in response["hits"]["hits"]:
-        sources.append(
-            SourceDocument(
-                id=hit["_id"],
-                text=hit["_source"]["content"],
-                metadata={
-                    "score": hit["_score"],
-                    "index": hit["_index"],
-                    **hit["_source"],
-                },
-            )
-        )
-
-    # Compute citations
-    return align_citations(answer, sources)
-```
-
-## REST API Integration
-
-For custom retrieval APIs:
+Any other key in the dictionary is copied into the `SourceDocument.metadata` mapping, except for the `text_key` and `id_key` keys themselves.
 
 ```python
-import requests
-from cite_right.integrations import from_dicts
-from cite_right import align_citations
-
-
-def fetch_and_cite(query, answer):
-    # Call your retrieval API
-    response = requests.post(
-        "https://api.example.com/search", json={"query": query, "limit": 10}
-    )
-    response.raise_for_status()
-
-    # Convert the response
-    docs = response.json()["results"]
-    sources = from_dicts(docs)
-
-    # Compute citations
-    return align_citations(answer, sources)
+# Renaming fields is one explicit call
+sources = from_dicts(
+    api_response,
+    text_key="content",
+    id_key="doc_id",
+)
 ```
+
+`from_dicts` does not do a multi-key fallback like the older draft of this page claimed. If your payload uses `"body"` or `"page_content"`, either rename the key in Python or pass the right `text_key`. That is the whole contract.
+
+```python
+# Standardize first, then convert
+standardized = [
+    {"text": d["body"], "id": d["url"]}
+    for d in raw_payload
+]
+sources = from_dicts(standardized)
+```
+
+If you also need chunk offsets, build `SourceChunk` directly with the offsets your retrieval layer already knows. There is no `from_dicts` variant that emits `SourceChunk`s; the dict adapter is for whole documents.
 
 ## Mixing Source Types
 
-You can mix `SourceDocument` and `SourceChunk` in the same call. The library handles each according to its type.
+You can mix `SourceDocument` and `SourceChunk` in one call. The pipeline normalizes each, so candidates from a whole document and candidates from a pre-chunked excerpt sit in the same list and compete on equal footing.
 
 ```python
 sources = [
@@ -234,30 +203,51 @@ sources = [
 results = align_citations(answer, sources)
 ```
 
-This flexibility allows integration with hybrid retrieval systems that return both complete documents and pre-chunked excerpts.
+This is useful for hybrid retrieval: one set of results comes back from a vector store with offset metadata (build `SourceChunk`s), another set comes back as complete blobs from a database (build `SourceDocument`s). Pass them both in one call and the citations will carry the right `source_id` and the right absolute offsets in each parent.
 
-## Validation
+## Custom Sources In A RAG Pipeline
 
-The library validates input types and raises clear errors for invalid data.
-
-```python
-# Empty text raises no error but produces no citations
-sources = [SourceDocument(id="empty", text="")]
-results = align_citations(answer, sources)  # Works, but finds no matches
-
-# Invalid types raise errors
-sources = [{"text": "..."}]  # Not a SourceDocument
-results = align_citations(answer, sources)  # TypeError
-```
-
-For production systems, validate your data before calling the alignment functions.
+The typical shape: retrieve a set of documents or chunks, build the right input type for each, call `align_citations` on the generated answer. Here is the pattern with a search index that returns whole documents.
 
 ```python
-def validate_sources(sources):
-    if not sources:
-        raise ValueError("At least one source document is required")
-    for i, source in enumerate(sources):
-        if not source.text.strip():
-            raise ValueError(f"Source at index {i} has empty text")
-    return sources
+from cite_right import SourceDocument, align_citations
+
+
+def search_and_cite(query, answer, index):
+    hits = index.search(query, top_k=10)
+    sources = [
+        SourceDocument(
+            id=hit["id"],
+            text=hit["text"],
+            metadata={
+                "score": hit["score"],
+                "title": hit.get("title"),
+            },
+        )
+        for hit in hits
+    ]
+    return align_citations(answer, sources)
 ```
+
+If your store already splits into chunks with offsets, swap `SourceDocument` for `SourceChunk` and add the offsets your store tracks. If your store returns JSON, `from_dicts` does the conversion in one line — `sources = from_dicts(json_response)` and the rest of the pipeline is unchanged.
+
+## What Cite-Right Does Not Touch
+
+`metadata` is opaque to Cite-Right. Cite-Right does not index it, does not score on it, and does not emit it on `Citation` results. It is your handle for round-tripping the original document back to the user. The same is true of any framework-specific extras (retrieval scores, file paths, page numbers) — they belong in `SourceDocument.metadata` or `SourceChunk.metadata` and you read them off after the call returns.
+
+`from_dicts` makes the round-trip automatic: every dictionary key that is not the `text_key` or the `id_key` ends up in `metadata`. That is the only place Cite-Right looks at your data outside the text.
+
+## Common Pitfalls
+
+- **Do not pass plain `str` in production.** Plain strings get auto-assigned ids `"source_0"`, `"source_1"`, and so on, and you will lose the ability to map citations back to your real source identifiers. Build `SourceDocument` or `SourceChunk` so the `source_id` is meaningful.
+- **Do not forget the chunk range when building `SourceChunk`.** Without `doc_char_start` and `doc_char_end`, the model validator rejects the construction, and the pipeline has no way to rebase the offsets.
+- **Do not pass `document_text` that does not actually contain the chunk text.** The slice-equality check will raise and you will know immediately, which is the point. If the parent text is not available, omit the field and the rebase still produces correct absolute offsets.
+- **Do not expect `from_dicts` to fall through to `content` or `body`.** It only reads the configured `text_key` (default `"text"`). If the key is missing, the text defaults to `""` and the document is effectively empty.
+- **Do not pass a chunk that overlaps another chunk from the same parent.** Cite-Right does not deduplicate; two overlapping chunks can each produce a citation, and the offsets will both be valid but the user will see the same evidence twice. Deduplicate at the retrieval layer.
+
+## See Also
+
+- [Citation Alignment](../concepts/citation-alignment.md) — full I/O contract, the half-open offset convention, the evidence equality invariant, and the rules behind `status`.
+- [LangChain Integration](langchain.md) — `from_langchain_documents` and `from_langchain_chunks` for LangChain retrievers.
+- [LlamaIndex Integration](llamaindex.md) — `from_llamaindex_nodes` and `from_llamaindex_chunks` for LlamaIndex retrievers.
+- [Quickstart](../getting-started/quickstart.md) — the basic `align_citations` call and `PreparedCitationCorpus` reuse.
