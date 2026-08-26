@@ -1,7 +1,7 @@
 {
   "updatedAt": "2026-08-26T04:48:20.854Z",
   "command": "init",
-  "gitHead": "991735774ee5c516999cda081bd3e71e8e08938e",
+  "gitHead": "46ab790c87cd9c9a0143494c0f65e116fc9fd26f",
   "model": "minimax/minimax-m3:free",
   "status": "complete",
   "language": "en"
