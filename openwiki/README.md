@@ -1,3 +1,9 @@
+---
+type: "Reference"
+title: "openwiki/"
+openwiki_generated: true
+---
+
 # openwiki/
 
 Generated documentation tree for coding agents, produced by
