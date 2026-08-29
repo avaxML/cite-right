@@ -382,9 +382,90 @@ def build_embedding_index(
 ) -> EmbeddingIndex | None:
     if embedder is None:
         return None
+
+    # Check if embedder supports document-level span pooling
+    if (
+        hasattr(embedder, "supports_span_pooling")
+        and callable(embedder.supports_span_pooling)
+        and embedder.supports_span_pooling()  # pyright: ignore[reportAttributeAccessIssue]
+    ):
+        return build_embedding_index_from_document_spans(embedder, candidates)
+
+    # Fallback to per-passage encoding
     return EmbeddingIndex.build(
         embedder, [candidate.passage.text for candidate in candidates]
     )
+
+
+def build_embedding_index_from_document_spans(
+    embedder: Embedder,
+    candidates: list[Candidate],
+) -> EmbeddingIndex:
+    """Build an embedding index using document-level span pooling.
+
+    This groups candidates by source document and encodes each document once,
+    pooling token embeddings for each passage span.
+
+    Args:
+        embedder: Embedder that supports span pooling (e.g., DocumentSpanEmbedder).
+        candidates: List of all candidates to encode.
+
+    Returns:
+        EmbeddingIndex with vectors in the same order as candidates.
+    """
+    import numpy as np
+
+    # Group candidates by source document
+    source_to_candidates: dict[str, list[tuple[int, Candidate]]] = {}
+    for idx, candidate in enumerate(candidates):
+        source_key = f"{candidate.source.source_id}_{candidate.source.source_index}"
+        if source_key not in source_to_candidates:
+            source_to_candidates[source_key] = []
+        source_to_candidates[source_key].append((idx, candidate))
+
+    # Pre-allocate result array
+    num_candidates = len(candidates)
+    embedding_dim = 384  # Default for MiniLM-L6-v2
+    all_vectors = np.zeros((num_candidates, embedding_dim), dtype=np.float32)
+
+    # Encode each source document and assign vectors to candidates
+    for source_candidates in source_to_candidates.values():
+        if not source_candidates:
+            continue
+
+        # Get the source text from the first candidate
+        first_idx, first_candidate = source_candidates[0]
+        source_text = first_candidate.source.text
+
+        # Get all passages for this source
+        passages = [candidate.passage for _, candidate in source_candidates]
+
+        # Encode using document-level span pooling
+        encode_method = getattr(embedder, "encode_document_spans", None)
+        if encode_method is None or not callable(encode_method):
+            # Fallback to per-passage encoding
+            span_embeddings = embedder.encode([passage.text for passage in passages])
+        else:
+            span_embeddings = encode_method(source_text, passages)  # pyright: ignore[reportAttributeAccessIssue]
+
+        # Update the embedding dimension if needed (first source)
+        if first_idx == source_candidates[0][0]:
+            if span_embeddings and len(span_embeddings[0]) != embedding_dim:
+                embedding_dim = len(span_embeddings[0])
+                all_vectors = np.zeros(
+                    (num_candidates, embedding_dim), dtype=np.float32
+                )
+
+        # Assign vectors to the corresponding candidate positions
+        for (candidate_idx, _), embedding in zip(
+            source_candidates, span_embeddings, strict=False
+        ):
+            all_vectors[candidate_idx] = embedding
+
+    # Compute norms
+    norms = np.linalg.norm(all_vectors, axis=1).astype(np.float32)
+
+    return EmbeddingIndex(vectors=all_vectors, norms=norms)
 
 
 def build_answer_embedding_cache(
