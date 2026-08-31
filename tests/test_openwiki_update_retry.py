@@ -28,7 +28,9 @@ def _check(tmp_path: Path, text: str) -> int:
         "Cannot read properties of undefined (reading '0')\n",
         "TypeError: Cannot read properties of undefined (reading '0')\n",
         "Cannot read property '0' of undefined\n",
+        'Cannot read properties of undefined (reading "0")\n',
         "undefined is not an object (evaluating 'choices[0]')\n",
+        "undefined is not an object (evaluating 'content[0]')\n",
         (
             "Provider returned error | metadata:"
             ' {"retry_after_seconds":5}\n'
@@ -48,6 +50,9 @@ def test_retryable_logs(tmp_path: Path, text: str) -> None:
         "ENOENT: no such file or directory, open 'openwiki/INSTRUCTIONS.md'\n",
         "SyntaxError: Unexpected token\n",
         "Error: 500 Internal Server Error\n",
+        "Cannot read properties of undefined (reading 'config')\n",
+        "Cannot read properties of undefined (reading 'length')\n",
+        "undefined is not an object (evaluating 'config.model')\n",
         "",
     ],
 )

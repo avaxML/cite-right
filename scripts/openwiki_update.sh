@@ -22,7 +22,7 @@ MAX_RATE_LIMIT_SLEEP=90
 is_retryable_provider_error() {
   local log_file="$1"
   grep -Eiq \
-    'HTTP[/ ]*(429|402|403|404)([^0-9]|$)|Error:[[:space:]]*(429|402|403|404)([^0-9]|$)|status["'\''[:space:]=]+(429|402|403|404)([^0-9]|$)|(429|402|403|404)[[:space:]]+(Forbidden|Not Found|Too Many|Payment Required)|rate[-_ ]?limit|too many requests|free-models-per-min|payment required|insufficient.?credit|quota.?exceeded|only available on agentic harnesses|model not found|no endpoints|\bunavailable\b|Cannot read propert(y|ies) of undefined|Cannot read property .+ of undefined|undefined is not (an object|iterable)' \
+    'HTTP[/ ]*(429|402|403|404)([^0-9]|$)|Error:[[:space:]]*(429|402|403|404)([^0-9]|$)|status["'\''[:space:]=]+(429|402|403|404)([^0-9]|$)|(429|402|403|404)[[:space:]]+(Forbidden|Not Found|Too Many|Payment Required)|rate[-_ ]?limit|too many requests|free-models-per-min|payment required|insufficient.?credit|quota.?exceeded|only available on agentic harnesses|model not found|no endpoints|\bunavailable\b|Cannot read properties of undefined \(reading ['\''"]0['\''"]\)|Cannot read property ['\''"]0['\''"] of undefined|undefined is not (an object|iterable).*(choices\[0\]|content\[0\])' \
     "${log_file}"
 }
 
