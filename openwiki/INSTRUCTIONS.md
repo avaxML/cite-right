@@ -395,8 +395,9 @@ OpenWiki in GitHub Actions uses OpenRouter `:free` models.
 `scripts/openwiki_pick_model.py` ranks them (prefer `tools`, then Artificial
 Analysis `coding_index` if present, else `context_length`, then `created`).
 `scripts/openwiki_update.sh` retries the next model on 429/402/rate-limit,
-403/404, agentic-harness blocks, and model-unavailable errors. A 429 sleeps
-`retry_after_seconds` or until `X-RateLimit-Reset` (cap 90s). After a
+403/404, agentic-harness blocks, model-unavailable errors, and empty/malformed
+completions that crash OpenWiki with `Cannot read properties of undefined`.
+A 429 sleeps `retry_after_seconds` or until `X-RateLimit-Reset` (cap 90s). After a
 successful update, `scripts/publish_openwiki_to_docs.py` copies the public
 paths above into `docs/`. That rotation and copy step are CI machinery, not
 page content. Do not document a paid model id as required.

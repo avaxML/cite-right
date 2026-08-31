@@ -4,10 +4,11 @@
 # scripts/openwiki_pick_model.py lists :free ids (prefer tool-calling), ranked
 # by Artificial Analysis coding_index when present, else context_length, then
 # created. This wrapper exports OPENWIKI_MODEL_ID to the first id, then retries
-# the next on 429/402/rate-limit, 403/404, agentic-harness blocks, and
-# model-unavailable errors. On 429, sleep retry_after_seconds or until
-# X-RateLimit-Reset (cap 90s) before the next model. Do not pin a paid model
-# such as z-ai/glm-5.2 (without :free).
+# the next on 429/402/rate-limit, 403/404, agentic-harness blocks,
+# model-unavailable errors, and empty/malformed completions that crash
+# OpenWiki with "Cannot read properties of undefined (reading '0')". On 429,
+# sleep retry_after_seconds or until X-RateLimit-Reset (cap 90s) before the
+# next model. Do not pin a paid model such as z-ai/glm-5.2 (without :free).
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -15,40 +16,13 @@ REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 PICKER="${SCRIPT_DIR}/openwiki_pick_model.py"
 MAX_RATE_LIMIT_SLEEP=90
 
-if [[ -z "${OPENROUTER_API_KEY:-}" ]]; then
-  echo "::warning::OPENROUTER_API_KEY is not set. Add the GitHub Actions secret, then re-run this workflow (workflow_dispatch or next merge to main)."
-  if [[ "${GITHUB_EVENT_NAME:-}" == "workflow_dispatch" ]]; then
-    exit 1
-  fi
-  exit 0
-fi
-
-if ! command -v openwiki >/dev/null 2>&1; then
-  echo "openwiki is not on PATH. Install with: npm install --global openwiki@latest" >&2
-  exit 1
-fi
-
-pick_out="$(mktemp)"
-if ! python3 "${PICKER}" >"${pick_out}"; then
-  rm -f "${pick_out}"
-  echo "Failed to pick free OpenRouter models." >&2
-  exit 1
-fi
-mapfile -t MODELS < "${pick_out}"
-rm -f "${pick_out}"
-if [[ ${#MODELS[@]} -eq 0 ]]; then
-  echo "No free OpenRouter models selected." >&2
-  exit 1
-fi
-
-cd "${REPO_ROOT}"
-
 # Provider errors that mean "this free model is unusable right now, try the next".
-# Real OpenWiki crashes and other unexpected errors still fail the job.
+# Includes empty/malformed chat completions that make OpenWiki throw
+# TypeError on choices[0] / content[0]. Other unexpected crashes still fail.
 is_retryable_provider_error() {
   local log_file="$1"
   grep -Eiq \
-    'HTTP[/ ]*(429|402|403|404)([^0-9]|$)|Error:[[:space:]]*(429|402|403|404)([^0-9]|$)|status["'\''[:space:]=]+(429|402|403|404)([^0-9]|$)|(429|402|403|404)[[:space:]]+(Forbidden|Not Found|Too Many|Payment Required)|rate[-_ ]?limit|too many requests|free-models-per-min|payment required|insufficient.?credit|quota.?exceeded|only available on agentic harnesses|model not found|no endpoints|\bunavailable\b' \
+    'HTTP[/ ]*(429|402|403|404)([^0-9]|$)|Error:[[:space:]]*(429|402|403|404)([^0-9]|$)|status["'\''[:space:]=]+(429|402|403|404)([^0-9]|$)|(429|402|403|404)[[:space:]]+(Forbidden|Not Found|Too Many|Payment Required)|rate[-_ ]?limit|too many requests|free-models-per-min|payment required|insufficient.?credit|quota.?exceeded|only available on agentic harnesses|model not found|no endpoints|\bunavailable\b|Cannot read propert(y|ies) of undefined|Cannot read property .+ of undefined|undefined is not (an object|iterable)' \
     "${log_file}"
 }
 
@@ -106,6 +80,39 @@ sleep_rate_limit_backoff() {
   fi
 }
 
+if [[ "${1:-}" == "--check-retryable" ]]; then
+  is_retryable_provider_error "${2:?usage: $0 --check-retryable LOG_FILE}"
+  exit $?
+fi
+
+if [[ -z "${OPENROUTER_API_KEY:-}" ]]; then
+  echo "::warning::OPENROUTER_API_KEY is not set. Add the GitHub Actions secret, then re-run this workflow (workflow_dispatch or next merge to main)."
+  if [[ "${GITHUB_EVENT_NAME:-}" == "workflow_dispatch" ]]; then
+    exit 1
+  fi
+  exit 0
+fi
+
+if ! command -v openwiki >/dev/null 2>&1; then
+  echo "openwiki is not on PATH. Install with: npm install --global openwiki@latest" >&2
+  exit 1
+fi
+
+pick_out="$(mktemp)"
+if ! python3 "${PICKER}" >"${pick_out}"; then
+  rm -f "${pick_out}"
+  echo "Failed to pick free OpenRouter models." >&2
+  exit 1
+fi
+mapfile -t MODELS < "${pick_out}"
+rm -f "${pick_out}"
+if [[ ${#MODELS[@]} -eq 0 ]]; then
+  echo "No free OpenRouter models selected." >&2
+  exit 1
+fi
+
+cd "${REPO_ROOT}"
+
 last_status=1
 model_index=0
 for model_id in "${MODELS[@]}"; do
@@ -126,7 +133,7 @@ for model_id in "${MODELS[@]}"; do
     if is_rate_limit_error "${log_file}" && [[ "${model_index}" -lt "${#MODELS[@]}" ]]; then
       sleep_rate_limit_backoff "${log_file}"
     fi
-    echo "OpenWiki failed on ${model_id} with a retryable provider error (429/402/403/404/unavailable). Trying the next free model."
+    echo "OpenWiki failed on ${model_id} with a retryable provider error (429/402/403/404/unavailable/malformed completion). Trying the next free model."
     rm -f "${log_file}"
     continue
   fi
