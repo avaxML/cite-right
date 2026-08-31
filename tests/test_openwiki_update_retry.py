@@ -29,8 +29,11 @@ def _check(tmp_path: Path, text: str) -> int:
         "TypeError: Cannot read properties of undefined (reading '0')\n",
         "Cannot read property '0' of undefined\n",
         "undefined is not an object (evaluating 'choices[0]')\n",
-        "Provider returned error | metadata: {\"retry_after_seconds\":5}\n"
-        "rate-limited upstream\n",
+        (
+            "Provider returned error | metadata:"
+            ' {"retry_after_seconds":5}\n'
+            "rate-limited upstream\n"
+        ),
         "HTTP 429 Too Many Requests\n",
         "Error: 403 Forbidden\n only available on agentic harnesses\n",
     ],
