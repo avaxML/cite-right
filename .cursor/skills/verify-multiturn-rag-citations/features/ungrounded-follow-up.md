@@ -20,7 +20,7 @@ Preconditions:
 - Doctor is green.
 - Turn 1 sources may still be retrieved; that is the point.
 
-- **Hallucination.** Run `uv run python .cursor/skills/verify-multiturn-rag-citations/scripts/drive_session.py --feature ungrounded-follow-up`. `turns` include `turn3_hallucinated_followup` with `statuses` all `"unsupported"` and `cited_source_ids` empty.
+- **Hallucination.** Run `uv run python .cursor/skills/verify-multiturn-rag-citations/scripts/drive_session.py --feature ungrounded-follow-up`. `turns` include `turn3_hallucinated_followup` with answer `Martian terraforming began yesterday.`, `statuses` all `"unsupported"`, and `cited_source_ids` empty.
 - **Wrapper.** `turn4_conversational_wrapper` has answer `Sure!`, status `"unsupported"`, empty citations.
 - **Proof.** `${VERIFY_EVIDENCE_DIR}/ungrounded-follow-up.json` has `"ok": true`.
 
@@ -29,3 +29,4 @@ Preconditions:
 - `"partial"` is not this feature. A contradiction of a real source (`The vaccine is not safe.` vs a safety sentence) is `"partial"` with citations. Do not assert `"unsupported"` there.
 - `"unsupported"` means no localized citation survived, not a high-precision hallucination detector. Still require empty `citations` for these two canned answers.
 - Embedding extras can add `retrieval_support` without changing status. Status must remain `"unsupported"` if `citations` is empty.
+- Shared tokens with retrieved docs (`company` in `a new company record`, or verbs like `announced`) can still localize a `"partial"` citation. This recipe uses a Mars claim with no overlapping content tokens.

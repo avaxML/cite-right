@@ -99,7 +99,10 @@ TURNS: list[TurnSpec] = [
     TurnSpec(
         turn_id="turn1_q4_revenue",
         question="What was Acme Q4 revenue?",
-        answer="Revenue reached 5.2 billion dollars, exceeding analyst expectations.",
+        answer=(
+            "During the Q4 earnings call, CEO Jane Smith noted that revenue "
+            "reached 5.2 billion dollars, exceeding analyst expectations."
+        ),
         retrieve_query="Acme Q4 revenue earnings call Jane Smith",
         expected_status="supported",
         required_source_ids=frozenset({"q4_earnings", "press_release"}),
@@ -117,7 +120,7 @@ TURNS: list[TurnSpec] = [
     TurnSpec(
         turn_id="turn3_hallucinated_followup",
         question="Did they colonize Mars?",
-        answer="The company announced plans to colonize Mars this year.",
+        answer="Martian terraforming began yesterday.",
         retrieve_query="Acme Q4 revenue earnings",
         expected_status="unsupported",
         expect_empty_citations=True,
@@ -252,7 +255,7 @@ def drive_turn(spec: TurnSpec) -> dict[str, Any]:
 def drive_prepared_corpus() -> dict[str, Any]:
     corpus = PreparedCitationCorpus.from_sources(CORPUS)
     answers = [
-        "Revenue reached 5.2 billion dollars, exceeding analyst expectations.",
+        "During the Q4 earnings call, CEO Jane Smith noted that revenue reached 5.2 billion dollars, exceeding analyst expectations.",
         "Sales in Europe surpassed all projections by 15 percent.",
     ]
     turns = []

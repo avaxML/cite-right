@@ -23,7 +23,7 @@ Preconditions:
 - No requirement to start the demo.
 
 - **Ask and retrieve.** The user asks about Q4 revenue. Run `uv run python .cursor/skills/verify-multiturn-rag-citations/scripts/drive_session.py --feature per-turn-alignment`. The JSON `turns[0].turn_id` is `turn1_q4_revenue` and `retrieved_source_ids` includes `q4_earnings` or `press_release`.
-- **Cite the answer.** The harness calls `align_citations` on `Revenue reached 5.2 billion dollars, exceeding analyst expectations.` against those sources. `turns[0].statuses` contains `"supported"` and `cited_source_ids` is a subset of `retrieved_source_ids`.
+- **Cite the answer.** The harness calls `align_citations` on `During the Q4 earnings call, CEO Jane Smith noted that revenue reached 5.2 billion dollars, exceeding analyst expectations.` against those sources. `turns[0].statuses` contains `"supported"` and `cited_source_ids` is a subset of `retrieved_source_ids`.
 - **Check highlights.** In `turns[0].spans[*].citations[*]`, `offset_invariant` is `true` and `evidence` is a substring of the named source.
 - **Proof.** Open `${VERIFY_EVIDENCE_DIR}/per-turn-alignment.json` and `${VERIFY_EVIDENCE_DIR}/session-summary.txt`. The summary line for `turn1_q4_revenue` shows `ok=True`. Top-level `"ok": true`.
 
@@ -33,3 +33,4 @@ Preconditions:
 - `retrieval_support` is not a citation. Status comes from localized `citations` and `answer_coverage`, not embedding-only hits.
 - The demo `/api/citations` path proves a single canned DeepSeek mHC answer. Do not count it as `turn1_q4_revenue`.
 - Status spelling is `"supported"`, never `"fully_supported"`.
+- A shortened paraphrase that drops named entities still in the source passage can land `"partial"` via contradiction-on-passage, even with `answer_coverage` 1.0. This recipe uses the extractive Jane Smith sentence so the expected status is `"supported"`.
