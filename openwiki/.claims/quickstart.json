@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:0e380a39068e28d3f15bd55c182458d6a154ae5c97bc326f9c5b6f02cccdf0ed",
+  "pageVersion": "sha256:6d1e49cb1317be139bb8033ee9f94c8e90ac54640017143ba9a378574ee4c7df",
   "claims": [
     {
       "id": "claim_8836b2de293648a6847bc9847850d700",
@@ -18,8 +18,12 @@
     },
     {
       "id": "claim_417781d72b9d4f35918bdf7a2c4e944f",
-      "statement": "The openwiki/ tree contains exactly 16 public pages under the listed Public Paths (excluding the auto-generated Home at openwiki/index.md) and 2 agent-only pages under openwiki/testing/.",
+      "statement": "The openwiki/ tree contains exactly 17 public pages under the listed Public Paths (excluding the auto-generated Home at openwiki/index.md) and 2 agent-only pages under openwiki/testing/.",
       "evidence": [
+        {
+          "resource": "repo://scripts/publish_openwiki_to_docs.py",
+          "version": "repo-file-v1:sha256:708e4f3cca92c433f1a45349a3ce8970c696b77a886045448876e8f102849cb9"
+        },
         {
           "resource": "repo://src/cite_right/__init__.py",
           "version": "repo-file-v1:sha256:d5aee04ba747603020968cca58ba3c52dd717454f78f5fe6fbfdfd3353bb8a3c"
@@ -28,8 +32,12 @@
     },
     {
       "id": "claim_b67bfd4336984d4ab547bd325328ab5d",
-      "statement": "The 16 public pages are: getting-started/installation.md, getting-started/quickstart.md, concepts/how-it-works.md, concepts/citation-alignment.md, concepts/hallucination-detection.md, concepts/fact-verification.md, configuration/citation-config.md, configuration/presets.md, configuration/tokenizers.md, configuration/segmenters.md, integrations/langchain.md, integrations/llamaindex.md, integrations/custom-sources.md, advanced/multi-span-evidence.md, advanced/embedding-retrieval.md, advanced/rust-acceleration.md, advanced/performance-tuning.md (Home at openwiki/index.md is auto-generated and excluded from the 16).",
+      "statement": "The 17 public pages are: getting-started/installation.md, getting-started/quickstart.md, concepts/how-it-works.md, concepts/citation-alignment.md, concepts/hallucination-detection.md, concepts/fact-verification.md, configuration/citation-config.md, configuration/presets.md, configuration/tokenizers.md, configuration/segmenters.md, integrations/langchain.md, integrations/llamaindex.md, integrations/custom-sources.md, advanced/multi-span-evidence.md, advanced/embedding-retrieval.md, advanced/rust-acceleration.md, advanced/performance-tuning.md (Home at openwiki/index.md is auto-generated and excluded from the 17).",
       "evidence": [
+        {
+          "resource": "repo://scripts/publish_openwiki_to_docs.py",
+          "version": "repo-file-v1:sha256:708e4f3cca92c433f1a45349a3ce8970c696b77a886045448876e8f102849cb9"
+        },
         {
           "resource": "repo://src/cite_right/__init__.py",
           "version": "repo-file-v1:sha256:d5aee04ba747603020968cca58ba3c52dd717454f78f5fe6fbfdfd3353bb8a3c"
@@ -152,7 +160,7 @@
     }
   ],
   "verification": {
-    "by": "openwiki/0.4.0",
-    "at": "2026-08-26T03:32:47.432Z"
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-02T12:21:54.997Z"
   }
 }

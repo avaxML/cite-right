@@ -1,11 +1,11 @@
 ---
 type: testing-reference
 title: Rust/Python Contract Tests
-description: Agent-only reference for the Python vs Rust parity contract enforced by tests/test_alignment_rust_parity.py. Compares status, offsets, scores, matches, match_blocks, and best-candidate selection between SmithWatermanAligner and the cite_right._core extension. Points at src/cite_right/core/aligner_py.py and src/cite_right/core/aligner_rust.py.
+description: Agent-only reference for the Python vs Rust parity contract enforced by tests/test_alignment_rust_parity.py. Compares offsets, scores, matches, match_blocks, and best-candidate selection between SmithWatermanAligner and the cite_right._core extension. Points at src/cite_right/core/aligner_py.py and src/cite_right/core/aligner_rust.py.
 tags: [contract-tests, rust, python, smith-waterman, parity, alignment, _core, match-blocks, best-match, tie-breaking, skip, fixtures]
 verified:
-  - by: openwiki/0.4.0
-    at: 2026-08-26T03:32:47.432Z
+  - by: openwiki/0.5.0
+    at: 2026-09-02T12:21:54.997Z
 sources:
   - id: openwiki-source-0b1b3279f2fdef17b4081691
     resource: repo://src/cite_right/_core.pyi
@@ -17,7 +17,7 @@ sources:
     resource: repo://tests/conftest.py
   - id: openwiki-source-811d84c9631d27a47d6421e0
     resource: repo://tests/test_alignment_rust_parity.py
-generated: {by: "openwiki/0.4.0", at: "2026-08-26T03:32:47.432Z"}
+generated: { by: "openwiki/0.5.0", at: "2026-09-02T12:21:54.997Z" }
 ---
 
 # Rust/Python Contract Tests
@@ -32,7 +32,7 @@ The tests assert that for the same query sequence, the same candidate sequence, 
 
 The contract is enforced on three different entry points, in increasing order of detail:
 
-- `align_pair_details` — pair alignment, six integers plus a match count.
+- `align_pair_details` — pair alignment, a six-tuple of integers.
 - `align_pair_blocks_details` — pair alignment with per-alignment `match_blocks`, the tuple expected by `CitationConfig(multi_span_evidence=True)`.
 - `align_best_details` — best-candidate selection across a list, with deterministic tie-breaking.
 
@@ -138,6 +138,32 @@ Verifies that `align_pair_blocks_details` matches the Python blocks output on a 
 Verifies that the choice of alignment does not depend on whether `match_blocks` are being collected. Skips via `requires_rust_blocks`. The test calls `align_pair_details` on the non-blocks entry point and `align_pair_blocks_details` on the blocks entry point on the same input, then asserts `with_blocks[:6] == without_blocks`. The first six elements of the blocks tuple must equal the non-blocks tuple; only the `match_blocks` element is allowed to differ.
 
 This pins the invariant that the traceback choice is independent of the traceback-collection flag. A regression in that invariant would change the chosen alignment when `multi_span_evidence` is enabled, which would silently change citation offsets.
+
+### `test_rust_align_topk_matches_python_selection`
+
+Verifies that `align_topk_details` on the Rust side returns the same top-k list the Python selector would build, applying `_python_alignment_sort_key` to every candidate and slicing the first `k`. Skips via `requires_rust`.
+
+The Python side aligns each candidate, builds a `(score, index, token_start, token_end, query_start, query_end, matches)` tuple per candidate, and sorts the list with the eight-element key. The Rust side calls `align_topk_details(claim, candidates, top_k, 2, -1, -1)` directly. The test asserts the returned list equals `py_items[:top_k]`. The candidate set is the same `[[3, 4], [1, 2, 1, 2], [1, 2], [0, 1, 2, 3]]` against `claim = [1, 2]` used in `test_rust_align_best_matches_python_selection`, with `top_k = 3`.
+
+### `test_rust_align_batch_extension_preserves_input_order`
+
+Verifies that `align_batch_details` on the Rust side preserves input order, matching repeated Python alignment of the same query against each candidate in order. Skips via `requires_rust`.
+
+The Python side aligns each candidate individually; the Rust side calls `align_batch_details(claim, candidates, 2, -1, -1)` once. The test compares the two six-tuple lists element-for-element. The candidate set is `[[0, 1, 2, 3, 4], [1, 2, 9, 3], [8, 9, 10]]` against `claim = [1, 2, 3]`.
+
+This is the raw-extension counterpart of `test_rust_wrapper_align_batch_matches_python_ordered_results`, which exercises the same invariant through `RustSmithWatermanAligner(return_match_blocks=True).align_batch` and the `align_batch_blocks_details` entry point.
+
+### `test_rust_align_best_prefers_more_matches_on_equal_scores`
+
+Verifies that `align_best_details` on the Rust side applies the matches-first tie-break on equal scores — the same rule `test_rust_parity_for_equal_score_more_matches_case` pins for the single-pair path. Skips via `requires_rust`.
+
+Sequences are `claim = [0, 1, 0]` and `candidates = [[0, 1, 1, 1, 0], [0, 2, 1, 1, 0]]`. The first candidate wins under the matches-first rule; the second candidate shares the same score but has fewer matches. The test asserts the Rust seven-tuple equals the head of the Python sorted list.
+
+### `test_rust_align_best_matches_topk_first_item`
+
+Verifies the cross-entry-point agreement between `align_best_details` and `align_topk_details`: the best match returned by the former must equal the head of the top-1 list returned by the latter. Skips via `requires_rust`.
+
+Sequences are `claim = [1, 2, 3]` and `candidates = [[1, 2], [1, 2, 3], [0, 1, 2, 3], [1, 9, 2, 9, 3]]`. The test asserts `rust_core.align_topk_details(claim, candidates, 1, 2, -1, -1) == [rust_core.align_best_details(claim, candidates, 2, -1, -1)]`. A regression that broke this invariant would let `align_best` and `align_topk` pick different winners on the same input.
 
 ## What This Test File Does Not Cover
 

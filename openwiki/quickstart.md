@@ -1,14 +1,16 @@
 ---
 type: agent-routing
 title: Cite-Right Wiki Quickstart
-description: Agent-only routing map for the documentation tree under openwiki/. Indexes the 16 public pages and the 2 agent-only pages under openwiki/testing/, lists the public-vs-agent split, and points new agents at the right entry page (openwiki/index.md for reader questions, openwiki/concepts/how-it-works.md for pipeline work, openwiki/testing/contract-tests.md for Rust parity work).
+description: Agent-only routing map for the documentation tree under openwiki/. Indexes the 17 public pages and the 2 agent-only pages under openwiki/testing/, lists the public-vs-agent split, and points new agents at the right entry page (openwiki/index.md for reader questions, openwiki/concepts/how-it-works.md for pipeline work, openwiki/testing/contract-tests.md for Rust parity work).
 tags: [quickstart, agent-routing, public-pages, agent-only, testing, index, how-it-works, contract-tests, pytest-markers, mkdocs, public-paths, instructions, page-map]
 verified:
-  - by: openwiki/0.4.0
-    at: 2026-08-26T03:32:47.432Z
+  - by: openwiki/0.5.0
+    at: 2026-09-02T12:21:54.997Z
 sources:
   - id: openwiki-source-5e3251d7fd54ced7f7fb97fd
     resource: repo://rust_core/src/lib.rs
+  - id: openwiki-source-05c3bec64c5e68a936893998
+    resource: repo://scripts/publish_openwiki_to_docs.py
   - id: openwiki-source-0d7249770abeac51acffd6d9
     resource: repo://src/cite_right/__init__.py
   - id: openwiki-source-9420301e9a6eeb80c89f2f99
@@ -25,27 +27,27 @@ sources:
     resource: repo://tests/conftest.py
   - id: openwiki-source-811d84c9631d27a47d6421e0
     resource: repo://tests/test_alignment_rust_parity.py
-generated: {by: "openwiki/0.4.0", at: "2026-08-26T03:32:47.432Z"}
+generated: { by: "openwiki/0.5.0", at: "2026-09-02T12:21:54.997Z" }
 ---
 
 # Cite-Right Wiki Quickstart
 
 This page is the routing map for the Cite-Right documentation tree under `openwiki/`. It is for coding agents, not for readers. There are two parallel audiences in this tree:
 
-- **Public pages** under `openwiki/` that mirror what `mkdocs.yml` ships to GitHub Pages. There are 16 of them, plus the auto-generated Home at `openwiki/index.md`. Readers see only these.
+- **Public pages** under `openwiki/` that mirror what `mkdocs.yml` ships to GitHub Pages. There are 17 of them, plus the auto-generated Home at `openwiki/index.md`. Readers see only these.
 - **Agent-only pages** under `openwiki/testing/`. There are 2 of them. They are denser, may mention `openwiki/` paths, and are not published.
 
 The job of this page is to point a new agent at the right entry page for the question it actually has. Public-to-public links use relative paths (for example `../concepts/how-it-works.md`). Public-to-agent links are forbidden: no public page may link to `testing/`. This page itself is the one and only place that names the split.
 
 ## How The Tree Is Wired
 
-`openwiki/INSTRUCTIONS.md` is the user-authored brief and is not generated. The public page paths are listed there under "Public Paths" and match `mkdocs.yml` exactly. The 16 public pages plus the auto-generated Home feed GitHub Pages. After each successful update, `scripts/publish_openwiki_to_docs.py` copies the public paths into `docs/`. The two pages under `openwiki/testing/` and this routing page are agent-only and never get published.
+`openwiki/INSTRUCTIONS.md` is the user-authored brief and is not generated. The public page paths are listed there under "Public Paths" and match `mkdocs.yml` exactly. The 17 public pages plus the auto-generated Home feed GitHub Pages. After each successful update, `scripts/publish_openwiki_to_docs.py` copies the public paths into `docs/`. The two pages under `openwiki/testing/` and this routing page are agent-only and never get published.
 
 There is one documentation site. Do not invent a second nav, a `/wiki/` URL, a Wiki tab, or a "see the wiki" cross-link. Public pages never mention `wiki`, `MkDocs`, or `OpenWiki`. This page is allowed to name those because it is not on the public site.
 
 ## The Public Page Index
 
-The Home (`openwiki/index.md`) is auto-generated and not counted in the 16 below. Each entry gives the path, a one-line role, and the canonical source the page documents.
+The Home (`openwiki/index.md`) is auto-generated and not counted in the 17 below. Each entry gives the path, a one-line role, and the canonical source the page documents.
 
 ### Getting Started (2)
 
@@ -84,7 +86,7 @@ The Home (`openwiki/index.md`) is auto-generated and not counted in the 16 below
 The pages under `openwiki/testing/` are for coding agents only. They never reach the public site. They are denser, and they may mention `openwiki/` paths and source-file paths.
 
 - `openwiki/testing/pytest-markers.md` — the seven pytest markers registered in `tests/conftest.py` (`rust`, `spacy`, `embeddings`, `tiktoken`, `huggingface`, `pysbd`, `slow`), the `rust_core` and `rust_core_with_blocks` fixtures, and the `requires_rust` / `requires_rust_blocks` / `requires_spacy` / `requires_spacy_model` / `requires_embeddings` / `requires_tiktoken` / `requires_huggingface` / `requires_pysbd` skip decorators. Points at `src/cite_right/__init__.py` for the public surface, `src/cite_right/citations.py` for the pipeline, `src/cite_right/core/prepared_corpus.py` for prepare, `src/cite_right/contradiction.py` for the cheap contradiction check, and `rust_core/` for the extension. Source: `tests/conftest.py`, `pyproject.toml`.
-- `openwiki/testing/contract-tests.md` — the Python vs Rust parity contract enforced by `tests/test_alignment_rust_parity.py`. Compares status, offsets, scores, matches, `match_blocks`, and best-candidate selection between `SmithWatermanAligner` and the `cite_right._core` extension. Covers `align_pair_details`, `align_pair_blocks_details`, and `align_best_details` parity, the equal-score coverage regression, the tie-breaker key, and the `_core` capability check. Points at `src/cite_right/core/aligner_py.py` and `src/cite_right/core/aligner_rust.py`. Source: `tests/test_alignment_rust_parity.py`, `src/cite_right/core/aligner_rust.py`, `src/cite_right/core/aligner_py.py`.
+- `openwiki/testing/contract-tests.md` — the Python vs Rust parity contract enforced by `tests/test_alignment_rust_parity.py`. Compares offsets, scores, matches, `match_blocks`, and best-candidate selection between `SmithWatermanAligner` and the `cite_right._core` extension. Covers `align_pair_details`, `align_pair_blocks_details`, and `align_best_details` parity, the equal-score coverage regression, the tie-breaker key, and the `_core` capability check. Status assignment is covered elsewhere (see the page's "What This Test File Does Not Cover" section). Points at `src/cite_right/core/aligner_py.py` and `src/cite_right/core/aligner_rust.py`. Source: `tests/test_alignment_rust_parity.py`, `src/cite_right/core/aligner_rust.py`, `src/cite_right/core/aligner_py.py`.
 
 ## Picking The Entry Page
 
@@ -92,7 +94,7 @@ Use this table to pick the right starting point for a new task. Reader questions
 
 | You need to… | Open |
 | --- | --- |
-| Answer a reader / user question, or write a public page | `openwiki/index.md` (Home) and the 16 public pages above |
+| Answer a reader / user question, or write a public page | `openwiki/index.md` (Home) and the 17 public pages above |
 | Understand or modify the pipeline (segment, tokenize, index, align, rank, contradict, status) | `openwiki/concepts/how-it-works.md` |
 | Change a config default, add a config field, or update a preset | `openwiki/configuration/citation-config.md` then `openwiki/configuration/presets.md` |
 | Add or change a tokenizer / segmenter, or wire a custom one | `openwiki/configuration/tokenizers.md` and `openwiki/configuration/segmenters.md` |
@@ -136,7 +138,7 @@ These must stay true on every generated page that touches them.
 ## Pointers
 
 - `openwiki/INSTRUCTIONS.md` — the user-authored brief. Public Paths list, invariants, voice rules, testing-page rules. Not generated.
-- `mkdocs.yml` — the nav that the public site renders. The 16 public pages plus the auto-generated Home and the `docs/api/` API reference map exactly onto `openwiki/` paths.
+- `mkdocs.yml` — the nav that the public site renders. The 17 public pages plus the auto-generated Home and the `docs/api/` API reference map exactly onto `openwiki/` paths.
 - `docs/index.md` — the source of truth for the public Home voice. Match the voice of the current public pages.
 - `docs/concepts/how-it-works.md`, `docs/concepts/hallucination-detection.md`, `docs/advanced/rust-acceleration.md` — additional voice anchors named in `openwiki/INSTRUCTIONS.md`.
 - `src/cite_right/__init__.py` — the public surface. `align_citations`, `PreparedCitationCorpus`, `SourceDocument`, `SourceChunk`, `CitationConfig`, `CitationWeights`, the segmenter / tokenizer / embedder classes, the presets, and the helpers used on public pages.
@@ -145,7 +147,7 @@ These must stay true on every generated page that touches them.
 - `src/cite_right/core/citation_config.py` — `CitationConfig` and `CitationWeights`. Defaults and presets.
 - `src/cite_right/core/aligner_py.py` and `src/cite_right/core/aligner_rust.py` — the two Smith-Waterman backends. The Rust wrapper performs the `align_pair_blocks_details` capability check.
 - `src/cite_right/contradiction.py` — the cheap contradiction check.
-- `rust_core/` — the Rust extension source. `Cargo.toml` and `rust_core/src/`. The entry points `align_pair`, `align_pair_details`, `align_pair_blocks_details`, `align_best`, `align_best_details`, `align_topk_details`, `align_batch_details`, `align_batch_blocks_details`, `rust_tokenize_and_prepare`, `InvertedIndex`, `PreparedCorpus`, `align_batch_with_match_blocks`, `rust_build_citations_fast` are declared in `src/cite_right/_core.pyi`.
+- `rust_core/` — the Rust extension source. `Cargo.toml` and `rust_core/src/`. The entry points `align_pair`, `align_pair_details`, `align_pair_blocks_details`, `align_best`, `align_best_details`, `align_topk_details`, `align_batch_details`, `align_batch_blocks_details`, `rust_tokenize_and_prepare`, plus the `InvertedIndex` and `PreparedCorpus` classes are declared in `src/cite_right/_core.pyi`.
 - `tests/conftest.py` — the seven pytest markers, the `_rust_available` / `_rust_has_blocks_details` / `_spacy_available` / `_spacy_model_available` / `_embeddings_available` / `_tiktoken_available` / `_huggingface_available` / `_pysbd_available` probes, and the `rust_core` / `rust_core_with_blocks` / `spacy_nlp` fixtures.
 - `tests/test_alignment_rust_parity.py` — the parity contract enforced between `SmithWatermanAligner` and `RustSmithWatermanAligner`. Documented in `openwiki/testing/contract-tests.md`.
 - `pyproject.toml` — `[project.optional-dependencies]` for `spacy`, `embeddings`, `tiktoken`, `huggingface`, `pysbd`, `langchain`, `llamaindex`; `[tool.pytest.ini_options]` notes that markers are registered in conftest rather than re-declared.
