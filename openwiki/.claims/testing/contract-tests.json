@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:302dd2838f6d2cc1b956733b26d15b11e1ae3513ce701ee64f63e099fb2dc26f",
+  "pageVersion": "sha256:e85db154a03eac67be2ae96b0765d8451219b9d8475e38d3c64beb8b7964d2c0",
   "claims": [
     {
       "id": "claim_e0fd2468ba7544ffb3420812ef5699a0",
@@ -135,10 +135,54 @@
           "version": "repo-file-v1:sha256:4addd71f0e42faa3ba3b577c227e1cabe713c5810a7af762a9158aac7b6dff7e"
         }
       ]
+    },
+    {
+      "id": "claim_dc226000a2614894aa35d459e26b9d9f",
+      "statement": "test_rust_align_topk_matches_python_selection pins the contract that align_topk_details returns the same top-k list the Python selector would build by aligning each candidate and applying the eight-element _python_alignment_sort_key, using the candidate set [[3,4],[1,2,1,2],[1,2],[0,1,2,3]] with claim=[1,2] and top_k=3.",
+      "evidence": [
+        {
+          "resource": "repo://tests/test_alignment_rust_parity.py",
+          "version": "repo-file-v1:sha256:4addd71f0e42faa3ba3b577c227e1cabe713c5810a7af762a9158aac7b6dff7e"
+        }
+      ]
+    },
+    {
+      "id": "claim_cc59cf6d5ef04e14aba4ac1b3cb9cbc9",
+      "statement": "test_rust_align_batch_extension_preserves_input_order pins the contract that align_batch_details returns alignments in the same order as the input candidate list, using [[0,1,2,3,4],[1,2,9,3],[8,9,10]] with claim=[1,2,3] as the canonical case.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/_core.pyi",
+          "version": "repo-file-v1:sha256:4f437437e50ab896ab92fc0684268316d2c381116780197fab33872e576389c5"
+        },
+        {
+          "resource": "repo://tests/test_alignment_rust_parity.py",
+          "version": "repo-file-v1:sha256:4addd71f0e42faa3ba3b577c227e1cabe713c5810a7af762a9158aac7b6dff7e"
+        }
+      ]
+    },
+    {
+      "id": "claim_62d01c70f2fe449898fdea5d02bc50e9",
+      "statement": "test_rust_align_best_prefers_more_matches_on_equal_scores pins the contract that align_best_details applies the matches-first tie-break across candidates on equal scores, using claim=[0,1,0] and candidates=[[0,1,1,1,0],[0,2,1,1,0]] as the canonical regression case.",
+      "evidence": [
+        {
+          "resource": "repo://tests/test_alignment_rust_parity.py",
+          "version": "repo-file-v1:sha256:4addd71f0e42faa3ba3b577c227e1cabe713c5810a7af762a9158aac7b6dff7e"
+        }
+      ]
+    },
+    {
+      "id": "claim_29f83afc3845451eaf9e2b8ee5db5efb",
+      "statement": "test_rust_align_best_matches_topk_first_item pins the cross-entry-point invariant that align_best_details and align_topk_details(..., top_k=1, ...) pick the same winner on the same input, using claim=[1,2,3] and candidates=[[1,2],[1,2,3],[0,1,2,3],[1,9,2,9,3]].",
+      "evidence": [
+        {
+          "resource": "repo://tests/test_alignment_rust_parity.py",
+          "version": "repo-file-v1:sha256:4addd71f0e42faa3ba3b577c227e1cabe713c5810a7af762a9158aac7b6dff7e"
+        }
+      ]
     }
   ],
   "verification": {
-    "by": "openwiki/0.4.0",
-    "at": "2026-08-26T03:32:47.432Z"
+    "by": "openwiki/0.5.0",
+    "at": "2026-09-02T12:21:54.997Z"
   }
 }
