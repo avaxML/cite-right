@@ -3,9 +3,6 @@ type: concept
 title: Citation Alignment
 description: Inputs, outputs, and offset conventions for align_citations — SourceDocument and SourceChunk inputs, SpanCitations results, and the half-open char_start/char_end contract.
 tags: [citation-alignment, align-citations, source-document, source-chunk, span-citations, citation, char-offsets, status, retrieval-support]
-verified:
-  - by: openwiki/0.4.0
-    at: 2026-08-26T03:32:47.432Z
 sources:
   - id: openwiki-source-9420301e9a6eeb80c89f2f99
     resource: repo://src/cite_right/citations.py

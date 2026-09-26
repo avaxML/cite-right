@@ -3,9 +3,6 @@ type: testing-reference
 title: Pytest Markers and Optional Dependencies
 description: Agent-only reference for tests/conftest.py. Documents the seven registered markers (rust, spacy, embeddings, tiktoken, huggingface, pysbd, slow), the rust_core and rust_core_with_blocks fixtures, and the requires_rust / requires_rust_blocks skip decorators used to gate tests on the optional Rust extension and optional dependency extras.
 tags: [pytest, markers, optional-dependencies, rust, spacy, embeddings, tiktoken, huggingface, pysbd, slow, skip-decorators, fixtures, conftest, abi3, _core, match-blocks]
-verified:
-  - by: openwiki/0.4.0
-    at: 2026-08-26T03:32:47.432Z
 sources:
   - id: openwiki-source-05ccef8d4cf1698187f20464
     resource: repo://pyproject.toml

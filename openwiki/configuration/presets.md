@@ -3,9 +3,6 @@ type: configuration
 title: Configuration Presets
 description: CitationConfig preset tradeoffs — balanced() default, strict() high-precision, permissive() paraphrase-friendly, fast() latency-bound. Permissive still requires localized Smith-Waterman evidence and does not emit embedding-only citations.
 tags: [configuration, presets, citation-config, balanced, strict, permissive, fast, smith-waterman, retrieval-support, candidate-selection, threshold]
-verified:
-  - by: openwiki/0.4.0
-    at: 2026-08-26T03:32:47.432Z
 sources:
   - id: openwiki-source-9420301e9a6eeb80c89f2f99
     resource: repo://src/cite_right/citations.py

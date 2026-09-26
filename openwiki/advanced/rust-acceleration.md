@@ -3,9 +3,6 @@ type: advanced-guide
 title: Rust Acceleration
 description: How the optional cite_right._core extension accelerates prepare, inverted-index retrieval, and Smith-Waterman alignment, how to select a backend, and what the Python fallback path does when the extension is missing.
 tags: [rust, _core, backend, prepare, inverted-index, smith-waterman, performance, fallback, thread-safety, abi3]
-verified:
-  - by: openwiki/0.4.0
-    at: 2026-08-26T03:32:47.432Z
 sources:
   - id: openwiki-source-b774a369d680d48a9a4648c3
     resource: repo://rust_core/Cargo.toml

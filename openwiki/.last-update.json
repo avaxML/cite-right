@@ -1,8 +1,8 @@
 {
-  "updatedAt": "2026-08-27T18:31:06.903Z",
+  "updatedAt": "2026-09-26T12:33:50.478Z",
   "command": "update",
   "gitHead": "840d6c55508b79a3b09732c3f45e9f9120b23779",
-  "model": "minimax/minimax-m3:free",
-  "status": "complete",
+  "model": "inclusionai/ling-3.0-flash-fin:free",
+  "status": "interrupted",
   "language": "en"
 }
