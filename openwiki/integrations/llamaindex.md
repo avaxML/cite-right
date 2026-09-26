@@ -3,9 +3,6 @@ type: integration-guide
 title: LlamaIndex Integration
 description: How to feed LlamaIndex retrievers into Cite-Right — convert TextNode and NodeWithScore lists to SourceDocument with from_llamaindex_nodes, preserve chunk offsets with from_llamaindex_chunks, and call align_citations. Covers the id_key fallback, the file_name default, start_char_idx handling, and LLAMAINDEX_AVAILABLE.
 tags: [llamaindex, integration, from-llamaindex-nodes, from-llamaindex-chunks, source-document, source-chunk, text-node, node-with-score, file-name, start-char-idx, align-citations, rag, retriever, query-engine, is-llamaindex-available]
-verified:
-  - by: openwiki/0.4.0
-    at: 2026-08-26T03:32:47.432Z
 sources:
   - id: openwiki-source-05ccef8d4cf1698187f20464
     resource: repo://pyproject.toml

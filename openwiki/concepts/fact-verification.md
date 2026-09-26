@@ -3,9 +3,6 @@ type: concept
 title: Fact Verification
 description: Claim-level verification with verify_facts — how SimpleClaimDecomposer and SpacyClaimDecomposer split answer sentences into atomic claims, how FactVerificationConfig thresholds map to verified/partial/unverified status, and what FactVerificationMetrics and ClaimVerification return per claim.
 tags: [fact-verification, verify-facts, claim-decomposition, simple-claim-decomposer, spacy-claim-decomposer, claim-verification, fact-verification-config, fact-verification-metrics, atomic-claim, partial-coverage]
-verified:
-  - by: openwiki/0.4.0
-    at: 2026-08-26T03:32:47.432Z
 sources:
   - id: openwiki-source-0d7249770abeac51acffd6d9
     resource: repo://src/cite_right/__init__.py

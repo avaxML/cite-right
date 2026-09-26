@@ -3,9 +3,6 @@ type: getting-started-guide
 title: Quickstart
 description: Build a complete citation pipeline in a few lines — call align_citations on a generated answer plus sources, read per-span status and evidence, handle multiple sources, and reuse a PreparedCitationCorpus for repeated queries.
 tags: [quickstart, getting-started, align-citations, prepared-citation-corpus, source-document, status, supported, partial, unsupported, answer-coverage, evidence, char-offsets]
-verified:
-  - by: openwiki/0.4.0
-    at: 2026-08-26T03:32:47.432Z
 sources:
   - id: openwiki-source-9420301e9a6eeb80c89f2f99
     resource: repo://src/cite_right/citations.py

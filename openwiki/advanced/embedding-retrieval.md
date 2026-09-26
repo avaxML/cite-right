@@ -3,9 +3,6 @@ type: advanced-guide
 title: Embedding Retrieval
 description: How to enable semantic candidate expansion in Cite-Right using sentence-transformers, and how it interacts with index-first retrieval and Smith-Waterman localization.
 tags: [embeddings, semantic-retrieval, sentence-transformers, embedder, candidate-selection, retrieval-support, smith-waterman, citation-config]
-verified:
-  - by: openwiki/0.4.0
-    at: 2026-08-26T03:32:47.432Z
 sources:
   - id: openwiki-source-05ccef8d4cf1698187f20464
     resource: repo://pyproject.toml

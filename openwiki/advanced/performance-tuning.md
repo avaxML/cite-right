@@ -3,9 +3,6 @@ type: advanced-guide
 title: Performance Tuning
 description: How Cite-Right's index-first pipeline scales, which configuration levers actually move steady-state latency, and how to reuse PreparedCitationCorpus for high-volume workloads.
 tags: [performance, index-first, candidate-selection, citation-config, prepared-corpus, rust, threading, memory, smith-waterman]
-verified:
-  - by: openwiki/0.4.0
-    at: 2026-08-26T03:32:47.432Z
 sources:
   - id: openwiki-source-9420301e9a6eeb80c89f2f99
     resource: repo://src/cite_right/citations.py

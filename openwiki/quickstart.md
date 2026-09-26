@@ -3,9 +3,6 @@ type: agent-routing
 title: Cite-Right Wiki Quickstart
 description: Agent-only routing map for the documentation tree under openwiki/. Indexes the 16 public pages and the 2 agent-only pages under openwiki/testing/, lists the public-vs-agent split, and points new agents at the right entry page (openwiki/index.md for reader questions, openwiki/concepts/how-it-works.md for pipeline work, openwiki/testing/contract-tests.md for Rust parity work).
 tags: [quickstart, agent-routing, public-pages, agent-only, testing, index, how-it-works, contract-tests, pytest-markers, mkdocs, public-paths, instructions, page-map]
-verified:
-  - by: openwiki/0.4.0
-    at: 2026-08-26T03:32:47.432Z
 sources:
   - id: openwiki-source-5e3251d7fd54ced7f7fb97fd
     resource: repo://rust_core/src/lib.rs

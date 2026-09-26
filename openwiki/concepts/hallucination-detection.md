@@ -3,9 +3,6 @@ type: concept
 title: Hallucination Detection
 description: Groundedness and citation rollup with compute_hallucination_metrics — how HallucinationConfig.include_partial_in_grounded controls whether "partial" counts, what HallucinationMetrics and SpanConfidence return per answer, and how the is_grounded, is_hallucinated, and check_groundedness convenience helpers share the same overflag behavior on the RAGTruth test (2,675 answers).
 tags: [hallucination-detection, groundedness, hallucination-metrics, hallucination-config, span-confidence, compute-hallucination-metrics, is-grounded, is-hallucinated, check-groundedness, citation-rollup, ragtruth, overflag, partial-coverage]
-verified:
-  - by: openwiki/0.4.0
-    at: 2026-08-26T03:32:47.432Z
 sources:
   - id: openwiki-source-2239349d0f5307d9d0756d4c
     resource: repo://src/cite_right/convenience.py
