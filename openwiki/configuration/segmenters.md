@@ -3,9 +3,6 @@ type: configuration
 title: Segmenters
 description: Sentence and answer segmenter options for the citation alignment pipeline — SimpleSegmenter / SimpleAnswerSegmenter default, SpacySegmenter / SpacyAnswerSegmenter, PySBDSegmenter. How segmenters shape the source passages, when the lexical fallback path is forced, and how the spaCy and pysbd extras enable the optional segmenters.
 tags: [configuration, segmenter, simple-segmenter, spacy-segmenter, pysbd-segmenter, answer-segmenter, simple-answer-segmenter, spacy-answer-segmenter, paragraph, sentence, clause, passage-window, lexical-fallback, inverted-index, rust-prepare]
-verified:
-  - by: openwiki/0.4.0
-    at: 2026-08-26T03:32:47.432Z
 sources:
   - id: openwiki-source-05ccef8d4cf1698187f20464
     resource: repo://pyproject.toml

@@ -3,9 +3,6 @@ type: configuration
 title: Citation Config
 description: "CitationConfig and CitationWeights knobs for the citation alignment pipeline: status thresholds, candidate selection caps, multi-span evidence, embedder interaction, contradiction behavior, and presets."
 tags: [configuration, citation-config, citation-weights, status, threshold, candidate-selection, multi-span, embedder, contradiction, presets, smith-waterman, scoring]
-verified:
-  - by: openwiki/0.4.0
-    at: 2026-08-26T03:32:47.432Z
 sources:
   - id: openwiki-source-0d7249770abeac51acffd6d9
     resource: repo://src/cite_right/__init__.py

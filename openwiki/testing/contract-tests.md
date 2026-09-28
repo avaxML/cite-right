@@ -3,9 +3,6 @@ type: testing-reference
 title: Rust/Python Contract Tests
 description: Agent-only reference for the Python vs Rust parity contract enforced by tests/test_alignment_rust_parity.py. Compares status, offsets, scores, matches, match_blocks, and best-candidate selection between SmithWatermanAligner and the cite_right._core extension. Points at src/cite_right/core/aligner_py.py and src/cite_right/core/aligner_rust.py.
 tags: [contract-tests, rust, python, smith-waterman, parity, alignment, _core, match-blocks, best-match, tie-breaking, skip, fixtures]
-verified:
-  - by: openwiki/0.4.0
-    at: 2026-08-26T03:32:47.432Z
 sources:
   - id: openwiki-source-0b1b3279f2fdef17b4081691
     resource: repo://src/cite_right/_core.pyi

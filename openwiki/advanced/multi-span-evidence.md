@@ -3,9 +3,6 @@ type: advanced-guide
 title: Multi-Span Evidence
 description: How CitationConfig(multi_span_evidence=True) exposes non-contiguous evidence regions on a Citation via evidence_spans, with gap merging and a max-spans fallback to the legacy contiguous span.
 tags: [multi-span, evidence, citation-config, smith-waterman, match-blocks, exact-evidence, source-chunk, citation-alignment]
-verified:
-  - by: openwiki/0.4.0
-    at: 2026-08-26T03:32:47.432Z
 sources:
   - id: openwiki-source-b1f252781b2a8b1f101b4564
     resource: repo://rust_core/src/citation_fast.rs

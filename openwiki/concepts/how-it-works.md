@@ -3,9 +3,6 @@ type: concept
 title: How It Works
 description: End-to-end pipeline orientation for Cite-Right 0.4.0 — answer segmentation, source passage windowing, one-tokenizer tokenization, index-first candidate selection, Smith-Waterman localization, offset rebase, ranking, contradiction check, and status assignment, including the default Rust path, the lexical fallback path, and the embedder path.
 tags: [how-it-works, pipeline, segmenter, tokenizer, passage-window, inverted-index, candidate-selection, smith-waterman, alignment, content-coverage, structured-field, contradiction, ranking, status, char-offsets, rust, fallback, embedder]
-verified:
-  - by: openwiki/0.4.0
-    at: 2026-08-26T03:32:47.432Z
 sources:
   - id: openwiki-source-9420301e9a6eeb80c89f2f99
     resource: repo://src/cite_right/citations.py
