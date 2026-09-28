@@ -3,9 +3,6 @@ type: integration-guide
 title: LangChain Integration
 description: How to feed LangChain retrievers into Cite-Right — convert langchain_core Document lists to SourceDocument with from_langchain_documents, preserve chunk offsets with from_langchain_chunks, and call align_citations. Covers the id_key fallback, start_index handling, and LANGCHAIN_AVAILABLE.
 tags: [langchain, integration, from-langchain-documents, from-langchain-chunks, source-document, source-chunk, langchain-document, start-index, align-citations, rag, retriever, lcel, is-langchain-available]
-verified:
-  - by: openwiki/0.4.0
-    at: 2026-08-26T03:32:47.432Z
 sources:
   - id: openwiki-source-05ccef8d4cf1698187f20464
     resource: repo://pyproject.toml

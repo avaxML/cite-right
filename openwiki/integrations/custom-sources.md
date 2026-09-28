@@ -3,9 +3,6 @@ type: integration-guide
 title: Custom Sources
 description: How to feed non-framework retrieval into Cite-Right — build SourceDocument and SourceChunk directly, use from_dicts for plain dictionaries, and pass the result to align_citations. Covers chunk-rebase offsets, the document_text validation, and the evidence equality invariant.
 tags: [custom-sources, source-document, source-chunk, from-dicts, align-citations, char-offsets, chunk-rebase, evidence-equality, retrieval]
-verified:
-  - by: openwiki/0.4.0
-    at: 2026-08-26T03:32:47.432Z
 sources:
   - id: openwiki-source-b3431af41a97a9253d6038b0
     resource: repo://src/cite_right/core/prepared_corpus.py

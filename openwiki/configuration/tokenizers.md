@@ -3,9 +3,6 @@ type: configuration
 title: Tokenizers
 description: Tokenizer options for the citation alignment pipeline — SimpleTokenizer (default, Unicode NFKC and case-fold with original character offsets), HuggingFaceTokenizer, and TiktokenTokenizer. The Tokenizer protocol, the TokenizedText offset contract, the optional TokenizerConfig normalization knobs, and the rule that a custom tokenizer forces the lexical fallback path with no inverted index.
 tags: [configuration, tokenizer, simple-tokenizer, huggingface-tokenizer, tiktoken-tokenizer, tokenizer-config, tokenized-text, unicode-nfkc, case-fold, char-offsets, lexical-fallback, inverted-index, rust-prepare, subword, bpe, token-protocol]
-verified:
-  - by: openwiki/0.4.0
-    at: 2026-08-26T03:32:47.432Z
 sources:
   - id: openwiki-source-0d7249770abeac51acffd6d9
     resource: repo://src/cite_right/__init__.py

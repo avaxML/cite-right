@@ -3,9 +3,6 @@ type: getting-started-guide
 title: Installation
 description: How to install Cite-Right, including Python and platform requirements, the optional embeddings, spacy, huggingface, and tiktoken extras, and the spaCy model download step.
 tags: [installation, pip, abi3, wheels, extras, embeddings, spacy, huggingface, tiktoken, sdist, linux, aarch64]
-verified:
-  - by: openwiki/0.4.0
-    at: 2026-08-26T03:32:47.432Z
 sources:
   - id: openwiki-source-ca6cb4b1a14fd7969dfae3ec
     resource: repo://CHANGELOG.md
