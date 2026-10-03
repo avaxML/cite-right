@@ -25,6 +25,8 @@ sequenceDiagram
 
 `retrieval_support` is a separate channel. A passage that the index or embedder selected but Smith-Waterman could not localize is emitted as `RetrievalSupport`, not as a `Citation`, and it never flips `status`. A span with no localized evidence is `"unsupported"` even when the embedder is confident.
 
+`retrieval_support` also receives secondary citations that are demoted on `"supported"` spans. When a span is `"supported"`, a citation after the best one stays only if it would be `"supported"` on its own (`answer_coverage >= supported_answer_coverage` and no contradiction); otherwise it is moved here, keeping the passage it matched. A passage already present in `retrieval_support` is not added twice.
+
 ## Installation And First Run
 
 Embedding retrieval is an optional extra on top of the default install.

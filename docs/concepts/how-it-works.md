@@ -141,6 +141,8 @@ When any of those fire against the best-ranked citation, the span status is forc
 - If citations exist but `answer_coverage` is below the threshold, or a contradiction fired, the span is `"partial"`.
 - If no citations survive filtering, the span is `"unsupported"`.
 
+On a `"supported"` span, the best citation always stays. Every other citation is kept only if it would be `"supported"` on its own: its `answer_coverage` meets `supported_answer_coverage` and its passage does not contradict the answer. A secondary citation that fails that test, whether it comes from the same source or another one, moves to `retrieval_support` for the same passage, so a source chip UI does not show weakly related documents next to a supported sentence. `"partial"` spans keep all of their citations. Demoted entries use the citation's `score` as `retrieval_score` and are subject to `max_retrieval_support`.
+
 `retrieval_support` is intentionally outside this decision: a high embedding score that never localizes is evidence-of-interest, not a grounded citation. It is the diagnostic that a recall signal fired but Smith-Waterman could not pin a span.
 
 ## Scoring Components
