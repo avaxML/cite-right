@@ -9,7 +9,7 @@ The hot path stays the same shape either way: prepare tokenizes sources, builds 
 
 The Rust extension exposes three layers over the existing Python API.
 
-`rust_tokenize_and_prepare(source_texts, window_size, stride) -> PreparedCorpus` tokenizes the source corpus, generates passage windows, computes IDF, and builds the inverted index in one Rust call. The Python `SimpleTokenizer` vocabulary is then synchronized from the Rust side so the answer-side tokenizer maps tokens to the same IDs. Per-passage `token_ids` and `token_spans` are kept on the Rust `PreparedCorpus` and fetched on demand at alignment time, avoiding the cost of copying large token arrays back to Python after prepare.
+`rust_tokenize_and_prepare(source_texts, window_size, stride, *, normalize_numbers, normalize_percent, normalize_currency) -> PreparedCorpus` tokenizes the source corpus (applying the `SimpleTokenizer`'s `TokenizerConfig` normalization flags), generates passage windows, computes IDF, and builds the inverted index in one Rust call. The Python `SimpleTokenizer` vocabulary is then synchronized from the Rust side so the answer-side tokenizer maps tokens to the same IDs. Per-passage `token_ids` and `token_spans` are kept on the Rust `PreparedCorpus` and fetched on demand at alignment time, avoiding the cost of copying large token arrays back to Python after prepare.
 
 `query_index(query_tokens, max_candidates) -> list[int]` and `InvertedIndex.query(query_tokens, max_candidates) -> list[int]` both implement the same conjunctive rare-token intersect: tokens are sorted by posting count, the intersection of the rarest tokens is taken first, and the result is capped at `max_candidates`. The result is a list of candidate global indices that survive to Smith-Waterman.
 

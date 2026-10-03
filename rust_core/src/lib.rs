@@ -238,17 +238,33 @@ fn align_batch_blocks_details(
 }
 
 #[pyfunction]
+#[pyo3(signature = (
+    source_texts,
+    window_size,
+    stride,
+    *,
+    normalize_numbers,
+    normalize_percent,
+    normalize_currency
+))]
 fn rust_tokenize_and_prepare(
     py: Python<'_>,
     source_texts: Vec<String>,
     window_size: usize,
     stride: usize,
+    normalize_numbers: bool,
+    normalize_percent: bool,
+    normalize_currency: bool,
 ) -> PyResult<prepared_corpus::PreparedCorpus> {
     use rayon::prelude::*;
 
     py.detach(|| {
         // Tokenize sequentially to maintain consistent vocabulary
-        let mut tokenizer = prepare::SimpleTokenizer::new();
+        let mut tokenizer = prepare::SimpleTokenizer::new(prepare::NormalizeFlags {
+            numbers: normalize_numbers,
+            percent: normalize_percent,
+            currency: normalize_currency,
+        });
         let all_tokenized: Vec<_> = source_texts
             .iter()
             .map(|text| tokenizer.tokenize(text))

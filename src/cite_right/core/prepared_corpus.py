@@ -205,6 +205,9 @@ class PreparedCitationCorpus(BaseModel):
             source_texts,
             cfg.window_size_sentences,
             cfg.window_stride_sentences,
+            normalize_numbers=tokenizer._config.normalize_numbers,
+            normalize_percent=tokenizer._config.normalize_percent,
+            normalize_currency=tokenizer._config.normalize_currency,
         )
 
         # Populate the Python tokenizer's vocab from Rust
