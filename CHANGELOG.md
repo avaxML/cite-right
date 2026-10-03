@@ -2,6 +2,11 @@
 
 All notable changes to cite-right will be documented in this file.
 
+## [Unreleased]
+
+### Fixed
+- On a `supported` span, secondary citations that would not be `supported` on their own (`answer_coverage` below `supported_answer_coverage`, or a contradicting passage) now move to `retrieval_support` instead of being returned as citations, so the default `top_k=3` no longer attaches unrelated documents to supported sentences. The best citation is always kept and `partial` spans are unchanged. (#67)
+
 ## [0.4.0] - 2026-08-25
 
 ### Added

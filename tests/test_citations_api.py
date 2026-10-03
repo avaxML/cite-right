@@ -908,3 +908,30 @@ def test_align_citations_python_and_rust_backends_match() -> None:
     python = align_citations(answer, sources, config=config, backend="python")
     rust = align_citations(answer, sources, config=config, backend="rust")
     assert rust == python
+
+
+def test_align_citations_default_config_keeps_only_supporting_source() -> None:
+    answer = "Backups containing customer records are rotated every 90 days."
+    retention = SourceDocument(
+        id="retention",
+        text=(
+            "Data Retention Policy. Backups containing customer records are "
+            "rotated every 90 days. Audit logs are kept for seven years."
+        ),
+    )
+    security = SourceDocument(
+        id="security",
+        text=(
+            "Information Security Policy. Customer records are encrypted at rest. "
+            "Backups are stored in a separate region."
+        ),
+    )
+
+    (span,) = align_citations(answer, [retention, security])
+
+    assert span.status == "supported"
+    assert [c.source_id for c in span.citations] == ["retention"]
+    assert {s.passage_text for s in span.retrieval_support} == {
+        "Customer records are encrypted at rest.",
+        "Backups are stored in a separate region.",
+    }
