@@ -48,16 +48,29 @@ pub struct RustTokenizedText {
     pub token_spans: Vec<(usize, usize)>,
 }
 
+/// Mirrors the three normalization flags of Python's `TokenizerConfig`.
+///
+/// The caller supplies every value; Python's `TokenizerConfig` is the only
+/// owner of the defaults.
+#[derive(Clone, Copy, Debug)]
+pub struct NormalizeFlags {
+    pub numbers: bool,
+    pub percent: bool,
+    pub currency: bool,
+}
+
 pub struct SimpleTokenizer {
     vocab: HashMap<String, u32>,
     pub next_id: u32,
+    flags: NormalizeFlags,
 }
 
 impl SimpleTokenizer {
-    pub fn new() -> Self {
+    pub fn new(flags: NormalizeFlags) -> Self {
         Self {
             vocab: HashMap::new(),
             next_id: 1,
+            flags,
         }
     }
 
@@ -79,7 +92,7 @@ impl SimpleTokenizer {
 
         for (start_byte, end_byte) in iter_token_spans(text) {
             let raw = &text[start_byte..end_byte];
-            let normalized = normalize_token_simple(raw);
+            let normalized = normalize_token_simple(raw, self.flags);
             if normalized.is_empty() {
                 continue;
             }
@@ -143,7 +156,7 @@ fn iter_token_spans(text: &str) -> Vec<(usize, usize)> {
             }
         }
         // Check if it's a special symbol (%, $, €, £) - after NFKC normalization
-        else if matches!(c, '%' | '$' | '€' | '£' | '％' | '＄') {
+        else if is_symbol_char(c) {
             idx += 1;
         }
         // Check if it's a word character
@@ -182,23 +195,37 @@ fn iter_token_spans(text: &str) -> Vec<(usize, usize)> {
     spans
 }
 
-fn normalize_token_simple(token: &str) -> String {
-    // Apply NFKC normalization (fullwidth→halfwidth, etc.) + casefold
+/// Mirrors Python's `_normalize_token`: NFKC, casefold, punctuation, then the
+/// flag-gated comma strip and percent/currency word mapping, in that order.
+fn normalize_token_simple(token: &str, flags: NormalizeFlags) -> String {
     let normalized: String = token.nfkc().collect();
     let casefolded = normalized
         .chars()
         .flat_map(|c| c.to_lowercase())
         .collect::<String>();
+    let mut normalized = normalize_punctuation(&casefolded);
 
-    // Normalize punctuation (quotes and dashes) to ASCII equivalents
-    let punct_normalized = normalize_punctuation(&casefolded);
-
-    // Normalize percent symbol (matching Python's normalize_percent)
-    if punct_normalized == "%" {
-        "percent".to_string()
-    } else {
-        punct_normalized
+    if flags.numbers && normalized.chars().next().is_some_and(char::is_numeric) {
+        normalized.retain(|c| c != ',');
     }
+
+    match (normalized.as_str(), flags) {
+        ("%", NormalizeFlags { percent: true, .. }) => "percent".to_string(),
+        ("$", NormalizeFlags { currency: true, .. }) => "dollar".to_string(),
+        ("\u{20ac}", NormalizeFlags { currency: true, .. }) => "euro".to_string(),
+        ("\u{a3}", NormalizeFlags { currency: true, .. }) => "pound".to_string(),
+        _ => normalized,
+    }
+}
+
+/// True when `c` normalizes (NFKC) to one of the symbols Python's
+/// `_iter_token_spans` emits as a standalone token: `%`, `$`, `€`, `£`.
+fn is_symbol_char(c: char) -> bool {
+    let mut folded = std::iter::once(c).nfkc();
+    matches!(
+        (folded.next(), folded.next()),
+        (Some('%' | '$' | '\u{20ac}' | '\u{a3}'), None)
+    )
 }
 
 fn normalize_punctuation(text: &str) -> String {
@@ -396,5 +423,110 @@ mod tests {
             normalize_punctuation("don\u{2019}t re\u{2011}enter"),
             "don't re-enter"
         );
+    }
+
+    const ALL_ON: NormalizeFlags = NormalizeFlags {
+        numbers: true,
+        percent: true,
+        currency: true,
+    };
+    const ALL_OFF: NormalizeFlags = NormalizeFlags {
+        numbers: false,
+        percent: false,
+        currency: false,
+    };
+
+    fn only_numbers_off() -> NormalizeFlags {
+        NormalizeFlags {
+            numbers: false,
+            ..ALL_ON
+        }
+    }
+
+    fn only_percent_off() -> NormalizeFlags {
+        NormalizeFlags {
+            percent: false,
+            ..ALL_ON
+        }
+    }
+
+    fn only_currency_off() -> NormalizeFlags {
+        NormalizeFlags {
+            currency: false,
+            ..ALL_ON
+        }
+    }
+
+    #[test]
+    fn comma_grouping_is_stripped_only_when_numbers_on() {
+        assert_eq!(normalize_token_simple("2,410.12", ALL_ON), "2410.12");
+        assert_eq!(
+            normalize_token_simple("2,410.12", only_numbers_off()),
+            "2,410.12"
+        );
+        assert_eq!(normalize_token_simple("2,410.12", ALL_OFF), "2,410.12");
+    }
+
+    #[test]
+    fn comma_strip_follows_first_normalized_char_being_a_digit() {
+        // Fullwidth digits fold to ASCII under NFKC; Arabic-Indic digits stay as is.
+        assert_eq!(
+            normalize_token_simple("\u{ff12},\u{ff14}\u{ff11}\u{ff10}", ALL_ON),
+            "2410"
+        );
+        assert_eq!(
+            normalize_token_simple("\u{662},\u{664}\u{661}\u{660}", ALL_ON),
+            "\u{662}\u{664}\u{661}\u{660}"
+        );
+        assert_eq!(normalize_token_simple("a,b", ALL_ON), "a,b");
+    }
+
+    #[test]
+    fn currency_symbols_map_only_when_currency_on() {
+        for (raw, word) in [
+            ("$", "dollar"),
+            ("\u{20ac}", "euro"),
+            ("\u{a3}", "pound"),
+            ("\u{ff04}", "dollar"),
+        ] {
+            assert_eq!(normalize_token_simple(raw, ALL_ON), word);
+            let folded: String = raw.nfkc().collect();
+            assert_eq!(normalize_token_simple(raw, only_currency_off()), folded);
+        }
+    }
+
+    #[test]
+    fn percent_maps_only_when_percent_on() {
+        assert_eq!(normalize_token_simple("%", ALL_ON), "percent");
+        assert_eq!(normalize_token_simple("\u{ff05}", ALL_ON), "percent");
+        assert_eq!(normalize_token_simple("%", only_percent_off()), "%");
+        assert_eq!(normalize_token_simple("\u{ff05}", only_percent_off()), "%");
+    }
+
+    #[test]
+    fn symbol_spans_follow_nfkc_form() {
+        for text in [
+            "\u{ffe1}",
+            "\u{fe69}",
+            "\u{fe6a}",
+            "%",
+            "$",
+            "\u{20ac}",
+            "\u{a3}",
+        ] {
+            assert_eq!(iter_token_spans(text), vec![(0, text.len())], "{text:?}");
+        }
+        assert!(iter_token_spans("\u{ff5e}").is_empty());
+    }
+
+    #[test]
+    fn tokenizer_applies_flags_to_vocab() {
+        let mut tokenizer = SimpleTokenizer::new(ALL_ON);
+        let out = tokenizer.tokenize("Fee 1,204.50 \u{ffe1}5");
+        assert_eq!(out.token_ids.len(), 4);
+        let vocab = tokenizer.get_vocab();
+        assert!(vocab.contains_key("1204.50"));
+        assert!(vocab.contains_key("pound"));
+        assert!(!vocab.contains_key("1,204.50"));
     }
 }

@@ -2,6 +2,11 @@
 
 All notable changes to cite-right will be documented in this file.
 
+## [Unreleased]
+
+### Fixed
+- Rust prepare now normalizes source tokens like the Python tokenizer: it honors `TokenizerConfig.normalize_numbers`, `normalize_percent`, and `normalize_currency` (comma-grouped numbers, `%`, `$`/`€`/`£`) and treats NFKC-equivalent symbols such as `￡`, `﹩`, `﹪` as symbol tokens, so restated amounts like `2,410.12` no longer drop to `partial`. `rust_tokenize_and_prepare` takes the three flags as required keyword arguments. (#66)
+
 ## [0.4.0] - 2026-08-25
 
 ### Added
