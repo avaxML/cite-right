@@ -204,26 +204,25 @@ fn normalize_token_simple(token: &str) -> String {
 fn normalize_punctuation(text: &str) -> String {
     // Map quote and dash variants that should not affect matching
     // Matches Python's _normalize_punctuation function
-    text.chars()
-        .map(|c| match c {
-            '\u{2018}' | '\u{2019}' | '\u{02bc}' => '\'', // Curly quotes, modifier apostrophe → ASCII
-            '\u{2010}' | '\u{2011}' | '\u{2012}' | '\u{2013}' | '\u{2212}' => '-', // Various dashes → ASCII hyphen
-            _ => c,
-        })
-        .collect()
+    text.chars().map(map_punctuation_char).collect()
+}
+
+/// Single source of truth for the quote and dash variants Python's
+/// `_normalize_punctuation` folds to ASCII.
+fn map_punctuation_char(c: char) -> char {
+    match c {
+        '\u{2018}' | '\u{2019}' | '\u{02bc}' => '\'', // Curly quotes, modifier apostrophe → ASCII
+        '\u{2010}' | '\u{2011}' | '\u{2012}' | '\u{2013}' | '\u{2212}' => '-', // Various dashes → ASCII hyphen
+        _ => c,
+    }
 }
 
 fn is_apostrophe_variant(ch: char) -> bool {
-    // ASCII apostrophe and Unicode variants
-    matches!(ch, '\'' | '\u{2018}' | '\u{2019}' | '\u{02bc}')
+    map_punctuation_char(ch) == '\''
 }
 
 fn is_dash_variant(ch: char) -> bool {
-    // ASCII hyphen and Unicode variants
-    matches!(
-        ch,
-        '-' | '\u{2010}' | '\u{2011}' | '\u{2012}' | '\u{2013}' | '\u{2212}'
-    )
+    map_punctuation_char(ch) == '-'
 }
 
 fn is_combining_mark(ch: char) -> bool {
@@ -367,4 +366,35 @@ pub fn compute_idf(candidate_token_sets: &[Vec<u32>]) -> HashMap<u32, f64> {
     df.into_iter()
         .map(|(token_id, count)| (token_id, ((n + 1) as f64 / (count + 1) as f64).ln() + 1.0))
         .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn punctuation_variants_map_to_ascii() {
+        for c in ['\u{2018}', '\u{2019}', '\u{02bc}', '\''] {
+            assert!(is_apostrophe_variant(c));
+            assert!(!is_dash_variant(c));
+            assert_eq!(map_punctuation_char(c), '\'');
+        }
+        for c in [
+            '\u{2010}',
+            '\u{2011}',
+            '\u{2012}',
+            '\u{2013}',
+            '\u{2212}',
+            '-',
+        ] {
+            assert!(is_dash_variant(c));
+            assert!(!is_apostrophe_variant(c));
+            assert_eq!(map_punctuation_char(c), '-');
+        }
+        assert!(!is_apostrophe_variant('a') && !is_dash_variant('a'));
+        assert_eq!(
+            normalize_punctuation("don\u{2019}t re\u{2011}enter"),
+            "don't re-enter"
+        );
+    }
 }
