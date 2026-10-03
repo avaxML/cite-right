@@ -1,0 +1,2054 @@
+{
+ "schema_version": 1,
+ "description": "Document-level attribution cases from a document-QA agent. Each answer is one sentence an LLM agent (or a person, for paraphrase and adversarial cases) wrote about the fixture documents below; markdown and model citation markers were stripped before alignment. Labels were drafted by the integrating team and reviewed by a person.",
+ "labels": {
+  "must_cite": "The claim is stated in the listed document. No citation is a recall miss; a citation to any other document is wrong.",
+  "may_cite": "Inference, meta, or mixed sentence. A citation to the listed document is fine and a missing one is not penalised; any other document is wrong.",
+  "must_not_cite": "No document supports the claim. Any citation is wrong."
+ },
+ "split": "Stratified by group, seed 7513: tune on train, report dev.",
+ "documents": {
+  "bank": "Harbor Savings Bank - Account statement for May 2026\n\nAccount holder: Example Test Account\nOpening balance: 3,111.92 EUR\n\n3 May: Card payment 701.80 EUR to Fresh Market grocery chain.\n9 May: Salary credit 4,250.00 EUR.\n17 May: Standing order 1,250.00 EUR rent.\n28 May: Card payment 64.30 EUR fuel station.\n\nClosing balance: 2,410.12 EUR.\nThis statement is not a tax invoice.\n",
+  "invoice": "Nordwind Logistics GmbH - Invoice INV-2291\n\nInvoice number: INV-2291\nInvoice date: 2 September 2026\nCustomer: Example Test Account\n\nDescription of services: freight forwarding for shipment NW-55810, Hamburg to Lisbon, including customs clearance.\n\nTotal amount due: 701.80 EUR.\nPayment is due within 14 days of the invoice date.\nPlease pay by bank transfer to the account listed below and quote the invoice number INV-2291 as the payment reference.\nLate payments incur a fee of 2 percent per month.\n",
+  "retention": "Customer Data Retention Policy (version 3)\n\nScope: this policy applies to customer account records held by the operations team.\n\nCustomer records are retained for a minimum of 30 days after account closure.\nAfter the retention period, records are deleted within a further 60 days unless a legal hold applies.\nBackups containing customer records are rotated every 90 days.\nRequests for early deletion are handled by the privacy office.\n",
+  "travel": "Employee Travel Policy\n\nFlights: employees must book economy class for flights shorter than six hours.\nPremium economy may be booked for flights of six hours or longer with manager approval.\nHotels: the nightly hotel cap in Lisbon is 160 EUR.\nMeals: receipts are required for every meal expense above 25 EUR.\nTravel must be booked through the company travel portal at least 14 days in advance.\n",
+  "invoice-2307": "Nordwind Logistics GmbH - Invoice INV-2307\n\nInvoice number: INV-2307\nInvoice date: 18 September 2026\nCustomer: Example Test Account\n\nDescription of services: freight forwarding for shipment NW-56112, Hamburg to Lisbon, 3,200 kg, including customs clearance.\n\nFreight: 1,204.50 EUR\nCustoms clearance: 85.00 EUR\nTotal amount due: 1,289.50 EUR.\nPayment is due within 30 days of the invoice date.\nPlease pay by bank transfer and quote the invoice number INV-2307 as the payment reference.\nLate payments incur a fee of 2 percent per month.\n",
+  "ratecard": "Nordwind Logistics GmbH - Freight Rate Card 2026\n\nValid from 1 January 2026 to 31 December 2026. Prices in EUR, excluding VAT.\n\nRoute                  | Weight band     | Price per shipment | Transit time\nHamburg - Lisbon       | up to 500 kg    | 420.00 EUR         | 4 working days\nHamburg - Lisbon       | 501 - 2000 kg   | 701.80 EUR         | 4 working days\nHamburg - Lisbon       | 2001 - 5000 kg  | 1,204.50 EUR       | 5 working days\nHamburg - Madrid       | up to 500 kg    | 455.00 EUR         | 5 working days\nHamburg - Madrid       | 501 - 2000 kg   | 760.00 EUR         | 5 working days\nRotterdam - Lisbon     | up to 500 kg    | 398.00 EUR         | 4 working days\n\nCustoms clearance is charged separately at 85.00 EUR per shipment.\nA fuel surcharge of 6 percent applies to all routes from 1 July 2026.\nExpress service (one working day faster) costs 25 percent extra.\nQuotes for shipments above 5000 kg are available on request.\n",
+  "expense": "Employee Expense Policy (version 2)\n\n1. Scope\nThis policy covers business expenses that employees pay personally and claim back through the expense system.\n\n2. Meals\nMeal expenses are reimbursed up to 45 EUR per day when travelling.\nA receipt is required for every meal expense above 25 EUR.\nAlcohol is not reimbursed.\n\n3. Local transport\nTaxis are reimbursed when public transport is not available or the trip starts before 6:00.\nRide-sharing is treated as a taxi.\n\n4. Submission\nExpense claims must be submitted within 60 days of the expense date.\nClaims older than 60 days are rejected unless a manager approves an exception.\n\n5. Approval\nClaims up to 500 EUR are approved by the line manager.\nClaims above 500 EUR also require finance approval.\n",
+  "security": "Information Security Policy (version 5)\n\n1. Purpose\nThis policy sets the minimum security controls for company systems, accounts, and data. It applies to all employees, contractors, and temporary staff who use company equipment or access company services. Line managers are responsible for making sure their teams have read it.\n\n2. Accounts and passwords\nEvery person receives a personal account. Shared accounts are not permitted except for documented service accounts owned by the IT team.\nPasswords must be at least 14 characters long.\nPasswords for standard accounts must be changed every 90 days.\nPasswords for administrator accounts must be changed every 30 days.\nA password may not be reused within the last 12 changes.\nMulti-factor authentication is mandatory for email, the VPN, and every administrator account.\n\n3. Devices\nCompany laptops must use full-disk encryption.\nScreens must lock automatically after 5 minutes of inactivity.\nPersonal devices may access email only through the approved mobile management app.\nLost or stolen devices must be reported to the service desk within 24 hours.\n\n4. Data classification\nData is classified as public, internal, confidential, or restricted.\nConfidential data may be shared outside the company only with a signed non-disclosure agreement.\nRestricted data, including payment card data, may never be stored on laptops or in email.\n\n5. Access reviews\nManagers review the access rights of their team every quarter.\nAccess for leavers is removed on their last working day.\nAdministrator access is reviewed every month by the IT security team.\n\n6. Backups and recovery\nProduction databases are backed up every night.\nBackups are kept for 35 days and tested by a restore exercise twice a year.\nThe recovery time objective for customer-facing systems is 8 hours.\n\n7. Incidents\nSuspected security incidents must be reported to the security team immediately and no later than 1 hour after discovery.\nThe security team notifies the data protection officer within 24 hours when personal data may be affected.\n\n8. Software\nOnly software from the approved catalogue may be installed on company devices.\nSecurity patches rated critical are installed within 7 days of release.\nBrowser extensions require approval from the IT team.\n\n9. Exceptions\nExceptions to this policy must be approved in writing by the head of IT security and are valid for at most 6 months.\n"
+ },
+ "cases": [
+  {
+   "id": "live-00",
+   "group": "live",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "bank"
+   ],
+   "answer": "On 3 May, the card payment was to Fresh Market grocery chain for €701.80.",
+   "origin": "LLM agent answer to live question L2-bank-may-3"
+  },
+  {
+   "id": "live-01",
+   "group": "live",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "bank"
+   ],
+   "answer": "The closing balance was €2,410.12.",
+   "origin": "LLM agent answer to live question L2-bank-may-3"
+  },
+  {
+   "id": "live-02",
+   "group": "live",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "invoice"
+   ],
+   "answer": "The total amount due on invoice INV-2291 is 701.80 EUR.",
+   "origin": "LLM agent answer to live question L1-invoice-total"
+  },
+  {
+   "id": "live-03",
+   "group": "live",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "invoice"
+   ],
+   "answer": "Payment is due within 14 days of the invoice date, which was 2 September 2026—i.e., by 16 September 2026.",
+   "origin": "LLM agent answer to live question L1-invoice-total"
+  },
+  {
+   "id": "live-04",
+   "group": "live",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "bank"
+   ],
+   "answer": "The card payment on 3 May was €701.80 to Fresh Market grocery chain.",
+   "origin": "LLM agent answer to live question L2-bank-may-3"
+  },
+  {
+   "id": "live-05",
+   "group": "live",
+   "split": "train",
+   "label": "may_cite",
+   "docs": [
+    "bank"
+   ],
+   "answer": "This is stated in the Harbor Savings Bank – Account statement for May 2026 (page 1).",
+   "origin": "LLM agent answer to live question L2-bank-may-3"
+  },
+  {
+   "id": "live-06",
+   "group": "live",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "retention"
+   ],
+   "answer": "Customer records are retained for at least 30 days after account closure.",
+   "origin": "LLM agent answer to live question L3-retention"
+  },
+  {
+   "id": "live-07",
+   "group": "live",
+   "split": "train",
+   "label": "may_cite",
+   "docs": [
+    "retention"
+   ],
+   "answer": "After that, they are deleted within an additional 60 days, unless a legal hold applies—so deletion may take up to approximately 90 days total.",
+   "origin": "LLM agent answer to live question L3-retention"
+  },
+  {
+   "id": "live-08",
+   "group": "live",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "retention"
+   ],
+   "answer": "Backups containing customer records are rotated every 90 days.",
+   "origin": "LLM agent answer to live question L3-retention"
+  },
+  {
+   "id": "live-09",
+   "group": "live",
+   "split": "train",
+   "label": "may_cite",
+   "docs": [
+    "retention"
+   ],
+   "answer": "This is based on the Customer Data Retention Policy (version 3); its extraction coverage is marked unknown, so the answer reflects the retrieved policy text rather than a guaranteed exhaustive corpus-wide result.",
+   "origin": "LLM agent answer to live question L3-retention"
+  },
+  {
+   "id": "live-10",
+   "group": "live",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "travel"
+   ],
+   "answer": "Flight class: Economy is required for flights under six hours.",
+   "origin": "LLM agent answer to live question L4-travel-lisbon"
+  },
+  {
+   "id": "live-11",
+   "group": "live",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "travel"
+   ],
+   "answer": "For flights of six hours or longer, premium economy may be booked with manager approval.",
+   "origin": "LLM agent answer to live question L4-travel-lisbon"
+  },
+  {
+   "id": "live-12",
+   "group": "live",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "travel"
+   ],
+   "answer": "Hotel: Lisbon hotels are capped at €160 per night.",
+   "origin": "LLM agent answer to live question L4-travel-lisbon"
+  },
+  {
+   "id": "live-13",
+   "group": "live",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "travel"
+   ],
+   "answer": "Meals: A receipt is required for every meal expense over €25.",
+   "origin": "LLM agent answer to live question L4-travel-lisbon"
+  },
+  {
+   "id": "live-14",
+   "group": "live",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "travel"
+   ],
+   "answer": "Business class: No—business class is not identified as an allowed option in the policy.",
+   "origin": "LLM agent answer to live question L4-travel-lisbon"
+  },
+  {
+   "id": "live-15",
+   "group": "live",
+   "split": "train",
+   "label": "may_cite",
+   "docs": [
+    "travel"
+   ],
+   "answer": "The stated options are economy, or premium economy for longer flights with manager approval.",
+   "origin": "LLM agent answer to live question L4-travel-lisbon"
+  },
+  {
+   "id": "live-16",
+   "group": "live",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "travel"
+   ],
+   "answer": "The retrieved policy has unknown extraction coverage, so this summary reflects the available policy text and should not be treated as proving that no additional exceptions exist.",
+   "origin": "LLM agent answer to live question L4-travel-lisbon"
+  },
+  {
+   "id": "live-17",
+   "group": "live",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "bank"
+   ],
+   "answer": "The card payment made on 3 May was €701.80 to Fresh Market grocery chain.",
+   "origin": "LLM agent answer to live question L2-bank-may-3"
+  },
+  {
+   "id": "live-18",
+   "group": "live",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "invoice"
+   ],
+   "answer": "The total amount due is €701.80.",
+   "origin": "LLM agent answer to live question L1-invoice-total"
+  },
+  {
+   "id": "live-19",
+   "group": "live",
+   "split": "train",
+   "label": "may_cite",
+   "docs": [
+    "invoice"
+   ],
+   "answer": "Payment is due within 14 days of the invoice date—by 16 September 2026 (invoice date: 2 September 2026).",
+   "origin": "LLM agent answer to live question L1-invoice-total"
+  },
+  {
+   "id": "live-20",
+   "group": "live",
+   "split": "train",
+   "label": "may_cite",
+   "docs": [
+    "bank"
+   ],
+   "answer": "This comes from the Harbor Savings Bank – Account statement for May 2026.",
+   "origin": "LLM agent answer to live question L2-bank-may-3"
+  },
+  {
+   "id": "live-21",
+   "group": "live",
+   "split": "train",
+   "label": "may_cite",
+   "docs": [
+    "retention"
+   ],
+   "answer": "They are then deleted within an additional 60 days, meaning deletion should occur within 90 days of closure, unless a legal hold applies.",
+   "origin": "LLM agent answer to live question L3-retention"
+  },
+  {
+   "id": "live-22",
+   "group": "live",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "retention"
+   ],
+   "answer": "Source: Customer Data Retention Policy (version 3).",
+   "origin": "LLM agent answer to live question L3-retention"
+  },
+  {
+   "id": "live-23",
+   "group": "live",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "retention"
+   ],
+   "answer": "The document’s extraction coverage is marked unknown, so these details should be treated as limited to the retrieved policy text.",
+   "origin": "LLM agent answer to live question L3-retention"
+  },
+  {
+   "id": "live-24",
+   "group": "live",
+   "split": "train",
+   "label": "may_cite",
+   "docs": [
+    "travel"
+   ],
+   "answer": "For a trip to Lisbon:",
+   "origin": "LLM agent answer to live question L4-travel-lisbon"
+  },
+  {
+   "id": "live-25",
+   "group": "live",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "travel"
+   ],
+   "answer": "Flights: Economy class is required for flights under six hours.",
+   "origin": "LLM agent answer to live question L4-travel-lisbon"
+  },
+  {
+   "id": "live-26",
+   "group": "live",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "travel"
+   ],
+   "answer": "For flights of six hours or more, premium economy may be booked with manager approval.",
+   "origin": "LLM agent answer to live question L4-travel-lisbon"
+  },
+  {
+   "id": "live-27",
+   "group": "live",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "travel"
+   ],
+   "answer": "Hotel: Maximum €160 per night in Lisbon.",
+   "origin": "LLM agent answer to live question L4-travel-lisbon"
+  },
+  {
+   "id": "live-28",
+   "group": "live",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "travel"
+   ],
+   "answer": "Meals: Receipts are required for every meal expense over €25.",
+   "origin": "LLM agent answer to live question L4-travel-lisbon"
+  },
+  {
+   "id": "live-29",
+   "group": "live",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "travel"
+   ],
+   "answer": "Business class: Not authorized under the stated policy.",
+   "origin": "LLM agent answer to live question L4-travel-lisbon"
+  },
+  {
+   "id": "live-30",
+   "group": "live",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "travel"
+   ],
+   "answer": "The policy specifies economy or approved premium economy, and does not provide a business-class exception.",
+   "origin": "LLM agent answer to live question L4-travel-lisbon"
+  },
+  {
+   "id": "live-31",
+   "group": "live",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "travel"
+   ],
+   "answer": "The policy also requires booking through the company travel portal at least 14 days in advance.",
+   "origin": "LLM agent answer to live question L4-travel-lisbon"
+  },
+  {
+   "id": "live-32",
+   "group": "live",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "travel"
+   ],
+   "answer": "(Employee Travel Policy, p. 1)",
+   "origin": "LLM agent answer to live question L4-travel-lisbon"
+  },
+  {
+   "id": "live-33",
+   "group": "live",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "invoice"
+   ],
+   "answer": "The total amount due is 701.80 EUR, payable by 16 September 2026—14 days after the invoice date of 2 September 2026.",
+   "origin": "LLM agent answer to live question L1-invoice-total"
+  },
+  {
+   "id": "live-34",
+   "group": "live",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "bank"
+   ],
+   "answer": "The card payment made on 3 May was 701.80 EUR to Fresh Market grocery chain.",
+   "origin": "LLM agent answer to live question L2-bank-may-3"
+  },
+  {
+   "id": "live-35",
+   "group": "live",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "bank"
+   ],
+   "answer": "The closing balance was 2,410.12 EUR.",
+   "origin": "LLM agent answer to live question L2-bank-may-3"
+  },
+  {
+   "id": "live-36",
+   "group": "live",
+   "split": "train",
+   "label": "may_cite",
+   "docs": [
+    "retention"
+   ],
+   "answer": "Customer records: retained for a minimum of 30 days after account closure, then deleted within an additional 60 days—so deletion may occur within roughly 90 days after closure, unless a legal hold applies.",
+   "origin": "LLM agent answer to live question L3-retention"
+  },
+  {
+   "id": "live-37",
+   "group": "live",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "retention"
+   ],
+   "answer": "Backups: backups containing customer records are rotated every 90 days.",
+   "origin": "LLM agent answer to live question L3-retention"
+  },
+  {
+   "id": "live-38",
+   "group": "live",
+   "split": "train",
+   "label": "may_cite",
+   "docs": [
+    "retention"
+   ],
+   "answer": "The retention policy’s extraction coverage is marked unknown, so this is based on the readable policy text and may not establish that no additional provisions exist.",
+   "origin": "LLM agent answer to live question L3-retention"
+  },
+  {
+   "id": "live-39",
+   "group": "live",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "travel"
+   ],
+   "answer": "For a trip to Lisbon, the travel policy states:",
+   "origin": "LLM agent answer to live question L4-travel-lisbon"
+  },
+  {
+   "id": "live-40",
+   "group": "live",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "travel"
+   ],
+   "answer": "Flights: Economy class is required for flights shorter than six hours.",
+   "origin": "LLM agent answer to live question L4-travel-lisbon"
+  },
+  {
+   "id": "live-41",
+   "group": "live",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "travel"
+   ],
+   "answer": "Premium economy may be used for flights of six hours or longer with manager approval.",
+   "origin": "LLM agent answer to live question L4-travel-lisbon"
+  },
+  {
+   "id": "live-42",
+   "group": "live",
+   "split": "train",
+   "label": "may_cite",
+   "docs": [
+    "travel"
+   ],
+   "answer": "Business class: Not authorized by the stated policy.",
+   "origin": "LLM agent answer to live question L4-travel-lisbon"
+  },
+  {
+   "id": "live-43",
+   "group": "live",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "travel"
+   ],
+   "answer": "The policy only permits economy or, for longer flights, approved premium economy.",
+   "origin": "LLM agent answer to live question L4-travel-lisbon"
+  },
+  {
+   "id": "N01",
+   "group": "adversarial",
+   "split": "train",
+   "label": "must_not_cite",
+   "docs": [],
+   "answer": "Customer records are retained for a maximum of 30 days after account closure.",
+   "origin": "hand-written: contradiction (minimum→maximum)"
+  },
+  {
+   "id": "N02",
+   "group": "adversarial",
+   "split": "train",
+   "label": "must_not_cite",
+   "docs": [],
+   "answer": "Customer records are deleted immediately after account closure.",
+   "origin": "hand-written: contradiction"
+  },
+  {
+   "id": "N03",
+   "group": "adversarial",
+   "split": "train",
+   "label": "must_not_cite",
+   "docs": [],
+   "answer": "Backups containing customer records are rotated every 30 days.",
+   "origin": "hand-written: swapped number (90→30)"
+  },
+  {
+   "id": "N04",
+   "group": "adversarial",
+   "split": "train",
+   "label": "must_not_cite",
+   "docs": [],
+   "answer": "Business class is allowed for any flight booked by a manager.",
+   "origin": "hand-written: invented permission"
+  },
+  {
+   "id": "N05",
+   "group": "adversarial",
+   "split": "train",
+   "label": "must_not_cite",
+   "docs": [],
+   "answer": "Employees must book business class for flights shorter than six hours.",
+   "origin": "hand-written: swapped entity (economy→business)"
+  },
+  {
+   "id": "N06",
+   "group": "adversarial",
+   "split": "train",
+   "label": "must_not_cite",
+   "docs": [],
+   "answer": "The nightly hotel cap in Lisbon is 250 EUR.",
+   "origin": "hand-written: swapped number (160→250)"
+  },
+  {
+   "id": "N07",
+   "group": "adversarial",
+   "split": "dev",
+   "label": "must_not_cite",
+   "docs": [],
+   "answer": "Hotels in Lisbon have no nightly cap.",
+   "origin": "hand-written: negation"
+  },
+  {
+   "id": "N08",
+   "group": "adversarial",
+   "split": "train",
+   "label": "must_not_cite",
+   "docs": [],
+   "answer": "The daily per diem for Lisbon is 85 EUR.",
+   "origin": "hand-written: absent fact"
+  },
+  {
+   "id": "N09",
+   "group": "adversarial",
+   "split": "dev",
+   "label": "must_not_cite",
+   "docs": [],
+   "answer": "Receipts are not required for meal expenses.",
+   "origin": "hand-written: negation"
+  },
+  {
+   "id": "N10",
+   "group": "adversarial",
+   "split": "dev",
+   "label": "must_not_cite",
+   "docs": [],
+   "answer": "Invoice INV-2291 is due within 30 days of the invoice date.",
+   "origin": "hand-written: swapped number (14→30)"
+  },
+  {
+   "id": "N11",
+   "group": "adversarial",
+   "split": "dev",
+   "label": "must_not_cite",
+   "docs": [],
+   "answer": "The total amount due on invoice INV-2291 is 2,410.12 EUR.",
+   "origin": "hand-written: number from the other document"
+  },
+  {
+   "id": "N12",
+   "group": "adversarial",
+   "split": "train",
+   "label": "must_not_cite",
+   "docs": [],
+   "answer": "The closing balance for May was 701.80 EUR.",
+   "origin": "hand-written: decoy number from the other document"
+  },
+  {
+   "id": "N13",
+   "group": "adversarial",
+   "split": "dev",
+   "label": "must_not_cite",
+   "docs": [],
+   "answer": "Late payments on the invoice incur no fee.",
+   "origin": "hand-written: negation"
+  },
+  {
+   "id": "N14",
+   "group": "adversarial",
+   "split": "dev",
+   "label": "must_not_cite",
+   "docs": [],
+   "answer": "The card payment on 3 May was 64.30 EUR to Fresh Market grocery chain.",
+   "origin": "hand-written: swapped number"
+  },
+  {
+   "id": "N15",
+   "group": "adversarial",
+   "split": "dev",
+   "label": "must_not_cite",
+   "docs": [],
+   "answer": "Nordwind Logistics shipped the goods from Lisbon to Hamburg.",
+   "origin": "hand-written: swapped direction"
+  },
+  {
+   "id": "N16",
+   "group": "adversarial",
+   "split": "dev",
+   "label": "must_not_cite",
+   "docs": [],
+   "answer": "Travel must be booked through the company travel portal at least 7 days in advance.",
+   "origin": "hand-written: swapped number (14→7)"
+  },
+  {
+   "id": "P01",
+   "group": "paraphrase",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "invoice"
+   ],
+   "answer": "Invoice INV-2291 has a total amount due of 701.80 EUR.",
+   "origin": "hand-written paraphrase of a stated fact"
+  },
+  {
+   "id": "P02",
+   "group": "paraphrase",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "bank"
+   ],
+   "answer": "The May statement shows a card payment of 701.80 EUR to Fresh Market grocery chain on 3 May.",
+   "origin": "hand-written paraphrase of a stated fact"
+  },
+  {
+   "id": "P03",
+   "group": "paraphrase",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "retention"
+   ],
+   "answer": "Customer records are kept for at least 30 days after an account is closed.",
+   "origin": "hand-written paraphrase of a stated fact"
+  },
+  {
+   "id": "P04",
+   "group": "paraphrase",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "retention"
+   ],
+   "answer": "Requests for early deletion are handled by the privacy office.",
+   "origin": "hand-written paraphrase of a stated fact"
+  },
+  {
+   "id": "P05",
+   "group": "paraphrase",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "travel"
+   ],
+   "answer": "Flights shorter than six hours must be booked in economy class.",
+   "origin": "hand-written paraphrase of a stated fact"
+  },
+  {
+   "id": "P06",
+   "group": "paraphrase",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "travel"
+   ],
+   "answer": "Lisbon hotels are capped at 160 EUR per night.",
+   "origin": "hand-written paraphrase of a stated fact"
+  },
+  {
+   "id": "P07",
+   "group": "paraphrase",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "bank"
+   ],
+   "answer": "A salary credit of 4,250.00 EUR arrived on 9 May.",
+   "origin": "hand-written paraphrase of a stated fact"
+  },
+  {
+   "id": "P08",
+   "group": "paraphrase",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "invoice"
+   ],
+   "answer": "Late payment of invoice INV-2291 incurs a fee of 2 percent per month.",
+   "origin": "hand-written paraphrase of a stated fact"
+  },
+  {
+   "id": "syn-000",
+   "group": "synthetic:comparison of two docs",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "invoice-2307",
+    "ratecard"
+   ],
+   "answer": "The invoice also separately bills €85.00 for customs clearance, matching the rate card.",
+   "origin": "LLM agent answer to synthetic question T063 (comparison of two docs / decoy value / plain sentence)"
+  },
+  {
+   "id": "syn-001",
+   "group": "synthetic:comparison of two docs",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "ratecard"
+   ],
+   "answer": "The fuel surcharge applies from 1 July 2026; customs clearance is charged separately.",
+   "origin": "LLM agent answer to synthetic question T031 (comparison of two docs / table cell / markdown table)"
+  },
+  {
+   "id": "syn-002",
+   "group": "synthetic:comparison of two docs",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "ratecard"
+   ],
+   "answer": "Prices exclude VAT.",
+   "origin": "LLM agent answer to synthetic question T039 (comparison of two docs / decoy value / markdown table)"
+  },
+  {
+   "id": "syn-003",
+   "group": "synthetic:comparison of two docs",
+   "split": "train",
+   "label": "may_cite",
+   "docs": [
+    "invoice",
+    "bank",
+    "ratecard"
+   ],
+   "answer": "I found three occurrences of 701.80 EUR in the eight readable documents:",
+   "origin": "LLM agent answer to synthetic question T039 (comparison of two docs / decoy value / markdown table)"
+  },
+  {
+   "id": "syn-004",
+   "group": "synthetic:comparison of two docs",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "ratecard"
+   ],
+   "answer": "Comparison: Rotterdam → Lisbon is €22.00 cheaper on the base freight rate, or €23.32 cheaper including the 6% fuel surcharge and €85 customs clearance.",
+   "origin": "LLM agent answer to synthetic question T031 (comparison of two docs / table cell / markdown table)"
+  },
+  {
+   "id": "syn-005",
+   "group": "synthetic:comparison of two docs",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "invoice-2307"
+   ],
+   "answer": "INV-2307: €1,289.50",
+   "origin": "LLM agent answer to synthetic question T079 (comparison of two docs / decoy value / unit/currency reformatting)"
+  },
+  {
+   "id": "syn-006",
+   "group": "synthetic:comparison of two docs",
+   "split": "train",
+   "label": "may_cite",
+   "docs": [
+    "retention",
+    "security"
+   ],
+   "answer": "Key difference: The retention policy specifies a backup rotation interval, while the security policy specifies backup frequency, retention duration, restore testing, and recovery expectations.",
+   "origin": "LLM agent answer to synthetic question T047 (comparison of two docs / stated once / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-007",
+   "group": "synthetic:comparison of two docs",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "expense"
+   ],
+   "answer": "Alcohol is not reimbursable.",
+   "origin": "LLM agent answer to synthetic question T010 (comparison of two docs / stated once / plain sentence)"
+  },
+  {
+   "id": "syn-008",
+   "group": "synthetic:comparison of two docs",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "ratecard"
+   ],
+   "answer": "Hamburg – Madrid Up to 500 kg 5 working days",
+   "origin": "LLM agent answer to synthetic question T055 (comparison of two docs / table cell / markdown table)"
+  },
+  {
+   "id": "syn-009",
+   "group": "synthetic:comparison of two docs",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "invoice-2307",
+    "ratecard"
+   ],
+   "answer": "The retrieved document coverage is marked unknown, so this conclusion is based on the available invoice and rate-card text.",
+   "origin": "LLM agent answer to synthetic question T063 (comparison of two docs / decoy value / plain sentence)"
+  },
+  {
+   "id": "syn-010",
+   "group": "synthetic:comparison of two docs",
+   "split": "train",
+   "label": "may_cite",
+   "docs": [
+    "invoice",
+    "invoice-2307"
+   ],
+   "answer": "INV-2307 is €587.70 more than INV-2291.",
+   "origin": "LLM agent answer to synthetic question T079 (comparison of two docs / decoy value / unit/currency reformatting)"
+  },
+  {
+   "id": "syn-011",
+   "group": "synthetic:comparison of two docs",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "ratecard",
+    "invoice-2307"
+   ],
+   "answer": "The rate card is valid throughout 2026, and INV-2307 is dated September 18, 2026.",
+   "origin": "LLM agent answer to synthetic question T063 (comparison of two docs / decoy value / plain sentence)"
+  },
+  {
+   "id": "syn-012",
+   "group": "synthetic:comparison of two docs",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "security"
+   ],
+   "answer": "Security policy: Focuses on operational resilience.",
+   "origin": "LLM agent answer to synthetic question T047 (comparison of two docs / stated once / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-013",
+   "group": "synthetic:comparison of two docs",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "bank"
+   ],
+   "answer": "Harbor Savings Bank – Account statement for May 2026 Card payment A 3 May card payment to Fresh Market grocery chain.",
+   "origin": "LLM agent answer to synthetic question T039 (comparison of two docs / decoy value / markdown table)"
+  },
+  {
+   "id": "syn-014",
+   "group": "synthetic:comparison of two docs",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "ratecard"
+   ],
+   "answer": "The available rate card lists these transit times:",
+   "origin": "LLM agent answer to synthetic question T055 (comparison of two docs / table cell / markdown table)"
+  },
+  {
+   "id": "syn-015",
+   "group": "synthetic:derived value",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "ratecard"
+   ],
+   "answer": "Estimated total: €1,361.77",
+   "origin": "LLM agent answer to synthetic question T024 (derived value / table cell / plain sentence)"
+  },
+  {
+   "id": "syn-016",
+   "group": "synthetic:derived value",
+   "split": "train",
+   "label": "may_cite",
+   "docs": [
+    "ratecard"
+   ],
+   "answer": "Fuel surcharge (6%): €57.00",
+   "origin": "LLM agent answer to synthetic question T040 (derived value / table cell / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-017",
+   "group": "synthetic:derived value",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "ratecard"
+   ],
+   "answer": "surcharge Customs clearance Total incl.",
+   "origin": "LLM agent answer to synthetic question T080 (derived value / table cell / markdown table)"
+  },
+  {
+   "id": "syn-018",
+   "group": "synthetic:derived value",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "ratecard"
+   ],
+   "answer": "Madrid costs €61.69 more than Lisbon, excluding VAT.",
+   "origin": "LLM agent answer to synthetic question T080 (derived value / table cell / markdown table)"
+  },
+  {
+   "id": "syn-019",
+   "group": "synthetic:derived value",
+   "split": "train",
+   "label": "may_cite",
+   "docs": [
+    "ratecard"
+   ],
+   "answer": "This excludes the stated fuel surcharge and customs clearance fee.",
+   "origin": "LLM agent answer to synthetic question T012 (derived value / table cell / plain sentence)"
+  },
+  {
+   "id": "syn-020",
+   "group": "synthetic:derived value",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "ratecard",
+    "invoice-2307"
+   ],
+   "answer": "Customs clearance: €85.00",
+   "origin": "LLM agent answer to synthetic question T024 (derived value / table cell / plain sentence)"
+  },
+  {
+   "id": "syn-021",
+   "group": "synthetic:derived value",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "ratecard"
+   ],
+   "answer": "Express service is one working day faster than the standard 5-working-day transit.",
+   "origin": "LLM agent answer to synthetic question T040 (derived value / table cell / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-022",
+   "group": "synthetic:derived value",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "bank"
+   ],
+   "answer": "Fuel: €64.30",
+   "origin": "LLM agent answer to synthetic question T064 (derived value / stated once / unit/currency reformatting)"
+  },
+  {
+   "id": "syn-023",
+   "group": "synthetic:derived value",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "ratecard"
+   ],
+   "answer": "The calculation assumes the 6% fuel surcharge applies to the express-adjusted freight amount.",
+   "origin": "LLM agent answer to synthetic question T040 (derived value / table cell / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-024",
+   "group": "synthetic:derived value",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "ratecard"
+   ],
+   "answer": "This estimate excludes VAT and any import duties, taxes, or other shipment-specific charges.",
+   "origin": "LLM agent answer to synthetic question T024 (derived value / table cell / plain sentence)"
+  },
+  {
+   "id": "syn-025",
+   "group": "synthetic:derived value",
+   "split": "train",
+   "label": "may_cite",
+   "docs": [
+    "ratecard"
+   ],
+   "answer": "Customs clearance is charged separately at €85.00, making the total €1,361.77, excluding VAT.",
+   "origin": "LLM agent answer to synthetic question T096 (derived value / table cell / plain sentence)"
+  },
+  {
+   "id": "syn-026",
+   "group": "synthetic:derived value",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "ratecard"
+   ],
+   "answer": "Route: Hamburg → Madrid",
+   "origin": "LLM agent answer to synthetic question T040 (derived value / table cell / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-027",
+   "group": "synthetic:derived value",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "ratecard"
+   ],
+   "answer": "The freight cost before surcharges would be €840.00:",
+   "origin": "LLM agent answer to synthetic question T012 (derived value / table cell / plain sentence)"
+  },
+  {
+   "id": "syn-028",
+   "group": "synthetic:derived value",
+   "split": "train",
+   "label": "may_cite",
+   "docs": [
+    "ratecard"
+   ],
+   "answer": "Estimated total: €1,092.00",
+   "origin": "LLM agent answer to synthetic question T040 (derived value / table cell / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-029",
+   "group": "synthetic:derived value",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "ratecard"
+   ],
+   "answer": "Standard freight: €760.00",
+   "origin": "LLM agent answer to synthetic question T040 (derived value / table cell / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-030",
+   "group": "synthetic:exact-quote request",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "security"
+   ],
+   "answer": "Accounts and passwords and 5.",
+   "origin": "LLM agent answer to synthetic question T044 (exact-quote request / split in long doc / plain sentence)"
+  },
+  {
+   "id": "syn-031",
+   "group": "synthetic:exact-quote request",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "security"
+   ],
+   "answer": "Change administrator-account passwords every 30 days.",
+   "origin": "LLM agent answer to synthetic question T044 (exact-quote request / split in long doc / plain sentence)"
+  },
+  {
+   "id": "syn-032",
+   "group": "synthetic:exact-quote request",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "security"
+   ],
+   "answer": "Data is classified as public, internal, confidential, or restricted. Confidential data may be shared outside the company only with a signed non-disclosure agreement. Restricted data, including payment card data, may never be stored on laptops or in email.",
+   "origin": "LLM agent answer to synthetic question T092 (exact-quote request / split in long doc / verbatim quote)"
+  },
+  {
+   "id": "syn-033",
+   "group": "synthetic:exact-quote request",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "security"
+   ],
+   "answer": "Avoid reusing any of the previous 12 passwords.",
+   "origin": "LLM agent answer to synthetic question T044 (exact-quote request / split in long doc / plain sentence)"
+  },
+  {
+   "id": "syn-034",
+   "group": "synthetic:exact-quote request",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "security"
+   ],
+   "answer": "Only software from the approved catalogue may be installed on company devices.",
+   "origin": "LLM agent answer to synthetic question T036 (exact-quote request / split in long doc / plain sentence)"
+  },
+  {
+   "id": "syn-035",
+   "group": "synthetic:exact-quote request",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "security"
+   ],
+   "answer": "Suspected security incidents must be reported to the security team immediately and no later than 1 hour after discovery. The security team notifies the data protection officer within 24 hours when personal data may be affected.",
+   "origin": "LLM agent answer to synthetic question T060 (exact-quote request / split in long doc / verbatim quote)"
+  },
+  {
+   "id": "syn-036",
+   "group": "synthetic:exact-quote request",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "security"
+   ],
+   "answer": "The Information Security Policy (version 5), Section 3 Devices, states:",
+   "origin": "LLM agent answer to synthetic question T028 (exact-quote request / stated once / verbatim quote)"
+  },
+  {
+   "id": "syn-037",
+   "group": "synthetic:exact-quote request",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "security"
+   ],
+   "answer": "It also requires company laptops to use full-disk encryption.",
+   "origin": "LLM agent answer to synthetic question T068 (exact-quote request / split in long doc / plain sentence)"
+  },
+  {
+   "id": "syn-038",
+   "group": "synthetic:exact-quote request",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "security"
+   ],
+   "answer": "Any exception must be approved in writing by the head of IT security and is valid for no more than six months.",
+   "origin": "LLM agent answer to synthetic question T036 (exact-quote request / split in long doc / plain sentence)"
+  },
+  {
+   "id": "syn-039",
+   "group": "synthetic:exact-quote request",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "security"
+   ],
+   "answer": "Use multi-factor authentication (MFA).",
+   "origin": "LLM agent answer to synthetic question T044 (exact-quote request / split in long doc / plain sentence)"
+  },
+  {
+   "id": "syn-040",
+   "group": "synthetic:exact-quote request",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "retention"
+   ],
+   "answer": "For context, it also says customer records are retained for at least 30 days after account closure and deleted within a further 60 days after the retention period, unless a legal hold applies.",
+   "origin": "LLM agent answer to synthetic question T084 (exact-quote request / stated once / plain sentence)"
+  },
+  {
+   "id": "syn-041",
+   "group": "synthetic:exact-quote request",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "expense"
+   ],
+   "answer": "Alcohol is not reimbursed. — Employee Expense Policy (version 2), Section 2: Meals",
+   "origin": "LLM agent answer to synthetic question T100 (exact-quote request / stated once / verbatim quote)"
+  },
+  {
+   "id": "syn-042",
+   "group": "synthetic:exact-quote request",
+   "split": "train",
+   "label": "may_cite",
+   "docs": [
+    "security"
+   ],
+   "answer": "The security policy says:",
+   "origin": "LLM agent answer to synthetic question T036 (exact-quote request / split in long doc / plain sentence)"
+  },
+  {
+   "id": "syn-043",
+   "group": "synthetic:exact-quote request",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "security"
+   ],
+   "answer": "The Information Security Policy requires administrator accounts to:",
+   "origin": "LLM agent answer to synthetic question T044 (exact-quote request / split in long doc / plain sentence)"
+  },
+  {
+   "id": "syn-044",
+   "group": "synthetic:exact-quote request",
+   "split": "train",
+   "label": "may_cite",
+   "docs": [
+    "security"
+   ],
+   "answer": "The document’s extraction coverage is marked unknown, so this summary is based on the retained text available from that source.",
+   "origin": "LLM agent answer to synthetic question T044 (exact-quote request / split in long doc / plain sentence)"
+  },
+  {
+   "id": "syn-045",
+   "group": "synthetic:false premise",
+   "split": "dev",
+   "label": "must_not_cite",
+   "docs": [],
+   "answer": "Their access would be removed 30 days after their last working day.",
+   "origin": "LLM agent answer to synthetic question T067 (false premise / contradicted by doc / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-046",
+   "group": "synthetic:false premise",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "expense"
+   ],
+   "answer": "Meals are reimbursed up to 45 EUR per day, but alcohol is explicitly excluded.",
+   "origin": "LLM agent answer to synthetic question T035 (false premise / contradicted by doc / plain sentence)"
+  },
+  {
+   "id": "syn-047",
+   "group": "synthetic:false premise",
+   "split": "train",
+   "label": "may_cite",
+   "docs": [
+    "expense"
+   ],
+   "answer": "The one-year submission window you mentioned does not appear to apply to expense claims in this policy.",
+   "origin": "LLM agent answer to synthetic question T051 (false premise / contradicted by doc / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-048",
+   "group": "synthetic:false premise",
+   "split": "train",
+   "label": "may_cite",
+   "docs": [
+    "retention"
+   ],
+   "answer": "The policy does not require waiting until the end of that 60-day window.",
+   "origin": "LLM agent answer to synthetic question T020 (false premise / contradicted by doc / plain sentence)"
+  },
+  {
+   "id": "syn-049",
+   "group": "synthetic:false premise",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "security"
+   ],
+   "answer": "Backups are taken nightly and tested through a restore exercise twice a year.",
+   "origin": "LLM agent answer to synthetic question T059 (false premise / contradicted by doc / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-050",
+   "group": "synthetic:false premise",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "security"
+   ],
+   "answer": "If you don’t know when that was, change it now or check with IT.",
+   "origin": "LLM agent answer to synthetic question T043 (false premise / contradicted by doc / plain sentence)"
+  },
+  {
+   "id": "syn-051",
+   "group": "synthetic:false premise",
+   "split": "train",
+   "label": "must_not_cite",
+   "docs": [],
+   "answer": "Late fee: €701.80 × 5% = €35.09",
+   "origin": "LLM agent answer to synthetic question T099 (false premise / contradicted by doc / unit/currency reformatting)"
+  },
+  {
+   "id": "syn-052",
+   "group": "synthetic:false premise",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "retention"
+   ],
+   "answer": "Yes—assuming no legal hold applies, deleting customer records on day 31 is consistent with the policy: records must be retained for a minimum of 30 days after closure, then deleted within the following 60 days.",
+   "origin": "LLM agent answer to synthetic question T020 (false premise / contradicted by doc / plain sentence)"
+  },
+  {
+   "id": "syn-053",
+   "group": "synthetic:false premise",
+   "split": "train",
+   "label": "may_cite",
+   "docs": [
+    "security"
+   ],
+   "answer": "The document does not state a 72-hour deadline for notifying the data protection officer.",
+   "origin": "LLM agent answer to synthetic question T091 (false premise / contradicted by doc / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-054",
+   "group": "synthetic:false premise",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "expense"
+   ],
+   "answer": "Claims older than 60 days are rejected unless a manager approves an exception.",
+   "origin": "LLM agent answer to synthetic question T051 (false premise / contradicted by doc / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-055",
+   "group": "synthetic:false premise",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "retention"
+   ],
+   "answer": "A legal hold is an exception to the normal deletion schedule and can keep the records longer.",
+   "origin": "LLM agent answer to synthetic question T083 (false premise / contradicted by doc / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-056",
+   "group": "synthetic:false premise",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "expense"
+   ],
+   "answer": "A 4-month-old receipt is generally not fine under the expense policy.",
+   "origin": "LLM agent answer to synthetic question T051 (false premise / contradicted by doc / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-057",
+   "group": "synthetic:false premise",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "security"
+   ],
+   "answer": "Your organization’s policy says standard-account passwords must be changed every 90 days, not once a year.",
+   "origin": "LLM agent answer to synthetic question T043 (false premise / contradicted by doc / plain sentence)"
+  },
+  {
+   "id": "syn-058",
+   "group": "synthetic:false premise",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "invoice"
+   ],
+   "answer": "Invoice amount: €701.80",
+   "origin": "LLM agent answer to synthetic question T099 (false premise / contradicted by doc / unit/currency reformatting)"
+  },
+  {
+   "id": "syn-059",
+   "group": "synthetic:false premise",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "security"
+   ],
+   "answer": "Change yours 90 days after your last password change.",
+   "origin": "LLM agent answer to synthetic question T043 (false premise / contradicted by doc / plain sentence)"
+  },
+  {
+   "id": "syn-060",
+   "group": "synthetic:multi-fact summary",
+   "split": "train",
+   "label": "may_cite",
+   "docs": [
+    "travel"
+   ],
+   "answer": "Note: The document’s extraction coverage is marked unknown, so this summary reflects the content retrieved but may not establish that the policy document is exhaustive.",
+   "origin": "LLM agent answer to synthetic question T038 (multi-fact summary / stated once / plain sentence)"
+  },
+  {
+   "id": "syn-061",
+   "group": "synthetic:multi-fact summary",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "security"
+   ],
+   "answer": "Backups must be retained for 35 days.",
+   "origin": "LLM agent answer to synthetic question T046 (multi-fact summary / stated once / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-062",
+   "group": "synthetic:multi-fact summary",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "invoice",
+    "invoice-2307"
+   ],
+   "answer": "I found two explicit 2% references, both late-payment charges on Nordwind Logistics invoices:",
+   "origin": "LLM agent answer to synthetic question T094 (multi-fact summary / decoy value / unit/currency reformatting)"
+  },
+  {
+   "id": "syn-063",
+   "group": "synthetic:multi-fact summary",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "security"
+   ],
+   "answer": "Review team access rights — every quarter.",
+   "origin": "LLM agent answer to synthetic question T008 (multi-fact summary / decoy value / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-064",
+   "group": "synthetic:multi-fact summary",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "security"
+   ],
+   "answer": "Data classification levels: Data is categorized as public, internal, confidential, or restricted.",
+   "origin": "LLM agent answer to synthetic question T062 (multi-fact summary / split in long doc / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-065",
+   "group": "synthetic:multi-fact summary",
+   "split": "train",
+   "label": "may_cite",
+   "docs": [
+    "security"
+   ],
+   "answer": "The retrieved policy passage’s extraction coverage is marked unknown, so this summary reflects the available section and may not establish that the entire document was exhaustively indexed.",
+   "origin": "LLM agent answer to synthetic question T006 (multi-fact summary / stated once / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-066",
+   "group": "synthetic:multi-fact summary",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "expense"
+   ],
+   "answer": "Claims over €500 require both line-manager and Finance approval.",
+   "origin": "LLM agent answer to synthetic question T030 (multi-fact summary / stated once / plain sentence)"
+  },
+  {
+   "id": "syn-067",
+   "group": "synthetic:multi-fact summary",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "invoice",
+    "invoice-2307"
+   ],
+   "answer": "The retrieved documents have unknown extraction coverage, so this is the set of explicit 2% references found in the indexed text, not a guaranteed exhaustive result.",
+   "origin": "LLM agent answer to synthetic question T094 (multi-fact summary / decoy value / unit/currency reformatting)"
+  },
+  {
+   "id": "syn-068",
+   "group": "synthetic:multi-fact summary",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "expense"
+   ],
+   "answer": "Claims older than 60 days require a manager-approved exception.",
+   "origin": "LLM agent answer to synthetic question T022 (multi-fact summary / stated once / unit/currency reformatting)"
+  },
+  {
+   "id": "syn-069",
+   "group": "synthetic:multi-fact summary",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "expense",
+    "travel"
+   ],
+   "answer": "A receipt is required for any meal over €25; alcohol is not reimbursed.",
+   "origin": "LLM agent answer to synthetic question T078 (multi-fact summary / stated once / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-070",
+   "group": "synthetic:multi-fact summary",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "security"
+   ],
+   "answer": "Standard-account passwords must be changed every 90 days.",
+   "origin": "LLM agent answer to synthetic question T006 (multi-fact summary / stated once / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-071",
+   "group": "synthetic:multi-fact summary",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "ratecard"
+   ],
+   "answer": "I also found a Nordwind rate-card surcharge, but it is 6%, not 2%: a fuel surcharge applying to all routes from 1 July 2026.",
+   "origin": "LLM agent answer to synthetic question T094 (multi-fact summary / decoy value / unit/currency reformatting)"
+  },
+  {
+   "id": "syn-072",
+   "group": "synthetic:multi-fact summary",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "expense"
+   ],
+   "answer": "Submission deadline: Claims must be submitted within 60 days of the expense date.",
+   "origin": "LLM agent answer to synthetic question T078 (multi-fact summary / stated once / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-073",
+   "group": "synthetic:multi-fact summary",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "security"
+   ],
+   "answer": "Exceptions: Any exception to the policy requires written approval from the head of IT security.",
+   "origin": "LLM agent answer to synthetic question T062 (multi-fact summary / split in long doc / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-074",
+   "group": "synthetic:multi-fact summary",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "security"
+   ],
+   "answer": "The recovery time objective for customer-facing systems is 8 hours.",
+   "origin": "LLM agent answer to synthetic question T046 (multi-fact summary / stated once / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-075",
+   "group": "synthetic:negative (is X allowed?)",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "security"
+   ],
+   "answer": "Do not treat encryption as an exception.",
+   "origin": "LLM agent answer to synthetic question T014 (negative (is X allowed?) / absent / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-076",
+   "group": "synthetic:negative (is X allowed?)",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "security"
+   ],
+   "answer": "Under the Information Security Policy, a password may not be reused within the last 12 password changes.",
+   "origin": "LLM agent answer to synthetic question T033 (negative (is X allowed?) / absent / plain sentence)"
+  },
+  {
+   "id": "syn-077",
+   "group": "synthetic:negative (is X allowed?)",
+   "split": "dev",
+   "label": "must_not_cite",
+   "docs": [],
+   "answer": "If card data is already on the laptop, don’t copy or transmit it; contact the security team for handling instructions.",
+   "origin": "LLM agent answer to synthetic question T014 (negative (is X allowed?) / absent / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-078",
+   "group": "synthetic:negative (is X allowed?)",
+   "split": "train",
+   "label": "may_cite",
+   "docs": [
+    "security"
+   ],
+   "answer": "Full-disk encryption is required for company laptops, but it does not authorize storing prohibited data on them.",
+   "origin": "LLM agent answer to synthetic question T014 (negative (is X allowed?) / absent / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-079",
+   "group": "synthetic:negative (is X allowed?)",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "travel"
+   ],
+   "answer": "The travel policy sets a nightly hotel reimbursement cap of €160 in Lisbon.",
+   "origin": "LLM agent answer to synthetic question T097 (negative (is X allowed?) / absent / unit/currency reformatting)"
+  },
+  {
+   "id": "syn-080",
+   "group": "synthetic:negative (is X allowed?)",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "travel"
+   ],
+   "answer": "For flights shorter than six hours, employees must book economy class.",
+   "origin": "LLM agent answer to synthetic question T013 (negative (is X allowed?) / absent / plain sentence)"
+  },
+  {
+   "id": "syn-081",
+   "group": "synthetic:negative (is X allowed?)",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "security"
+   ],
+   "answer": "(Information Security Policy, §3: Devices)",
+   "origin": "LLM agent answer to synthetic question T014 (negative (is X allowed?) / absent / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-082",
+   "group": "synthetic:negative (is X allowed?)",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "security"
+   ],
+   "answer": "Under the company’s Information Security Policy, payment card data is classified as restricted and may never be stored on laptops, even when encrypted.",
+   "origin": "LLM agent answer to synthetic question T014 (negative (is X allowed?) / absent / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-083",
+   "group": "synthetic:negative (is X allowed?)",
+   "split": "train",
+   "label": "may_cite",
+   "docs": [
+    "expense"
+   ],
+   "answer": "The available policy record has unknown extraction coverage, so this is based on the retained policy text.",
+   "origin": "LLM agent answer to synthetic question T089 (negative (is X allowed?) / absent / plain sentence)"
+  },
+  {
+   "id": "syn-084",
+   "group": "synthetic:negative (is X allowed?)",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "security"
+   ],
+   "answer": "Under the Information Security Policy (version 5), confidential data may be shared outside the company—including with a supplier—only with a signed non-disclosure agreement (NDA).",
+   "origin": "LLM agent answer to synthetic question T073 (negative (is X allowed?) / absent / plain sentence)"
+  },
+  {
+   "id": "syn-085",
+   "group": "synthetic:negative (is X allowed?)",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "travel"
+   ],
+   "answer": "The policy allows premium economy—not business class—for flights of six hours or longer, with manager approval.",
+   "origin": "LLM agent answer to synthetic question T013 (negative (is X allowed?) / absent / plain sentence)"
+  },
+  {
+   "id": "syn-086",
+   "group": "synthetic:negative (is X allowed?)",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "security"
+   ],
+   "answer": "The only exception is a documented service account owned by the IT team.",
+   "origin": "LLM agent answer to synthetic question T041 (negative (is X allowed?) / absent / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-087",
+   "group": "synthetic:negative (is X allowed?)",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "expense"
+   ],
+   "answer": "Ride-sharing is treated like a taxi for reimbursement purposes.",
+   "origin": "LLM agent answer to synthetic question T049 (negative (is X allowed?) / absent / plain sentence)"
+  },
+  {
+   "id": "syn-088",
+   "group": "synthetic:negative (is X allowed?)",
+   "split": "train",
+   "label": "may_cite",
+   "docs": [
+    "security"
+   ],
+   "answer": "Do not access work email through an unapproved mail app or method.",
+   "origin": "LLM agent answer to synthetic question T081 (negative (is X allowed?) / absent / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-089",
+   "group": "synthetic:negative (is X allowed?)",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "security"
+   ],
+   "answer": "Also, restricted data—including payment-card data—may never be stored on laptops or sent by email.",
+   "origin": "LLM agent answer to synthetic question T073 (negative (is X allowed?) / absent / plain sentence)"
+  },
+  {
+   "id": "syn-090",
+   "group": "synthetic:out of corpus",
+   "split": "train",
+   "label": "may_cite",
+   "docs": [
+    "expense"
+   ],
+   "answer": "The expense policy only states that taxis are reimbursed when public transport is unavailable or the trip starts before 06:00; it gives no per-kilometre rate.",
+   "origin": "LLM agent answer to synthetic question T074 (out of corpus / absent / unit/currency reformatting)"
+  },
+  {
+   "id": "syn-091",
+   "group": "synthetic:out of corpus",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "travel"
+   ],
+   "answer": "Flights under six hours must be booked in economy.",
+   "origin": "LLM agent answer to synthetic question T066 (out of corpus / absent / plain sentence)"
+  },
+  {
+   "id": "syn-092",
+   "group": "synthetic:out of corpus",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "security"
+   ],
+   "answer": "Multi-factor authentication is mandatory for email and VPN access.",
+   "origin": "LLM agent answer to synthetic question T026 (out of corpus / absent / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-093",
+   "group": "synthetic:out of corpus",
+   "split": "dev",
+   "label": "must_not_cite",
+   "docs": [],
+   "answer": "I couldn’t find a company policy specifically addressing working from home, remote work, telecommuting, eligibility, approval, or required schedules in the available documents.",
+   "origin": "LLM agent answer to synthetic question T026 (out of corpus / absent / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-094",
+   "group": "synthetic:out of corpus",
+   "split": "dev",
+   "label": "must_not_cite",
+   "docs": [],
+   "answer": "I couldn’t find a parental leave policy in the available company documents.",
+   "origin": "LLM agent answer to synthetic question T090 (out of corpus / absent / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-095",
+   "group": "synthetic:out of corpus",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "travel"
+   ],
+   "answer": "Premium economy for longer flights requires manager approval.",
+   "origin": "LLM agent answer to synthetic question T066 (out of corpus / absent / plain sentence)"
+  },
+  {
+   "id": "syn-096",
+   "group": "synthetic:out of corpus",
+   "split": "train",
+   "label": "must_not_cite",
+   "docs": [],
+   "answer": "Therefore, the available document corpus does not provide the policy’s eligibility, duration, pay, or application requirements.",
+   "origin": "LLM agent answer to synthetic question T090 (out of corpus / absent / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-097",
+   "group": "synthetic:out of corpus",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "travel"
+   ],
+   "answer": "It only states that:",
+   "origin": "LLM agent answer to synthetic question T066 (out of corpus / absent / plain sentence)"
+  },
+  {
+   "id": "syn-098",
+   "group": "synthetic:out of corpus",
+   "split": "train",
+   "label": "may_cite",
+   "docs": [
+    "ratecard"
+   ],
+   "answer": "The available Nordwind rate card does not specify a cancellation fee.",
+   "origin": "LLM agent answer to synthetic question T058 (out of corpus / absent / plain sentence)"
+  },
+  {
+   "id": "syn-099",
+   "group": "synthetic:out of corpus",
+   "split": "dev",
+   "label": "must_not_cite",
+   "docs": [],
+   "answer": "The documents do not specify a mileage allowance per kilometre in euros.",
+   "origin": "LLM agent answer to synthetic question T074 (out of corpus / absent / unit/currency reformatting)"
+  },
+  {
+   "id": "syn-100",
+   "group": "synthetic:out of corpus",
+   "split": "train",
+   "label": "may_cite",
+   "docs": [
+    "security"
+   ],
+   "answer": "The available Information Security Policy does include requirements relevant to working remotely:",
+   "origin": "LLM agent answer to synthetic question T026 (out of corpus / absent / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-101",
+   "group": "synthetic:out of corpus",
+   "split": "train",
+   "label": "must_not_cite",
+   "docs": [],
+   "answer": "Because the retrieved documents have unknown extraction coverage, this may not be exhaustive.",
+   "origin": "LLM agent answer to synthetic question T042 (out of corpus / absent / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-102",
+   "group": "synthetic:out of corpus",
+   "split": "train",
+   "label": "must_not_cite",
+   "docs": [],
+   "answer": "I couldn’t find an account manager for Nordwind Logistics in the available documents.",
+   "origin": "LLM agent answer to synthetic question T034 (out of corpus / absent / plain sentence)"
+  },
+  {
+   "id": "syn-103",
+   "group": "synthetic:out of corpus",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "ratecard"
+   ],
+   "answer": "It lists shipment prices, an €85 customs-clearance charge, a 6% fuel surcharge, and a 25% express-service premium, but no cancellation charge.",
+   "origin": "LLM agent answer to synthetic question T058 (out of corpus / absent / plain sentence)"
+  },
+  {
+   "id": "syn-104",
+   "group": "synthetic:out of corpus",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "invoice",
+    "invoice-2307",
+    "ratecard"
+   ],
+   "answer": "The records I found are invoices and a freight rate card, but none identifies a named account manager.",
+   "origin": "LLM agent answer to synthetic question T034 (out of corpus / absent / plain sentence)"
+  },
+  {
+   "id": "syn-105",
+   "group": "synthetic:single fact",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "bank"
+   ],
+   "answer": "The Fresh Market card payment in May 2026 was €701.80.",
+   "origin": "LLM agent answer to synthetic question T002 (single fact / decoy value / plain sentence)"
+  },
+  {
+   "id": "syn-106",
+   "group": "synthetic:single fact",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "ratecard"
+   ],
+   "answer": "Hamburg → Lisbon freight prices:",
+   "origin": "LLM agent answer to synthetic question T093 (single fact / table cell / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-107",
+   "group": "synthetic:single fact",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "ratecard"
+   ],
+   "answer": "Transit time: 5 working days.",
+   "origin": "LLM agent answer to synthetic question T045 (single fact / table cell / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-108",
+   "group": "synthetic:single fact",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "ratecard"
+   ],
+   "answer": "2,001–5,000 kg: €1,204.50",
+   "origin": "LLM agent answer to synthetic question T093 (single fact / table cell / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-109",
+   "group": "synthetic:single fact",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "ratecard"
+   ],
+   "answer": "Up to 500 kg: €420.00",
+   "origin": "LLM agent answer to synthetic question T093 (single fact / table cell / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-110",
+   "group": "synthetic:single fact",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "ratecard"
+   ],
+   "answer": "Customs clearance is charged separately at €85.00 per shipment.",
+   "origin": "LLM agent answer to synthetic question T005 (single fact / table cell / markdown table)"
+  },
+  {
+   "id": "syn-111",
+   "group": "synthetic:single fact",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "ratecard"
+   ],
+   "answer": "Source: Nordwind Logistics GmbH – Freight Rate Card 2026.",
+   "origin": "LLM agent answer to synthetic question T029 (single fact / table cell / markdown table)"
+  },
+  {
+   "id": "syn-112",
+   "group": "synthetic:single fact",
+   "split": "train",
+   "label": "may_cite",
+   "docs": [
+    "ratecard"
+   ],
+   "answer": "6% fuel surcharge: €42.11",
+   "origin": "LLM agent answer to synthetic question T004 (single fact / table cell / plain sentence)"
+  },
+  {
+   "id": "syn-113",
+   "group": "synthetic:single fact",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "invoice"
+   ],
+   "answer": "Payment terms: Due within 14 days of the invoice date; pay by bank transfer using INV-2291 as the reference",
+   "origin": "LLM agent answer to synthetic question T003 (single fact / decoy value / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-114",
+   "group": "synthetic:single fact",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "invoice-2307"
+   ],
+   "answer": "The total on invoice INV-2307 is 1,289.50 EUR.",
+   "origin": "LLM agent answer to synthetic question T061 (single fact / decoy value / plain sentence)"
+  },
+  {
+   "id": "syn-115",
+   "group": "synthetic:single fact",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "invoice"
+   ],
+   "answer": "Total due: 701.80 EUR",
+   "origin": "LLM agent answer to synthetic question T003 (single fact / decoy value / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-116",
+   "group": "synthetic:single fact",
+   "split": "dev",
+   "label": "must_cite",
+   "docs": [
+    "ratecard"
+   ],
+   "answer": "Customs clearance, if required: €85.00 separately",
+   "origin": "LLM agent answer to synthetic question T045 (single fact / table cell / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-117",
+   "group": "synthetic:single fact",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "invoice",
+    "invoice-2307"
+   ],
+   "answer": "Late-payment fee: 2% per month",
+   "origin": "LLM agent answer to synthetic question T003 (single fact / decoy value / bulleted list with bold labels)"
+  },
+  {
+   "id": "syn-118",
+   "group": "synthetic:single fact",
+   "split": "dev",
+   "label": "may_cite",
+   "docs": [
+    "ratecard"
+   ],
+   "answer": "Freight total: €743.91",
+   "origin": "LLM agent answer to synthetic question T004 (single fact / table cell / plain sentence)"
+  },
+  {
+   "id": "syn-119",
+   "group": "synthetic:single fact",
+   "split": "train",
+   "label": "must_cite",
+   "docs": [
+    "ratecard"
+   ],
+   "answer": "A 6% fuel surcharge applies to all routes from 1 July 2026; shipments above 5,000 kg require a quote.",
+   "origin": "LLM agent answer to synthetic question T005 (single fact / table cell / markdown table)"
+  }
+ ]
+}
