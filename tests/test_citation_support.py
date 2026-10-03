@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Literal
+
 from cite_right.citation_support import (
     citation_is_supported,
     demote_unsupported_secondaries,
@@ -73,7 +75,7 @@ def _demote(
     candidates: list[Candidate],
     *,
     cfg: CitationConfig | None = None,
-    status: str = "supported",
+    status: Literal["supported", "partial", "unsupported"] = "supported",
     retrieval_support: list[RetrievalSupport] | None = None,
 ) -> tuple[list[Citation], list[RetrievalSupport]]:
     return demote_unsupported_secondaries(
