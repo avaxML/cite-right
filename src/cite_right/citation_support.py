@@ -65,7 +65,8 @@ def demote_unsupported_secondaries(
 
     Only ``supported`` spans are filtered, and the best citation always stays.
     Each demoted citation becomes a ``RetrievalSupport`` for its passage unless
-    that candidate is already present. Citation order is preserved.
+    that candidate is already present or still cited, and is dropped when its
+    candidate is not in ``candidates``. Citation order is preserved.
     """
     if status != "supported":
         return citations, retrieval_support

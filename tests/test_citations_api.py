@@ -931,4 +931,7 @@ def test_align_citations_default_config_keeps_only_supporting_source() -> None:
 
     assert span.status == "supported"
     assert [c.source_id for c in span.citations] == ["retention"]
-    assert "security" in {s.source_id for s in span.retrieval_support}
+    assert {s.passage_text for s in span.retrieval_support} == {
+        "Customer records are encrypted at rest.",
+        "Backups are stored in a separate region.",
+    }
