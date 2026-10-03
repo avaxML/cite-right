@@ -407,12 +407,7 @@ mod tests {
             assert_eq!(map_punctuation_char(c), '\'');
         }
         for c in [
-            '\u{2010}',
-            '\u{2011}',
-            '\u{2012}',
-            '\u{2013}',
-            '\u{2212}',
-            '-',
+            '\u{2010}', '\u{2011}', '\u{2012}', '\u{2013}', '\u{2212}', '-',
         ] {
             assert!(is_dash_variant(c));
             assert!(!is_apostrophe_variant(c));
@@ -506,13 +501,7 @@ mod tests {
     #[test]
     fn symbol_spans_follow_nfkc_form() {
         for text in [
-            "\u{ffe1}",
-            "\u{fe69}",
-            "\u{fe6a}",
-            "%",
-            "$",
-            "\u{20ac}",
-            "\u{a3}",
+            "\u{ffe1}", "\u{fe69}", "\u{fe6a}", "%", "$", "\u{20ac}", "\u{a3}",
         ] {
             assert_eq!(iter_token_spans(text), vec![(0, text.len())], "{text:?}");
         }
