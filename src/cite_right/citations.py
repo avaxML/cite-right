@@ -23,7 +23,10 @@ except ImportError:
         InvertedIndex = object  # type: ignore[misc,assignment]
         RustPreparedCorpus = object  # type: ignore[misc,assignment]
 
-from cite_right.citation_support import citation_is_supported
+from cite_right.citation_support import (
+    citation_is_supported,
+    demote_unsupported_secondaries,
+)
 from cite_right.core.aligner_py import SmithWatermanAligner
 from cite_right.core.aligner_rust import RustSmithWatermanAligner
 from cite_right.core.citation_config import CitationConfig
@@ -661,6 +664,15 @@ def _process_answer_span(
         cfg,
         answer_span.text,
         candidates=candidates,
+    )
+    citations, retrieval_support = demote_unsupported_secondaries(
+        citations,
+        retrieval_support,
+        status=status,
+        cfg=cfg,
+        answer_text=answer_span.text,
+        candidates=candidates,
+        build_support=_build_retrieval_support,
     )
     retrieval_support = _rank_retrieval_support(retrieval_support, cfg)
 
