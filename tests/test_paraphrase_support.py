@@ -451,3 +451,20 @@ def test_paraphrase_gate_preserves_hyphens_inside_labels(
     )
     assert span.status == "supported"
     assert span.citations[0].components["content_gate"] == 1.0
+
+
+@pytest.mark.parametrize(
+    "backend", ["python", pytest.param("rust", marks=requires_rust)]
+)
+@pytest.mark.parametrize("linked_phrase", ["against the stop", "using a wrench"])
+def test_paraphrase_gate_keeps_a_linked_phrase_in_its_action(
+    backend: Literal["python", "rust"], linked_phrase: str
+) -> None:
+    [span] = align_citations(
+        f"Tighten the clamp {linked_phrase} after drying the latch.",
+        [f"After drying the latch, tighten the clamp {linked_phrase}."],
+        config=CitationConfig(paraphrase_support=True, supported_answer_coverage=1.0),
+        backend=backend,
+    )
+    assert span.status == "supported"
+    assert span.citations[0].components["content_gate"] == 1.0

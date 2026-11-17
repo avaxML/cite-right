@@ -206,3 +206,19 @@ def test_hyphenated_uppercase_command_cannot_attach_time_ambiguously(
     )
     assert span.status == "partial"
     assert span.citations[0].components["content_gate"] == 0.0
+
+
+@pytest.mark.parametrize(
+    "backend", ["python", pytest.param("rust", marks=requires_rust)]
+)
+def test_explicit_joiner_marks_an_action_outside_the_recognized_list(
+    backend: Literal["python", "rust"],
+) -> None:
+    [span] = align_citations(
+        "Tighten the clamps also clean housings after drying the latch.",
+        ["After drying the latch, tighten the clamps also clean housings."],
+        config=CitationConfig(paraphrase_support=True, supported_answer_coverage=1.0),
+        backend=backend,
+    )
+    assert span.status == "partial"
+    assert span.citations[0].components["content_gate"] == 0.0
