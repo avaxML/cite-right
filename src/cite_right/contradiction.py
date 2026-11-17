@@ -206,6 +206,19 @@ _CONTROL_LABELS = frozenset(
         "toolbar",
     }
 )
+_DISPLAY_VERBS = frozenset(
+    {
+        "display",
+        "displays",
+        "displayed",
+        "list",
+        "lists",
+        "listed",
+        "show",
+        "shows",
+        "showed",
+    }
+)
 _PRODUCT_ROLES = frozenset({"edition", "plan", "product", "subscription", "tier"})
 _DECLARED_NAME_ROLES = _PRODUCT_ROLES | {
     "approver",
@@ -390,7 +403,14 @@ def _interface_or_layout(
     if index == clause_start + 1 and before in _COPULAS:
         return True
     recent_words = words[max(clause_start, index - 3) : index]
-    return any(word in _CONTROL_VERBS for word in recent_words)
+    return _has_control_context(recent_words, before)
+
+
+def _has_control_context(recent_words: list[str], before: str) -> bool:
+    return any(word in _CONTROL_VERBS for word in recent_words) or (
+        before in _DISPLAY_VERBS
+        and any(word in _CONTROL_LABELS for word in recent_words[:-1])
+    )
 
 
 def has_temporal_polarity_mismatch(answer_text: str, evidence_text: str) -> bool:

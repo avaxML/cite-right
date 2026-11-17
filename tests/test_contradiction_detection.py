@@ -185,6 +185,7 @@ def test_check_contradiction_uses_passage_not_truncated_span() -> None:
         ("Export Options", "Download Options"),
         ("Report Layout.", "Archive Layout."),
         ("Summary: Review the report.", "Overview: Review the report."),
+        ("The toolbar shows Export.", "The toolbar shows Download."),
         (
             "Plan • “Is Loading” appears while the plan details are displayed.",
             "Plan • “Is Refreshing” appears while the plan details are displayed.",
