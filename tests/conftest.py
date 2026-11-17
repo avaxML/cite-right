@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Sequence
 
 import pytest
 
@@ -140,6 +140,26 @@ requires_spacy_model = pytest.mark.skipif(
 # =============================================================================
 # Embeddings Fixtures
 # =============================================================================
+
+
+class KeywordEmbedder:
+    """A deterministic embedder that keys off a substring.
+
+    This is used to test the embedding-only citation path without external
+    dependencies.
+    """
+
+    def __init__(self, keyword: str) -> None:
+        self._keyword = keyword.casefold()
+
+    def encode(self, texts: Sequence[str]) -> list[list[float]]:
+        vectors: list[list[float]] = []
+        for text in texts:
+            if self._keyword in text.casefold():
+                vectors.append([1.0, 0.0])
+            else:
+                vectors.append([0.0, 1.0])
+        return vectors
 
 
 def _embeddings_available() -> bool:
