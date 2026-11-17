@@ -191,6 +191,10 @@ def _add_gate_components(
 
 _RELATION_MARKERS = frozenset({"after", "before", "once", "when", "while"})
 _CLAUSE_JOINERS = _RELATION_MARKERS | {
+    "&",
+    "-",
+    "/",
+    "|",
     "and",
     "but",
     "if",

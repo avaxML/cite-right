@@ -147,3 +147,20 @@ def test_lexical_gate_requires_three_distinct_content_tokens(
     assert span.status == "partial"
     assert span.citations[0].components["content_coverage"] == 1.0
     assert span.citations[0].components["content_gate"] == 0.0
+
+
+@pytest.mark.parametrize(
+    "backend", ["python", pytest.param("rust", marks=requires_rust)]
+)
+@pytest.mark.parametrize("separator", [" - ", "--", " / ", " | ", " & "])
+def test_order_of_compound_instructions_is_ambiguous(
+    backend: Literal["python", "rust"], separator: str
+) -> None:
+    [span] = align_citations(
+        f"Tighten the clamp{separator}replace the housing after drying the latch.",
+        [f"After drying the latch, tighten the clamp{separator}replace the housing."],
+        config=CitationConfig(paraphrase_support=True, supported_answer_coverage=1.0),
+        backend=backend,
+    )
+    assert span.status == "partial"
+    assert span.citations[0].components["content_gate"] == 0.0

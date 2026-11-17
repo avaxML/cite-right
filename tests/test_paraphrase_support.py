@@ -435,3 +435,19 @@ def test_paraphrase_gate_normalizes_decimal_digits(
     )
     assert span.status == "supported"
     assert span.citations[0].components["content_gate"] == 1.0
+
+
+@pytest.mark.parametrize(
+    "backend", ["python", pytest.param("rust", marks=requires_rust)]
+)
+def test_paraphrase_gate_preserves_hyphens_inside_labels(
+    backend: Literal["python", "rust"],
+) -> None:
+    [span] = align_citations(
+        "Tighten the R-X clamp after drying the latch.",
+        ["After drying the latch, tighten the R-X clamp."],
+        config=CitationConfig(paraphrase_support=True, supported_answer_coverage=1.0),
+        backend=backend,
+    )
+    assert span.status == "supported"
+    assert span.citations[0].components["content_gate"] == 1.0
