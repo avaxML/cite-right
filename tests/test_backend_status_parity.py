@@ -1,5 +1,7 @@
 """Content coverage and admission across the native and Python builders."""
 
+from __future__ import annotations
+
 from typing import Any
 
 import pytest
