@@ -184,6 +184,7 @@ def extract_numbers(text: str) -> list[str]:
 
 _NAME_TOKEN = re.compile(r"[^\W_]+(?:[-'’][^\W_]+)*")
 _CLAUSE_BOUNDARY = re.compile(r"[:;.!?•\n]")
+_LIST_MARKERS = frozenset({"-", "*", "+", "–", "—", "−"})
 _NameRole = tuple[str, str]
 _UNIT_NAMES = frozenset(
     {"eur", "usd", "gbp", "cad", "aud", "jpy", "kg", "mg", "km", "cm", "mm", "kwh"}
@@ -269,13 +270,16 @@ def _find_named_roles(
     )
 
     mentions: list[tuple[str, list[_NameRole]]] = []
+    clause_start = previous_end = 0
     for index, (raw, word) in enumerate(zip(raw_words, words, strict=True)):
+        leading = normalized[previous_end : matches[index].start()]
+        previous_end = matches[index].end()
+        if _is_clause_gap(leading):
+            clause_start = index
         if not _looks_like_name(raw, word):
             continue
-        previous_end = matches[index - 1].end() if index else 0
-        leading = normalized[previous_end : matches[index].start()]
         after = _right_anchor(normalized, matches, words, index)
-        roles = _local_name_roles(words, index, leading, after, heading)
+        roles = _local_name_roles(words, index, leading, after, heading, clause_start)
         if roles:
             mentions.append((word, roles))
     return set(words), mentions
@@ -286,13 +290,20 @@ def _looks_like_name(raw: str, folded: str) -> bool:
 
 
 def _local_name_roles(
-    words: list[str], index: int, leading: str, after: str, heading: bool
+    words: list[str],
+    index: int,
+    leading: str,
+    after: str,
+    heading: bool,
+    clause_start: int,
 ) -> list[_NameRole]:
     before = words[index - 1] if index else ""
-    explicit = _explicit_name_role(words, index, before, after, leading)
+    explicit = _explicit_name_role(words, index, before, after, leading, clause_start)
     if explicit is not None:
         return [explicit]
-    if heading or _interface_or_layout(words, index, leading, before, after):
+    if heading or _interface_or_layout(
+        words, index, leading, before, after, clause_start
+    ):
         return []
 
     roles: list[_NameRole] = []
@@ -303,8 +314,12 @@ def _local_name_roles(
     return roles
 
 
+def _is_clause_gap(gap: str) -> bool:
+    return _CLAUSE_BOUNDARY.search(gap) is not None or gap.strip() in _LIST_MARKERS
+
+
 def _has_left_anchor(before: str, after: str, leading: str) -> bool:
-    return not _CLAUSE_BOUNDARY.search(leading) and (
+    return not _is_clause_gap(leading) and (
         before in _NAME_PREPOSITIONS
         or (not after and before.isalpha() and before not in _NON_NAME_WORDS)
     )
@@ -316,54 +331,65 @@ def _right_anchor(
     next_index = index + 1
     if next_index == len(words):
         return ""
-    if _CLAUSE_BOUNDARY.search(
-        text[matches[index].end() : matches[next_index].start()]
-    ):
+    if _is_clause_gap(text[matches[index].end() : matches[next_index].start()]):
         return ""
     after = words[next_index]
     if after.endswith("ly") and next_index + 1 < len(words):
         gap = text[matches[next_index].end() : matches[next_index + 1].start()]
-        return "" if _CLAUSE_BOUNDARY.search(gap) else words[next_index + 1]
+        return "" if _is_clause_gap(gap) else words[next_index + 1]
     return after
 
 
 def _explicit_name_role(
-    words: list[str], index: int, before: str, after: str, leading: str
+    words: list[str],
+    index: int,
+    before: str,
+    after: str,
+    leading: str,
+    clause_start: int,
 ) -> _NameRole | None:
     if after in _PRODUCT_ROLES:
         return ("before", after)
     if before in _DECLARED_NAME_ROLES and ":" in leading:
         return ("after", before)
-    if not _CLAUSE_BOUNDARY.search(leading):
-        subject = _role_before_copula(words, index)
-        if subject in _DECLARED_NAME_ROLES:
-            return ("after", subject)
-    return None
+    subject = _role_before_copula(words, index, clause_start)
+    return ("after", subject) if subject in _DECLARED_NAME_ROLES else None
 
 
-def _role_before_copula(words: list[str], index: int) -> str:
-    if index < 2:
+def _role_before_copula(words: list[str], index: int, clause_start: int) -> str:
+    if index - clause_start < 2:
         return ""
     verb, before_verb = words[index - 1], words[index - 2]
     if verb in _COPULAS:
         return before_verb
-    if verb == "been" and index >= 3 and before_verb in {"has", "have", "had"}:
+    if (
+        verb == "been"
+        and index - clause_start >= 3
+        and before_verb in {"has", "have", "had"}
+    ):
         return words[index - 3]
     return ""
 
 
 def _interface_or_layout(
-    words: list[str], index: int, leading: str, before: str, after: str
+    words: list[str],
+    index: int,
+    leading: str,
+    before: str,
+    after: str,
+    clause_start: int,
 ) -> bool:
     if any(separator in leading for separator in (":", "•", "\n")):
         return True
-    if leading.strip() in {"-", "*", "+", "–", "—", "−"}:
+    if leading.strip() in _LIST_MARKERS:
         return True
     if before.isdigit() and leading.strip() in {".", ")"}:
         return True
     if after in _CONTROL_LABELS:
         return True
-    recent_words = words[max(0, index - 3) : index]
+    if index == clause_start + 1 and before in _COPULAS:
+        return True
+    recent_words = words[max(clause_start, index - 3) : index]
     return any(word in _CONTROL_VERBS for word in recent_words)
 
 

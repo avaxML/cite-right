@@ -185,6 +185,10 @@ def test_check_contradiction_uses_passage_not_truncated_span() -> None:
         ("Export Options", "Download Options"),
         ("Report Layout.", "Archive Layout."),
         ("Summary: Review the report.", "Overview: Review the report."),
+        (
+            "Plan • “Is Loading” appears while the plan details are displayed.",
+            "Plan • “Is Refreshing” appears while the plan details are displayed.",
+        ),
         ("- First find the source.", "- Next find the source."),
         ("– First find the source.", "– Next find the source."),
         ("Summary only; review the report.", "Overview only; review the report."),
@@ -253,6 +257,10 @@ def test_entity_swap_keeps_role_changes(answer: str, source: str) -> None:
         (
             "Luneston to Pineford: Up to 600 kg in 5 working days.",
             "Luneston to Pineford: up to 600 kg for 385.00 EUR in 5 working days.",
+        ),
+        (
+            "Plan • “Is Loading”: review the Pro plan details and payment options when the preview opens.",
+            "Plan • “Is Refreshing”: review the Pro plan details and payment options when the preview opens.",
         ),
     ],
 )
