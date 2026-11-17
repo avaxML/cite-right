@@ -196,3 +196,7 @@ Worth repeating because it is the most-misread preset:
 - **Permissive does not skip Smith-Waterman.** Every `Citation` it emits is still a localized alignment with `char_start` / `char_end` rebaseable onto the source text. The lower thresholds let more candidates through, but each surviving candidate still goes through the same alignment step.
 - **Permissive does not emit embedding-only citations.** The removed `allow_embedding_only` and `supported_embedding_similarity` fields are still rejected at construction; the supported path for embedding-only signals is `SpanCitations.retrieval_support`, which is a separate channel that does not produce `Citation` objects and does not flip `status`. The lower `min_embedding_similarity` widens that channel, it does not bypass Smith-Waterman to make it a citation.
 - **Permissive is a recall preset, not a precision preset.** It will let through borderline alignments that strict rejects. For workloads where you want both wide recall and tight numerical/entity matching, tune individual fields rather than picking the preset wholesale.
+
+## Paraphrase Support
+
+All presets use sequential answer coverage to decide support by default. To recognize a supported claim with a reordered time condition, explicitly enable `paraphrase_support`. The configuration reference describes the content floors, the additional cosine requirement when an embedder is supplied, and the strict preset's exact-evidence setting. [Opt-In Paraphrase Support](./citation-config.md#opt-in-paraphrase-support)

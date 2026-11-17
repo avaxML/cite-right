@@ -95,7 +95,7 @@ class EmbeddingCache(BaseModel):
                 [span.text for span in self.answer_spans]
             )
             self._computed = True
-        return self.vectors[span_index]
+        return self.vectors[span_index] if span_index < len(self.vectors) else []
 
 
 class PreparedCitationCorpus(BaseModel):

@@ -135,10 +135,11 @@ After sorting, the same source with the same evidence-span tuple is collapsed (d
 
 When any of those fire against the best-ranked citation, the span status is forced to `"partial"`. The status is never forced to `"unsupported"` by contradiction: there is evidence, it just conflicts with the claim. So source "The vaccine is safe and effective." and answer "The vaccine is not safe." resolves to `"partial"` with citations, not to `"unsupported"`. Shared tokens that would otherwise bless a contradictory statement as `"supported"` are downgraded for the same reason.
 
-**Status.** Status comes from the top-ranked `Citation`'s `answer_coverage` component, not from its overall score. The exact rule:
+**Status.** The top-ranked `Citation` alone determines whether an answer span has support.
 
 - If the best citation's answer coverage meets `supported_answer_coverage` (default `0.6`) and no contradiction fired, the span is `"supported"`.
-- If citations exist but `answer_coverage` is below the threshold, or a contradiction fired, the span is `"partial"`.
+- If paraphrase support is enabled, the best citation can also support a claim with a reordered time condition. Both must agree within the same passage and meet the appropriate content and cosine floors. See [Opt-In Paraphrase Support](../configuration/citation-config.md#opt-in-paraphrase-support).
+- When citations exist but the best one fails the applicable support checks, the span is `"partial"`.
 - If no citations survive filtering, the span is `"unsupported"`.
 
 `retrieval_support` is intentionally outside this decision: a high embedding score that never localizes is evidence-of-interest, not a grounded citation. It is the diagnostic that a recall signal fired but Smith-Waterman could not pin a span.

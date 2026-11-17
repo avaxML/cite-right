@@ -4,6 +4,10 @@ All notable changes to cite-right will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Opt-in paraphrase support for a reordered claim and time condition contained in one passage. The first citation records content coverage and, when an embedder is supplied, cosine similarity. (#85)
+
 ### Fixed
 
 - Entity-swap detection distinguishes names in corresponding roles from UI controls, headings, unit codes, and spelling that differs only in casing. This changes how default settings classify affected restatements. (#69)

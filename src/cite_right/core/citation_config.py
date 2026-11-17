@@ -59,6 +59,11 @@ class CitationConfig(BaseModel):
     supported_answer_coverage: float = 0.6
     min_embedding_similarity: float = 0.3
 
+    paraphrase_support: bool = False
+    paraphrase_content_coverage: float = Field(default=0.65, ge=0.0, le=1.0)
+    paraphrase_embedding_similarity: float = Field(default=0.75, ge=0.0, le=1.0)
+    paraphrase_lexical_content_coverage: float = Field(default=0.80, ge=0.0, le=1.0)
+
     window_size_sentences: int = 1
     window_stride_sentences: int = 1
 

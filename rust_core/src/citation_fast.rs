@@ -43,6 +43,7 @@ pub struct Config {
     pub stopword_ids: HashSet<u32>,
     pub min_alignment_score: i32,
     pub min_answer_coverage: f64,
+    pub content_admission_floor: Option<f64>,
     pub min_final_score: f64,
     pub require_all_tokens: bool,
     pub match_score: i32,
@@ -159,7 +160,12 @@ fn process_alignment(
     // Check thresholds
     if alignment.score < cfg.min_alignment_score
         || alignment.token_start >= alignment.token_end
-        || !adequate_coverage(answer_coverage, passage_coverage, cfg.min_answer_coverage)
+        || !adequate_coverage(
+            answer_coverage,
+            passage_coverage,
+            cfg.min_answer_coverage,
+            cfg.content_admission_floor,
+        )
     {
         return build_support(
             candidate,

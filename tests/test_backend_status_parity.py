@@ -11,7 +11,7 @@ from cite_right.core.results import SpanCitations, TokenizedText
 from cite_right.text.tokenizer import SimpleTokenizer
 
 from .conftest import requires_rust
-from .paraphrase_fixtures import ANSWERS, PASSAGES
+from .paraphrase_fixtures import ANSWERS, GUARDS, PASSAGES
 from .test_paraphrase_support import (
     _BNP_ANSWER,
     _BNP_SOURCES,
@@ -37,6 +37,19 @@ STRICT = CitationConfig.strict().model_copy(
         "supported_answer_coverage": 0.75,
     }
 )
+PARAPHRASE = CitationConfig.model_validate(
+    {
+        "paraphrase_support": True,
+        "min_answer_coverage": 0.9,
+        "supported_answer_coverage": 1.0,
+        "top_k": 1,
+    }
+)
+PARAPHRASE_GUARD = CitationConfig.model_validate(
+    {"paraphrase_support": True, "supported_answer_coverage": 1.0, "top_k": 1}
+)
+REWORDING = "Tighten the clamp once drying the latch is complete."
+REWORDING_PASSAGE = "After drying the latch, tighten the clamp."
 REORDERED = "Dry the latch after rinsing the tray before packing the sleeve."
 MANUAL = "Before packing the sleeve, rinse the tray and dry the latch."
 
@@ -59,6 +72,19 @@ MANUAL = "Before packing the sleeve, rinse the tray and dry the latch."
             id="stopword-only",
         ),
         pytest.param(" ".join(ANSWERS), list(PASSAGES), STRICT, id="manual-replay"),
+        pytest.param(
+            REWORDING, [REWORDING_PASSAGE], PARAPHRASE, id="paraphrase-admission"
+        ),
+        pytest.param(
+            " ".join(ANSWERS),
+            list(PASSAGES),
+            STRICT.model_copy(update={"paraphrase_support": True}),
+            id="manual-replay-opt-in",
+        ),
+        *[
+            pytest.param(answer, list(passages), PARAPHRASE_GUARD, id=f"guard-{name}")
+            for name, answer, passages in GUARDS
+        ],
         pytest.param(
             _BNP_ANSWER, _BNP_SOURCES, CitationConfig(top_k=1), id="issue49-bnp"
         ),
@@ -96,7 +122,10 @@ def assert_citation_coverage(actual: SpanCitations, expected: SpanCitations) -> 
         c.source_id for c in expected.citations
     ]
     for left, right in zip(actual.citations, expected.citations, strict=True):
-        for key in ("answer_coverage", "content_coverage"):
+        for key in ("answer_coverage", "content_coverage", "content_gate"):
+            assert (key in left.components) == (key in right.components)
+            if key not in right.components:
+                continue
             assert left.components[key] == pytest.approx(
                 right.components[key], abs=1e-9
             )
@@ -192,3 +221,41 @@ def test_arabic_ratio_sign_counts_as_content(backend: str, sign: str) -> None:
     [span] = corpus.align(f"الخصم ١٢{sign}", backend=backend)
     [citation] = span.citations
     assert citation.components["content_coverage"] == pytest.approx(2 / 3)
+
+
+@requires_rust
+def test_native_builders_apply_paraphrase_admission_floor(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from cite_right import _core
+
+    prepared_build = _core.PreparedCorpus.build_citations
+    legacy_build = _core.rust_build_citations_fast
+    calls: list[str] = []
+
+    def track_prepared(*args: Any, **kwargs: Any) -> _core.PyCitationResult:
+        result = prepared_build(*args, **kwargs)
+        calls.append("prepared")
+        return result
+
+    def track_legacy(*args: Any, **kwargs: Any) -> str:
+        result = legacy_build(*args, **kwargs)
+        calls.append("legacy")
+        return result
+
+    monkeypatch.setattr(_core.PreparedCorpus, "build_citations", track_prepared)
+    monkeypatch.setattr(_core, "rust_build_citations_fast", track_legacy)
+    prepared = PreparedCitationCorpus.from_sources(
+        [REWORDING_PASSAGE], config=PARAPHRASE
+    )
+    custom = PreparedCitationCorpus.from_sources(
+        [REWORDING_PASSAGE], config=PARAPHRASE, tokenizer=ProtocolTokenizer()
+    )
+    for corpus in (prepared, custom):
+        [span] = corpus.align(REWORDING, backend="rust")
+        assert span.status == "supported"
+        [citation] = span.citations
+        assert citation.components["answer_coverage"] < 0.9
+        assert citation.components["content_coverage"] == pytest.approx(0.8)
+        assert citation.components["content_gate"] == 1.0
+    assert calls == ["prepared", "legacy"]

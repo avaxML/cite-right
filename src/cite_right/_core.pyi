@@ -122,7 +122,17 @@ class PreparedCorpus:
         source_id_map: Dict[int, str],
         base_offset_map: Dict[int, int],
         config_tuple: tuple[
-            int, float, float, bool, int, float, float, float, float, float
+            int,
+            float,
+            float,
+            bool,
+            int,
+            float,
+            float,
+            float,
+            float,
+            float,
+            float | None,
         ],
         multi_span_config: tuple[bool, int, int],
         match_score: int,
@@ -171,7 +181,7 @@ def rust_build_citations_fast(
     lexical_scores: Sequence[float],
     embed_scores: Sequence[float],
     config_tuple: tuple[
-        int, float, float, bool, int, float, float, float, float, float
+        int, float, float, bool, int, float, float, float, float, float, float | None
     ],
     multi_span_config: tuple[bool, int, int],
     match_score: int = ...,

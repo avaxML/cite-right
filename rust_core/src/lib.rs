@@ -8,6 +8,19 @@ mod prepare;
 mod prepared_corpus;
 mod smith_waterman;
 
+type CitationBuildConfigTuple = (
+    i32,
+    f64,
+    f64,
+    bool,
+    i32,
+    f64,
+    f64,
+    f64,
+    f64,
+    f64,
+    Option<f64>,
+);
 type MatchBlocks = Vec<(usize, usize)>;
 type AlignmentDetails = (i32, usize, usize, usize, usize, usize, usize);
 type AlignmentWithBlocks = (i32, usize, usize, usize, usize, usize, MatchBlocks);
@@ -398,7 +411,7 @@ fn rust_build_citations_fast(
     candidate_indices: Vec<usize>,
     lexical_scores: Vec<f64>,
     embed_scores: Vec<f64>,
-    config_tuple: (i32, f64, f64, bool, i32, f64, f64, f64, f64, f64),
+    config_tuple: CitationBuildConfigTuple,
     multi_span_config: (bool, i32, usize),
     match_score: i32,
     mismatch_score: i32,
@@ -451,6 +464,7 @@ fn rust_build_citations_fast(
             weight_evidence_coverage: config_tuple.7,
             weight_lexical: config_tuple.8,
             weight_embedding: config_tuple.9,
+            content_admission_floor: config_tuple.10,
             multi_span_evidence: multi_span_config.0,
             multi_span_merge_gap_chars: multi_span_config.1,
             multi_span_max_spans: multi_span_config.2,

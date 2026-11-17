@@ -1,53 +1,240 @@
 """Decide support from the best localized citation."""
 
+from __future__ import annotations
+
+import unicodedata
 from collections.abc import Sequence
 from typing import Literal
 
 from cite_right.contradiction import check_contradiction
 from cite_right.core.citation_config import CitationConfig
 from cite_right.core.prepared_corpus import Candidate
-from cite_right.core.results import Citation
+from cite_right.core.results import Citation, EvidenceSpan
+from cite_right.models.embedding_index import EmbeddingIndex
+
+_Status = Literal["supported", "partial", "unsupported"]
 
 
-def _contradiction_context(
-    citation: Citation,
-    candidates: Sequence[Candidate] | None,
-) -> str:
-    """Prefer the candidate passage over truncated Smith-Waterman evidence.
-
-    Leftover n-grams (issue #48) attach to the wrong slot when alignment
-    truncates evidence and hides the contradicting remainder of the passage.
-    """
-    if candidates:
-        for candidate in candidates:
-            if candidate.global_index == citation.candidate_index:
-                passage = candidate.passage.text
-                if passage:
-                    return passage
-    return citation.evidence
+def paraphrase_admission_floor(
+    config: CitationConfig, *, has_embedder: bool
+) -> float | None:
+    if not config.paraphrase_support:
+        return None
+    if has_embedder:
+        return config.paraphrase_content_coverage
+    return config.paraphrase_lexical_content_coverage
 
 
 def span_status(
-    citations: Sequence[Citation],
+    citations: list[Citation],
     cfg: CitationConfig,
     answer_text: str | None = None,
     candidates: Sequence[Candidate] | None = None,
-) -> Literal["supported", "partial", "unsupported"]:
+    *,
+    answer_tokens: Sequence[int],
+    stopword_ids: frozenset[int],
+    embedding_index: EmbeddingIndex | None = None,
+    query_vector: list[float] | None = None,
+) -> _Status:
     if not citations:
         return "unsupported"
+
     best = citations[0]
-    coverage = float(best.components.get("answer_coverage", 0.0))
+    candidate = _candidate_for(best, candidates)
+    passage = candidate.passage.text if candidate is not None else best.evidence
+    contradiction = answer_text is not None and check_contradiction(
+        answer_text, passage or best.evidence
+    )
+    extractive_support = not contradiction and _has_extractive_support(best, cfg)
+    if not cfg.paraphrase_support:
+        return "supported" if extractive_support else "partial"
 
-    # Check for contradictions if answer text is provided.
-    # Use the candidate passage so leftover tokens beyond truncated evidence
-    # (e.g. "BC", "of which came in the first half") are visible.
-    if answer_text is not None and check_contradiction(
-        answer_text, _contradiction_context(best, candidates)
+    similarity = _best_similarity(best, embedding_index, query_vector)
+    promoted = _paraphrase_is_supported(
+        best,
+        cfg,
+        answer_text=answer_text,
+        candidate=candidate,
+        content_count=len(set(answer_tokens) - stopword_ids),
+        contradiction=contradiction,
+        extractive_support=extractive_support,
+        has_embedder=embedding_index is not None,
+        similarity=similarity,
+    )
+    citations[0] = _add_gate_components(
+        best, candidate, promoted, embedding_index is not None, similarity
+    )
+    return "supported" if extractive_support or promoted else "partial"
+
+
+def _has_extractive_support(citation: Citation, cfg: CitationConfig) -> bool:
+    answer = citation.components.get("answer_coverage", 0.0)
+    if not cfg.paraphrase_support:
+        return answer >= cfg.supported_answer_coverage
+    content = citation.components.get("content_coverage", 0.0)
+    return (
+        answer >= cfg.supported_answer_coverage
+        and max(answer, content) >= cfg.min_answer_coverage
+    )
+
+
+def _candidate_for(
+    citation: Citation, candidates: Sequence[Candidate] | None
+) -> Candidate | None:
+    if not candidates:
+        return None
+    index = citation.candidate_index
+    if 0 <= index < len(candidates) and candidates[index].global_index == index:
+        return candidates[index]
+    return next((item for item in candidates if item.global_index == index), None)
+
+
+def _best_similarity(
+    citation: Citation,
+    index: EmbeddingIndex | None,
+    query_vector: list[float] | None,
+) -> float | None:
+    if index is None or query_vector is None:
+        return None
+    return index.similarity(citation.candidate_index, query_vector)
+
+
+def _paraphrase_is_supported(
+    citation: Citation,
+    cfg: CitationConfig,
+    *,
+    answer_text: str | None,
+    candidate: Candidate | None,
+    content_count: int,
+    contradiction: bool,
+    extractive_support: bool,
+    has_embedder: bool,
+    similarity: float | None,
+) -> bool:
+    if contradiction or extractive_support or candidate is None or not answer_text:
+        return False
+    if not _passes_paraphrase_floors(
+        cfg,
+        content_count,
+        citation.components.get("content_coverage", 0.0),
+        has_embedder=has_embedder,
+        similarity=similarity,
     ):
-        # Downgrade to partial (not unsupported) if contradiction detected
-        # because we have evidence, it just contradicts the claim
-        return "partial"
+        return False
 
-    if coverage >= cfg.supported_answer_coverage:
-        return "supported"
-    return "partial"
+    passage = candidate.passage.text
+    return _same_reordered_claim(answer_text, passage) and _has_exact_passage(
+        candidate, passage
+    )
+
+
+def _passes_paraphrase_floors(
+    cfg: CitationConfig,
+    content_count: int,
+    content_coverage: float,
+    *,
+    has_embedder: bool,
+    similarity: float | None,
+) -> bool:
+    floor = paraphrase_admission_floor(cfg, has_embedder=has_embedder)
+    if floor is None or content_count < 3 or content_coverage < floor:
+        return False
+    return not has_embedder or (
+        similarity is not None and similarity >= cfg.paraphrase_embedding_similarity
+    )
+
+
+def _has_exact_passage(candidate: Candidate, passage: str) -> bool:
+    full_text = candidate.source.full_text
+    if full_text is None:
+        return True
+    start = candidate.source.base_doc_offset + candidate.passage.doc_char_start
+    end = candidate.source.base_doc_offset + candidate.passage.doc_char_end
+    return full_text[start:end] == passage
+
+
+def _add_gate_components(
+    citation: Citation,
+    candidate: Candidate | None,
+    promoted: bool,
+    has_embedder: bool,
+    similarity: float | None,
+) -> Citation:
+    components = dict(citation.components)
+    components["content_gate"] = float(promoted)
+    if has_embedder:
+        components["embedding_similarity"] = 0.0 if similarity is None else similarity
+
+    if not promoted or candidate is None:
+        return citation.model_copy(update={"components": components})
+
+    start = candidate.source.base_doc_offset + candidate.passage.doc_char_start
+    end = candidate.source.base_doc_offset + candidate.passage.doc_char_end
+    text = candidate.passage.text
+    components["num_evidence_spans"] = 1.0
+    components["evidence_chars_total"] = float(end - start)
+    return citation.model_copy(
+        update={
+            "components": components,
+            "char_start": start,
+            "char_end": end,
+            "evidence": text,
+            "evidence_spans": [
+                EvidenceSpan(char_start=start, char_end=end, evidence=text)
+            ],
+        }
+    )
+
+
+_RELATION_MARKERS = frozenset({"after", "before", "once", "when", "while"})
+_CLAUSE_JOINERS = _RELATION_MARKERS | {"and", "but", "or"}
+
+
+def _paraphrase_clause_key(text: str) -> tuple[str, str, str] | None:
+    """Canonicalize a single claim and its movable time clause."""
+    body = " ".join(unicodedata.normalize("NFKC", text).casefold().split())
+    if body.endswith("?"):
+        return None
+    body = body.rstrip(".!")
+    parts = _split_time_clause(body.split())
+    if parts is None:
+        return None
+
+    marker, condition, claim = parts
+    if not (_is_simple_clause(condition) and _is_simple_clause(claim)):
+        return None
+
+    if marker == "once" and condition.endswith(" is complete"):
+        marker = "after"
+        condition = condition.removesuffix(" is complete")
+    return marker, condition, claim
+
+
+def _split_time_clause(words: list[str]) -> tuple[str, str, str] | None:
+    markers = [index for index, word in enumerate(words) if word in _RELATION_MARKERS]
+    if len(markers) != 1:
+        return None
+
+    index = markers[0]
+    marker = words[index]
+    if index:
+        return marker, " ".join(words[index + 1 :]), " ".join(words[:index])
+
+    condition, separator, claim = " ".join(words[1:]).partition(",")
+    if not separator:
+        return None
+    return marker, condition.strip(), claim.strip()
+
+
+def _is_simple_clause(text: str) -> bool:
+    words = text.split()
+    return (
+        len(words) >= 2
+        and not any(word in _CLAUSE_JOINERS for word in words)
+        and not any(char in text for char in ",;:.!?")
+    )
+
+
+def _same_reordered_claim(answer: str, passage: str) -> bool:
+    answer_key = _paraphrase_clause_key(answer)
+    return answer_key is not None and answer_key == _paraphrase_clause_key(passage)

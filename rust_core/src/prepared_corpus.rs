@@ -4,7 +4,7 @@ use pyo3::prelude::*;
 use std::collections::{HashMap, HashSet};
 
 use crate::inverted_index::InvertedIndex;
-use crate::smith_waterman;
+use crate::{smith_waterman, CitationBuildConfigTuple};
 
 /// Type alias for candidate metadata tuple
 type CandidateMetadata = (usize, usize, usize, Vec<(usize, usize)>);
@@ -215,7 +215,7 @@ impl PreparedCorpus {
         embed_scores: Vec<f64>,
         source_id_map: HashMap<usize, String>, // source_index -> source_id
         base_offset_map: HashMap<usize, usize>, // source_index -> base_offset
-        config_tuple: (i32, f64, f64, bool, i32, f64, f64, f64, f64, f64),
+        config_tuple: CitationBuildConfigTuple,
         multi_span_config: (bool, i32, usize),
         match_score: i32,
         mismatch_score: i32,
@@ -236,6 +236,7 @@ impl PreparedCorpus {
                 weight_evidence_coverage,
                 weight_lexical,
                 weight_embedding,
+                content_admission_floor,
             ) = config_tuple;
 
             let (multi_span_evidence, multi_span_merge_gap_chars, multi_span_max_spans) =
@@ -311,6 +312,7 @@ impl PreparedCorpus {
                             multi_span_merge_gap_chars,
                             multi_span_max_spans,
                             &stopword_ids,
+                            content_admission_floor,
                         )
                     })
                 })
@@ -376,6 +378,7 @@ impl PreparedCorpus {
         multi_span_merge_gap_chars: i32,
         multi_span_max_spans: usize,
         stopword_ids: &HashSet<u32>,
+        content_admission_floor: Option<f64>,
     ) -> Option<CitationOrSupport> {
         let candidate = self.candidates.get(candidate_index)?;
         let source_text = self.source_texts.get(candidate.source_index)?;
@@ -407,6 +410,7 @@ impl PreparedCorpus {
                 answer_coverage,
                 passage_coverage,
                 min_answer_coverage,
+                content_admission_floor,
             )
         {
             return self.build_support_internal(

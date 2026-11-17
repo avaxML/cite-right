@@ -51,6 +51,7 @@ from cite_right.core.results import (
 )
 from cite_right.models.base import Embedder
 from cite_right.models.embedding_index import EmbeddingIndex
+from cite_right.support_gate import paraphrase_admission_floor
 from cite_right.support_gate import span_status as _span_status
 from cite_right.text.content_coverage import (
     content_token_coverage,
@@ -251,6 +252,10 @@ def _process_answer_span(
     stopword_ids = query_stopword_token_ids(
         answer_tokenized.text, answer_tokens, answer_tokenized.token_spans
     )
+    content_admission_floor = paraphrase_admission_floor(
+        cfg, has_embedder=embedding_index is not None
+    )
+    query_vector: list[float] | None = None
     citations: list[Citation] = []
     retrieval_support: list[RetrievalSupport] = []
 
@@ -264,7 +269,6 @@ def _process_answer_span(
             lexical_scores = _lexical_prefilter(answer_set, candidates, idf)
 
         embed_start = time.perf_counter()
-        query_vector: list[float] | None = None
         if embedding_cache is not None:
             query_vector = embedding_cache.get_vector(span_index)
         embedding_time = (time.perf_counter() - embed_start) * 1000
@@ -373,6 +377,7 @@ def _process_answer_span(
                     cfg.weights.evidence_coverage,
                     cfg.weights.lexical,
                     cfg.weights.embedding,
+                    content_admission_floor,
                 )
 
                 multi_span_config = (
@@ -513,6 +518,7 @@ def _process_answer_span(
                     cfg.weights.evidence_coverage,
                     cfg.weights.lexical,
                     cfg.weights.embedding,
+                    content_admission_floor,
                 )
 
                 multi_span_config = (
@@ -625,6 +631,7 @@ def _process_answer_span(
                     lexical_score=lexical_score,
                     cfg=cfg,
                     stopword_ids=stopword_ids,
+                    content_admission_floor=content_admission_floor,
                 )
                 if citation is not None:
                     citations.append(citation)
@@ -652,6 +659,7 @@ def _process_answer_span(
                 cfg=cfg,
                 aligner=aligner,
                 lexical_scores=lexical_scores,
+                content_admission_floor=content_admission_floor,
             )
         )
         num_alignments += extra_alignments
@@ -663,6 +671,10 @@ def _process_answer_span(
         cfg,
         answer_span.text,
         candidates=candidates,
+        answer_tokens=answer_tokens,
+        stopword_ids=stopword_ids,
+        embedding_index=embedding_index,
+        query_vector=query_vector,
     )
     retrieval_support = _rank_retrieval_support(retrieval_support, cfg)
 
@@ -689,6 +701,7 @@ def _build_exact_citation(
     lexical_score: float,
     cfg: CitationConfig,
     stopword_ids: frozenset[int],
+    content_admission_floor: float | None,
 ) -> Citation | None:
     """Build an exact citation when alignment localizes evidence precisely."""
     metrics = _compute_alignment_metrics(alignment, answer_tokens, cfg)
@@ -697,7 +710,9 @@ def _build_exact_citation(
     )
     metrics["content_coverage"] = passage_coverage
     final_score = _compute_final_score(metrics, lexical_score, embed_score, cfg)
-    if not _should_use_alignment(alignment, metrics, cfg, passage_coverage):
+    if not _should_use_alignment(
+        alignment, metrics, cfg, passage_coverage, content_admission_floor
+    ):
         return None
     if cfg.require_all_answer_tokens_in_evidence and not (
         trusted_alignment_match_counts and alignment.matches == len(answer_tokens)
@@ -774,6 +789,7 @@ def _should_use_alignment(
     metrics: dict[str, float],
     cfg: CitationConfig,
     passage_coverage: float = 0.0,
+    content_admission_floor: float | None = None,
 ) -> bool:
     """Check if alignment evidence meets quality thresholds.
 
@@ -787,7 +803,12 @@ def _should_use_alignment(
         return False
     min_coverage = cfg.min_answer_coverage
     sequential_ok = metrics["answer_coverage"] >= min_coverage
-    paraphrase_ok = passage_coverage >= min_coverage
+    content_floor = (
+        min(min_coverage, content_admission_floor)
+        if content_admission_floor is not None
+        else min_coverage
+    )
+    paraphrase_ok = passage_coverage >= content_floor
     # Stopword-only SW hits (e.g. "the" in "Here's the summary") must not count.
     return passage_coverage > 0.0 and (sequential_ok or paraphrase_ok)
 
@@ -1036,6 +1057,7 @@ def _retry_structured_field_citations(
     cfg: CitationConfig,
     aligner: Aligner,
     lexical_scores: LexicalScores,
+    content_admission_floor: float | None,
 ) -> tuple[list[Citation], list[RetrievalSupport], int]:
     """Re-run Smith-Waterman with gap_score=0 on structured-field misses.
 
@@ -1080,6 +1102,7 @@ def _retry_structured_field_citations(
             lexical_score=lexical_scores.get(candidate_index, lexical_score_orig),
             cfg=cfg,
             stopword_ids=stopword_ids,
+            content_admission_floor=content_admission_floor,
         )
         if citation is not None:
             citations.append(citation)

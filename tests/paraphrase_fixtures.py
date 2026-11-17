@@ -30,3 +30,50 @@ ANSWERS = (
     "Revision metadata follows.",
     "See also troubleshooting procedures.",
 )
+
+
+GUARDS = (
+    (
+        "quantity",
+        "Tighten the clamp after drying the latch for 30 days.",
+        ("After drying the latch for 14 days, tighten the clamp.",),
+    ),
+    (
+        "polarity",
+        "Tighten the clamp after drying the latch.",
+        ("After drying the latch, never tighten the clamp.",),
+    ),
+    (
+        "role",
+        "James asked Maria to approve the transfer after the inspection.",
+        ("After the inspection, Maria asked James to approve the transfer.",),
+    ),
+    (
+        "object",
+        "Tighten the cover after drying the latch and checking the pressure.",
+        ("After drying the latch and checking the pressure, tighten the clamp.",),
+    ),
+    (
+        "action",
+        "Slowly loosen the clamp after drying the latch.",
+        ("After drying the latch, slowly tighten the clamp.",),
+    ),
+    (
+        "wrong-source",
+        "Tighten the clamp after drying the latch.",
+        (
+            "Tighten the clamp before drying the latch.",
+            "After drying the latch, tighten the clamp.",
+        ),
+    ),
+    (
+        "partial-claim",
+        "Tighten the brass clamp after drying the latch.",
+        ("After drying the latch, tighten the clamp.",),
+    ),
+    (
+        "generic-advice",
+        "Advice to tighten the clamp after drying the latch.",
+        ("After drying the latch, tighten the clamp.",),
+    ),
+)

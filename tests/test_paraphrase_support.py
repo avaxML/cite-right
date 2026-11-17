@@ -5,12 +5,19 @@ count on a one-sentence window was marking them unsupported even though the
 same content words are in the source. Status may be partial.
 """
 
+import os
+from typing import Literal, Sequence
+
+import pytest
+from pydantic import ValidationError
+
 from cite_right import SourceDocument, align_citations
 from cite_right.core.citation_config import CitationConfig
 from cite_right.text.content_coverage import content_token_coverage, stopword_token_ids
 from cite_right.text.tokenizer import SimpleTokenizer
 
-from .conftest import requires_rust
+from .conftest import requires_embeddings, requires_rust
+from .test_citations_embedding_only_edge_cases import KeywordEmbedder
 
 _BNP_ANSWER = (
     "The normal B-type Natriuretic Peptide (BNP) refers to a low amount of the "
@@ -159,3 +166,182 @@ def test_content_token_coverage_ignores_stopwords() -> None:
         stopword_token_ids(vocab),
     )
     assert empty == 0.0
+
+
+@pytest.mark.parametrize(
+    "backend", ["python", pytest.param("rust", marks=requires_rust)]
+)
+@pytest.mark.parametrize("with_embeddings", [False, True], ids=["lexical", "embedding"])
+@pytest.mark.parametrize(
+    ("answer", "coverage"),
+    [
+        ("Tighten the clamp after drying the latch.", 1.0),
+        ("Tighten the clamp once drying the latch is complete.", 0.8),
+    ],
+)
+def test_paraphrase_gate_supports_clause_reordering(
+    backend: Literal["python", "rust"],
+    with_embeddings: bool,
+    answer: str,
+    coverage: float,
+) -> None:
+    passage = "After drying the latch, tighten the clamp."
+    embedder = KeywordEmbedder("clamp") if with_embeddings else None
+    config = CitationConfig(supported_answer_coverage=0.9)
+    [original] = align_citations(
+        answer, [passage], config=config, backend=backend, embedder=embedder
+    )
+    [promoted] = align_citations(
+        answer,
+        [passage],
+        config=CitationConfig.model_validate(
+            config.model_dump() | {"paraphrase_support": True}
+        ),
+        backend=backend,
+        embedder=embedder,
+    )
+    assert original.status == "partial"
+    assert promoted.status == "supported"
+    [citation] = promoted.citations
+    assert citation.components["content_gate"] == 1.0
+    assert citation.components["content_coverage"] == pytest.approx(coverage)
+    assert ("embedding_similarity" in citation.components) is with_embeddings
+    assert passage[citation.char_start : citation.char_end] == citation.evidence
+    assert "drying the latch" in citation.evidence
+    assert "tighten the clamp" in citation.evidence
+
+
+@pytest.mark.parametrize(
+    "backend", ["python", pytest.param("rust", marks=requires_rust)]
+)
+def test_paraphrase_gate_can_admit_reworded_evidence(
+    backend: Literal["python", "rust"],
+) -> None:
+    text = "After drying the latch, tighten the clamp."
+    answer = "Tighten the clamp once drying the latch is complete."
+    cfg = CitationConfig(min_answer_coverage=0.9, supported_answer_coverage=0.9)
+    [without] = align_citations(answer, [text], config=cfg, backend=backend)
+    assert without.status == "unsupported"
+    active = CitationConfig.model_validate(
+        cfg.model_dump() | {"paraphrase_support": True}
+    )
+    [with_gate] = align_citations(answer, [text], config=active, backend=backend)
+    assert with_gate.status == "supported"
+
+
+@pytest.mark.parametrize("bad_vector", [[0.0, 0.0], [float("nan"), 1.0], [1.0]])
+@pytest.mark.parametrize(
+    "backend", ["python", pytest.param("rust", marks=requires_rust)]
+)
+def test_paraphrase_gate_abstains_on_invalid_similarity(
+    backend: Literal["python", "rust"], bad_vector: list[float]
+) -> None:
+    class InvalidQueryEmbedder:
+        def encode(self, texts: Sequence[str]) -> list[list[float]]:
+            return [
+                bad_vector if text.startswith("Tighten") else [1.0, 0.0]
+                for text in texts
+            ]
+
+    [span] = align_citations(
+        "Tighten the clamp after drying the latch.",
+        ["After drying the latch, tighten the clamp."],
+        config=CitationConfig.model_validate(
+            {"paraphrase_support": True, "supported_answer_coverage": 0.9}
+        ),
+        embedder=InvalidQueryEmbedder(),
+        backend=backend,
+    )
+    assert span.status == "partial"
+    assert span.citations[0].components["content_gate"] == 0.0
+
+
+@pytest.mark.parametrize(
+    "field",
+    [
+        "paraphrase_content_coverage",
+        "paraphrase_embedding_similarity",
+        "paraphrase_lexical_content_coverage",
+    ],
+)
+@pytest.mark.parametrize("value", [-0.01, 1.01, float("nan")])
+def test_paraphrase_config_validates_thresholds(field: str, value: float) -> None:
+    with pytest.raises(ValidationError):
+        CitationConfig.model_validate({field: value})
+
+
+@pytest.mark.embeddings
+@requires_embeddings
+@pytest.mark.skipif(
+    os.environ.get("CITE_RIGHT_RUN_EMBEDDINGS_TESTS") != "1",
+    reason="Set CITE_RIGHT_RUN_EMBEDDINGS_TESTS=1 to run embeddings tests",
+)
+def test_embeddings_paraphrase_supports_reordered_instruction() -> None:
+    from cite_right.models.sbert_embedder import SentenceTransformerEmbedder
+
+    cfg = CitationConfig.model_validate(
+        {"paraphrase_support": True, "supported_answer_coverage": 0.9}
+    )
+    [span] = align_citations(
+        "Tighten the clamp after drying the latch.",
+        ["After drying the latch, tighten the clamp."],
+        config=cfg,
+        embedder=SentenceTransformerEmbedder("all-MiniLM-L6-v2"),
+    )
+    assert span.status == "supported"
+    assert span.citations[0].components["content_gate"] == 1.0
+
+
+@pytest.mark.parametrize(
+    "backend", ["python", pytest.param("rust", marks=requires_rust)]
+)
+def test_paraphrase_gate_needs_embedding_similarity_and_batches_queries(
+    backend: Literal["python", "rust"],
+) -> None:
+    class OrthogonalEmbedder:
+        def __init__(self) -> None:
+            self.batches: list[tuple[str, ...]] = []
+
+        def encode(self, texts: Sequence[str]) -> list[list[float]]:
+            self.batches.append(tuple(texts))
+            return [
+                [1.0, 0.0] if text.startswith("After") else [0.0, 1.0] for text in texts
+            ]
+
+    embedder = OrthogonalEmbedder()
+    passages = [
+        "After drying the latch, tighten the clamp.",
+        "After heating the sleeve, fold the wire.",
+    ]
+    answer = "Tighten the clamp after drying the latch. Fold the wire after heating the sleeve."
+    config = CitationConfig.model_validate(
+        {"paraphrase_support": True, "supported_answer_coverage": 0.9}
+    )
+    spans = align_citations(
+        answer, passages, config=config, backend=backend, embedder=embedder
+    )
+    assert [span.status for span in spans] == ["partial", "partial"]
+    assert [span.citations[0].components["embedding_similarity"] for span in spans] == [
+        0.0,
+        0.0,
+    ]
+    assert len(embedder.batches) == 2
+    assert set(embedder.batches[0]) == set(passages)
+    assert embedder.batches[1] == tuple(span.answer_span.text for span in spans)
+
+
+def test_paraphrase_gate_respects_stricter_content_floor() -> None:
+    [span] = align_citations(
+        "Tighten the clamp once drying the latch is complete.",
+        ["After drying the latch, tighten the clamp."],
+        config=CitationConfig.model_validate(
+            {
+                "paraphrase_support": True,
+                "supported_answer_coverage": 0.9,
+                "paraphrase_lexical_content_coverage": 0.85,
+            }
+        ),
+    )
+    assert span.status == "partial"
+    assert span.citations[0].components["content_coverage"] == pytest.approx(0.8)
+    assert span.citations[0].components["content_gate"] == 0.0

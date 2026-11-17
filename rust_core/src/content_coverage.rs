@@ -6,8 +6,14 @@
 use std::collections::{HashMap, HashSet};
 
 /// Match the admission rule used by the Python builder.
-pub fn adequate_coverage(answer_coverage: f64, content_coverage: f64, minimum: f64) -> bool {
-    content_coverage > 0.0 && (answer_coverage >= minimum || content_coverage >= minimum)
+pub fn adequate_coverage(
+    answer_coverage: f64,
+    content_coverage: f64,
+    minimum: f64,
+    content_admission_floor: Option<f64>,
+) -> bool {
+    let content_floor = content_admission_floor.map_or(minimum, |floor| floor.min(minimum));
+    content_coverage > 0.0 && (answer_coverage >= minimum || content_coverage >= content_floor)
 }
 
 pub fn content_token_coverage(

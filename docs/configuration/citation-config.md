@@ -25,13 +25,13 @@ config = CitationConfig.balanced().model_copy(update={"top_k": 5})
 
 ## Status And Thresholds
 
-Status is one of `"supported"`, `"partial"`, or `"unsupported"` and is computed from the best exact citation's `answer_coverage`, not from the overall `score`. The contradiction check runs against the **full candidate passage**, not the truncated Smith-Waterman evidence, and downgrades the span to `"partial"` (never `"unsupported"`) when it fires. So source `"The vaccine is safe and effective."` paired with answer `"The vaccine is not safe."` resolves to `"partial"` with citations.
+Status is one of `"supported"`, `"partial"`, or `"unsupported"` and is computed from the best exact citation. By default, the support floor uses its `answer_coverage`. The contradiction check runs against the **full candidate passage**, not the truncated Smith-Waterman evidence, and downgrades the span to `"partial"` (never `"unsupported"`) when it fires. So source `"The vaccine is safe and effective."` paired with answer `"The vaccine is not safe."` resolves to `"partial"` with citations.
 
 The thresholds below decide where the line falls.
 
 | Field | Default | Effect |
 |-------|---------|--------|
-| `supported_answer_coverage` | `0.6` | A span is `"supported"` only when its best citation's `answer_coverage` clears this. Below it (or any contradiction) is `"partial"`. No surviving citation is `"unsupported"`. |
+| `supported_answer_coverage` | `0.6` | The best citation can make the span `"supported"` by meeting this sequential coverage floor. A contradiction makes the span `"partial"`. No surviving citation gives `"unsupported"`. |
 | `min_answer_coverage` | `0.2` | Lower gate on a candidate before it becomes a `Citation`. A candidate must clear it on sequential Smith-Waterman coverage **or** on content-word coverage over the same passage. Stopword-only SW hits never clear it. |
 | `min_alignment_score` | `0` | Minimum raw Smith-Waterman score required before alignment evidence is used. |
 | `min_final_score` | `0.0` | Final weighted score must clear this for a `Citation` to be emitted at all. |
@@ -55,6 +55,32 @@ config = CitationConfig(
     max_retrieval_support=3,
 )
 ```
+
+## Opt-In Paraphrase Support
+
+Set `paraphrase_support=True` to accept a claim whose time condition moves to a different part of the sentence. For example, the answer “Tighten the clamp once drying the latch is complete” can cite “After drying the latch, tighten the clamp.” The claim and its condition must agree within the best citation's candidate passage, with at least three distinct content tokens in the answer. A contradiction leaves the span `"partial"`.
+
+| Field | Default | Effect |
+|-------|---------|--------|
+| `paraphrase_support` | `False` | Add the paraphrase support check. All presets leave it off. |
+| `paraphrase_content_coverage` | `0.65` | Minimum answer content-token coverage within the candidate passage when an embedder is supplied. |
+| `paraphrase_embedding_similarity` | `0.75` | Minimum cached cosine for the answer and candidate passage. Invalid vectors cannot satisfy this floor. |
+| `paraphrase_lexical_content_coverage` | `0.80` | Minimum answer content-token coverage when working without an embedder. |
+
+All three thresholds accept values between `0.0` and `1.0`, inclusive. With an embedder, both floors must pass. The applicable content floor can also admit a localized candidate below `min_answer_coverage`. A citation admitted this way must pass the paraphrase support check to reach `"supported"`. Other admission checks, citation ordering, and `top_k` still apply. Under `strict()`, set `require_all_answer_tokens_in_evidence=False` if evidence may omit words that the answer rephrases.
+
+With the gate enabled, the best citation's `components` include `content_coverage` and `content_gate`. The latter is `1.0` when the paraphrase check determined support and `0.0` otherwise. When you provide an embedder, the best citation records `embedding_similarity`. An unusable cosine is reported as `0.0`. A citation promoted by the gate quotes the complete supporting passage at its original source offsets.
+
+```python
+config = CitationConfig.strict().model_copy(
+    update={
+        "require_all_answer_tokens_in_evidence": False,
+        "paraphrase_support": True,
+    }
+)
+```
+
+The configuration serializes the new fields even when the gate is disabled. Applications that fingerprint serialized configurations may see a new fingerprint.
 
 ## Passage Windowing
 
