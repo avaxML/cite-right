@@ -229,6 +229,7 @@ _DECLARED_NAME_ROLES = _PRODUCT_ROLES | {
     "winner",
 }
 _COPULAS = frozenset({"is", "was", "are", "were"})
+_ARTICLES = frozenset({"a", "an", "the"})
 _NAME_PREPOSITIONS = frozenset({"at", "by", "for", "from", "in", "of", "to", "with"})
 _NON_NAME_WORDS = (
     _SENTENCE_START_STOPWORDS
@@ -277,10 +278,7 @@ def _find_named_roles(
     matches = list(_NAME_TOKEN.finditer(normalized))
     raw_words = [match.group() for match in matches]
     words = [word.casefold() for word in raw_words]
-    heading = all(
-        raw[0].isupper() or word in _FUNCTION_WORDS
-        for raw, word in zip(raw_words, words, strict=True)
-    )
+    heading = _looks_like_heading(normalized, raw_words, words)
 
     mentions: list[tuple[str, list[_NameRole]]] = []
     clause_start = previous_end = 0
@@ -296,6 +294,22 @@ def _find_named_roles(
         if roles:
             mentions.append((word, roles))
     return set(words), mentions
+
+
+def _looks_like_heading(text: str, raw_words: list[str], words: list[str]) -> bool:
+    if (
+        len(words) >= 4
+        and text.rstrip().endswith((".", "!", "?"))
+        and raw_words[0].isupper()
+        and raw_words[1].isupper()
+        and words[1].endswith("ed")
+        and words[2] in _ARTICLES
+    ):
+        return False
+    return all(
+        raw[0].isupper() or word in _FUNCTION_WORDS
+        for raw, word in zip(raw_words, words, strict=True)
+    )
 
 
 def _looks_like_name(raw: str, folded: str) -> bool:
@@ -332,10 +346,11 @@ def _is_clause_gap(gap: str) -> bool:
 
 
 def _has_left_anchor(before: str, after: str, leading: str) -> bool:
-    return not _is_clause_gap(leading) and (
-        before in _NAME_PREPOSITIONS
-        or (not after and before.isalpha() and before not in _NON_NAME_WORDS)
-    )
+    if _is_clause_gap(leading):
+        return False
+    if before in _NAME_PREPOSITIONS or (before.endswith("ed") and after in _ARTICLES):
+        return True
+    return not after and before.isalpha() and before not in _NON_NAME_WORDS
 
 
 def _right_anchor(

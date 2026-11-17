@@ -268,3 +268,26 @@ def test_entity_swap_keeps_role_changes(answer: str, source: str) -> None:
 def test_issue69_restatements_are_supported(answer: str, source: str) -> None:
     [span] = align_citations(answer, [source], config=CitationConfig())
     assert span.status == "supported"
+
+
+@pytest.mark.parametrize(
+    ("answer", "passage"),
+    [
+        (
+            "The board awarded Maria the maintenance contract for the third quarter.",
+            "The board awarded James the maintenance contract for the third quarter.",
+        ),
+        ("ALICE SIGNED THE CONTRACT.", "BOB SIGNED THE CONTRACT."),
+    ],
+    ids=["recipient-before-determiner", "uppercase-statement"],
+)
+def test_entity_swap_keeps_actor_roles_in_complete_statements(
+    answer: str, passage: str
+) -> None:
+    assert has_entity_swap(answer, passage)
+    [span] = align_citations(answer, [passage], config=CitationConfig())
+    assert span.status == "partial"
+
+
+def test_entity_swap_ignores_uppercase_layout_heading() -> None:
+    assert not has_entity_swap("EXPORT DEVICE SETTINGS.", "IMPORT DEVICE SETTINGS.")
