@@ -230,6 +230,25 @@ _DECLARED_NAME_ROLES = _PRODUCT_ROLES | {
 }
 _COPULAS = frozenset({"is", "was", "are", "were"})
 _ARTICLES = frozenset({"a", "an", "the"})
+_CLAUSE_START_ADVERBS = frozenset(
+    {
+        "accidentally",
+        "already",
+        "automatically",
+        "currently",
+        "finally",
+        "immediately",
+        "just",
+        "manually",
+        "now",
+        "previously",
+        "recently",
+        "successfully",
+        "temporarily",
+        "unexpectedly",
+        "usually",
+    }
+)
 _NAME_PREPOSITIONS = frozenset({"at", "by", "for", "from", "in", "of", "to", "with"})
 _NON_NAME_WORDS = (
     _SENTENCE_START_STOPWORDS
@@ -301,6 +320,7 @@ def _looks_like_heading(text: str, raw_words: list[str], words: list[str]) -> bo
         len(words) >= 4
         and text.rstrip().endswith((".", "!", "?"))
         and raw_words[0].isupper()
+        and words[0] not in _CLAUSE_START_ADVERBS
         and raw_words[1].isupper()
         and words[1].endswith("ed")
         and words[2] in _ARTICLES

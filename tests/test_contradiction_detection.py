@@ -289,5 +289,15 @@ def test_entity_swap_keeps_actor_roles_in_complete_statements(
     assert span.status == "partial"
 
 
-def test_entity_swap_ignores_uppercase_layout_heading() -> None:
-    assert not has_entity_swap("EXPORT DEVICE SETTINGS.", "IMPORT DEVICE SETTINGS.")
+@pytest.mark.parametrize(
+    ("answer", "passage"),
+    [
+        ("EXPORT DEVICE SETTINGS.", "IMPORT DEVICE SETTINGS."),
+        ("ACCIDENTALLY DELETED A FILE?", "RECENTLY DELETED A FILE?"),
+        ("PREVIOUSLY ARCHIVED A FILE.", "AUTOMATICALLY ARCHIVED A FILE."),
+    ],
+)
+def test_entity_swap_ignores_uppercase_layout_heading(
+    answer: str, passage: str
+) -> None:
+    assert not has_entity_swap(answer, passage)
