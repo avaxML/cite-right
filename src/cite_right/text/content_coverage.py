@@ -6,8 +6,9 @@ restatement as unsupported when shared content words are scattered or reordered.
 
 from __future__ import annotations
 
+import unicodedata
 from collections import Counter
-from typing import Iterable, Mapping
+from typing import Iterable, Mapping, Sequence
 
 # Function words only. Polarity markers (not, no, never) stay as content.
 STOPWORDS = frozenset(
@@ -124,6 +125,36 @@ def stopword_token_ids(vocab: Mapping[str, int] | None) -> frozenset[int]:
     if not vocab:
         return frozenset()
     return frozenset(int(vocab[word]) for word in STOPWORDS if word in vocab)
+
+
+def query_stopword_token_ids(
+    text: str, token_ids: Sequence[int], token_spans: Sequence[tuple[int, int]]
+) -> frozenset[int]:
+    """Classify query IDs from tokenizer offsets, including query-only stopwords."""
+    return frozenset(
+        token_id
+        for token_id, (start, end) in zip(token_ids, token_spans, strict=True)
+        if _is_non_content_token(text[start:end])
+    )
+
+
+def _is_non_content_token(text: str) -> bool:
+    normalized = unicodedata.normalize("NFKC", text).strip().casefold()
+    if normalized in STOPWORDS:
+        return True
+    return all(_is_separator(char) for char in normalized)
+
+
+def _is_separator(char: str) -> bool:
+    if char.isspace():
+        return True
+    category = unicodedata.category(char)
+    if category == "Mn":
+        return "VARIATION SELECTOR" in unicodedata.name(char, "")
+    # Ratio signs carry quantity information even in punctuation categories.
+    return category.startswith("P") and not unicodedata.name(char, "").endswith(
+        ("PERCENT SIGN", "PER MILLE SIGN", "PER TEN THOUSAND SIGN")
+    )
 
 
 def content_token_coverage(

@@ -7,6 +7,7 @@ All notable changes to cite-right will be documented in this file.
 ### Fixed
 
 - Entity-swap detection distinguishes names in corresponding roles from UI controls, headings, unit codes, and spelling that differs only in casing. This changes how default settings classify affected restatements. (#69)
+- Python and Rust apply the same content coverage rule to citation admission. Custom tokenizers can provide citations using the existing public tokenization interface. (#84)
 
 ## [0.4.0] - 2026-08-25
 

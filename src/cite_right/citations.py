@@ -52,7 +52,10 @@ from cite_right.core.results import (
 )
 from cite_right.models.base import Embedder
 from cite_right.models.embedding_index import EmbeddingIndex
-from cite_right.text.content_coverage import content_token_coverage, stopword_token_ids
+from cite_right.text.content_coverage import (
+    content_token_coverage,
+    query_stopword_token_ids,
+)
 
 CandidateSelection: TypeAlias = list[tuple[int, float, float]]
 """List of (candidate_index, embedding_score, lexical_score) tuples."""
@@ -245,6 +248,9 @@ def _process_answer_span(
 
     answer_tokenized = tokenizer.tokenize(answer_span.text)
     answer_tokens = answer_tokenized.token_ids
+    stopword_ids = query_stopword_token_ids(
+        answer_tokenized.text, answer_tokens, answer_tokenized.token_spans
+    )
     citations: list[Citation] = []
     retrieval_support: list[RetrievalSupport] = []
 
@@ -375,11 +381,6 @@ def _process_answer_span(
                     cfg.multi_span_max_spans,
                 )
 
-                vocab = getattr(tokenizer, "_vocab", None)
-                query_stopword_ids = list(
-                    stopword_token_ids(vocab if isinstance(vocab, dict) else None)
-                )
-
                 # Call Rust PreparedCorpus.build_citations
                 result = rust_corpus.build_citations(  # type: ignore[attr-defined]
                     answer_tokens,
@@ -393,7 +394,7 @@ def _process_answer_span(
                     aligner.match_score,  # type: ignore[attr-defined]
                     aligner.mismatch_score,  # type: ignore[attr-defined]
                     aligner.gap_score,  # type: ignore[attr-defined]
-                    query_stopword_ids,
+                    list(stopword_ids),
                 )
 
                 num_alignments = result.num_alignments  # type: ignore[attr-defined]
@@ -450,7 +451,7 @@ def _process_answer_span(
             and hasattr(_core, "rust_build_citations_fast")
         )
 
-        if use_rust_fast_path:
+        if use_rust_fast_path and _core is not None:
             try:
                 import json
 
@@ -521,7 +522,7 @@ def _process_answer_span(
                 )
 
                 # Call Rust
-                result_json = _core.rust_build_citations_fast(  # type: ignore[attr-defined]
+                result_json = _core.rust_build_citations_fast(
                     answer_tokens,
                     candidates_data,
                     candidate_indices,
@@ -532,6 +533,7 @@ def _process_answer_span(
                     aligner.match_score,  # type: ignore[attr-defined]
                     aligner.mismatch_score,  # type: ignore[attr-defined]
                     aligner.gap_score,  # type: ignore[attr-defined]
+                    query_stopword_ids=list(stopword_ids),
                 )
 
                 result = json.loads(result_json)
@@ -622,7 +624,7 @@ def _process_answer_span(
                     embed_score=embed_score,
                     lexical_score=lexical_score,
                     cfg=cfg,
-                    tokenizer=tokenizer,
+                    stopword_ids=stopword_ids,
                 )
                 if citation is not None:
                     citations.append(citation)
@@ -686,13 +688,14 @@ def _build_exact_citation(
     embed_score: float,
     lexical_score: float,
     cfg: CitationConfig,
-    tokenizer: Tokenizer,
+    stopword_ids: frozenset[int],
 ) -> Citation | None:
     """Build an exact citation when alignment localizes evidence precisely."""
     metrics = _compute_alignment_metrics(alignment, answer_tokens, cfg)
-    passage_coverage = _passage_content_coverage(
-        tokenizer, answer_tokens, candidate.token_ids
+    passage_coverage = content_token_coverage(
+        answer_tokens, candidate.token_ids, stopword_ids
     )
+    metrics["content_coverage"] = passage_coverage
     final_score = _compute_final_score(metrics, lexical_score, embed_score, cfg)
     if not _should_use_alignment(alignment, metrics, cfg, passage_coverage):
         return None
@@ -764,22 +767,6 @@ def _compute_alignment_metrics(
         "evidence_coverage": matches / evidence_len,
         "normalized_alignment": alignment.score / max(1, cfg.match_score * answer_len),
     }
-
-
-def _passage_content_coverage(
-    tokenizer: Tokenizer,
-    answer_tokens: Sequence[int],
-    passage_tokens: Sequence[int],
-) -> float:
-    """Content-word overlap between the answer and the aligned candidate passage."""
-    vocab = getattr(tokenizer, "_vocab", None)
-    if not isinstance(vocab, dict):
-        return 0.0
-    return content_token_coverage(
-        answer_tokens,
-        passage_tokens,
-        stopword_token_ids(vocab),
-    )
 
 
 def _should_use_alignment(
@@ -892,6 +879,7 @@ def _build_citation(
             "normalized_alignment": metrics["normalized_alignment"],
             "matches": metrics["matches"],
             "answer_coverage": metrics["answer_coverage"],
+            "content_coverage": metrics["content_coverage"],
             "evidence_coverage": metrics["evidence_coverage"],
             "lexical_score": float(lexical_score),
             "embedding_score": float(embed_score),
@@ -1058,7 +1046,11 @@ def _retry_structured_field_citations(
     if reorder_aligner is None:
         return citations, retrieval_support, 0
 
-    answer_tokens = tokenizer.tokenize(_split_range_dashes(answer_span_text)).token_ids
+    answer_tokenized = tokenizer.tokenize(_split_range_dashes(answer_span_text))
+    answer_tokens = answer_tokenized.token_ids
+    stopword_ids = query_stopword_token_ids(
+        answer_tokenized.text, answer_tokens, answer_tokenized.token_spans
+    )
     if not answer_tokens:
         return citations, retrieval_support, 0
 
@@ -1087,7 +1079,7 @@ def _retry_structured_field_citations(
             embed_score=embed_score,
             lexical_score=lexical_scores.get(candidate_index, lexical_score_orig),
             cfg=cfg,
-            tokenizer=tokenizer,
+            stopword_ids=stopword_ids,
         )
         if citation is not None:
             citations.append(citation)

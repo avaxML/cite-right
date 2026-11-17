@@ -241,8 +241,7 @@ impl PreparedCorpus {
             let (multi_span_evidence, multi_span_merge_gap_chars, multi_span_max_spans) =
                 multi_span_config;
 
-            let mut stopword_ids = crate::content_coverage::stopword_token_ids(&self.vocab);
-            stopword_ids.extend(query_stopword_ids);
+            let stopword_ids = query_stopword_ids.into_iter().collect();
 
             // Align answer_tokens against each candidate in parallel
             let params = smith_waterman::ScoreParams {
@@ -402,12 +401,13 @@ impl PreparedCorpus {
             stopword_ids,
         );
 
-        let sequential_ok = answer_coverage >= min_answer_coverage;
-        let paraphrase_ok = passage_coverage >= min_answer_coverage;
         if alignment.score < min_alignment_score
             || alignment.token_start >= alignment.token_end
-            || passage_coverage <= 0.0
-            || (!sequential_ok && !paraphrase_ok)
+            || !crate::content_coverage::adequate_coverage(
+                answer_coverage,
+                passage_coverage,
+                min_answer_coverage,
+            )
         {
             return self.build_support_internal(
                 candidate,
@@ -499,6 +499,7 @@ impl PreparedCorpus {
         components.insert("normalized_alignment".to_string(), normalized_alignment);
         components.insert("matches".to_string(), alignment.matches as f64);
         components.insert("answer_coverage".to_string(), answer_coverage);
+        components.insert("content_coverage".to_string(), passage_coverage);
         components.insert("evidence_coverage".to_string(), evidence_coverage);
         components.insert("lexical_score".to_string(), lexical_score);
         components.insert("embedding_score".to_string(), embed_score.max(0.0));

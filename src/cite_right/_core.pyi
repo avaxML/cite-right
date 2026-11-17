@@ -151,6 +151,35 @@ def rust_tokenize_and_prepare(
     """
     ...
 
+def rust_build_citations_fast(
+    answer_tokens: Sequence[int],
+    candidates_data: Sequence[
+        tuple[
+            int,
+            str,
+            int,
+            str,
+            str | None,
+            int,
+            int,
+            int,
+            Sequence[int],
+            Sequence[tuple[int, int]],
+        ]
+    ],
+    candidate_indices: Sequence[int],
+    lexical_scores: Sequence[float],
+    embed_scores: Sequence[float],
+    config_tuple: tuple[
+        int, float, float, bool, int, float, float, float, float, float
+    ],
+    multi_span_config: tuple[bool, int, int],
+    match_score: int = ...,
+    mismatch_score: int = ...,
+    gap_score: int = ...,
+    *,
+    query_stopword_ids: Sequence[int],
+) -> str: ...
 def align_pair(
     seq1: Sequence[int],
     seq2: Sequence[int],
