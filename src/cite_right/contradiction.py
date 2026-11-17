@@ -334,14 +334,22 @@ def _explicit_name_role(
         return ("before", after)
     if before in _DECLARED_NAME_ROLES and ":" in leading:
         return ("after", before)
-    if (
-        before in _COPULAS
-        and index >= 2
-        and words[index - 2] in _DECLARED_NAME_ROLES
-        and not _CLAUSE_BOUNDARY.search(leading)
-    ):
-        return ("after", words[index - 2])
+    if not _CLAUSE_BOUNDARY.search(leading):
+        subject = _role_before_copula(words, index)
+        if subject in _DECLARED_NAME_ROLES:
+            return ("after", subject)
     return None
+
+
+def _role_before_copula(words: list[str], index: int) -> str:
+    if index < 2:
+        return ""
+    verb, before_verb = words[index - 1], words[index - 2]
+    if verb in _COPULAS:
+        return before_verb
+    if verb == "been" and index >= 3 and before_verb in {"has", "have", "had"}:
+        return words[index - 3]
+    return ""
 
 
 def _interface_or_layout(

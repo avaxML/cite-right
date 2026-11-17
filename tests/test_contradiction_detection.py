@@ -224,6 +224,10 @@ def test_entity_swap_ignores_interface_and_layout(answer: str, source: str) -> N
         ("The board chose Maria.", "The board chose James."),
         ("The reviewer was Maria.", "The reviewer was James."),
         (
+            "The owner has been Maria since the start of the project.",
+            "The owner is James and has been since the start of the project.",
+        ),
+        (
             "Reviewer: Maria approved the budget.",
             "Reviewer: James approved the budget.",
         ),
