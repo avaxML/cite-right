@@ -157,18 +157,24 @@ class TrailingSymbolTokenizer(ProtocolTokenizer):
         return TokenizedText(
             text=text,
             token_ids=[*tokens.token_ids, 0],
-            token_spans=[*tokens.token_spans, (len(text) - 1, len(text))],
+            token_spans=[
+                *tokens.token_spans,
+                (len(text) - len(self.symbol), len(text)),
+            ],
         )
 
 
 @pytest.mark.parametrize(
     "backend", ["python", pytest.param("rust", marks=requires_rust)]
 )
-def test_punctuation_only_overlap_does_not_admit_citation(backend: str) -> None:
+@pytest.mark.parametrize("symbol", [".", "⁉️", "、︀"])
+def test_punctuation_only_overlap_does_not_admit_citation(
+    backend: str, symbol: str
+) -> None:
     corpus = PreparedCitationCorpus.from_sources(
-        ["Copper glows."], tokenizer=TrailingSymbolTokenizer(".")
+        [f"Copper glows{symbol}"], tokenizer=TrailingSymbolTokenizer(symbol)
     )
-    [span] = corpus.align("Zinc bends.", backend=backend)
+    [span] = corpus.align(f"Zinc bends{symbol}", backend=backend)
     assert span.status == "unsupported"
     assert not span.citations
 

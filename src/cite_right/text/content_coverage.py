@@ -142,17 +142,18 @@ def _is_non_content_token(text: str) -> bool:
     normalized = unicodedata.normalize("NFKC", text).strip().casefold()
     if normalized in STOPWORDS:
         return True
-    # Some tokenizers emit punctuation separately. Ratio signs carry
-    # quantity information, even when Unicode classifies them as punctuation.
-    return all(
-        char.isspace()
-        or (
-            unicodedata.category(char).startswith("P")
-            and not unicodedata.name(char, "").endswith(
-                ("PERCENT SIGN", "PER MILLE SIGN", "PER TEN THOUSAND SIGN")
-            )
-        )
-        for char in normalized
+    return all(_is_separator(char) for char in normalized)
+
+
+def _is_separator(char: str) -> bool:
+    if char.isspace():
+        return True
+    category = unicodedata.category(char)
+    if category == "Mn":
+        return "VARIATION SELECTOR" in unicodedata.name(char, "")
+    # Ratio signs carry quantity information even in punctuation categories.
+    return category.startswith("P") and not unicodedata.name(char, "").endswith(
+        ("PERCENT SIGN", "PER MILLE SIGN", "PER TEN THOUSAND SIGN")
     )
 
 
