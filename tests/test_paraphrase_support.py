@@ -440,12 +440,14 @@ def test_paraphrase_gate_normalizes_decimal_digits(
 @pytest.mark.parametrize(
     "backend", ["python", pytest.param("rust", marks=requires_rust)]
 )
-def test_paraphrase_gate_preserves_hyphens_inside_labels(
+@pytest.mark.parametrize("modifier", ["R-X", "Rx-Label", "spring-loaded"])
+def test_paraphrase_gate_preserves_internal_hyphens(
     backend: Literal["python", "rust"],
+    modifier: str,
 ) -> None:
     [span] = align_citations(
-        "Tighten the R-X clamp after drying the latch.",
-        ["After drying the latch, tighten the R-X clamp."],
+        f"Tighten the {modifier} clamp after drying the latch.",
+        [f"After drying the latch, tighten the {modifier} clamp."],
         config=CitationConfig(paraphrase_support=True, supported_answer_coverage=1.0),
         backend=backend,
     )
@@ -463,6 +465,22 @@ def test_paraphrase_gate_keeps_a_linked_phrase_in_its_action(
     [span] = align_citations(
         f"Tighten the clamp {linked_phrase} after drying the latch.",
         [f"After drying the latch, tighten the clamp {linked_phrase}."],
+        config=CitationConfig(paraphrase_support=True, supported_answer_coverage=1.0),
+        backend=backend,
+    )
+    assert span.status == "supported"
+    assert span.citations[0].components["content_gate"] == 1.0
+
+
+@pytest.mark.parametrize(
+    "backend", ["python", pytest.param("rust", marks=requires_rust)]
+)
+def test_default_setting_as_phrase_belongs_to_the_same_action(
+    backend: Literal["python", "rust"],
+) -> None:
+    [span] = align_citations(
+        "Set Pro as the default workspace plan after auditing the settings.",
+        ["After auditing the settings, set Pro as the default workspace plan."],
         config=CitationConfig(paraphrase_support=True, supported_answer_coverage=1.0),
         backend=backend,
     )

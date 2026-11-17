@@ -215,11 +215,24 @@ _CLAUSE_JOINERS = _RELATION_MARKERS | {
 }
 _CLAUSE_WORD = re.compile(
     r"[^\W_]+(?:['’][^\W_]+)*"
-    r"|[A-Z0-9]+(?:[-‐‑][A-Z0-9]+)+"
+    r"|[A-Z0-9][^\W_]*(?:[-‐‑][A-Z0-9][^\W_]*)+"
+    r"|[^\W_]+[-‐‑][^\W_]+ed"
     r"|[+-]?\d+[%°]?"
 )
 _LABEL_HYPHEN = re.compile("[-‐‑]")
 _ARTICLES = frozenset({"a", "an", "the"})
+_SETTING_WORDS = frozenset(
+    {
+        "account",
+        "configuration",
+        "mode",
+        "option",
+        "plan",
+        "profile",
+        "setting",
+        "workspace",
+    }
+)
 _PREPOSITIONS = frozenset(
     {
         "about",
@@ -370,7 +383,7 @@ def _is_simple_clause(text: str) -> bool:
 
 def _has_second_action(words: list[str]) -> bool:
     folded = [word.casefold() for word in words]
-    if _has_action_complement(folded):
+    if _has_action_complement(folded) or _has_subordinate_as(folded):
         return True
     if any(
         _starts_separate_phrase(previous, word)
@@ -388,6 +401,21 @@ def _starts_separate_phrase(previous: str, word: str) -> bool:
     if word in _ARTICLES:
         return previous not in _PREPOSITIONS
     return word in _DIRECT_ACTIONS and previous not in _ARTICLES
+
+
+def _has_subordinate_as(words: list[str]) -> bool:
+    """Allow a default-setting assignment and reject an ambiguous 'as' clause."""
+    occurrences = words.count("as")
+    if not occurrences:
+        return False
+    role = words[words.index("as") + 1 :]
+    return (
+        occurrences != 1
+        or words[0] != "set"
+        or role[:2] != ["the", "default"]
+        or len(role) < 3
+        or any(word not in _SETTING_WORDS for word in role[2:])
+    )
 
 
 def _has_action_complement(words: list[str]) -> bool:
