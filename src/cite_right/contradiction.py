@@ -183,22 +183,31 @@ def extract_numbers(text: str) -> list[str]:
 
 
 _NAME_TOKEN = re.compile(r"[^\W_]+(?:[-'’][^\W_]+)*")
+_CLAUSE_BOUNDARY = re.compile(r"[:;.!?•\n]")
+_NameRole = tuple[str, str]
 _UNIT_NAMES = frozenset(
     {"eur", "usd", "gbp", "cad", "aud", "jpy", "kg", "mg", "km", "cm", "mm", "kwh"}
 )
 _CONTROL_VERBS = frozenset(
-    {"click", "choose", "hit", "open", "press", "select", "tap", "toggle"}
+    {"click", "choose", "hit", "open", "press", "select", "tap", "toggle", "use"}
 )
 _CONTROL_LABELS = frozenset(
-    {"button", "menu", "option", "options", "panel", "screen", "tab", "toggle"}
+    {"button", "field", "menu", "option", "options", "panel", "screen", "tab", "toggle"}
 )
-_PRODUCT_DIRECTIVES = _CONTROL_VERBS | {"switch", "upgrade"}
 _PRODUCT_ROLES = frozenset({"edition", "plan", "product", "subscription", "tier"})
+_DECLARED_NAME_ROLES = _PRODUCT_ROLES | {
+    "approver",
+    "author",
+    "owner",
+    "recipient",
+    "reviewer",
+    "winner",
+}
 _NAME_PREPOSITIONS = frozenset({"at", "by", "for", "from", "in", "of", "to", "with"})
 _NON_NAME_WORDS = (
     _SENTENCE_START_STOPWORDS
     | _UNIT_NAMES
-    | _PRODUCT_DIRECTIVES
+    | _CONTROL_VERBS
     | _CONTROL_LABELS
     | {
         "also",
@@ -236,63 +245,82 @@ def extract_entities(text: str) -> list[str]:
 
 def _find_named_roles(
     text: str,
-) -> tuple[set[str], list[tuple[str, list[tuple[str, str]]]]]:
+) -> tuple[set[str], list[tuple[str, list[_NameRole]]]]:
     normalized = unicodedata.normalize("NFKC", text)
     matches = list(_NAME_TOKEN.finditer(normalized))
     raw_words = [match.group() for match in matches]
     words = [word.casefold() for word in raw_words]
-    all_words = set(words)
-    if _is_title_heading(raw_words, words):
-        return all_words, []
+    heading = all(
+        raw[0].isupper() or word in _FUNCTION_WORDS
+        for raw, word in zip(raw_words, words, strict=True)
+    )
 
-    mentions: list[tuple[str, list[tuple[str, str]]]] = []
+    mentions: list[tuple[str, list[_NameRole]]] = []
     for index, (raw, word) in enumerate(zip(raw_words, words, strict=True)):
         if len(raw) < 2 or not raw[0].isupper() or word in _NON_NAME_WORDS:
             continue
-        previous_end = matches[index - 1].end() if index else 0
-        leading = normalized[previous_end : matches[index].start()]
-        roles = _local_name_roles(words, index, leading)
+        leading, trailing = _token_gaps(normalized, matches, index)
+        roles = _local_name_roles(words, index, leading, trailing, heading)
         if roles:
             mentions.append((word, roles))
-    return all_words, mentions
+    return set(words), mentions
 
 
-def _is_title_heading(raw_words: list[str], words: list[str]) -> bool:
-    if not words or not all(
-        raw[0].isupper() or word in _FUNCTION_WORDS
-        for raw, word in zip(raw_words, words, strict=True)
-    ):
-        return False
-    return not (
-        words[0] in _PRODUCT_DIRECTIVES
-        and any(word in _PRODUCT_ROLES for word in words)
-    )
+def _token_gaps(text: str, matches: list[re.Match[str]], index: int) -> tuple[str, str]:
+    current = matches[index]
+    previous_end = matches[index - 1].end() if index else 0
+    next_start = matches[index + 1].start() if index + 1 < len(matches) else len(text)
+    return text[previous_end : current.start()], text[current.end() : next_start]
 
 
 def _local_name_roles(
-    words: list[str], index: int, leading: str
-) -> list[tuple[str, str]]:
+    words: list[str], index: int, leading: str, trailing: str, heading: bool
+) -> list[_NameRole]:
     before = words[index - 1] if index else ""
-    after = words[index + 1] if index + 1 < len(words) else ""
-    if after in _PRODUCT_ROLES:
-        return [("before", after)]
-    if _interface_or_layout(words, index, leading, after):
+    after = _right_anchor(words, index, trailing)
+    explicit = _explicit_name_role(words, index, before, after, leading)
+    if explicit is not None:
+        return [explicit]
+    if heading or _interface_or_layout(words, index, leading, before, after):
         return []
 
-    roles: list[tuple[str, str]] = []
-    if before in _NAME_PREPOSITIONS:
+    roles: list[_NameRole] = []
+    if before in _NAME_PREPOSITIONS or (not after and before.endswith("ed")):
         roles.append(("after", before))
-    if after.endswith("ly") and index + 2 < len(words):
-        after = words[index + 2]
     if after and after not in _SENTENCE_START_STOPWORDS:
         roles.append(("before", after))
     return roles
 
 
+def _right_anchor(words: list[str], index: int, trailing: str) -> str:
+    if index + 1 == len(words) or _CLAUSE_BOUNDARY.search(trailing):
+        return ""
+    after = words[index + 1]
+    if after.endswith("ly") and index + 2 < len(words):
+        return words[index + 2]
+    return after
+
+
+def _explicit_name_role(
+    words: list[str], index: int, before: str, after: str, leading: str
+) -> _NameRole | None:
+    if after in _PRODUCT_ROLES:
+        return ("before", after)
+    if before in _DECLARED_NAME_ROLES and ":" in leading:
+        return ("after", before)
+    if before == "is" and index >= 2 and words[index - 2] in _DECLARED_NAME_ROLES:
+        return ("after", words[index - 2])
+    return None
+
+
 def _interface_or_layout(
-    words: list[str], index: int, leading: str, after: str
+    words: list[str], index: int, leading: str, before: str, after: str
 ) -> bool:
     if any(separator in leading for separator in (":", "•", "\n")):
+        return True
+    if leading.strip() in {"-", "*", "+"}:
+        return True
+    if before.isdigit() and leading.strip() in {".", ")"}:
         return True
     if after in _CONTROL_LABELS:
         return True

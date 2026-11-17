@@ -184,6 +184,17 @@ def test_check_contradiction_uses_passage_not_truncated_span() -> None:
         ),
         ("Export Options", "Download Options"),
         ("Report Layout.", "Archive Layout."),
+        ("Summary: Review the report.", "Overview: Review the report."),
+        ("- First find the source.", "- Next find the source."),
+        ("1. First find the source.", "1. Next find the source."),
+        (
+            "Use the Search field to find a document.",
+            "Use the Filter field to find a document.",
+        ),
+        (
+            "Maria approved the london budget.",
+            "maria approved the London budget.",
+        ),
         ("Step 2: Select Export", "Step 2: Choose Download"),
         ("Menu: Open Details.", "Menu: View Summary."),
         ("• Review Queue", "• Inspect Inbox"),
@@ -203,6 +214,14 @@ def test_entity_swap_ignores_interface_and_layout(answer: str, source: str) -> N
     [
         ("Revenue rose in Paris.", "Revenue rose in London."),
         ("Maria Lopez approved the budget.", "James Chen approved the budget."),
+        ("The board picked Maria.", "The board picked James."),
+        (
+            "Reviewer: Maria approved the budget.",
+            "Reviewer: James approved the budget.",
+        ),
+        ("Reviewer: Maria", "Reviewer: James"),
+        ("The product is Photoshop.", "The product is Lightroom."),
+        ('The product is "Photoshop".', 'The product is "Lightroom".'),
         ("Upgrade to the Pro plan.", "Upgrade to the Team plan."),
         ("Select the Pro Plan.", "Select the Team Plan."),
         ('Upgrade to the "Pro" plan.', 'Upgrade to the "Team" plan.'),
