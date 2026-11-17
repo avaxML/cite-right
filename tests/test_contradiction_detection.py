@@ -280,12 +280,16 @@ def test_issue69_restatements_are_supported(answer: str, source: str) -> None:
         ("ALICE SIGNED THE CONTRACT.", "BOB SIGNED THE CONTRACT."),
         ("“EMILY SIGNED THE CONTRACT.”", "“HOLLY SIGNED THE CONTRACT.”"),
         ("‹EMILY SIGNED THE CONTRACT.›", "‹HOLLY SIGNED THE CONTRACT.›"),
+        ("„EMILY SIGNED THE CONTRACT.“", "„HOLLY SIGNED THE CONTRACT.“"),
+        ("»EMILY SIGNED THE CONTRACT.«", "»HOLLY SIGNED THE CONTRACT.«"),
     ],
     ids=[
         "recipient-before-determiner",
         "uppercase-statement",
         "quoted-uppercase-statement",
         "guillemet-uppercase-statement",
+        "german-uppercase-statement",
+        "reversed-guillemet-uppercase-statement",
     ],
 )
 def test_entity_swap_keeps_actor_roles_in_complete_statements(

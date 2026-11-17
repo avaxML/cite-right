@@ -341,7 +341,7 @@ def _ends_with_assertion(text: str) -> bool:
         if not (
             char.isspace()
             or char in "\"'"
-            or unicodedata.category(char) in {"Pe", "Pf"}
+            or unicodedata.category(char) in {"Pe", "Pf", "Pi"}
         ):
             break
         end -= 1
