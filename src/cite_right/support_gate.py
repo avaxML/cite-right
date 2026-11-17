@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import unicodedata
 from collections.abc import Sequence
+from itertools import pairwise
 from typing import Literal
 
 from cite_right.contradiction import check_contradiction
@@ -201,6 +202,8 @@ _CLAUSE_JOINERS = _RELATION_MARKERS | {
     "who",
     "whose",
 }
+_CLAUSE_DELIMITERS = frozenset(",;:.!?—–―⸺⸻•…؛،")
+_ARTICLES = frozenset({"a", "an", "the"})
 _DIRECT_ACTIONS = frozenset(
     {
         "attach",
@@ -240,7 +243,7 @@ _DIRECT_ACTIONS = frozenset(
 
 def _paraphrase_clause_key(text: str) -> tuple[str, str, str] | None:
     """Canonicalize a single claim and its movable time clause."""
-    body = " ".join(unicodedata.normalize("NFKC", text).split())
+    body = _normalize_clause_text(text)
     if body.endswith("?"):
         return None
     body = body.rstrip(".!")
@@ -260,6 +263,12 @@ def _paraphrase_clause_key(text: str) -> tuple[str, str, str] | None:
     if action not in _DIRECT_ACTIONS:
         return None
     return marker, condition, f"{action} {target}"
+
+
+def _normalize_clause_text(text: str) -> str:
+    normalized = unicodedata.normalize("NFC", text)
+    decimal_text = "".join(str(unicodedata.decimal(char, char)) for char in normalized)
+    return " ".join(decimal_text.split())
 
 
 def _split_time_clause(words: list[str]) -> tuple[str, str, str] | None:
@@ -287,7 +296,17 @@ def _is_simple_clause(text: str) -> bool:
     return (
         len(words) >= 2
         and not any(word.casefold() in _CLAUSE_JOINERS for word in words)
-        and not any(char in text for char in ",;:.!?")
+        and not any(char in _CLAUSE_DELIMITERS for char in text)
+        and not _has_action_complement(words)
+    )
+
+
+def _has_action_complement(words: list[str]) -> bool:
+    return any(
+        current.casefold() == "to"
+        and following.casefold() not in _ARTICLES
+        and not following.lstrip("+-")[:1].isdecimal()
+        for current, following in pairwise(words)
     )
 
 

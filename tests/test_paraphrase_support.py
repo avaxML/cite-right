@@ -419,3 +419,19 @@ def test_paraphrase_gate_rejects_malformed_answer_batches(
     for span in spans:
         assert span.citations[0].components["embedding_similarity"] == 0.0
         assert span.citations[0].components["content_gate"] == 0.0
+
+
+@pytest.mark.parametrize(
+    "backend", ["python", pytest.param("rust", marks=requires_rust)]
+)
+def test_paraphrase_gate_normalizes_decimal_digits(
+    backend: Literal["python", "rust"],
+) -> None:
+    [span] = align_citations(
+        "Set the timer to ３０ seconds after closing the hatch.",
+        ["After closing the hatch, set the timer to 30 seconds."],
+        config=CitationConfig(paraphrase_support=True, supported_answer_coverage=1.0),
+        backend=backend,
+    )
+    assert span.status == "supported"
+    assert span.citations[0].components["content_gate"] == 1.0

@@ -58,7 +58,7 @@ config = CitationConfig(
 
 ## Opt-In Paraphrase Support
 
-Set `paraphrase_support=True` to accept a direct instruction whose single time condition moves to a different part of the sentence. For example, the answer “Tighten the clamp once drying the latch is complete” can cite “After drying the latch, tighten the clamp.” The instruction and its condition must agree within the best citation's passage, with at least three distinct content tokens in the answer. The check recognizes direct actions such as tightening, rinsing, or folding, and preserves unit and identifier case. A contradiction leaves the span `"partial"`.
+Set `paraphrase_support=True` to accept a direct instruction whose single time condition moves to a different part of the sentence. For example, the answer “Tighten the clamp once drying the latch is complete” can cite “After drying the latch, tighten the clamp.” The instruction and its condition must agree within the best citation's passage, with at least three distinct content tokens in the answer. The check recognizes direct actions such as tightening, rinsing, or folding. It preserves unit case and numeric notation, and abstains when multiple actions make the time condition ambiguous. A contradiction leaves the span `"partial"`.
 
 | Field | Default | Effect |
 |-------|---------|--------|

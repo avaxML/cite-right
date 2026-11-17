@@ -92,8 +92,27 @@ def test_new_admission_requires_the_paraphrase_support_check(
             "Set the power to 1 MW on the external supply after reconnecting the cable.",
             "After reconnecting the cable, set the power to 1 mW on the external supply.",
         ),
+        (
+            "Set the controller to close the valve after the inspection.",
+            "After the inspection, set the controller to close the valve.",
+        ),
+        (
+            "Tighten the clamp—replace the housing after drying the latch.",
+            "After drying the latch, tighten the clamp—replace the housing.",
+        ),
+        (
+            "Set the timer to 102 seconds after closing the hatch.",
+            "After closing the hatch, set the timer to 10² seconds.",
+        ),
     ],
-    ids=["reported-action", "requested-action", "case-sensitive-unit"],
+    ids=[
+        "reported-action",
+        "requested-action",
+        "case-sensitive-unit",
+        "embedded-command",
+        "compound-command",
+        "superscript",
+    ],
 )
 def test_paraphrase_gate_preserves_time_attachment_and_unit_case(
     backend: Literal["python", "rust"], answer: str, passage: str
