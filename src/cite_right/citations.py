@@ -23,7 +23,6 @@ except ImportError:
         InvertedIndex = object  # type: ignore[misc,assignment]
         RustPreparedCorpus = object  # type: ignore[misc,assignment]
 
-from cite_right.contradiction import check_contradiction
 from cite_right.core.aligner_py import SmithWatermanAligner
 from cite_right.core.aligner_rust import RustSmithWatermanAligner
 from cite_right.core.citation_config import CitationConfig
@@ -52,6 +51,7 @@ from cite_right.core.results import (
 )
 from cite_right.models.base import Embedder
 from cite_right.models.embedding_index import EmbeddingIndex
+from cite_right.support_gate import span_status as _span_status
 from cite_right.text.content_coverage import (
     content_token_coverage,
     query_stopword_token_ids,
@@ -1579,47 +1579,3 @@ def _citation_sort_key(
         citation.source_index,
         citation.candidate_index,
     )
-
-
-def _contradiction_context(
-    citation: Citation,
-    candidates: Sequence[Candidate] | None,
-) -> str:
-    """Prefer the candidate passage over truncated Smith-Waterman evidence.
-
-    Leftover n-grams (issue #48) attach to the wrong slot when alignment
-    truncates evidence and hides the contradicting remainder of the passage.
-    """
-    if candidates:
-        for candidate in candidates:
-            if candidate.global_index == citation.candidate_index:
-                passage = candidate.passage.text
-                if passage:
-                    return passage
-    return citation.evidence
-
-
-def _span_status(
-    citations: Sequence[Citation],
-    cfg: CitationConfig,
-    answer_text: str | None = None,
-    candidates: Sequence[Candidate] | None = None,
-) -> Literal["supported", "partial", "unsupported"]:
-    if not citations:
-        return "unsupported"
-    best = citations[0]
-    coverage = float(best.components.get("answer_coverage", 0.0))
-
-    # Check for contradictions if answer text is provided.
-    # Use the candidate passage so leftover tokens beyond truncated evidence
-    # (e.g. "BC", "of which came in the first half") are visible.
-    if answer_text is not None and check_contradiction(
-        answer_text, _contradiction_context(best, candidates)
-    ):
-        # Downgrade to partial (not unsupported) if contradiction detected
-        # because we have evidence, it just contradicts the claim
-        return "partial"
-
-    if coverage >= cfg.supported_answer_coverage:
-        return "supported"
-    return "partial"
