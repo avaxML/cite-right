@@ -242,7 +242,9 @@ _CLAUSE_START_ADVERBS = frozenset(
         "manually",
         "now",
         "previously",
+        "quickly",
         "recently",
+        "slowly",
         "successfully",
         "temporarily",
         "unexpectedly",
@@ -318,9 +320,9 @@ def _find_named_roles(
 def _looks_like_heading(text: str, raw_words: list[str], words: list[str]) -> bool:
     if (
         len(words) >= 4
-        and text.rstrip().endswith((".", "!", "?"))
+        and _ends_with_assertion(text)
         and raw_words[0].isupper()
-        and words[0] not in _CLAUSE_START_ADVERBS
+        and not _looks_like_adverb(words[0])
         and raw_words[1].isupper()
         and words[1].endswith("ed")
         and words[2] in _ARTICLES
@@ -329,6 +331,18 @@ def _looks_like_heading(text: str, raw_words: list[str], words: list[str]) -> bo
     return all(
         raw[0].isupper() or word in _FUNCTION_WORDS
         for raw, word in zip(raw_words, words, strict=True)
+    )
+
+
+def _ends_with_assertion(text: str) -> bool:
+    trimmed = text.rstrip().rstrip('”’»)]}"').rstrip("'").rstrip()
+    ending = trimmed[len(trimmed.rstrip(".!?")) :]
+    return bool(ending) and "?" not in ending
+
+
+def _looks_like_adverb(word: str) -> bool:
+    return word in _CLAUSE_START_ADVERBS or word.endswith(
+        ("ately", "ably", "edly", "ently", "ibly", "ically", "ously")
     )
 
 

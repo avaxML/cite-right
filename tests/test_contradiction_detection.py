@@ -278,8 +278,13 @@ def test_issue69_restatements_are_supported(answer: str, source: str) -> None:
             "The board awarded James the maintenance contract for the third quarter.",
         ),
         ("ALICE SIGNED THE CONTRACT.", "BOB SIGNED THE CONTRACT."),
+        ("“EMILY SIGNED THE CONTRACT.”", "“HOLLY SIGNED THE CONTRACT.”"),
     ],
-    ids=["recipient-before-determiner", "uppercase-statement"],
+    ids=[
+        "recipient-before-determiner",
+        "uppercase-statement",
+        "quoted-uppercase-statement",
+    ],
 )
 def test_entity_swap_keeps_actor_roles_in_complete_statements(
     answer: str, passage: str
@@ -295,6 +300,14 @@ def test_entity_swap_keeps_actor_roles_in_complete_statements(
         ("EXPORT DEVICE SETTINGS.", "IMPORT DEVICE SETTINGS."),
         ("ACCIDENTALLY DELETED A FILE?", "RECENTLY DELETED A FILE?"),
         ("PREVIOUSLY ARCHIVED A FILE.", "AUTOMATICALLY ARCHIVED A FILE."),
+        (
+            "INADVERTENTLY ERASED THE SHARED PROJECT FILE?!",
+            "UNINTENTIONALLY ERASED THE SHARED PROJECT FILE?!",
+        ),
+        (
+            "INADVERTENTLY ERASED THE SHARED PROJECT FILE.",
+            "PERMANENTLY ERASED THE SHARED PROJECT FILE.",
+        ),
     ],
 )
 def test_entity_swap_ignores_uppercase_layout_heading(
