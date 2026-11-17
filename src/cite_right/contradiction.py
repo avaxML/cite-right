@@ -192,7 +192,18 @@ _CONTROL_VERBS = frozenset(
     {"click", "choose", "hit", "open", "press", "select", "tap", "toggle", "use"}
 )
 _CONTROL_LABELS = frozenset(
-    {"button", "field", "menu", "option", "options", "panel", "screen", "tab", "toggle"}
+    {
+        "button",
+        "field",
+        "menu",
+        "option",
+        "options",
+        "panel",
+        "screen",
+        "tab",
+        "toggle",
+        "toolbar",
+    }
 )
 _PRODUCT_ROLES = frozenset({"edition", "plan", "product", "subscription", "tier"})
 _DECLARED_NAME_ROLES = _PRODUCT_ROLES | {
@@ -203,12 +214,14 @@ _DECLARED_NAME_ROLES = _PRODUCT_ROLES | {
     "reviewer",
     "winner",
 }
+_COPULAS = frozenset({"is", "was", "are", "were"})
 _NAME_PREPOSITIONS = frozenset({"at", "by", "for", "from", "in", "of", "to", "with"})
 _NON_NAME_WORDS = (
     _SENTENCE_START_STOPWORDS
     | _UNIT_NAMES
     | _CONTROL_VERBS
     | _CONTROL_LABELS
+    | _COPULAS
     | {
         "also",
         "step",
@@ -257,27 +270,25 @@ def _find_named_roles(
 
     mentions: list[tuple[str, list[_NameRole]]] = []
     for index, (raw, word) in enumerate(zip(raw_words, words, strict=True)):
-        if len(raw) < 2 or not raw[0].isupper() or word in _NON_NAME_WORDS:
+        if not _looks_like_name(raw, word):
             continue
-        leading, trailing = _token_gaps(normalized, matches, index)
-        roles = _local_name_roles(words, index, leading, trailing, heading)
+        previous_end = matches[index - 1].end() if index else 0
+        leading = normalized[previous_end : matches[index].start()]
+        after = _right_anchor(normalized, matches, words, index)
+        roles = _local_name_roles(words, index, leading, after, heading)
         if roles:
             mentions.append((word, roles))
     return set(words), mentions
 
 
-def _token_gaps(text: str, matches: list[re.Match[str]], index: int) -> tuple[str, str]:
-    current = matches[index]
-    previous_end = matches[index - 1].end() if index else 0
-    next_start = matches[index + 1].start() if index + 1 < len(matches) else len(text)
-    return text[previous_end : current.start()], text[current.end() : next_start]
+def _looks_like_name(raw: str, folded: str) -> bool:
+    return len(raw) >= 2 and raw[0].isupper() and folded not in _NON_NAME_WORDS
 
 
 def _local_name_roles(
-    words: list[str], index: int, leading: str, trailing: str, heading: bool
+    words: list[str], index: int, leading: str, after: str, heading: bool
 ) -> list[_NameRole]:
     before = words[index - 1] if index else ""
-    after = _right_anchor(words, index, trailing)
     explicit = _explicit_name_role(words, index, before, after, leading)
     if explicit is not None:
         return [explicit]
@@ -285,19 +296,34 @@ def _local_name_roles(
         return []
 
     roles: list[_NameRole] = []
-    if before in _NAME_PREPOSITIONS or (not after and before.endswith("ed")):
+    if _has_left_anchor(before, after, leading):
         roles.append(("after", before))
     if after and after not in _SENTENCE_START_STOPWORDS:
         roles.append(("before", after))
     return roles
 
 
-def _right_anchor(words: list[str], index: int, trailing: str) -> str:
-    if index + 1 == len(words) or _CLAUSE_BOUNDARY.search(trailing):
+def _has_left_anchor(before: str, after: str, leading: str) -> bool:
+    return not _CLAUSE_BOUNDARY.search(leading) and (
+        before in _NAME_PREPOSITIONS
+        or (not after and before.isalpha() and before not in _NON_NAME_WORDS)
+    )
+
+
+def _right_anchor(
+    text: str, matches: list[re.Match[str]], words: list[str], index: int
+) -> str:
+    next_index = index + 1
+    if next_index == len(words):
         return ""
-    after = words[index + 1]
-    if after.endswith("ly") and index + 2 < len(words):
-        return words[index + 2]
+    if _CLAUSE_BOUNDARY.search(
+        text[matches[index].end() : matches[next_index].start()]
+    ):
+        return ""
+    after = words[next_index]
+    if after.endswith("ly") and next_index + 1 < len(words):
+        gap = text[matches[next_index].end() : matches[next_index + 1].start()]
+        return "" if _CLAUSE_BOUNDARY.search(gap) else words[next_index + 1]
     return after
 
 
@@ -308,7 +334,12 @@ def _explicit_name_role(
         return ("before", after)
     if before in _DECLARED_NAME_ROLES and ":" in leading:
         return ("after", before)
-    if before == "is" and index >= 2 and words[index - 2] in _DECLARED_NAME_ROLES:
+    if (
+        before in _COPULAS
+        and index >= 2
+        and words[index - 2] in _DECLARED_NAME_ROLES
+        and not _CLAUSE_BOUNDARY.search(leading)
+    ):
         return ("after", words[index - 2])
     return None
 
@@ -318,7 +349,7 @@ def _interface_or_layout(
 ) -> bool:
     if any(separator in leading for separator in (":", "•", "\n")):
         return True
-    if leading.strip() in {"-", "*", "+"}:
+    if leading.strip() in {"-", "*", "+", "–", "—", "−"}:
         return True
     if before.isdigit() and leading.strip() in {".", ")"}:
         return True

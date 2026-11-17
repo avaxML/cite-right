@@ -186,6 +186,12 @@ def test_check_contradiction_uses_passage_not_truncated_span() -> None:
         ("Report Layout.", "Archive Layout."),
         ("Summary: Review the report.", "Overview: Review the report."),
         ("- First find the source.", "- Next find the source."),
+        ("– First find the source.", "– Next find the source."),
+        ("Summary only; review the report.", "Overview only; review the report."),
+        (
+            "With the “EXPORT” toolbar visible, continue editing the document.",
+            "With the “Download” toolbar visible, continue editing the document.",
+        ),
         ("1. First find the source.", "1. Next find the source."),
         (
             "Use the Search field to find a document.",
@@ -215,6 +221,8 @@ def test_entity_swap_ignores_interface_and_layout(answer: str, source: str) -> N
         ("Revenue rose in Paris.", "Revenue rose in London."),
         ("Maria Lopez approved the budget.", "James Chen approved the budget."),
         ("The board picked Maria.", "The board picked James."),
+        ("The board chose Maria.", "The board chose James."),
+        ("The reviewer was Maria.", "The reviewer was James."),
         (
             "Reviewer: Maria approved the budget.",
             "Reviewer: James approved the budget.",
