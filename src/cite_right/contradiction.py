@@ -335,14 +335,24 @@ def _looks_like_heading(text: str, raw_words: list[str], words: list[str]) -> bo
 
 
 def _ends_with_assertion(text: str) -> bool:
-    trimmed = text.rstrip().rstrip('”’»)]}"').rstrip("'").rstrip()
-    ending = trimmed[len(trimmed.rstrip(".!?")) :]
+    end = len(text)
+    while end:
+        char = text[end - 1]
+        if not (
+            char.isspace()
+            or char in "\"'"
+            or unicodedata.category(char) in {"Pe", "Pf"}
+        ):
+            break
+        end -= 1
+    statement = text[:end]
+    ending = statement[len(statement.rstrip(".!?")) :]
     return bool(ending) and "?" not in ending
 
 
 def _looks_like_adverb(word: str) -> bool:
     return word in _CLAUSE_START_ADVERBS or word.endswith(
-        ("ately", "ably", "edly", "ently", "ibly", "ically", "ously")
+        ("ately", "ably", "edly", "ently", "etely", "fully", "ibly", "ically", "ously")
     )
 
 
