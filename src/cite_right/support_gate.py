@@ -215,7 +215,32 @@ _CLAUSE_WORD = re.compile(
     r"|[A-Z0-9]+(?:[-‐‑][A-Z0-9]+)+"
     r"|[+-]?\d+[%°]?"
 )
+_LABEL_HYPHEN = re.compile("[-‐‑]")
 _ARTICLES = frozenset({"a", "an", "the"})
+_PREPOSITIONS = frozenset(
+    {
+        "above",
+        "around",
+        "as",
+        "at",
+        "below",
+        "beside",
+        "by",
+        "for",
+        "from",
+        "in",
+        "inside",
+        "into",
+        "near",
+        "of",
+        "on",
+        "over",
+        "through",
+        "to",
+        "under",
+        "with",
+    }
+)
 _DIRECT_ACTIONS = frozenset(
     {
         "attach",
@@ -311,14 +336,36 @@ def _is_simple_clause(text: str) -> bool:
             word.casefold() not in _CLAUSE_JOINERS and _CLAUSE_WORD.fullmatch(word)
             for word in words
         )
-        and not _has_action_complement(words)
+        and not _has_second_action(words)
     )
+
+
+def _has_second_action(words: list[str]) -> bool:
+    folded = [word.casefold() for word in words]
+    if _has_action_complement(folded):
+        return True
+    if any(
+        _starts_separate_phrase(previous, word)
+        for previous, word in pairwise(folded[1:])
+    ):
+        return True
+    return any(
+        part in _DIRECT_ACTIONS
+        for word in folded
+        for part in _LABEL_HYPHEN.split(word)[1:]
+    )
+
+
+def _starts_separate_phrase(previous: str, word: str) -> bool:
+    if word in _ARTICLES:
+        return previous not in _PREPOSITIONS
+    return word in _DIRECT_ACTIONS and previous not in _ARTICLES
 
 
 def _has_action_complement(words: list[str]) -> bool:
     return any(
-        current.casefold() == "to"
-        and following.casefold() not in _ARTICLES
+        current == "to"
+        and following not in _ARTICLES
         and not following.lstrip("+-")[:1].isdecimal()
         for current, following in pairwise(words)
     )

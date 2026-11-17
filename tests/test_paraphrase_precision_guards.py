@@ -172,6 +172,8 @@ def test_lexical_gate_requires_three_distinct_content_tokens(
         " then ",
         " plus ",
         " otherwise ",
+        " also ",
+        " ",
     ],
 )
 def test_order_of_compound_instructions_is_ambiguous(
@@ -180,6 +182,24 @@ def test_order_of_compound_instructions_is_ambiguous(
     [span] = align_citations(
         f"Tighten the clamp{separator}replace the housing after drying the latch.",
         [f"After drying the latch, tighten the clamp{separator}replace the housing."],
+        config=CitationConfig(paraphrase_support=True, supported_answer_coverage=1.0),
+        backend=backend,
+        embedder=KeywordEmbedder("synthetic probe") if embedded else None,
+    )
+    assert span.status == "partial"
+    assert span.citations[0].components["content_gate"] == 0.0
+
+
+@pytest.mark.parametrize(
+    "backend", ["python", pytest.param("rust", marks=requires_rust)]
+)
+@pytest.mark.parametrize("embedded", [False, True], ids=["lexical", "embedded"])
+def test_hyphenated_uppercase_command_cannot_attach_time_ambiguously(
+    backend: Literal["python", "rust"], embedded: bool
+) -> None:
+    [span] = align_citations(
+        "TIGHTEN THE CLAMP-REPLACE THE HOUSING AFTER DRYING THE LATCH.",
+        ["AFTER DRYING THE LATCH, TIGHTEN THE CLAMP-REPLACE THE HOUSING."],
         config=CitationConfig(paraphrase_support=True, supported_answer_coverage=1.0),
         backend=backend,
         embedder=KeywordEmbedder("synthetic probe") if embedded else None,
