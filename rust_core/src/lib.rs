@@ -375,7 +375,9 @@ fn rust_align_batch_candidates(
     multi_span_config,
     match_score=2,
     mismatch_score=-1,
-    gap_score=-1
+    gap_score=-1,
+    *,
+    query_stopword_ids
 ))]
 #[allow(clippy::too_many_arguments, clippy::type_complexity)]
 fn rust_build_citations_fast(
@@ -401,6 +403,7 @@ fn rust_build_citations_fast(
     match_score: i32,
     mismatch_score: i32,
     gap_score: i32,
+    query_stopword_ids: Vec<u32>,
 ) -> PyResult<String> {
     py.detach(|| {
         // Build candidates
@@ -437,6 +440,7 @@ fn rust_build_citations_fast(
 
         // Build config
         let cfg = citation_fast::Config {
+            stopword_ids: query_stopword_ids.into_iter().collect(),
             min_alignment_score: config_tuple.0,
             min_answer_coverage: config_tuple.1,
             min_final_score: config_tuple.2,

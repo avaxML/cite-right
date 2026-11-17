@@ -2,6 +2,12 @@
 
 All notable changes to cite-right will be documented in this file.
 
+## [Unreleased]
+
+### Fixed
+
+- Python and Rust apply the same content coverage rule to citation admission. Custom tokenizers can provide citations using the existing public tokenization interface. (#84)
+
 ## [0.4.0] - 2026-08-25
 
 ### Added

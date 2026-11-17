@@ -6,8 +6,9 @@ restatement as unsupported when shared content words are scattered or reordered.
 
 from __future__ import annotations
 
+import unicodedata
 from collections import Counter
-from typing import Iterable, Mapping
+from typing import Iterable, Mapping, Sequence
 
 # Function words only. Polarity markers (not, no, never) stay as content.
 STOPWORDS = frozenset(
@@ -124,6 +125,18 @@ def stopword_token_ids(vocab: Mapping[str, int] | None) -> frozenset[int]:
     if not vocab:
         return frozenset()
     return frozenset(int(vocab[word]) for word in STOPWORDS if word in vocab)
+
+
+def query_stopword_token_ids(
+    text: str, token_ids: Sequence[int], token_spans: Sequence[tuple[int, int]]
+) -> frozenset[int]:
+    """Classify query IDs from tokenizer offsets, including query-only stopwords."""
+    return frozenset(
+        token_id
+        for token_id, (start, end) in zip(token_ids, token_spans, strict=True)
+        if unicodedata.normalize("NFKC", text[start:end]).strip().casefold()
+        in STOPWORDS
+    )
 
 
 def content_token_coverage(

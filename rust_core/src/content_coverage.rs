@@ -5,24 +5,9 @@
 
 use std::collections::{HashMap, HashSet};
 
-/// Function words only. Polarity markers (not, no, never) stay as content.
-const STOPWORDS: &[&str] = &[
-    "a", "an", "the", "and", "or", "but", "if", "then", "else", "when", "at", "by", "for", "with",
-    "about", "against", "between", "into", "through", "during", "before", "after", "above",
-    "below", "to", "from", "up", "down", "in", "out", "on", "off", "over", "under", "again",
-    "further", "once", "here", "there", "where", "why", "how", "all", "each", "few", "more",
-    "most", "other", "some", "such", "only", "own", "same", "so", "than", "too", "very", "can",
-    "will", "just", "should", "now", "of", "as", "is", "are", "was", "were", "be", "been", "being",
-    "have", "has", "had", "do", "does", "did", "this", "that", "these", "those", "i", "you", "he",
-    "she", "it", "we", "they", "me", "him", "her", "us", "them", "my", "your", "his", "its", "our",
-    "their", "what", "which", "who", "whom",
-];
-
-pub fn stopword_token_ids(vocab: &HashMap<String, u32>) -> HashSet<u32> {
-    STOPWORDS
-        .iter()
-        .filter_map(|word| vocab.get(*word).copied())
-        .collect()
+/// Match the admission rule used by the Python builder.
+pub fn adequate_coverage(answer_coverage: f64, content_coverage: f64, minimum: f64) -> bool {
+    content_coverage > 0.0 && (answer_coverage >= minimum || content_coverage >= minimum)
 }
 
 pub fn content_token_coverage(
