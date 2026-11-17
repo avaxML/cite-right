@@ -190,7 +190,19 @@ _UNIT_NAMES = frozenset(
     {"eur", "usd", "gbp", "cad", "aud", "jpy", "kg", "mg", "km", "cm", "mm", "kwh"}
 )
 _CONTROL_VERBS = frozenset(
-    {"click", "choose", "hit", "open", "press", "select", "tap", "toggle", "use"}
+    {
+        "click",
+        "clicked",
+        "clicks",
+        "choose",
+        "hit",
+        "open",
+        "press",
+        "select",
+        "tap",
+        "toggle",
+        "use",
+    }
 )
 _CONTROL_LABELS = frozenset(
     {
@@ -230,6 +242,27 @@ _DECLARED_NAME_ROLES = _PRODUCT_ROLES | {
 }
 _COPULAS = frozenset({"is", "was", "are", "were"})
 _ARTICLES = frozenset({"a", "an", "the"})
+_RECIPIENT_VERBS = frozenset(
+    {
+        "assigned",
+        "awarded",
+        "brought",
+        "emailed",
+        "gave",
+        "granted",
+        "handed",
+        "lent",
+        "mailed",
+        "offered",
+        "paid",
+        "promised",
+        "sent",
+        "showed",
+        "taught",
+        "told",
+        "wrote",
+    }
+)
 _CLAUSE_START_ADVERBS = frozenset(
     {
         "accidentally",
@@ -237,13 +270,17 @@ _CLAUSE_START_ADVERBS = frozenset(
         "automatically",
         "currently",
         "finally",
+        "frequently",
         "immediately",
         "just",
         "manually",
         "now",
+        "often",
         "previously",
         "quickly",
+        "rarely",
         "recently",
+        "seldom",
         "slowly",
         "successfully",
         "temporarily",
@@ -392,7 +429,9 @@ def _is_clause_gap(gap: str) -> bool:
 def _has_left_anchor(before: str, after: str, leading: str) -> bool:
     if _is_clause_gap(leading):
         return False
-    if before in _NAME_PREPOSITIONS or (before.endswith("ed") and after in _ARTICLES):
+    if before in _NAME_PREPOSITIONS or (
+        before in _RECIPIENT_VERBS and after in _ARTICLES
+    ):
         return True
     return not after and before.isalpha() and before not in _NON_NAME_WORDS
 

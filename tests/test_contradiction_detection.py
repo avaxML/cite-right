@@ -277,6 +277,10 @@ def test_issue69_restatements_are_supported(answer: str, source: str) -> None:
             "The board awarded Maria the maintenance contract for the third quarter.",
             "The board awarded James the maintenance contract for the third quarter.",
         ),
+        (
+            "The instructor gave Maria the equipment manual.",
+            "The instructor gave James the equipment manual.",
+        ),
         ("ALICE SIGNED THE CONTRACT.", "BOB SIGNED THE CONTRACT."),
         ("“EMILY SIGNED THE CONTRACT.”", "“HOLLY SIGNED THE CONTRACT.”"),
         ("‹EMILY SIGNED THE CONTRACT.›", "‹HOLLY SIGNED THE CONTRACT.›"),
@@ -285,6 +289,7 @@ def test_issue69_restatements_are_supported(answer: str, source: str) -> None:
     ],
     ids=[
         "recipient-before-determiner",
+        "irregular-verb-recipient",
         "uppercase-statement",
         "quoted-uppercase-statement",
         "guillemet-uppercase-statement",
@@ -304,6 +309,10 @@ def test_entity_swap_keeps_actor_roles_in_complete_statements(
     ("answer", "passage"),
     [
         ("EXPORT DEVICE SETTINGS.", "IMPORT DEVICE SETTINGS."),
+        (
+            "RARELY ARCHIVED THE SHARED PROJECT FILE.",
+            "SELDOM ARCHIVED THE SHARED PROJECT FILE.",
+        ),
         ("ACCIDENTALLY DELETED A FILE?", "RECENTLY DELETED A FILE?"),
         ("PREVIOUSLY ARCHIVED A FILE.", "AUTOMATICALLY ARCHIVED A FILE."),
         (
@@ -324,3 +333,12 @@ def test_entity_swap_ignores_uppercase_layout_heading(
     answer: str, passage: str
 ) -> None:
     assert not has_entity_swap(answer, passage)
+
+
+@pytest.mark.parametrize("verb", ["clicked", "tapped"])
+def test_control_label_before_an_article_is_not_a_recipient(verb: str) -> None:
+    answer = f"I {verb} Export the first time the toolbar opened."
+    passage = f"I {verb} Download the first time the toolbar opened."
+    assert not has_entity_swap(answer, passage)
+    [span] = align_citations(answer, [passage], config=CitationConfig())
+    assert span.status == "supported"
