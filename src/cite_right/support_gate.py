@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import unicodedata
 from collections.abc import Sequence
 from itertools import pairwise
@@ -191,22 +192,29 @@ def _add_gate_components(
 
 _RELATION_MARKERS = frozenset({"after", "before", "once", "when", "while"})
 _CLAUSE_JOINERS = _RELATION_MARKERS | {
-    "&",
-    "-",
-    "/",
-    "|",
     "and",
+    "because",
     "but",
     "if",
     "or",
+    "otherwise",
+    "plus",
+    "so",
     "that",
+    "then",
+    "unless",
+    "until",
     "where",
     "whether",
     "which",
     "who",
     "whose",
 }
-_CLAUSE_DELIMITERS = frozenset(",;:.!?—–―⸺⸻•…؛،")
+_CLAUSE_WORD = re.compile(
+    r"[^\W_]+(?:['’][^\W_]+)*"
+    r"|[A-Z0-9]+(?:[-‐‑][A-Z0-9]+)+"
+    r"|[+-]?\d+[%°]?"
+)
 _ARTICLES = frozenset({"a", "an", "the"})
 _DIRECT_ACTIONS = frozenset(
     {
@@ -299,8 +307,10 @@ def _is_simple_clause(text: str) -> bool:
     words = text.split()
     return (
         len(words) >= 2
-        and not any(word.casefold() in _CLAUSE_JOINERS for word in words)
-        and not any(char in _CLAUSE_DELIMITERS for char in text)
+        and all(
+            word.casefold() not in _CLAUSE_JOINERS and _CLAUSE_WORD.fullmatch(word)
+            for word in words
+        )
         and not _has_action_complement(words)
     )
 

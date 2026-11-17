@@ -152,15 +152,37 @@ def test_lexical_gate_requires_three_distinct_content_tokens(
 @pytest.mark.parametrize(
     "backend", ["python", pytest.param("rust", marks=requires_rust)]
 )
-@pytest.mark.parametrize("separator", [" - ", "--", " / ", " | ", " & "])
+@pytest.mark.parametrize("embedded", [False, True], ids=["lexical", "embedded"])
+@pytest.mark.parametrize(
+    "separator",
+    [
+        " - ",
+        "--",
+        "/",
+        " /",
+        "/ ",
+        " / ",
+        "|",
+        " | ",
+        "&",
+        " & ",
+        "-",
+        " -",
+        "- ",
+        " then ",
+        " plus ",
+        " otherwise ",
+    ],
+)
 def test_order_of_compound_instructions_is_ambiguous(
-    backend: Literal["python", "rust"], separator: str
+    backend: Literal["python", "rust"], separator: str, embedded: bool
 ) -> None:
     [span] = align_citations(
         f"Tighten the clamp{separator}replace the housing after drying the latch.",
         [f"After drying the latch, tighten the clamp{separator}replace the housing."],
         config=CitationConfig(paraphrase_support=True, supported_answer_coverage=1.0),
         backend=backend,
+        embedder=KeywordEmbedder("synthetic probe") if embedded else None,
     )
     assert span.status == "partial"
     assert span.citations[0].components["content_gate"] == 0.0
