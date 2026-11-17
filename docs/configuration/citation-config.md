@@ -211,7 +211,7 @@ See [Embedding Retrieval](../advanced/embedding-retrieval.md) for the full embed
 
 ## Custom Tokenizer Or Segmenter
 
-A custom tokenizer or segmenter takes the lexical fallback path. `PreparedCitationCorpus.from_sources` leaves `inverted_index=None` and `rust_corpus=None`, and `_select_candidates` uses the lexical prefilter plus optional embedding extras. Smith-Waterman still localizes. Citation builders classify stopwords from the tokenizer's answer-token offsets and report the non-stopword overlap in `Citation.components["content_coverage"]`. The public API is unchanged: `align_citations(answer, sources, config=...)` and `PreparedCitationCorpus.from_sources(sources, config=...)` work either way.
+A custom tokenizer or segmenter takes the lexical fallback path. `PreparedCitationCorpus.from_sources` leaves `inverted_index=None` and `rust_corpus=None`, and `_select_candidates` uses the lexical prefilter plus optional embedding extras. Smith-Waterman still localizes. Citation builders identify stopwords and punctuation-only tokens from the tokenizer's answer-token offsets and report the non-stopword overlap in `Citation.components["content_coverage"]`. The public API is unchanged: `align_citations(answer, sources, config=...)` and `PreparedCitationCorpus.from_sources(sources, config=...)` work either way.
 
 ## Complete Defaults
 

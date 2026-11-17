@@ -134,8 +134,19 @@ def query_stopword_token_ids(
     return frozenset(
         token_id
         for token_id, (start, end) in zip(token_ids, token_spans, strict=True)
-        if unicodedata.normalize("NFKC", text[start:end]).strip().casefold()
-        in STOPWORDS
+        if _is_non_content_token(text[start:end])
+    )
+
+
+def _is_non_content_token(text: str) -> bool:
+    normalized = unicodedata.normalize("NFKC", text).strip().casefold()
+    if normalized in STOPWORDS:
+        return True
+    # Some tokenizers emit punctuation separately. A percent sign carries
+    # quantity information, even though Unicode classifies it as punctuation.
+    return all(
+        char.isspace() or (char != "%" and unicodedata.category(char).startswith("P"))
+        for char in normalized
     )
 
 

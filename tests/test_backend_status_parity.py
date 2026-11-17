@@ -143,3 +143,27 @@ def test_native_builders_admit_reordered_claim(monkeypatch: pytest.MonkeyPatch) 
         assert citation.components["content_coverage"] == pytest.approx(5 / 6)
 
     assert calls == ["prepared", "legacy"]
+
+
+class PunctuationTokenizer(ProtocolTokenizer):
+    def tokenize(self, text: str) -> TokenizedText:
+        tokens = super().tokenize(text)
+        if not text.endswith("."):
+            return tokens
+        return TokenizedText(
+            text=text,
+            token_ids=[*tokens.token_ids, 0],
+            token_spans=[*tokens.token_spans, (len(text) - 1, len(text))],
+        )
+
+
+@pytest.mark.parametrize(
+    "backend", ["python", pytest.param("rust", marks=requires_rust)]
+)
+def test_punctuation_only_overlap_does_not_admit_citation(backend: str) -> None:
+    corpus = PreparedCitationCorpus.from_sources(
+        ["Copper glows."], tokenizer=PunctuationTokenizer()
+    )
+    [span] = corpus.align("Zinc bends.", backend=backend)
+    assert span.status == "unsupported"
+    assert not span.citations
