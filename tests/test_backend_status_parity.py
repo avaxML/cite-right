@@ -176,10 +176,11 @@ def test_punctuation_only_overlap_does_not_admit_citation(backend: str) -> None:
 @pytest.mark.parametrize(
     "backend", ["python", pytest.param("rust", marks=requires_rust)]
 )
-def test_arabic_percent_sign_counts_as_content(backend: str) -> None:
+@pytest.mark.parametrize("sign", ["٪", "؉", "؊"])
+def test_arabic_ratio_sign_counts_as_content(backend: str, sign: str) -> None:
     corpus = PreparedCitationCorpus.from_sources(
-        ["المعدل ١٢٪"], tokenizer=TrailingSymbolTokenizer("٪")
+        [f"المعدل ١٢{sign}"], tokenizer=TrailingSymbolTokenizer(sign)
     )
-    [span] = corpus.align("الخصم ١٢٪", backend=backend)
+    [span] = corpus.align(f"الخصم ١٢{sign}", backend=backend)
     [citation] = span.citations
     assert citation.components["content_coverage"] == pytest.approx(2 / 3)

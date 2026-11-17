@@ -146,7 +146,12 @@ def _is_non_content_token(text: str) -> bool:
     # quantity information, even when Unicode classifies them as punctuation.
     return all(
         char.isspace()
-        or (char not in "%٪‰‱" and unicodedata.category(char).startswith("P"))
+        or (
+            unicodedata.category(char).startswith("P")
+            and not unicodedata.name(char, "").endswith(
+                ("PERCENT SIGN", "PER MILLE SIGN", "PER TEN THOUSAND SIGN")
+            )
+        )
         for char in normalized
     )
 
