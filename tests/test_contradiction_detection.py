@@ -1,9 +1,13 @@
 """Tests for contradiction detection in citations."""
 
+from typing import Literal, cast
+
 import pytest
 
 from cite_right import CitationConfig, align_citations
 from cite_right.contradiction import check_contradiction, has_entity_swap
+
+from .conftest import requires_rust
 
 
 def test_negation_mismatch_marked_unsupported() -> None:
@@ -68,8 +72,20 @@ def test_entity_mismatch_not_supported() -> None:
     assert results[0].citations
 
 
+@pytest.fixture(params=[False, True], ids=["extractive", "paraphrase"])
+def issue48_config(request: pytest.FixtureRequest) -> CitationConfig:
+    return CitationConfig(top_k=1, paraphrase_support=request.param)
+
+
+@pytest.fixture(params=["python", pytest.param("rust", marks=requires_rust)])
+def issue48_backend(request: pytest.FixtureRequest) -> Literal["python", "rust"]:
+    return cast(Literal["python", "rust"], request.param)
+
+
 # Issue #48: Leftover n-gram / truncated evidence fixtures
-def test_issue48_number_leftover_rebounds() -> None:
+def test_issue48_number_leftover_rebounds(
+    issue48_config: CitationConfig, issue48_backend: Literal["python", "rust"]
+) -> None:
     """Issue #48 fixture 1: leftover '10' blesses '10 rebounds'.
 
     Source says '10 of which came in the first half' but answer says '10 rebounds'.
@@ -78,7 +94,9 @@ def test_issue48_number_leftover_rebounds() -> None:
     sources = ["Jahlil Okafor had 18 points, 10 of which came in the first half"]
     answer = "Okafor had 18 points and 10 rebounds."
 
-    results = align_citations(answer, sources, config=CitationConfig(top_k=1))
+    results = align_citations(
+        answer, sources, config=issue48_config, backend=issue48_backend
+    )
 
     assert len(results) == 1
     evidence = results[0].citations[0].evidence
@@ -88,7 +106,9 @@ def test_issue48_number_leftover_rebounds() -> None:
     assert results[0].status == "partial"
 
 
-def test_issue48_entity_swap_india_france() -> None:
+def test_issue48_entity_swap_india_france(
+    issue48_config: CitationConfig, issue48_backend: Literal["python", "rust"]
+) -> None:
     """Issue #48 fixture 2: entity swap - India/France, American/Indian.
 
     Shared content words (opposed, involvement, Vietnam War) bless the entity flip.
@@ -96,14 +116,18 @@ def test_issue48_entity_swap_india_france() -> None:
     sources = ["India strongly opposed American involvement in the Vietnam War"]
     answer = "France opposed Indian involvement in the Vietnam War"
 
-    results = align_citations(answer, sources, config=CitationConfig(top_k=1))
+    results = align_citations(
+        answer, sources, config=issue48_config, backend=issue48_backend
+    )
 
     assert len(results) == 1
     assert results[0].status == "partial"
     assert results[0].citations
 
 
-def test_issue48_temporal_polarity_bc_vs_ago() -> None:
+def test_issue48_temporal_polarity_bc_vs_ago(
+    issue48_config: CitationConfig, issue48_backend: Literal["python", "rust"]
+) -> None:
     """Issue #48 fixture 3: temporal polarity hidden by truncated evidence.
 
     Source: over 300 years BC (evidence historically cut before 'BC').
@@ -113,7 +137,9 @@ def test_issue48_temporal_polarity_bc_vs_ago() -> None:
     sources = ["The structure was built over 300 years BC"]
     answer = "The structure was built around 300 years ago"
 
-    results = align_citations(answer, sources, config=CitationConfig(top_k=1))
+    results = align_citations(
+        answer, sources, config=issue48_config, backend=issue48_backend
+    )
 
     assert len(results) == 1
     evidence = results[0].citations[0].evidence
@@ -123,7 +149,9 @@ def test_issue48_temporal_polarity_bc_vs_ago() -> None:
     assert results[0].status == "partial"
 
 
-def test_issue48_polarity_flip_oppose_vs_urged() -> None:
+def test_issue48_polarity_flip_oppose_vs_urged(
+    issue48_config: CitationConfig, issue48_backend: Literal["python", "rust"]
+) -> None:
     """Issue #48 fixture 4: polarity flip - oppose vs urged.
 
     Leftover 'laws' + 'prohibit' must not bless the flip from 'oppose' to 'urged'.
@@ -133,30 +161,40 @@ def test_issue48_polarity_flip_oppose_vs_urged() -> None:
     ]
     answer = "The organization urged laws restricting such actions"
 
-    results = align_citations(answer, sources, config=CitationConfig(top_k=1))
+    results = align_citations(
+        answer, sources, config=issue48_config, backend=issue48_backend
+    )
 
     assert len(results) == 1
     assert results[0].status == "partial"
     assert results[0].citations
 
 
-def test_issue48_extractive_near_copy_stays_supported() -> None:
+def test_issue48_extractive_near_copy_stays_supported(
+    issue48_config: CitationConfig, issue48_backend: Literal["python", "rust"]
+) -> None:
     """Extractive near-copies (how-to / zipper ledes) must stay supported."""
     source = "Click on the Start menu and scroll down to Web browser."
     answer = "Click on the Start menu and scroll down to Web browser."
 
-    results = align_citations(answer, [source], config=CitationConfig(top_k=1))
+    results = align_citations(
+        answer, [source], config=issue48_config, backend=issue48_backend
+    )
 
     assert len(results) == 1
     assert results[0].status == "supported"
 
 
-def test_issue48_extractive_subset_stays_supported() -> None:
+def test_issue48_extractive_subset_stays_supported(
+    issue48_config: CitationConfig, issue48_backend: Literal["python", "rust"]
+) -> None:
     """A faithful subset of source text is still extractive support."""
     sources = ["Jahlil Okafor had 18 points, 10 of which came in the first half"]
     answer = "Okafor had 18 points."
 
-    results = align_citations(answer, sources, config=CitationConfig(top_k=1))
+    results = align_citations(
+        answer, sources, config=issue48_config, backend=issue48_backend
+    )
 
     assert len(results) == 1
     assert results[0].status == "supported"

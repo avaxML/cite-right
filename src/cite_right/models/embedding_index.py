@@ -43,7 +43,10 @@ class EmbeddingIndex(BaseModel):
     def _query(
         self, query_vector: list[float]
     ) -> tuple[npt.NDArray[np.float32], float] | None:
-        query = np.asarray(query_vector, dtype=np.float32)
+        try:
+            query = np.asarray(query_vector, dtype=np.float32)
+        except (TypeError, ValueError, OverflowError):
+            return None
         if query.shape != (self.vectors.shape[1],):
             return None
         norm = float(np.linalg.norm(query))

@@ -6,18 +6,17 @@ same content words are in the source. Status may be partial.
 """
 
 import os
-from typing import Literal, Sequence
+from typing import Literal, Sequence, cast
 
 import pytest
 from pydantic import ValidationError
 
-from cite_right import SourceDocument, align_citations
+from cite_right import SourceChunk, SourceDocument, align_citations
 from cite_right.core.citation_config import CitationConfig
 from cite_right.text.content_coverage import content_token_coverage, stopword_token_ids
 from cite_right.text.tokenizer import SimpleTokenizer
 
-from .conftest import requires_embeddings, requires_rust
-from .test_citations_embedding_only_edge_cases import KeywordEmbedder
+from .conftest import KeywordEmbedder, requires_embeddings, requires_rust
 
 _BNP_ANSWER = (
     "The normal B-type Natriuretic Peptide (BNP) refers to a low amount of the "
@@ -345,3 +344,78 @@ def test_paraphrase_gate_respects_stricter_content_floor() -> None:
     assert span.status == "partial"
     assert span.citations[0].components["content_coverage"] == pytest.approx(0.8)
     assert span.citations[0].components["content_gate"] == 0.0
+
+
+@pytest.mark.parametrize(
+    "backend", ["python", pytest.param("rust", marks=requires_rust)]
+)
+def test_promoted_citation_retains_parent_identity_and_offsets(
+    backend: Literal["python", "rust"],
+) -> None:
+    preceding = "The tray has copper feet."
+    evidence = "After drying the latch, tighten the clamp."
+    full_text = preceding + " " + evidence
+    chunks = [
+        SourceChunk(
+            source_id="manual",
+            source_index=0,
+            document_text=full_text,
+            text=chunk,
+            doc_char_start=start,
+            doc_char_end=start + len(chunk),
+        )
+        for start, chunk in [(0, preceding), (len(preceding) + 1, evidence)]
+    ]
+    [span] = align_citations(
+        "Tighten the clamp after drying the latch.",
+        chunks,
+        config=CitationConfig(paraphrase_support=True, supported_answer_coverage=0.9),
+        backend=backend,
+    )
+    assert span.status == "supported"
+    [citation] = span.citations
+    assert citation.components["content_gate"] == 1.0
+    assert citation.source_id == "manual"
+    assert citation.source_index == 0
+    assert citation.char_start == len(preceding) + 1
+    assert citation.char_end == len(full_text)
+    assert (
+        full_text[citation.char_start : citation.char_end]
+        == citation.evidence
+        == evidence
+    )
+
+
+@pytest.mark.parametrize(
+    "backend", ["python", pytest.param("rust", marks=requires_rust)]
+)
+@pytest.mark.parametrize("malformed", ["missing", "extra", "ragged", "non-numeric"])
+def test_paraphrase_gate_rejects_malformed_answer_batches(
+    backend: Literal["python", "rust"], malformed: str
+) -> None:
+    class MalformedEmbedder:
+        def encode(self, texts: Sequence[str]) -> list[list[float]]:
+            if texts[0].startswith("After"):
+                return [[1.0, 0.0] for _ in texts]
+            if malformed == "missing":
+                return [[1.0, 0.0]]
+            if malformed == "extra":
+                return [[1.0, 0.0] for _ in range(len(texts) + 1)]
+            if malformed == "ragged":
+                return [cast("list[float]", [[1.0], [0.0, 1.0]]) for _ in texts]
+            return [cast("list[float]", ["bad", "values"]) for _ in texts]
+
+    spans = align_citations(
+        "Tighten the clamp after drying the latch. Fold the wire after heating the sleeve.",
+        [
+            "After drying the latch, tighten the clamp.",
+            "After heating the sleeve, fold the wire.",
+        ],
+        config=CitationConfig(paraphrase_support=True, supported_answer_coverage=0.9),
+        backend=backend,
+        embedder=MalformedEmbedder(),
+    )
+    assert [span.status for span in spans] == ["partial", "partial"]
+    for span in spans:
+        assert span.citations[0].components["embedding_similarity"] == 0.0
+        assert span.citations[0].components["content_gate"] == 0.0

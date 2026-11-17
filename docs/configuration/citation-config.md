@@ -58,7 +58,7 @@ config = CitationConfig(
 
 ## Opt-In Paraphrase Support
 
-Set `paraphrase_support=True` to accept a claim whose time condition moves to a different part of the sentence. For example, the answer “Tighten the clamp once drying the latch is complete” can cite “After drying the latch, tighten the clamp.” The claim and its condition must agree within the best citation's candidate passage, with at least three distinct content tokens in the answer. A contradiction leaves the span `"partial"`.
+Set `paraphrase_support=True` to accept a direct instruction whose single time condition moves to a different part of the sentence. For example, the answer “Tighten the clamp once drying the latch is complete” can cite “After drying the latch, tighten the clamp.” The instruction and its condition must agree within the best citation's passage, with at least three distinct content tokens in the answer. The check recognizes direct actions such as tightening, rinsing, or folding, and preserves unit and identifier case. A contradiction leaves the span `"partial"`.
 
 | Field | Default | Effect |
 |-------|---------|--------|
@@ -69,7 +69,7 @@ Set `paraphrase_support=True` to accept a claim whose time condition moves to a 
 
 All three thresholds accept values between `0.0` and `1.0`, inclusive. With an embedder, both floors must pass. The applicable content floor can also admit a localized candidate below `min_answer_coverage`. A citation admitted this way must pass the paraphrase support check to reach `"supported"`. Other admission checks, citation ordering, and `top_k` still apply. Under `strict()`, set `require_all_answer_tokens_in_evidence=False` if evidence may omit words that the answer rephrases.
 
-With the gate enabled, the best citation's `components` include `content_coverage` and `content_gate`. The latter is `1.0` when the paraphrase check determined support and `0.0` otherwise. When you provide an embedder, the best citation records `embedding_similarity`. An unusable cosine is reported as `0.0`. A citation promoted by the gate quotes the complete supporting passage at its original source offsets.
+With the gate enabled, the best citation's `components` include `content_coverage` and `content_gate`. The latter is `1.0` when the paraphrase check determined support and `0.0` otherwise. When you provide an embedder, the best citation records `embedding_similarity`. An unusable cosine is reported as `0.0`. A citation promoted by the gate quotes the complete supporting passage at its original source offsets. The `evidence_coverage` score continues to describe the original alignment window.
 
 ```python
 config = CitationConfig.strict().model_copy(

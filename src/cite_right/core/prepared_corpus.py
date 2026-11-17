@@ -91,9 +91,8 @@ class EmbeddingCache(BaseModel):
 
     def get_vector(self, span_index: int) -> list[float]:
         if not self._computed:
-            self.vectors = self.embedder.encode(
-                [span.text for span in self.answer_spans]
-            )
+            vectors = self.embedder.encode([span.text for span in self.answer_spans])
+            self.vectors = vectors if len(vectors) == len(self.answer_spans) else []
             self._computed = True
         return self.vectors[span_index] if span_index < len(self.vectors) else []
 

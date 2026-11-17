@@ -8,9 +8,8 @@ import pytest
 from cite_right import CitationConfig, SourceDocument, align_citations
 from cite_right.contradiction import check_contradiction, has_entity_swap
 
-from .conftest import requires_rust
+from .conftest import KeywordEmbedder, requires_rust
 from .paraphrase_fixtures import ANSWERS, PASSAGES
-from .test_citations_embedding_only_edge_cases import KeywordEmbedder
 
 EXPECTED_PASSAGES = (0, 1, 2, (3, 4), 5, 6, 7)
 
@@ -94,4 +93,26 @@ def test_manual_replay_target_recovery(
         embedder=embedder,
     )
     assert [span.status for span in spans[:8]] == ["supported"] * 7 + ["partial"]
+
+
+@pytest.mark.parametrize(
+    "backend", ["python", pytest.param("rust", marks=requires_rust)]
+)
+@pytest.mark.parametrize("embedded", [False, True], ids=["lexical", "embedded"])
+def test_enabled_replay_preserves_abstentions(
+    backend: Literal["python", "rust"], embedded: bool
+) -> None:
+    config = CitationConfig.model_validate(
+        CFG.model_dump() | {"paraphrase_support": True}
+    )
+    embedder = KeywordEmbedder("synthetic probe") if embedded else None
+    spans = align_citations(
+        " ".join(ANSWERS),
+        list(PASSAGES),
+        config=config,
+        backend=backend,
+        embedder=embedder,
+    )
+    assert [span.answer_span.text for span in spans] == list(ANSWERS)
+    assert spans[7].status == "partial"
     assert all(span.status != "supported" for span in spans[8:])

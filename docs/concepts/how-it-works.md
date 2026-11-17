@@ -138,7 +138,7 @@ When any of those fire against the best-ranked citation, the span status is forc
 **Status.** The top-ranked `Citation` alone determines whether an answer span has support.
 
 - If the best citation's answer coverage meets `supported_answer_coverage` (default `0.6`) and no contradiction fired, the span is `"supported"`.
-- If paraphrase support is enabled, the best citation can also support a claim with a reordered time condition. Both must agree within the same passage and meet the appropriate content and cosine floors. See [Opt-In Paraphrase Support](../configuration/citation-config.md#opt-in-paraphrase-support).
+- If paraphrase support is enabled, the best citation can also support a direct instruction with a reordered time condition. Both must agree within the same passage and meet the appropriate content and cosine floors. See [Opt-In Paraphrase Support](../configuration/citation-config.md#opt-in-paraphrase-support).
 - When citations exist but the best one fails the applicable support checks, the span is `"partial"`.
 - If no citations survive filtering, the span is `"unsupported"`.
 

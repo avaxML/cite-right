@@ -55,8 +55,8 @@ GUARDS = (
     ),
     (
         "action",
-        "Slowly loosen the clamp after drying the latch.",
-        ("After drying the latch, slowly tighten the clamp.",),
+        "Loosen the clamp after carefully drying the latch.",
+        ("After carefully drying the latch, tighten the clamp.",),
     ),
     (
         "wrong-source",

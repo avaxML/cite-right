@@ -6,9 +6,8 @@ import pytest
 
 from cite_right import CitationConfig, SourceDocument, align_citations
 
-from .conftest import requires_rust
+from .conftest import KeywordEmbedder, requires_rust
 from .paraphrase_fixtures import GUARDS
-from .test_citations_embedding_only_edge_cases import KeywordEmbedder
 
 
 @pytest.mark.parametrize(
@@ -73,3 +72,59 @@ def test_new_admission_requires_the_paraphrase_support_check(
     assert citation.components["answer_coverage"] >= config.supported_answer_coverage
     assert citation.components["content_coverage"] < config.min_answer_coverage
     assert span.status == "partial"
+
+
+@pytest.mark.parametrize(
+    "backend", ["python", pytest.param("rust", marks=requires_rust)]
+)
+@pytest.mark.parametrize(
+    ("answer", "passage"),
+    [
+        (
+            "Maria said John left after the inspection.",
+            "After the inspection, Maria said John left.",
+        ),
+        (
+            "Maria asked John to leave after the inspection.",
+            "After the inspection, Maria asked John to leave.",
+        ),
+        (
+            "Set the power to 1 MW on the external supply after reconnecting the cable.",
+            "After reconnecting the cable, set the power to 1 mW on the external supply.",
+        ),
+    ],
+    ids=["reported-action", "requested-action", "case-sensitive-unit"],
+)
+def test_paraphrase_gate_preserves_time_attachment_and_unit_case(
+    backend: Literal["python", "rust"], answer: str, passage: str
+) -> None:
+    [span] = align_citations(
+        answer,
+        [passage],
+        config=CitationConfig(paraphrase_support=True, supported_answer_coverage=1.0),
+        backend=backend,
+    )
+    assert span.citations[0].components["content_coverage"] == pytest.approx(1.0)
+    assert span.status == "partial"
+    assert span.citations[0].components["content_gate"] == 0.0
+
+
+@pytest.mark.parametrize(
+    "backend", ["python", pytest.param("rust", marks=requires_rust)]
+)
+def test_lexical_gate_requires_three_distinct_content_tokens(
+    backend: Literal["python", "rust"],
+) -> None:
+    [span] = align_citations(
+        "Turn it after warming it.",
+        ["After warming it, turn it."],
+        config=CitationConfig(
+            paraphrase_support=True,
+            supported_answer_coverage=1.0,
+            paraphrase_lexical_content_coverage=0.0,
+        ),
+        backend=backend,
+    )
+    assert span.status == "partial"
+    assert span.citations[0].components["content_coverage"] == 1.0
+    assert span.citations[0].components["content_gate"] == 0.0

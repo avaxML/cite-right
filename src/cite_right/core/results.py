@@ -242,7 +242,15 @@ class Citation(BaseModel):
             - ``normalized_alignment``: Alignment score / max possible score.
             - ``matches``: Number of exact token matches.
             - ``answer_coverage``: Fraction of answer tokens matched (0.0-1.0).
-            - ``evidence_coverage``: Fraction of evidence tokens matched.
+            - ``evidence_coverage``: Fraction of tokens matched in the original
+              Smith-Waterman evidence window. A citation promoted by the
+              paraphrase gate can quote the complete candidate passage.
+            - ``content_coverage``: Answer content-token coverage in the candidate
+              passage.
+            - ``content_gate``: 1.0 if the opt-in paraphrase gate determined
+              support, 0.0 for other outcomes with the gate enabled.
+            - ``embedding_similarity``: Answer-to-passage cosine when the
+              paraphrase gate is enabled and an embedder is supplied.
             - ``lexical_score``: IDF-weighted lexical overlap score (0.0-1.0).
             - ``embedding_score``: Cosine similarity from embeddings (-1.0-1.0).
             - ``num_evidence_spans``: Count of evidence spans.

@@ -176,6 +176,8 @@ def _add_gate_components(
     return citation.model_copy(
         update={
             "components": components,
+            "source_id": candidate.source.source_id,
+            "source_index": candidate.source.source_index,
             "char_start": start,
             "char_end": end,
             "evidence": text,
@@ -187,12 +189,58 @@ def _add_gate_components(
 
 
 _RELATION_MARKERS = frozenset({"after", "before", "once", "when", "while"})
-_CLAUSE_JOINERS = _RELATION_MARKERS | {"and", "but", "or"}
+_CLAUSE_JOINERS = _RELATION_MARKERS | {
+    "and",
+    "but",
+    "if",
+    "or",
+    "that",
+    "where",
+    "whether",
+    "which",
+    "who",
+    "whose",
+}
+_DIRECT_ACTIONS = frozenset(
+    {
+        "attach",
+        "close",
+        "disconnect",
+        "dry",
+        "fasten",
+        "fold",
+        "insert",
+        "install",
+        "latch",
+        "lift",
+        "lock",
+        "loosen",
+        "lower",
+        "open",
+        "plug",
+        "press",
+        "raise",
+        "release",
+        "remove",
+        "replace",
+        "rinse",
+        "rotate",
+        "secure",
+        "set",
+        "slide",
+        "switch",
+        "tighten",
+        "turn",
+        "unplug",
+        "wash",
+        "wipe",
+    }
+)
 
 
 def _paraphrase_clause_key(text: str) -> tuple[str, str, str] | None:
     """Canonicalize a single claim and its movable time clause."""
-    body = " ".join(unicodedata.normalize("NFKC", text).casefold().split())
+    body = " ".join(unicodedata.normalize("NFKC", text).split())
     if body.endswith("?"):
         return None
     body = body.rstrip(".!")
@@ -207,16 +255,24 @@ def _paraphrase_clause_key(text: str) -> tuple[str, str, str] | None:
     if marker == "once" and condition.endswith(" is complete"):
         marker = "after"
         condition = condition.removesuffix(" is complete")
-    return marker, condition, claim
+    action, _, target = claim.partition(" ")
+    action = action.casefold()
+    if action not in _DIRECT_ACTIONS:
+        return None
+    return marker, condition, f"{action} {target}"
 
 
 def _split_time_clause(words: list[str]) -> tuple[str, str, str] | None:
-    markers = [index for index, word in enumerate(words) if word in _RELATION_MARKERS]
+    markers = [
+        index
+        for index, word in enumerate(words)
+        if word.casefold() in _RELATION_MARKERS
+    ]
     if len(markers) != 1:
         return None
 
     index = markers[0]
-    marker = words[index]
+    marker = words[index].casefold()
     if index:
         return marker, " ".join(words[index + 1 :]), " ".join(words[:index])
 
@@ -230,7 +286,7 @@ def _is_simple_clause(text: str) -> bool:
     words = text.split()
     return (
         len(words) >= 2
-        and not any(word in _CLAUSE_JOINERS for word in words)
+        and not any(word.casefold() in _CLAUSE_JOINERS for word in words)
         and not any(char in text for char in ",;:.!?")
     )
 
