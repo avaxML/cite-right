@@ -145,10 +145,14 @@ def test_native_builders_admit_reordered_claim(monkeypatch: pytest.MonkeyPatch) 
     assert calls == ["prepared", "legacy"]
 
 
-class PunctuationTokenizer(ProtocolTokenizer):
+class TrailingSymbolTokenizer(ProtocolTokenizer):
+    def __init__(self, symbol: str) -> None:
+        super().__init__()
+        self.symbol = symbol
+
     def tokenize(self, text: str) -> TokenizedText:
         tokens = super().tokenize(text)
-        if not text.endswith("."):
+        if not text.endswith(self.symbol):
             return tokens
         return TokenizedText(
             text=text,
@@ -162,8 +166,20 @@ class PunctuationTokenizer(ProtocolTokenizer):
 )
 def test_punctuation_only_overlap_does_not_admit_citation(backend: str) -> None:
     corpus = PreparedCitationCorpus.from_sources(
-        ["Copper glows."], tokenizer=PunctuationTokenizer()
+        ["Copper glows."], tokenizer=TrailingSymbolTokenizer(".")
     )
     [span] = corpus.align("Zinc bends.", backend=backend)
     assert span.status == "unsupported"
     assert not span.citations
+
+
+@pytest.mark.parametrize(
+    "backend", ["python", pytest.param("rust", marks=requires_rust)]
+)
+def test_arabic_percent_sign_counts_as_content(backend: str) -> None:
+    corpus = PreparedCitationCorpus.from_sources(
+        ["المعدل ١٢٪"], tokenizer=TrailingSymbolTokenizer("٪")
+    )
+    [span] = corpus.align("الخصم ١٢٪", backend=backend)
+    [citation] = span.citations
+    assert citation.components["content_coverage"] == pytest.approx(2 / 3)

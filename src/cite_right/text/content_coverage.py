@@ -142,10 +142,11 @@ def _is_non_content_token(text: str) -> bool:
     normalized = unicodedata.normalize("NFKC", text).strip().casefold()
     if normalized in STOPWORDS:
         return True
-    # Some tokenizers emit punctuation separately. A percent sign carries
-    # quantity information, even though Unicode classifies it as punctuation.
+    # Some tokenizers emit punctuation separately. Ratio signs carry
+    # quantity information, even when Unicode classifies them as punctuation.
     return all(
-        char.isspace() or (char != "%" and unicodedata.category(char).startswith("P"))
+        char.isspace()
+        or (char not in "%٪‰‱" and unicodedata.category(char).startswith("P"))
         for char in normalized
     )
 
