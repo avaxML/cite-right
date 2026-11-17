@@ -1,7 +1,9 @@
 """Tests for contradiction detection in citations."""
 
+import pytest
+
 from cite_right import CitationConfig, align_citations
-from cite_right.contradiction import check_contradiction
+from cite_right.contradiction import check_contradiction, has_entity_swap
 
 
 def test_negation_mismatch_marked_unsupported() -> None:
@@ -171,3 +173,58 @@ def test_check_contradiction_uses_passage_not_truncated_span() -> None:
     assert not check_contradiction("The structure was built over 300 years BC", passage)
     # Number-slot leftover still flags truncated evidence via 'ago'.
     assert check_contradiction(answer, truncated)
+
+
+@pytest.mark.parametrize(
+    ("answer", "source"),
+    [
+        (
+            "Open Settings, choose Privacy, then press Save.",
+            "In the Settings menu select the privacy tab and click Apply to keep your changes.",
+        ),
+        ("Export Options", "Download Options"),
+        ("Report Layout.", "Archive Layout."),
+        ("Step 2: Select Export", "Step 2: Choose Download"),
+        ("Menu: Open Details.", "Menu: View Summary."),
+        ("• Review Queue", "• Inspect Inbox"),
+        ("Use 5 EUR for the allowance.", "Use 5 KG for the allowance."),
+        (
+            "Click Settings, then select advanced.",
+            "Click settings, then select Advanced.",
+        ),
+    ],
+)
+def test_entity_swap_ignores_interface_and_layout(answer: str, source: str) -> None:
+    assert not has_entity_swap(answer, source)
+
+
+@pytest.mark.parametrize(
+    ("answer", "source"),
+    [
+        ("Revenue rose in Paris.", "Revenue rose in London."),
+        ("Maria Lopez approved the budget.", "James Chen approved the budget."),
+        ("Upgrade to the Pro plan.", "Upgrade to the Team plan."),
+        ("Select the Pro Plan.", "Select the Team Plan."),
+        ('Upgrade to the "Pro" plan.', 'Upgrade to the "Team" plan.'),
+    ],
+)
+def test_entity_swap_keeps_role_changes(answer: str, source: str) -> None:
+    assert has_entity_swap(answer, source)
+
+
+@pytest.mark.parametrize(
+    ("answer", "source"),
+    [
+        (
+            "Also, sealed samples may never be stored in cupboards.",
+            "Sealed samples may never be stored in cupboards.",
+        ),
+        (
+            "Luneston to Pineford: Up to 600 kg in 5 working days.",
+            "Luneston to Pineford: up to 600 kg for 385.00 EUR in 5 working days.",
+        ),
+    ],
+)
+def test_issue69_restatements_are_supported(answer: str, source: str) -> None:
+    [span] = align_citations(answer, [source], config=CitationConfig())
+    assert span.status == "supported"

@@ -182,50 +182,122 @@ def extract_numbers(text: str) -> list[str]:
     return [num.replace(",", "") for num in numbers]
 
 
+_NAME_TOKEN = re.compile(r"[^\W_]+(?:[-'’][^\W_]+)*")
+_UNIT_NAMES = frozenset(
+    {"eur", "usd", "gbp", "cad", "aud", "jpy", "kg", "mg", "km", "cm", "mm", "kwh"}
+)
+_CONTROL_VERBS = frozenset(
+    {"click", "choose", "hit", "open", "press", "select", "tap", "toggle"}
+)
+_CONTROL_LABELS = frozenset(
+    {"button", "menu", "option", "options", "panel", "screen", "tab", "toggle"}
+)
+_PRODUCT_DIRECTIVES = _CONTROL_VERBS | {"switch", "upgrade"}
+_PRODUCT_ROLES = frozenset({"edition", "plan", "product", "subscription", "tier"})
+_NAME_PREPOSITIONS = frozenset({"at", "by", "for", "from", "in", "of", "to", "with"})
+_NON_NAME_WORDS = (
+    _SENTENCE_START_STOPWORDS
+    | _UNIT_NAMES
+    | _PRODUCT_DIRECTIVES
+    | _CONTROL_LABELS
+    | {
+        "also",
+        "step",
+        "up",
+        "view",
+    }
+)
+
+
 def has_entity_swap(answer_text: str, evidence_text: str) -> bool:
-    """Check if entities (proper nouns) differ between answer and evidence.
-
-    Args:
-        answer_text: The answer claim text
-        evidence_text: The evidence text from source
-
-    Returns:
-        True if entity swap detected
-    """
-    answer_entities = extract_entities(answer_text)
-    evidence_entities = extract_entities(evidence_text)
-    if not answer_entities or not evidence_entities:
-        return False
-
-    answer_set = set(answer_entities)
-    evidence_set = set(evidence_entities)
-    unique_in_answer = answer_set - evidence_set
-    unique_in_evidence = evidence_set - answer_set
-    return bool(unique_in_answer and unique_in_evidence)
+    """Check for absent names occupying a corresponding role on both sides."""
+    answer_words, answer_names = _find_named_roles(answer_text)
+    evidence_words, evidence_names = _find_named_roles(evidence_text)
+    answer_roles = {
+        role
+        for name, roles in answer_names
+        if name not in evidence_words
+        for role in roles
+    }
+    evidence_roles = {
+        role
+        for name, roles in evidence_names
+        if name not in answer_words
+        for role in roles
+    }
+    return not answer_roles.isdisjoint(evidence_roles)
 
 
 def extract_entities(text: str) -> list[str]:
-    """Extract likely entity names (capitalized words) from text.
+    """Return casefolded mentions that can participate in entity comparison."""
+    _, names = _find_named_roles(text)
+    return [name for name, _ in names]
 
-    Args:
-        text: The text to extract entities from
 
-    Returns:
-        List of capitalized words (lowercased and normalized for comparison)
-    """
-    normalized_text = unicodedata.normalize("NFKC", text)
-    words = normalized_text.split()
-    entities: list[str] = []
+def _find_named_roles(
+    text: str,
+) -> tuple[set[str], list[tuple[str, list[tuple[str, str]]]]]:
+    normalized = unicodedata.normalize("NFKC", text)
+    matches = list(_NAME_TOKEN.finditer(normalized))
+    raw_words = [match.group() for match in matches]
+    words = [word.casefold() for word in raw_words]
+    all_words = set(words)
+    if _is_title_heading(raw_words, words):
+        return all_words, []
 
-    for i, word in enumerate(words):
-        clean_word = re.sub(r"[.,;:!?]+$", "", word)
-        if len(clean_word) < 2 or not clean_word[0].isupper():
+    mentions: list[tuple[str, list[tuple[str, str]]]] = []
+    for index, (raw, word) in enumerate(zip(raw_words, words, strict=True)):
+        if len(raw) < 2 or not raw[0].isupper() or word in _NON_NAME_WORDS:
             continue
-        if i == 0 and clean_word.lower() in _SENTENCE_START_STOPWORDS:
-            continue
-        entities.append(clean_word.lower())
+        previous_end = matches[index - 1].end() if index else 0
+        leading = normalized[previous_end : matches[index].start()]
+        roles = _local_name_roles(words, index, leading)
+        if roles:
+            mentions.append((word, roles))
+    return all_words, mentions
 
-    return entities
+
+def _is_title_heading(raw_words: list[str], words: list[str]) -> bool:
+    if not words or not all(
+        raw[0].isupper() or word in _FUNCTION_WORDS
+        for raw, word in zip(raw_words, words, strict=True)
+    ):
+        return False
+    return not (
+        words[0] in _PRODUCT_DIRECTIVES
+        and any(word in _PRODUCT_ROLES for word in words)
+    )
+
+
+def _local_name_roles(
+    words: list[str], index: int, leading: str
+) -> list[tuple[str, str]]:
+    before = words[index - 1] if index else ""
+    after = words[index + 1] if index + 1 < len(words) else ""
+    if after in _PRODUCT_ROLES:
+        return [("before", after)]
+    if _interface_or_layout(words, index, leading, after):
+        return []
+
+    roles: list[tuple[str, str]] = []
+    if before in _NAME_PREPOSITIONS:
+        roles.append(("after", before))
+    if after.endswith("ly") and index + 2 < len(words):
+        after = words[index + 2]
+    if after and after not in _SENTENCE_START_STOPWORDS:
+        roles.append(("before", after))
+    return roles
+
+
+def _interface_or_layout(
+    words: list[str], index: int, leading: str, after: str
+) -> bool:
+    if any(separator in leading for separator in (":", "•", "\n")):
+        return True
+    if after in _CONTROL_LABELS:
+        return True
+    recent_words = words[max(0, index - 3) : index]
+    return any(word in _CONTROL_VERBS for word in recent_words)
 
 
 def has_temporal_polarity_mismatch(answer_text: str, evidence_text: str) -> bool:

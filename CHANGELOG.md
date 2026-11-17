@@ -2,6 +2,12 @@
 
 All notable changes to cite-right will be documented in this file.
 
+## [Unreleased]
+
+### Fixed
+
+- Entity-swap detection distinguishes names in corresponding roles from UI controls, headings, unit codes, and spelling that differs only in casing. This changes how default settings classify affected restatements. (#69)
+
 ## [0.4.0] - 2026-08-25
 
 ### Added

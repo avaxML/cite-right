@@ -130,7 +130,7 @@ After sorting, the same source with the same evidence-span tuple is collapsed (d
 - Negation mismatch: one side has a negation marker, the other does not.
 - Number mismatch: numbers differ between the answer and the candidate.
 - Leftover n-gram slot: a shared number attaches to different content words in each side.
-- Entity swap: capitalized entities differ between the two sides.
+- Entity swap looks for different names in a corresponding local role. Capitalization on its own is insufficient, including in headings and interface instructions.
 - Temporal / polarity mismatch: BC vs ago, oppose vs support, and similar paired markers.
 
 When any of those fire against the best-ranked citation, the span status is forced to `"partial"`. The status is never forced to `"unsupported"` by contradiction: there is evidence, it just conflicts with the claim. So source "The vaccine is safe and effective." and answer "The vaccine is not safe." resolves to `"partial"` with citations, not to `"unsupported"`. Shared tokens that would otherwise bless a contradictory statement as `"supported"` are downgraded for the same reason.
