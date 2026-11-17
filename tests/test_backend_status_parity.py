@@ -1,5 +1,7 @@
 """Content coverage and admission across the native and Python builders."""
 
+from typing import Any
+
 import pytest
 
 from cite_right import CitationConfig, PreparedCitationCorpus, SourceDocument
@@ -106,3 +108,38 @@ def test_protocol_tokenizer_covers_content_words() -> None:
     assert span.status == "supported"
     [citation] = span.citations
     assert citation.components["content_coverage"] == pytest.approx(2 / 3)
+
+
+@requires_rust
+def test_native_builders_admit_reordered_claim(monkeypatch: pytest.MonkeyPatch) -> None:
+    from cite_right import _core
+
+    prepared = PreparedCitationCorpus.from_sources([MANUAL], config=STRICT)
+    legacy = PreparedCitationCorpus.from_sources(
+        [MANUAL], config=STRICT, tokenizer=ProtocolTokenizer()
+    )
+    prepared_build = _core.PreparedCorpus.build_citations
+    legacy_build = _core.rust_build_citations_fast
+    calls: list[str] = []
+
+    def track_prepared(*args: Any, **kwargs: Any) -> _core.PyCitationResult:
+        result = prepared_build(*args, **kwargs)
+        calls.append("prepared")
+        return result
+
+    def track_legacy(*args: Any, **kwargs: Any) -> str:
+        result = legacy_build(*args, **kwargs)
+        calls.append("legacy")
+        return result
+
+    monkeypatch.setattr(_core.PreparedCorpus, "build_citations", track_prepared)
+    monkeypatch.setattr(_core, "rust_build_citations_fast", track_legacy)
+
+    for corpus in (prepared, legacy):
+        [span] = corpus.align(REORDERED, backend="rust")
+        assert span.status == "partial"
+        [citation] = span.citations
+        assert citation.components["answer_coverage"] == pytest.approx(4 / 11)
+        assert citation.components["content_coverage"] == pytest.approx(5 / 6)
+
+    assert calls == ["prepared", "legacy"]
