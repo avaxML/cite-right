@@ -112,7 +112,7 @@ for result in results:
         print(f"  From {citation.source_id}: {citation.evidence!r}")
 ```
 
-By default, up to `top_k` citations are returned per answer span (default `top_k=3`). Use `max_citations_per_source` (default `2`) to cap how many citations any one source can contribute to a single span. `retrieval_support` is the list of passages the index or embedder selected that did not localize into an exact citation; it is informational and does not change the status.
+By default, up to `top_k` citations are returned per answer span (default `top_k=3`). Use `max_citations_per_source` (default `2`) to cap how many citations any one source can contribute to a single span. `retrieval_support` lists selected passages without a citation and passages from demoted secondary citations. It is informational and does not affect the span status.
 
 ## Handling Multi-Sentence Answers
 
@@ -199,7 +199,15 @@ If an embedder is set on `from_sources`, the corpus also builds an embedding ind
 
 ## What Status Comes From
 
-Status is driven by the top-ranked exact `Citation` and the contradiction check, not by embedding similarity. Concretely, the per-span logic in `_span_status` looks at `citations[0].components["answer_coverage"]`. If that coverage meets `supported_answer_coverage` and `check_contradiction` is clean, the status is `"supported"`. If contradiction fires, the status is `"partial"`, never `"unsupported"` — the evidence exists, it just conflicts with the claim. If coverage is below the threshold, the status is `"partial"`. If `citations` is empty, the status is `"unsupported"`. A high embedding score that never localizes is `retrieval_support`, not a `Citation`, and it does not change the status.
+Status comes from the top-ranked exact citation. Coverage at or above
+`supported_answer_coverage` gives `"supported"` when the contradiction checks
+are clear. Low coverage or a contradiction gives `"partial"`. When no
+citation survives, the status is `"unsupported"`.
+
+Set `CitationConfig(report_possible_source=True)` to see each span's reason
+and which contradiction checks fired. Partial and unsupported spans can also
+return a likely source passage for inspection. See
+[Status diagnostics](../configuration/citation-config.md#status-diagnostics).
 
 ## Next Steps
 

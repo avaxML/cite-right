@@ -20,8 +20,10 @@ from cite_right.core.results import (
 from cite_right.models.base import Embedder
 from cite_right.models.embedding_index import EmbeddingIndex
 from cite_right.text.answer_segmenter import SimpleAnswerSegmenter
+from cite_right.text.content_coverage import STOPWORDS
 from cite_right.text.passage import Passage, generate_passages
 from cite_right.text.segmenter_simple import SimpleSegmenter
+from cite_right.text.term_aliases import TermAliases, build_postings
 from cite_right.text.tokenizer import SimpleTokenizer
 
 if TYPE_CHECKING:
@@ -68,6 +70,7 @@ class NormalizedSource(BaseModel):
     text: str
     base_doc_offset: int
     full_text: str | None
+    declared_doc_char_end: int | None = Field(default=None, exclude=True)
 
 
 class Candidate(BaseModel):
@@ -322,6 +325,17 @@ class PreparedCitationCorpus(BaseModel):
 
             resolved_aligner = _default_aligner(self.config, backend=backend)
 
+        tokenizer, term_aliases = self._alias_context()
+        alias_kwargs: dict[str, object] = {}
+        if term_aliases is not None:
+            alias_kwargs["term_aliases"] = term_aliases
+            from cite_right.core.aligner_rust import RustSmithWatermanAligner
+
+            if isinstance(resolved_aligner, RustSmithWatermanAligner):
+                from cite_right._core import AliasRemap
+
+                alias_kwargs["native_alias_remap"] = AliasRemap(term_aliases.ids)
+
         output: list[SpanCitations] = []
         num_alignments = 0
         alignment_time = 0.0
@@ -332,7 +346,7 @@ class PreparedCitationCorpus(BaseModel):
                 process_answer_span(
                     span_index=span_index,
                     answer_span=answer_span,
-                    tokenizer=self.tokenizer,
+                    tokenizer=tokenizer,
                     candidates=self.candidates,
                     idf=self.idf,
                     embedding_cache=embedding_cache,
@@ -342,6 +356,7 @@ class PreparedCitationCorpus(BaseModel):
                     aligner=resolved_aligner,
                     cfg=self.config,
                     backend=backend,
+                    **alias_kwargs,
                 )
             )
             output.append(span_citations)
@@ -362,6 +377,28 @@ class PreparedCitationCorpus(BaseModel):
             )
 
         return output
+
+    def _alias_context(self) -> tuple[Tokenizer, TermAliases | None]:
+        if not self.config.term_aliases:
+            return self.tokenizer, None
+        if not isinstance(self.tokenizer, SimpleTokenizer):
+            raise ValueError(
+                "term_aliases requires SimpleTokenizer whole-word token IDs"
+            )
+        tokenizer = self.tokenizer.fork()
+        postings = (
+            self.rust_corpus.get_candidate_postings
+            if self.rust_corpus is not None
+            else build_postings(candidate.token_set for candidate in self.candidates)
+        )
+        return tokenizer, TermAliases.compile(
+            self.config.term_aliases,
+            tokenizer,
+            postings,
+            source_idf=self.idf,
+            stopwords=STOPWORDS,
+            candidate_count=len(self.candidates),
+        )
 
 
 def report_empty_metrics(on_metrics: MetricsCallback | None) -> None:
@@ -430,6 +467,7 @@ def normalize_sources(
                     text=item.text,
                     base_doc_offset=item.doc_char_start,
                     full_text=item.document_text,
+                    declared_doc_char_end=item.doc_char_end,
                 )
             )
     return normalized

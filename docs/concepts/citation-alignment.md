@@ -74,7 +74,7 @@ A bare `str` is treated as a `SourceDocument` with an auto-assigned id (`"source
 
 ### SpanCitations
 
-A `SpanCitations` has four fields.
+The default `SpanCitations` result has four fields.
 
 `answer_span` is the `AnswerSpan` this set of citations belongs to. It carries the segment text plus `char_start` / `char_end` in the full answer string, and a `kind` of `"sentence"`, `"clause"`, or `"paragraph"`.
 
@@ -84,11 +84,17 @@ A `SpanCitations` has four fields.
 
 `status` is one of `"supported"`, `"partial"`, or `"unsupported"`. It comes from the best exact `Citation`, never from embedding similarity. A high embedding score that never localizes is a `RetrievalSupport`, not a `Citation`, and it does not flip the status. The model validator on `SpanCitations` enforces that `"unsupported"` requires an empty `citations` list, and that `"supported"` or `"partial"` requires at least one.
 
+Set `CitationConfig(report_possible_source=True)` to include a `status_reason`
+and the names of any `contradiction_checks` that fired. A qualifying partial or
+unsupported result can also include a `possible_source` with the source ID,
+source index, half-open passage offsets, and retrieval score. A related
+passage can be the likely source of a claim it does not establish.
+
 ### Status Rules
 
-`"supported"` means the top-ranked `Citation` has `answer_coverage >= supported_answer_coverage` (default 0.6) and the cheap contradiction check did not fire.
+`"supported"` means the top-ranked citation meets `supported_answer_coverage` (default 0.6) and no contradiction check fired. With `term_aliases` enabled, its `content_coverage` must also equal `1.0`.
 
-`"partial"` means citations exist but the supported threshold was not met, **or** the contradiction check fired. The literal is `"partial"`, never `"partially_supported"`. Contradiction (negation, number mismatch, leftover n-gram slot, entity swap) downgrades to `"partial"`, not `"unsupported"`, because the evidence exists — it just conflicts with the claim.
+`"partial"` means a citation exists and fails one or more of the support checks.
 
 `"unsupported"` means no citation survived filtering. The span may be hallucinated, or it may be content from outside the provided sources. `"unsupported"` is "no localized citation survived," not a high-precision hallucination label.
 
@@ -118,9 +124,12 @@ The rule that ties inputs and outputs together is the evidence equality invarian
 
 ## What Status Comes From
 
-Status is driven by the best exact citation's `answer_coverage` and the contradiction check. Embedding similarity, lexical overlap, and the inverted index are used to **select** candidate passages; they are not what flips a span to `"supported"`. A passage that scores well on embedding but never localizes into a `Citation` lands in `retrieval_support` and does not change the status.
+The [status rules](#status-rules) use coverage from the best exact citation.
+Contradiction checks inspect that citation's full candidate passage.
 
-Concretely: the per-span logic in `_span_status` looks at `citations[0].components["answer_coverage"]`. If that coverage meets `supported_answer_coverage` and `check_contradiction` is clean, the status is `"supported"`. If contradiction fires, the status is `"partial"` (not `"unsupported"`). If coverage is below the threshold, the status is `"partial"`. If `citations` is empty, the status is `"unsupported"`.
+Embedding similarity, lexical overlap, and the inverted index select candidate
+passages. A passage that scores well on embedding but never localizes into a
+`Citation` lands in `retrieval_support` and does not change the status.
 
 ## How Candidates Get Chosen
 

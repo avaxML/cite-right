@@ -25,7 +25,11 @@ sequenceDiagram
 
 `retrieval_support` is a separate channel. A passage that the index or embedder selected but Smith-Waterman could not localize is emitted as `RetrievalSupport`, not as a `Citation`, and it never flips `status`. A span with no localized evidence is `"unsupported"` even when the embedder is confident.
 
-`retrieval_support` also receives secondary citations that are demoted on `"supported"` spans. When a span is `"supported"`, a citation after the best one stays only if it would be `"supported"` on its own (`answer_coverage >= supported_answer_coverage` and no contradiction); otherwise it is moved here, keeping the passage it matched. A passage already present in `retrieval_support` is not added twice.
+On a `"supported"` span, secondary citations that fail the [span support checks](../concepts/how-it-works.md#step-7-ranking-contradiction-check-and-status)
+move to `retrieval_support`. Each demoted entry keeps its matched passage and
+weighted citation score. Demoted entries share the `max_retrieval_support`
+limit with other retrieval entries. An entry already present for the same
+candidate passage takes precedence.
 
 ## Installation And First Run
 
@@ -87,7 +91,16 @@ for result in results:
         print(support.passage_text)
 ```
 
-`retrieval_support` is only emitted when a candidate is selected and has either a positive lexical score or an embedding score at or above `min_embedding_similarity`. Embedding-only extras carry `lexical_score == 0.0`; lexical seeds carry the IDF overlap. This split lets you see at a glance which channel found the passage.
+A selected candidate that produces no citation can contribute to
+`retrieval_support` when it has a positive lexical score or an embedding score
+at or above `min_embedding_similarity`. Embedding-only extras carry
+`lexical_score == 0.0`. Lexical seeds carry the IDF overlap.
+
+With `report_possible_source=True`, a qualifying partial or unsupported span
+can also report the top retrieval passage in `possible_source`. This uses
+the cosine similarity already computed for candidate retrieval. See
+[Status diagnostics](../configuration/citation-config.md#status-diagnostics)
+for score and shared-token requirements.
 
 ## Configuration
 

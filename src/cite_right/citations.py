@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Iterable, Literal, Sequence, TypeAlias
 from pydantic import BaseModel, ConfigDict
 
 if TYPE_CHECKING:
-    from cite_right._core import InvertedIndex
+    from cite_right._core import AliasRemap, InvertedIndex
     from cite_right._core import PreparedCorpus as RustPreparedCorpus
 
 try:
@@ -23,10 +23,6 @@ except ImportError:
         InvertedIndex = object  # type: ignore[misc,assignment]
         RustPreparedCorpus = object  # type: ignore[misc,assignment]
 
-from cite_right.citation_support import (
-    citation_is_supported,
-    demote_unsupported_secondaries,
-)
 from cite_right.core.aligner_py import SmithWatermanAligner
 from cite_right.core.aligner_rust import RustSmithWatermanAligner
 from cite_right.core.citation_config import CitationConfig
@@ -52,10 +48,16 @@ from cite_right.core.results import (
     SourceChunk,
     SourceDocument,
     SpanCitations,
+    StatusReason,
 )
+from cite_right.core.span_support import build_span_citations, citation_status_reason
 from cite_right.models.base import Embedder
 from cite_right.models.embedding_index import EmbeddingIndex
-from cite_right.text.content_coverage import content_token_coverage, stopword_token_ids
+from cite_right.text.content_coverage import (
+    content_token_coverage,
+    query_stopword_token_ids,
+)
+from cite_right.text.term_aliases import TermAliases, remap_ids
 
 CandidateSelection: TypeAlias = list[tuple[int, float, float]]
 """List of (candidate_index, embedding_score, lexical_score) tuples."""
@@ -204,6 +206,8 @@ def _process_answer_span_with_backend(
     aligner: Aligner | None,
     cfg: CitationConfig,
     backend: str,
+    term_aliases: TermAliases | None = None,
+    native_alias_remap: AliasRemap | None = None,
 ) -> tuple[SpanCitations, int, float, float]:
     active_aligner = aligner or _default_aligner(cfg, backend=backend)
     span_result = _process_answer_span(
@@ -218,6 +222,8 @@ def _process_answer_span_with_backend(
         rust_corpus=rust_corpus,
         aligner=active_aligner,
         cfg=cfg,
+        term_aliases=term_aliases,
+        native_alias_remap=native_alias_remap,
     )
     return (
         span_result.span_citations,
@@ -240,6 +246,8 @@ def _process_answer_span(
     rust_corpus: RustPreparedCorpus | None,
     aligner: Aligner,
     cfg: CitationConfig,
+    term_aliases: TermAliases | None = None,
+    native_alias_remap: AliasRemap | None = None,
 ) -> _SpanProcessingResult:
     """Process a single answer span and return citations with timing info."""
     embedding_time = 0.0
@@ -248,17 +256,24 @@ def _process_answer_span(
 
     answer_tokenized = tokenizer.tokenize(answer_span.text)
     answer_tokens = answer_tokenized.token_ids
+    stopword_ids = query_stopword_token_ids(
+        answer_tokenized.text, answer_tokens, answer_tokenized.token_spans, term_aliases
+    )
+    alias_ids = term_aliases.ids if term_aliases else None
+    native_aliases = (
+        {} if native_alias_remap is None else {"alias_remap": native_alias_remap}
+    )
     citations: list[Citation] = []
     retrieval_support: list[RetrievalSupport] = []
+    selected: CandidateSelection = []
+    uses_alias_retrieval = False
 
     if answer_tokens and candidates:
         answer_set = frozenset(answer_tokens)
 
-        # Skip lexical prefilter when rust_corpus is available (compute on-demand if needed)
-        if rust_corpus is not None and HAS_RUST_CORE:
-            lexical_scores: LexicalScores = {}
-        else:
-            lexical_scores = _lexical_prefilter(answer_set, candidates, idf)
+        lexical_scores, uses_alias_retrieval = _initial_lexical_scores(
+            answer_tokens, answer_set, candidates, idf, rust_corpus, cfg, term_aliases
+        )
 
         embed_start = time.perf_counter()
         query_vector: list[float] | None = None
@@ -277,6 +292,7 @@ def _process_answer_span(
             rust_corpus=rust_corpus,
             query_vector=query_vector,
             cfg=cfg,
+            uses_alias_retrieval=uses_alias_retrieval,
         )
 
         align_start = time.perf_counter()
@@ -378,11 +394,6 @@ def _process_answer_span(
                     cfg.multi_span_max_spans,
                 )
 
-                vocab = getattr(tokenizer, "_vocab", None)
-                query_stopword_ids = list(
-                    stopword_token_ids(vocab if isinstance(vocab, dict) else None)
-                )
-
                 # Call Rust PreparedCorpus.build_citations
                 result = rust_corpus.build_citations(  # type: ignore[attr-defined]
                     answer_tokens,
@@ -396,7 +407,8 @@ def _process_answer_span(
                     aligner.match_score,  # type: ignore[attr-defined]
                     aligner.mismatch_score,  # type: ignore[attr-defined]
                     aligner.gap_score,  # type: ignore[attr-defined]
-                    query_stopword_ids,
+                    list(stopword_ids),
+                    **native_aliases,
                 )
 
                 num_alignments = result.num_alignments  # type: ignore[attr-defined]
@@ -453,7 +465,7 @@ def _process_answer_span(
             and hasattr(_core, "rust_build_citations_fast")
         )
 
-        if use_rust_fast_path:
+        if use_rust_fast_path and _core is not None:
             try:
                 import json
 
@@ -524,7 +536,7 @@ def _process_answer_span(
                 )
 
                 # Call Rust
-                result_json = _core.rust_build_citations_fast(  # type: ignore[attr-defined]
+                result_json = _core.rust_build_citations_fast(
                     answer_tokens,
                     candidates_data,
                     candidate_indices,
@@ -535,6 +547,8 @@ def _process_answer_span(
                     aligner.match_score,  # type: ignore[attr-defined]
                     aligner.mismatch_score,  # type: ignore[attr-defined]
                     aligner.gap_score,  # type: ignore[attr-defined]
+                    query_stopword_ids=list(stopword_ids),
+                    **native_aliases,
                 )
 
                 result = json.loads(result_json)
@@ -587,60 +601,20 @@ def _process_answer_span(
                 use_rust_fast_path = False
 
         if not use_corpus_fast_path and not use_rust_fast_path:
-            align_batch = getattr(aligner, "align_batch", None)
-            if align_batch is None:
-                alignments = [
-                    aligner.align(answer_tokens, token_ids)
-                    for token_ids in candidate_token_ids
-                ]
-            else:
-                alignments = align_batch(answer_tokens, candidate_token_ids)
-
-            trusted_alignment_match_counts = type(aligner) in {
-                SmithWatermanAligner,
-                RustSmithWatermanAligner,
-            }
-            for (
-                candidate_index,
-                embed_score,
-                lexical_score_orig,
-            ), candidate, alignment in zip(
+            python_citations, python_support = _build_python_citations(
                 selected,
                 selected_candidates,
-                alignments,
-                strict=True,
-            ):
-                # Use candidate from selected_candidates (may have token_ids/token_spans populated)
-                # Only re-fetch if needed for source context, not token data
-                num_alignments += 1
-
-                # Use updated lexical score if computed on-demand
-                lexical_score = lexical_scores.get(candidate_index, lexical_score_orig)
-
-                citation = _build_exact_citation(
-                    candidate=candidate,
-                    alignment=alignment,
-                    answer_tokens=answer_tokens,
-                    trusted_alignment_match_counts=trusted_alignment_match_counts,
-                    embed_score=embed_score,
-                    lexical_score=lexical_score,
-                    cfg=cfg,
-                    tokenizer=tokenizer,
-                )
-                if citation is not None:
-                    citations.append(citation)
-                    continue
-
-                support = _build_retrieval_support_for_candidate(
-                    candidate=candidate,
-                    alignment=alignment,
-                    answer_tokens=answer_tokens,
-                    embed_score=embed_score,
-                    lexical_score=lexical_score,
-                    cfg=cfg,
-                )
-                if support is not None:
-                    retrieval_support.append(support)
+                candidate_token_ids,
+                answer_tokens=answer_tokens,
+                stopword_ids=stopword_ids,
+                alias_ids=alias_ids,
+                lexical_scores=lexical_scores,
+                aligner=aligner,
+                cfg=cfg,
+            )
+            citations.extend(python_citations)
+            retrieval_support.extend(python_support)
+            num_alignments += len(selected)
 
         citations, retrieval_support, extra_alignments = (
             _retry_structured_field_citations(
@@ -653,40 +627,125 @@ def _process_answer_span(
                 cfg=cfg,
                 aligner=aligner,
                 lexical_scores=lexical_scores,
+                term_aliases=term_aliases,
+                alias_ids=alias_ids,
             )
         )
         num_alignments += extra_alignments
         alignment_time = (time.perf_counter() - align_start) * 1000
 
-    citations = _rank_and_limit_citations(citations, cfg)
-    status = _span_status(
-        citations,
-        cfg,
-        answer_span.text,
-        candidates=candidates,
-    )
-    citations, retrieval_support = demote_unsupported_secondaries(
+    citations, reason, checks = _classify_and_limit_citations(
         citations,
         retrieval_support,
-        status=status,
-        cfg=cfg,
-        answer_text=answer_span.text,
-        candidates=candidates,
-        build_support=_build_retrieval_support,
+        answer_span.text,
+        candidates,
+        cfg,
+        term_aliases,
     )
+    if term_aliases:
+        citations = [
+            citation.model_copy(
+                update={"components": dict(sorted(citation.components.items()))}
+            )
+            for citation in citations
+        ]
     retrieval_support = _rank_retrieval_support(retrieval_support, cfg)
 
     return _SpanProcessingResult(
-        span_citations=SpanCitations(
+        span_citations=build_span_citations(
             answer_span=answer_span,
+            answer_tokens=answer_tokenized,
+            reason=reason,
+            checks=checks,
             citations=citations,
             retrieval_support=retrieval_support,
-            status=status,
+            candidates=candidates,
+            candidate_ranking=selected,
+            idf=idf,
+            rust_corpus=rust_corpus,
+            config=cfg,
+            uses_alias_retrieval=uses_alias_retrieval,
         ),
         num_alignments=num_alignments,
         embedding_time_ms=embedding_time,
         alignment_time_ms=alignment_time,
     )
+
+
+def _build_python_citations(
+    selected: CandidateSelection,
+    selected_candidates: list[Candidate],
+    candidate_token_ids: list[list[int]],
+    *,
+    answer_tokens: list[int],
+    stopword_ids: frozenset[int],
+    alias_ids: dict[int, int] | None,
+    lexical_scores: LexicalScores,
+    aligner: Aligner,
+    cfg: CitationConfig,
+) -> tuple[list[Citation], list[RetrievalSupport]]:
+    citations: list[Citation] = []
+    retrieval_support: list[RetrievalSupport] = []
+    alignment_answer = remap_ids(answer_tokens, alias_ids)
+    alignment_passages = (
+        [remap_ids(tokens, alias_ids) for tokens in candidate_token_ids]
+        if alias_ids
+        else candidate_token_ids
+    )
+    align_batch = getattr(aligner, "align_batch", None)
+    if align_batch is None:
+        alignments = [
+            aligner.align(alignment_answer, token_ids)
+            for token_ids in alignment_passages
+        ]
+    else:
+        alignments = align_batch(alignment_answer, alignment_passages)
+
+    trusted_alignment_match_counts = type(aligner) in {
+        SmithWatermanAligner,
+        RustSmithWatermanAligner,
+    }
+    for (
+        candidate_index,
+        embed_score,
+        lexical_score_orig,
+    ), candidate, alignment, aligned_tokens in zip(
+        selected,
+        selected_candidates,
+        alignments,
+        alignment_passages,
+        strict=True,
+    ):
+        lexical_score = lexical_scores.get(candidate_index, lexical_score_orig)
+
+        citation = _build_exact_citation(
+            candidate=candidate,
+            alignment=alignment,
+            answer_tokens=answer_tokens,
+            trusted_alignment_match_counts=trusted_alignment_match_counts,
+            embed_score=embed_score,
+            lexical_score=lexical_score,
+            cfg=cfg,
+            stopword_ids=stopword_ids,
+            alias_ids=alias_ids,
+            alignment_answer=alignment_answer,
+            alignment_passage=aligned_tokens,
+        )
+        if citation is not None:
+            citations.append(citation)
+            continue
+
+        support = _build_retrieval_support_for_candidate(
+            candidate=candidate,
+            alignment=alignment,
+            answer_tokens=answer_tokens,
+            embed_score=embed_score,
+            lexical_score=lexical_score,
+            cfg=cfg,
+        )
+        if support is not None:
+            retrieval_support.append(support)
+    return citations, retrieval_support
 
 
 def _build_exact_citation(
@@ -698,13 +757,17 @@ def _build_exact_citation(
     embed_score: float,
     lexical_score: float,
     cfg: CitationConfig,
-    tokenizer: Tokenizer,
+    stopword_ids: frozenset[int],
+    alignment_answer: list[int],
+    alignment_passage: list[int],
+    alias_ids: dict[int, int] | None,
 ) -> Citation | None:
     """Build an exact citation when alignment localizes evidence precisely."""
     metrics = _compute_alignment_metrics(alignment, answer_tokens, cfg)
-    passage_coverage = _passage_content_coverage(
-        tokenizer, answer_tokens, candidate.token_ids
+    passage_coverage = content_token_coverage(
+        answer_tokens, candidate.token_ids, stopword_ids, alias_ids
     )
+    metrics["content_coverage"] = passage_coverage
     final_score = _compute_final_score(metrics, lexical_score, embed_score, cfg)
     if not _should_use_alignment(alignment, metrics, cfg, passage_coverage):
         return None
@@ -712,8 +775,8 @@ def _build_exact_citation(
         trusted_alignment_match_counts and alignment.matches == len(answer_tokens)
     ):
         if not _answer_tokens_match_evidence(
-            answer_tokens=answer_tokens,
-            evidence_tokens=candidate.token_ids[
+            answer_tokens=alignment_answer,
+            evidence_tokens=alignment_passage[
                 alignment.token_start : alignment.token_end
             ],
         ):
@@ -776,22 +839,6 @@ def _compute_alignment_metrics(
         "evidence_coverage": matches / evidence_len,
         "normalized_alignment": alignment.score / max(1, cfg.match_score * answer_len),
     }
-
-
-def _passage_content_coverage(
-    tokenizer: Tokenizer,
-    answer_tokens: Sequence[int],
-    passage_tokens: Sequence[int],
-) -> float:
-    """Content-word overlap between the answer and the aligned candidate passage."""
-    vocab = getattr(tokenizer, "_vocab", None)
-    if not isinstance(vocab, dict):
-        return 0.0
-    return content_token_coverage(
-        answer_tokens,
-        passage_tokens,
-        stopword_token_ids(vocab),
-    )
 
 
 def _should_use_alignment(
@@ -904,6 +951,7 @@ def _build_citation(
             "normalized_alignment": metrics["normalized_alignment"],
             "matches": metrics["matches"],
             "answer_coverage": metrics["answer_coverage"],
+            "content_coverage": metrics["content_coverage"],
             "evidence_coverage": metrics["evidence_coverage"],
             "lexical_score": float(lexical_score),
             "embedding_score": float(embed_score),
@@ -1060,6 +1108,8 @@ def _retry_structured_field_citations(
     cfg: CitationConfig,
     aligner: Aligner,
     lexical_scores: LexicalScores,
+    term_aliases: TermAliases | None,
+    alias_ids: dict[int, int] | None,
 ) -> tuple[list[Citation], list[RetrievalSupport], int]:
     """Re-run Smith-Waterman with gap_score=0 on structured-field misses.
 
@@ -1070,9 +1120,15 @@ def _retry_structured_field_citations(
     if reorder_aligner is None:
         return citations, retrieval_support, 0
 
-    answer_tokens = tokenizer.tokenize(_split_range_dashes(answer_span_text)).token_ids
+    answer_tokenized = tokenizer.tokenize(_split_range_dashes(answer_span_text))
+    answer_tokens = answer_tokenized.token_ids
+    stopword_ids = query_stopword_token_ids(
+        answer_tokenized.text, answer_tokens, answer_tokenized.token_spans, term_aliases
+    )
     if not answer_tokens:
         return citations, retrieval_support, 0
+
+    alignment_answer = remap_ids(answer_tokens, alias_ids)
 
     cited = {citation.candidate_index for citation in citations}
     extra_alignments = 0
@@ -1089,7 +1145,8 @@ def _retry_structured_field_citations(
         candidate = _python_tokens_for_candidate(candidate, tokenizer)
         if not candidate.token_ids:
             continue
-        alignment = reorder_aligner.align(answer_tokens, candidate.token_ids)
+        alignment_passage = remap_ids(candidate.token_ids, alias_ids)
+        alignment = reorder_aligner.align(alignment_answer, alignment_passage)
         extra_alignments += 1
         citation = _build_exact_citation(
             candidate=candidate,
@@ -1099,7 +1156,10 @@ def _retry_structured_field_citations(
             embed_score=embed_score,
             lexical_score=lexical_scores.get(candidate_index, lexical_score_orig),
             cfg=cfg,
-            tokenizer=tokenizer,
+            stopword_ids=stopword_ids,
+            alias_ids=alias_ids,
+            alignment_answer=alignment_answer,
+            alignment_passage=alignment_passage,
         )
         if citation is not None:
             citations.append(citation)
@@ -1145,6 +1205,24 @@ def _default_aligner(cfg: CitationConfig, *, backend: str) -> Aligner:
             gap_score=cfg.gap_score,
             return_match_blocks=cfg.multi_span_evidence,
         )
+
+
+def _initial_lexical_scores(
+    answer_tokens: list[int],
+    answer_set: frozenset[int],
+    candidates: list[Candidate],
+    idf: IdfWeights,
+    rust_corpus: RustPreparedCorpus | None,
+    cfg: CitationConfig,
+    term_aliases: TermAliases | None,
+) -> tuple[LexicalScores, bool]:
+    if term_aliases is not None and cfg.max_candidates_lexical > 0:
+        alias_scores = term_aliases.lexical_scores(answer_tokens, idf)
+        if alias_scores is not None:
+            return alias_scores, True
+    if rust_corpus is not None and HAS_RUST_CORE:
+        return {}, False
+    return _lexical_prefilter(answer_set, candidates, idf), False
 
 
 def _fill_rust_lexical_scores(
@@ -1201,11 +1279,14 @@ def _select_candidates(
     rust_corpus: RustPreparedCorpus | None,
     query_vector: list[float] | None,
     cfg: CitationConfig,
+    uses_alias_retrieval: bool = False,
 ) -> CandidateSelection:
     selected: dict[int, tuple[float, float]] = {}
 
     # Use rust_corpus index for seeding if available, else inverted_index
-    if rust_corpus is not None and HAS_RUST_CORE:
+    if uses_alias_retrieval:
+        _add_lexical_candidates(selected, candidates, lexical_scores, cfg)
+    elif rust_corpus is not None and HAS_RUST_CORE:
         _add_index_candidates_from_corpus(
             selected, answer_tokens, rust_corpus, lexical_scores, cfg
         )
@@ -1532,11 +1613,71 @@ def _token_span_to_char_span(
     return span_start, span_end
 
 
-def _rank_and_limit_citations(
+def _classify_and_limit_citations(
+    citations: list[Citation],
+    retrieval_support: list[RetrievalSupport],
+    answer_text: str,
+    candidates: Sequence[Candidate],
+    cfg: CitationConfig,
+    term_aliases: TermAliases | None,
+) -> tuple[list[Citation], StatusReason, list[str] | None]:
+    citations.sort(key=lambda citation: _citation_sort_key(citation, cfg))
+    # The quotas always admit the highest-ranked citation when per-source citations
+    # are enabled. Classify that citation before filtering any of the secondaries.
+    primary = citations[0] if citations and cfg.max_citations_per_source > 0 else None
+    reason, checks = citation_status_reason(
+        answer_text,
+        primary,
+        candidates,
+        cfg,
+        term_aliases,
+        report_checks=cfg.report_possible_source,
+    )
+    demoted: list[Citation] = []
+    if primary is not None and reason == "supported":
+        supported = [primary]
+        for citation in citations[1:]:
+            secondary_reason, _ = citation_status_reason(
+                answer_text, citation, candidates, cfg, term_aliases
+            )
+            if secondary_reason == "supported":
+                supported.append(citation)
+            else:
+                demoted.append(citation)
+        citations = supported
+
+    citations = _limit_ranked_citations(citations, cfg)
+    if demoted and cfg.max_retrieval_support > 0:
+        _append_demoted_support(retrieval_support, demoted, citations, candidates)
+    return citations, reason, checks
+
+
+def _append_demoted_support(
+    retrieval_support: list[RetrievalSupport],
+    demoted: list[Citation],
+    citations: list[Citation],
+    candidates: Sequence[Candidate],
+) -> None:
+    seen = {entry.candidate_index for entry in retrieval_support}
+    seen.update(citation.candidate_index for citation in citations)
+    for citation in demoted:
+        index = citation.candidate_index
+        if index in seen:
+            continue
+        seen.add(index)
+        retrieval_support.append(
+            _build_retrieval_support(
+                candidates[index],
+                citation.score,
+                float(citation.components.get("lexical_score", 0.0)),
+                float(citation.components.get("embedding_score", 0.0)),
+            )
+        )
+
+
+def _limit_ranked_citations(
     citations: list[Citation], cfg: CitationConfig
 ) -> list[Citation]:
-    citations.sort(key=lambda c: _citation_sort_key(c, cfg))
-
     seen: set[tuple[str, tuple[tuple[int, int], ...]]] = set()
     per_source: dict[str, int] = {}
     output: list[Citation] = []
@@ -1566,7 +1707,7 @@ def _rank_retrieval_support(
     retrieval_support: list[RetrievalSupport],
     cfg: CitationConfig,
 ) -> list[RetrievalSupport]:
-    """Rank retrieval-only support entries by retrieval signal only."""
+    """Rank retrieval-only support entries by their weighted score."""
     retrieval_support.sort(
         key=lambda support: (
             -support.retrieval_score,
@@ -1599,18 +1740,3 @@ def _citation_sort_key(
         citation.source_index,
         citation.candidate_index,
     )
-
-
-def _span_status(
-    citations: Sequence[Citation],
-    cfg: CitationConfig,
-    answer_text: str | None = None,
-    candidates: Sequence[Candidate] | None = None,
-) -> Literal["supported", "partial", "unsupported"]:
-    if not citations:
-        return "unsupported"
-    # A contradicted best citation downgrades to partial (not unsupported):
-    # we have evidence, it just contradicts the claim.
-    if citation_is_supported(citations[0], cfg, answer_text, candidates):
-        return "supported"
-    return "partial"

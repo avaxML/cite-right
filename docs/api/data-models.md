@@ -99,6 +99,9 @@ class SpanCitations(BaseModel):
     citations: list[Citation]
     retrieval_support: list[RetrievalSupport] = []
     status: Literal["supported", "partial", "unsupported"]
+    status_reason: StatusReason | None = None
+    contradiction_checks: list[str] | None = None
+    possible_source: PossibleSourceMatch | None = None
 ```
 
 **Fields:**
@@ -107,9 +110,28 @@ class SpanCitations(BaseModel):
 
 **citations** (`list[Citation]`): Ranked list of exact localized citations, best match first.
 
-**retrieval_support** (`list[RetrievalSupport]`): Retrieval-only support signals for passages selected during lexical and/or embedding candidate search that did not produce an exact localized citation.
+**retrieval_support** (`list[RetrievalSupport]`): Selected passages without a citation and passages from demoted secondary citations.
 
-**status** (`Literal["supported", "partial", "unsupported"]`): Overall support level based on exact citation answer coverage. Retrieval support does not change status.
+**status** (`Literal["supported", "partial", "unsupported"]`): Overall support level based on the best citation's coverage and contradiction checks. Retrieval support does not change status.
+
+With `CitationConfig(report_possible_source=True)`, `status_reason` is
+`"supported"`, `"below_coverage"`, `"contradiction"`, or `"no_candidate"`.
+`"below_coverage"` covers both the answer coverage threshold and the full
+content coverage requirement when aliases are enabled.
+`contradiction_checks` contains the names of all checks that fired. A
+qualifying partial or unsupported span can also include `possible_source`.
+Serialization omits diagnostic fields whose values are `None`.
+
+### PossibleSourceMatch
+
+`source_id` and `source_index` identify the candidate's source.
+`char_start` and `char_end` locate the candidate passage with half-open
+document-relative offsets. A match in a `SourceChunk` fits its declared range.
+`score` is the greater of the candidate's lexical overlap and embedding
+similarity.
+
+The match identifies the passage most likely to be the source. The
+passage can be related to a claim without establishing it.
 
 ### AnswerSpan
 
@@ -212,7 +234,7 @@ exact_spans = citation.evidence_spans
 
 ### RetrievalSupport
 
-Represents a retrieval-only support signal without localized evidence spans.
+Represents a candidate passage returned as retrieval support.
 
 **Location:** `src/cite_right/core/results.py`
 
@@ -231,7 +253,9 @@ class RetrievalSupport(BaseModel):
 
 **Fields:**
 
-**retrieval_score** (`float`): Combined retrieval score used for ranking support passages.
+**retrieval_score** (`float`): Weighted score used for ranking support passages.
+When a secondary citation is demoted, this field carries its original
+`Citation.score`.
 
 **source_id** (`str`): Identifier of the source document.
 
@@ -249,7 +273,9 @@ class RetrievalSupport(BaseModel):
 
 **lexical_score** (`float`): Lexical overlap score from candidate selection.
 
-Retrieval support is returned when a passage is selected during candidate search but does not produce an exact localized citation. Use it for semantic recall and UI hints, not as proof of exact grounding.
+Retrieval support includes selected passages that do not produce a citation
+and secondary citations that fail the support checks on a `"supported"` span.
+Use these passages for semantic recall and UI hints.
 
 ### EvidenceSpan
 

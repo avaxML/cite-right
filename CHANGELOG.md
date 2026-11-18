@@ -4,8 +4,35 @@ All notable changes to cite-right will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Opt-in per-span status reasons and contradiction check names. With
+  `report_possible_source=True`, a partial or unsupported span can also
+  report the likely source passage and its retrieval score. The hint score
+  is stable when reusing a prepared corpus. (#75)
+- Citations include `content_coverage` in `Citation.components` by default. (#84)
+- `CitationConfig.term_aliases` lets callers declare equivalent single words
+  for citation retrieval and alignment on Python and Rust. When aliases are
+  enabled, a cited span with incomplete content coverage stays `partial`
+  even if it meets the answer coverage threshold. (#85)
+
 ### Fixed
-- On a `supported` span, secondary citations that would not be `supported` on their own (`answer_coverage` below `supported_answer_coverage`, or a contradicting passage) now move to `retrieval_support` instead of being returned as citations, so the default `top_k=3` no longer attaches unrelated documents to supported sentences. The best citation is always kept and `partial` spans are unchanged. (#67)
+
+- Python and Rust use the same content coverage rule to admit citations,
+  including with custom tokenizers that implement the public tokenization
+  interface. Reordered text can move from `unsupported` to `partial` or
+  `supported` when content coverage meets the admission threshold and the span
+  passes the corresponding support checks. Punctuation-only overlap no longer
+  produces citations and can leave a span `unsupported`. (#84)
+- Reversing `before` and `after` between matching clauses now downgrades a span
+  from `supported` to `partial` and reports a contradiction when diagnostics
+  are enabled. (#84)
+- On a `supported` span, secondary citations now have to pass the same support
+  checks as the primary citation, including full content coverage when term
+  aliases are enabled. Secondaries that fail move to `retrieval_support` before
+  the per-span and per-source citation limits are applied, so a lower-ranked
+  supporting citation can fill the available slot. The primary citation and
+  span status stay the same. (#67)
 
 ## [0.4.0] - 2026-08-25
 
