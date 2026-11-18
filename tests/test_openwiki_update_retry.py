@@ -35,12 +35,8 @@ def _check(tmp_path: Path, text: str) -> subprocess.CompletedProcess[str]:
 @pytest.mark.parametrize(
     "text",
     [
-        "Cannot read properties of undefined (reading '0')\n",
-        "TypeError: Cannot read properties of undefined (reading '0')\n",
-        "Cannot read property '0' of undefined\n",
-        'Cannot read properties of undefined (reading "0")\n',
-        "undefined is not an object (evaluating 'choices[0]')\n",
-        "undefined is not an object (evaluating 'content[0]')\n",
+        "undefined is not an object (evaluating 'completion.choices[0]')\n",
+        'TypeError: undefined is not an object (evaluating "response.choices[0].message.content[0]")\n',
         (
             "Provider returned error | metadata:"
             ' {"retry_after_seconds":5}\n'
@@ -58,12 +54,25 @@ def test_retryable_logs(tmp_path: Path, text: str) -> None:
 @pytest.mark.parametrize(
     "text",
     [
-        "ENOENT: no such file or directory, open 'openwiki/INSTRUCTIONS.md'\n",
+        "ENOENT: no such file or directory, open 'example-input.txt'\n",
         "SyntaxError: Unexpected token\n",
         "Error: 500 Internal Server Error\n",
+        pytest.param(
+            "TypeError: Cannot read properties of undefined (reading '0')\n"
+            "    at renderCards (example-renderer.js:12:4)\n",
+            id="unrelated-render-crash",
+        ),
+        "Cannot read properties of undefined (reading '0')\n",
+        'Cannot read properties of undefined (reading "0")\n',
+        "Cannot read property '0' of undefined\n",
+        "Completion schema includes choices[0]\n"
+        "TypeError: Cannot read properties of undefined (reading '0')\n",
         "Cannot read properties of undefined (reading 'config')\n",
         "Cannot read properties of undefined (reading 'length')\n",
         "undefined is not an object (evaluating 'config.model')\n",
+        "undefined is not an object (evaluating 'choices[0]')\n",
+        "undefined is not an object (evaluating 'response.choices[0]')\n",
+        "undefined is not an object (evaluating 'content[0]')\n",
         "",
     ],
 )

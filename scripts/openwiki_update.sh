@@ -5,10 +5,10 @@
 # by Artificial Analysis coding_index when present, else context_length, then
 # created. This wrapper exports OPENWIKI_MODEL_ID to the first id, then retries
 # the next on 429/402/rate-limit, 403/404, agentic-harness blocks,
-# model-unavailable errors, and empty/malformed completions that crash
-# OpenWiki with "Cannot read properties of undefined (reading '0')". On 429,
-# sleep retry_after_seconds or until X-RateLimit-Reset (cap 90s) before the
-# next model. Do not pin a paid model such as z-ai/glm-5.2 (without :free).
+# model-unavailable errors, and TypeErrors that identify an indexed chat
+# completion field. On 429, sleep retry_after_seconds or until
+# X-RateLimit-Reset (cap 90s) before the next model. Do not pin a paid model
+# such as z-ai/glm-5.2 (without :free).
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -17,12 +17,13 @@ PICKER="${SCRIPT_DIR}/openwiki_pick_model.py"
 MAX_RATE_LIMIT_SLEEP=90
 
 # Provider errors that mean "this free model is unusable right now, try the next".
-# Includes empty/malformed chat completions that make OpenWiki throw
-# TypeError on choices[0] / content[0]. Other unexpected crashes still fail.
+# A bare "reading '0'" can come from any JavaScript code. Require the failing
+# expression to name the chat completion's choices field.
 is_retryable_provider_error() {
   local log_file="$1"
   grep -Eiq \
-    'HTTP[/ ]*(429|402|403|404)([^0-9]|$)|Error:[[:space:]]*(429|402|403|404)([^0-9]|$)|status["'\''[:space:]=]+(429|402|403|404)([^0-9]|$)|(429|402|403|404)[[:space:]]+(Forbidden|Not Found|Too Many|Payment Required)|rate[-_ ]?limit|too many requests|free-models-per-min|payment required|insufficient.?credit|quota.?exceeded|only available on agentic harnesses|model not found|no endpoints|\bunavailable\b|Cannot read properties of undefined \(reading ['\''"]0['\''"]\)|Cannot read property ['\''"]0['\''"] of undefined|undefined is not (an object|iterable).*(choices\[0\]|content\[0\])' \
+    -e 'HTTP[/ ]*(429|402|403|404)([^0-9]|$)|Error:[[:space:]]*(429|402|403|404)([^0-9]|$)|status["'\''[:space:]=]+(429|402|403|404)([^0-9]|$)|(429|402|403|404)[[:space:]]+(Forbidden|Not Found|Too Many|Payment Required)|rate[-_ ]?limit|too many requests|free-models-per-min|payment required|insufficient.?credit|quota.?exceeded|only available on agentic harnesses|model not found|no endpoints|\bunavailable\b' \
+    -e '^[[:space:]]*(TypeError: )?undefined is not (an object|iterable) \(evaluating ['\''"](completion\.choices\[0\]|((completion|response)\.)?choices\[0\]\.message\.content\[0\])['\''"]\)[[:space:]]*$' \
     "${log_file}"
 }
 
