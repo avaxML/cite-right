@@ -47,7 +47,7 @@ MANUAL = "Before packing the sleeve, rinse the tray and dry the latch."
     [
         pytest.param(REORDERED, [MANUAL], STRICT, id="below-sequential-minimum"),
         pytest.param(
-            "And the hinge opens safely.",
+            "And the hinge opens.",
             ["The hinge opens."],
             CitationConfig(),
             id="query-only-stopword",
@@ -106,10 +106,47 @@ def test_protocol_tokenizer_covers_content_words() -> None:
     corpus = PreparedCitationCorpus.from_sources(
         ["The hinge opens."], tokenizer=ProtocolTokenizer()
     )
-    [span] = corpus.align("And the hinge opens safely.", backend="python")
+    [span] = corpus.align("And the hinge opens.", backend="python")
     assert span.status == "supported"
     [citation] = span.citations
-    assert citation.components["content_coverage"] == pytest.approx(2 / 3)
+    assert citation.components["content_coverage"] == 1.0
+
+
+@pytest.mark.parametrize("comma", ["", ","])
+@pytest.mark.parametrize(
+    ("backend", "use_rust", "min_answer_coverage"),
+    [
+        ("python", False, 0.2),
+        pytest.param("rust", False, 0.95, marks=requires_rust, id="legacy-native"),
+        pytest.param("rust", True, 0.95, marks=requires_rust, id="prepared-native"),
+    ],
+)
+def test_reversed_temporal_claim_is_partial(
+    backend: str, use_rust: bool, min_answer_coverage: float, comma: str
+) -> None:
+    config = CitationConfig(
+        min_answer_coverage=min_answer_coverage, report_possible_source=True
+    )
+    corpus = PreparedCitationCorpus.from_sources(
+        ["The brass rotor spins before the steel shaft stops."],
+        config=config,
+        tokenizer=None if use_rust else ProtocolTokenizer(),
+        use_rust=use_rust,
+    )
+    [reversed_claim] = corpus.align(
+        f"The brass rotor spins{comma} after the steel shaft stops.", backend=backend
+    )
+    assert reversed_claim.status == "partial"
+    assert reversed_claim.status_reason == "contradiction"
+    assert reversed_claim.contradiction_checks == ["has_temporal_polarity_mismatch"]
+    # The stricter threshold still applies to lexical source hints.
+    assert (reversed_claim.possible_source is not None) == (min_answer_coverage == 0.2)
+
+    [equivalent_claim] = corpus.align(
+        "The steel shaft stops after the brass rotor spins.", backend=backend
+    )
+    assert equivalent_claim.citations
+    assert equivalent_claim.contradiction_checks == []
 
 
 @requires_rust
@@ -169,7 +206,7 @@ class TrailingSymbolTokenizer(ProtocolTokenizer):
 @pytest.mark.parametrize(
     "backend", ["python", pytest.param("rust", marks=requires_rust)]
 )
-@pytest.mark.parametrize("symbol", [".", "⁉️", "、︀"])
+@pytest.mark.parametrize("symbol", [".", "⁉️", "、︀", "❓", "❗"])
 def test_punctuation_only_overlap_does_not_admit_citation(
     backend: str, symbol: str
 ) -> None:

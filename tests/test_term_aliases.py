@@ -25,6 +25,7 @@ from .conftest import requires_rust
         ((("never", "clamp"),), "never"),
         ((("supports", "clamp"),), "supports"),
         ((("DON’T", "clamp"),), "DON’T"),
+        ((("Before", "AFTER"),), "cannot equate 'before' and 'after'"),
     ],
 )
 def test_invalid_alias_names_offending_term(

@@ -156,19 +156,7 @@ def test_long_polishing_claim_with_added_soft_modifier() -> None:
 @pytest.mark.parametrize(
     "answer,passages",
     [
-        pytest.param(
-            answer,
-            passages,
-            id=name,
-            marks=(
-                pytest.mark.xfail(
-                    strict=True,
-                    reason="The base status check accepts the before/after source at 6/7 coverage",
-                )
-                if name == "wrong-source"
-                else ()
-            ),
-        )
+        pytest.param(answer, passages, id=name)
         for name, answer, passages in DEPLOYMENT_GUARDS
     ],
 )
@@ -189,3 +177,19 @@ def test_original_guards_at_deployment_threshold(
         [span] = corpus.align(answer, backend=backend)
         statuses.append(span.status)
     assert statuses == ["partial"] * 4
+
+
+@pytest.mark.xfail(
+    strict=True,
+    raises=AssertionError,
+    reason="The contradictory before/after passage still outranks the agreeing passage",
+)
+def test_wrong_source_ranks_agreeing_passage_first() -> None:
+    _, answer, passages = next(
+        case for case in DEPLOYMENT_GUARDS if case[0] == "wrong-source"
+    )
+    corpus = PreparedCitationCorpus.from_sources(
+        passages, config=deploy_config(ALIASES), use_rust=False
+    )
+    [span] = corpus.align(answer, backend="python")
+    assert span.citations[0].source_index == 1

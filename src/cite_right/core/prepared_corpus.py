@@ -70,6 +70,7 @@ class NormalizedSource(BaseModel):
     text: str
     base_doc_offset: int
     full_text: str | None
+    declared_doc_char_end: int | None = Field(default=None, exclude=True)
 
 
 class Candidate(BaseModel):
@@ -466,6 +467,7 @@ def normalize_sources(
                     text=item.text,
                     base_doc_offset=item.doc_char_start,
                     full_text=item.document_text,
+                    declared_doc_char_end=item.doc_char_end,
                 )
             )
     return normalized

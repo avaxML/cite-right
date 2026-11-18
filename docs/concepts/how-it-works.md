@@ -147,6 +147,13 @@ When any of those fire against the best-ranked citation, the span status is forc
 
 `retrieval_support` is intentionally outside this decision: a high embedding score that never localizes is evidence-of-interest, not a grounded citation. It is the diagnostic that a recall signal fired but Smith-Waterman could not pin a span.
 
+With `report_possible_source=True`, the result exposes the reason for the
+status and all contradiction checks that fired. For a partial or unsupported
+span, it can also expose the location of the top-ranked retrieval candidate
+when the score and shared content pass the eligibility checks. This uses the
+existing retrieval scores and prepared tokens. See
+[Status diagnostics](../configuration/citation-config.md#status-diagnostics).
+
 ## Scoring Components
 
 The final citation `score` is a weighted sum over the components in `Citation.components`, exposed in `src/cite_right/citations.py` (`_compute_final_score`):

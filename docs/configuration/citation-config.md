@@ -39,6 +39,7 @@ The thresholds below decide where the line falls.
 | `top_k` | `3` | Maximum exact citations returned per answer span. |
 | `max_citations_per_source` | `2` | Maximum citations from a single source per span. |
 | `max_retrieval_support` | `3` | Maximum `retrieval_support` entries per span. Independent of `top_k`. |
+| `report_possible_source` | `False` | Report status reasons and contradiction checks for every returned span, plus a possible source match when a qualifying passage ranks first for a partial or unsupported span. |
 
 Two removed options, `allow_embedding_only` and `supported_embedding_similarity`, raise on construction; the supported path is `SpanCitations.retrieval_support`, not an embedding-only `Citation`.
 
@@ -55,6 +56,34 @@ config = CitationConfig(
     max_retrieval_support=3,
 )
 ```
+
+## Status diagnostics
+
+`CitationConfig(report_possible_source=True)` adds two fields to each
+returned span. `status_reason` is `supported`, `below_coverage`,
+`contradiction`, or `no_candidate`. `below_coverage` means the best citation
+missed the answer coverage threshold or the full content coverage requirement
+when aliases are enabled. `contradiction_checks` lists all
+checks that fired against the best citation's passage. It is empty when
+no check fired or when no citation was admitted.
+
+For partial and unsupported spans, `possible_source` points to the passage
+most likely to be the source. Verify the claim against the passage before
+citing it, since a related but different claim can produce a hint. The
+heuristic skips spans of up to three tokens and common heading, metadata,
+overview and generic instruction forms. The top retrieval candidate must
+share at least two distinct literal non-function word tokens with the answer. Its
+positive lexical score must meet `min_answer_coverage` or its positive cosine
+similarity must meet
+`min_embedding_similarity`. The hint reports the larger of those two scores.
+When alias retrieval supplies the lexical score, the hint uses that score.
+The hint reports the source ID, source index, and half-open character range
+of the passage.
+
+Enabling diagnostics preserves status, citations, retrieval support, and
+evaluation scores. The default configuration omits all three diagnostic
+fields from serialized results. A missing hint is also omitted with diagnostics
+enabled.
 
 ## Passage Windowing
 
@@ -114,11 +143,13 @@ spans = align_citations(
 )
 ```
 
-Each group must have at least two distinct single words after NFKC normalization and casefolding. A word may appear in only one group. Numbers, negation and polarity markers are invalid. Multi-word phrases are outside the feature's scope.
+Each group must have at least two distinct single words after NFKC normalization and casefolding. A word may appear in only one group. Numbers, negation and polarity markers are invalid. `before` and `after` must be in separate groups if both appear.
 
-Equivalence is symmetric. An answer-only term can match a declared group member in the passage. For a query containing a declared term, lexical retrieval combines the postings for each group as one term and retains the configured candidate caps. Both backends use the same equivalence in Smith-Waterman and content coverage. A group containing a stopword participates in alignment but contributes no content-word overlap. Evidence and character offsets use the original passage. For entity comparison, two capitalized terms in the same group count as equal. The other contradiction checks use the original words. With aliases enabled, the negation check recognizes typographic forms such as curly apostrophes.
+Equivalence is symmetric. An answer-only term can match a declared group member in the passage. For a query containing a declared term, lexical retrieval combines the postings for each group as one term and retains the configured candidate caps. Both backends use the same equivalence in Smith-Waterman and content coverage. A group containing a stopword participates in alignment but contributes no content-word overlap. Evidence and character offsets use the original passage.
 
-Declaring aliases also requires every content word of the answer to match in the best citation's candidate passage, either exactly or through a declared group. The check uses the citation's `content_coverage` over that passage. Unmatched content words keep a cited span `"partial"` even when `answer_coverage` meets the support threshold.
+The entity check treats declared aliases as equivalent. The temporal check uses aliases when comparing the clauses on either side of literal `before` and `after` markers. With aliases enabled, the negation check recognizes typographic apostrophes. Number and number-context checks use the original words.
+
+Declaring aliases also requires every content word of the answer to match in the best citation's candidate passage, either exactly or through a declared group. The check uses the citation's `content_coverage` over that passage. Unmatched content words keep a cited span `"partial"` even when `answer_coverage` meets the support threshold. Diagnostics report `"below_coverage"` unless a contradiction takes precedence.
 
 Aliases require the default `SimpleTokenizer` whole-word token IDs. You can use a custom segmenter with that tokenizer. The default value is `()`, which is omitted from serialized configurations.
 
@@ -260,6 +291,7 @@ CitationConfig(
     max_candidates_total=400,
     max_citations_per_source=2,
     max_retrieval_support=3,
+    report_possible_source=False,
     require_all_answer_tokens_in_evidence=False,
     weights=CitationWeights(
         alignment=1.0,
@@ -290,4 +322,6 @@ Four class methods return pre-tuned configs. `balanced()` is identical to the de
 | `permissive()` | 5 | 0.15 | 0.4 | 0.0 | 0.25 | 200 | 3 | 5 | `False` |
 | `fast()` | 1 | 0.2 | 0.6 | 0.0 | 0.3 | 50 | 1 | 1 | `False` |
 
-`permissive()` still requires localized Smith-Waterman evidence. It does not emit embedding-only citations; `retrieval_support` is the only embedding-driven output.
+`permissive()` still requires localized Smith-Waterman evidence for citations.
+Embedding similarity can contribute to retrieval support and possible source
+matches.

@@ -84,8 +84,19 @@ class TermAliases:
             postings=postings,
         )
 
-    def entity_id(self, entity: str) -> str:
-        return self.lexemes.get(normalize_alias(entity), entity)
+    def canonical_word(self, word: str) -> str:
+        return self.lexemes.get(normalize_alias(word), word)
+
+    def canonicalize_clause(self, clause: str) -> str:
+        """Replace declared words while preserving punctuation and spacing."""
+        parts = []
+        offset = 0
+        for start, end in _iter_token_spans(clause):
+            word = clause[start:end]
+            parts.extend((clause[offset:start], self.canonical_word(word)))
+            offset = end
+        parts.append(clause[offset:])
+        return "".join(parts)
 
     def lexical_scores(
         self, raw_answer: list[int], idf: Mapping[int, float]

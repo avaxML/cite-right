@@ -152,7 +152,8 @@ def _is_non_content_token(text: str) -> bool:
 
 
 def _is_separator(char: str) -> bool:
-    if char.isspace():
+    # Unicode classifies these question and exclamation ornaments as symbols.
+    if char.isspace() or char in "❓❔❕❗❢❣":
         return True
     category = unicodedata.category(char)
     if category == "Mn":

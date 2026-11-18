@@ -140,9 +140,10 @@ class PreparedCorpus:
         query_stopword_ids: Sequence[int],
         alias_remap: AliasRemap | None = None,
     ) -> PyCitationResult:
-        """Build citations directly from PreparedCorpus without Python marshalling.
+        """Build citations with the internal prepared Rust builder.
 
-        This eliminates the overhead of copying full source texts to Python and back.
+        query_stopword_ids are excluded from content coverage. The optional
+        alias_remap supplies equivalent token IDs for alignment and coverage.
         """
         ...
 
@@ -190,7 +191,15 @@ def rust_build_citations_fast(
     *,
     query_stopword_ids: Sequence[int],
     alias_remap: AliasRemap | None = None,
-) -> str: ...
+) -> str:
+    """Build citations as JSON using the internal legacy Rust builder.
+
+    The required keyword-only query_stopword_ids contains the query token IDs
+    excluded from content coverage. The optional keyword-only alias_remap
+    supplies equivalent token IDs for alignment and coverage.
+    """
+    ...
+
 def align_pair(
     seq1: Sequence[int],
     seq2: Sequence[int],

@@ -12,7 +12,9 @@ from __future__ import annotations
 
 import re
 import unicodedata
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+
+from cite_right.text.segmenter_simple import SimpleSegmenter
 
 _FUNCTION_WORDS = frozenset(
     {
@@ -128,6 +130,7 @@ def check_contradiction(
     *,
     entity_aliases: Callable[[str], str] | None = None,
     normalize_negation: Callable[[str], str] | None = None,
+    normalize_temporal_clause: Callable[[str], str] | None = None,
 ) -> bool:
     """Check if evidence contradicts the answer.
 
@@ -138,23 +141,14 @@ def check_contradiction(
     Returns:
         True if contradiction is detected, False otherwise
     """
-    negation_answer = (
-        normalize_negation(answer_text) if normalize_negation else answer_text
+    checks = iter_contradiction_checks(
+        answer_text,
+        evidence_text,
+        entity_aliases=entity_aliases,
+        normalize_negation=normalize_negation,
+        normalize_temporal_clause=normalize_temporal_clause,
     )
-    negation_evidence = (
-        normalize_negation(evidence_text) if normalize_negation else evidence_text
-    )
-    if has_negation_mismatch(negation_answer, negation_evidence):
-        return True
-    if has_number_mismatch(answer_text, evidence_text):
-        return True
-    if has_entity_swap(answer_text, evidence_text, entity_aliases=entity_aliases):
-        return True
-    if has_temporal_polarity_mismatch(answer_text, evidence_text):
-        return True
-    if has_number_context_mismatch(answer_text, evidence_text):
-        return True
-    return False
+    return next(checks, None) is not None
 
 
 def has_negation_mismatch(answer_text: str, evidence_text: str) -> bool:
@@ -279,7 +273,12 @@ def extract_entities(text: str) -> list[str]:
     return entities
 
 
-def has_temporal_polarity_mismatch(answer_text: str, evidence_text: str) -> bool:
+def has_temporal_polarity_mismatch(
+    answer_text: str,
+    evidence_text: str,
+    *,
+    normalize_clause: Callable[[str], str] | None = None,
+) -> bool:
     """Check for temporal or polarity contradictions.
 
     Args:
@@ -294,10 +293,41 @@ def has_temporal_polarity_mismatch(answer_text: str, evidence_text: str) -> bool
 
     if _paired_marker_mismatch(answer_lower, evidence_lower, _TEMPORAL_CONTRADICTIONS):
         return True
+    if _has_reversed_before_after(answer_lower, evidence_lower, normalize_clause):
+        return True
 
     return _paired_marker_mismatch(
         answer_lower, evidence_lower, _POLARITY_CONTRADICTIONS
     )
+
+
+def _has_reversed_before_after(
+    answer_lower: str,
+    evidence_lower: str,
+    normalize_clause: Callable[[str], str] | None,
+) -> bool:
+    """Detect a flipped temporal marker between the same two clauses."""
+    clauses = _split_temporal_claim(answer_lower, normalize_clause)
+    if len(clauses) != 3:
+        return False
+    first, marker, second = clauses
+    opposite = "after" if marker == "before" else "before"
+    reversed_claim = [first, opposite, second]
+    return any(
+        _split_temporal_claim(segment.text, normalize_clause) == reversed_claim
+        for segment in SimpleSegmenter().segment(evidence_lower)
+    )
+
+
+def _split_temporal_claim(
+    text: str, normalize_clause: Callable[[str], str] | None
+) -> list[str]:
+    normalized = " ".join(text.split()).rstrip(".!?;")
+    clauses = re.split(r",? (before|after) ", normalized)
+    if normalize_clause is not None and len(clauses) == 3:
+        first, marker, second = clauses
+        return [normalize_clause(first), marker, normalize_clause(second)]
+    return clauses
 
 
 def _paired_marker_mismatch(
@@ -404,3 +434,30 @@ def extract_number_context(text: str, number: str) -> list[str]:
             words = group.strip().split()
             context_words.extend(w.lower() for w in words if not re.match(r"^\d", w))
     return context_words
+
+
+def iter_contradiction_checks(
+    answer_text: str,
+    evidence_text: str,
+    *,
+    entity_aliases: Callable[[str], str] | None = None,
+    normalize_negation: Callable[[str], str] | None = None,
+    normalize_temporal_clause: Callable[[str], str] | None = None,
+) -> Iterator[str]:
+    """Yield the names of triggered checks in evaluation order."""
+    negation_answer, negation_evidence = answer_text, evidence_text
+    if normalize_negation is not None:
+        negation_answer = normalize_negation(answer_text)
+        negation_evidence = normalize_negation(evidence_text)
+    if has_negation_mismatch(negation_answer, negation_evidence):
+        yield "has_negation_mismatch"
+    if has_number_mismatch(answer_text, evidence_text):
+        yield "has_number_mismatch"
+    if has_entity_swap(answer_text, evidence_text, entity_aliases=entity_aliases):
+        yield "has_entity_swap"
+    if has_temporal_polarity_mismatch(
+        answer_text, evidence_text, normalize_clause=normalize_temporal_clause
+    ):
+        yield "has_temporal_polarity_mismatch"
+    if has_number_context_mismatch(answer_text, evidence_text):
+        yield "has_number_context_mismatch"

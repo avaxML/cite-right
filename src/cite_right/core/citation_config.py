@@ -44,6 +44,8 @@ class CitationConfig(BaseModel):
         multi_span_max_spans: Maximum number of evidence spans to return per
             citation after merging. If exceeded, the citation falls back to a single
             contiguous evidence span.
+        report_possible_source: Return span status reasons, contradiction checks,
+            and a possible source match when retrieval yields a qualifying passage.
 
     Presets:
         Use class methods for common configurations:
@@ -90,6 +92,7 @@ class CitationConfig(BaseModel):
     multi_span_evidence: bool = False
     multi_span_merge_gap_chars: int = 16
     multi_span_max_spans: int = 5
+    report_possible_source: bool = False
 
     term_aliases: tuple[tuple[str, ...], ...] = Field(
         default=(),
@@ -129,6 +132,8 @@ class CitationConfig(BaseModel):
                     )
                 seen.add(word)
                 normalized.append(word)
+            if {"before", "after"}.issubset(normalized):
+                raise ValueError("alias groups cannot equate 'before' and 'after'")
             normalized_groups.append(tuple(sorted(normalized)))
         return tuple(sorted(normalized_groups))
 
@@ -146,6 +151,8 @@ class CitationConfig(BaseModel):
     # A return annotation would replace Pydantic's generated field schema.
     def _serialize_config(self, handler: SerializerFunctionWrapHandler):  # noqa: ANN202
         payload = handler(self)
+        if not self.report_possible_source:
+            payload.pop("report_possible_source", None)
         if not self.term_aliases:
             payload.pop("term_aliases", None)
         return payload
