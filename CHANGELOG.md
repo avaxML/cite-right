@@ -4,8 +4,25 @@ All notable changes to cite-right will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Opt-in per-span status reasons and contradiction check names. With
+  `report_possible_source=True`, a partial or unsupported span can also
+  report the likely source passage and its retrieval score. The hint score
+  is stable when reusing a prepared corpus. (#75)
+
 ### Fixed
-- Rust prepare now normalizes source tokens like the Python tokenizer: it honors `TokenizerConfig.normalize_numbers`, `normalize_percent`, and `normalize_currency` (comma-grouped numbers, `%`, `$`/`€`/`£`) and treats NFKC-equivalent symbols such as `￡`, `﹩`, `﹪` as symbol tokens, so restated amounts like `2,410.12` no longer drop to `partial`. `rust_tokenize_and_prepare` takes the three flags as required keyword arguments. (#66)
+
+- Rust prepare honors `TokenizerConfig.normalize_numbers`, `normalize_percent`,
+  and `normalize_currency` for comma-grouped numbers and percent and currency
+  symbols (`%`, `$`, `€`, and `£`), including NFKC-equivalent symbols such as
+  `￡`, `﹩`, and `﹪`. On the default Rust path, restatements of the same
+  comma-grouped amount can move from `partial` to `supported`. The internal
+  `rust_tokenize_and_prepare` binding takes the three flags as required keyword
+  arguments. The shared contradiction check can now downgrade `supported`
+  spans to `partial` for changed signs, numeric values, percentage markers,
+  explicit currency units, or conflicting labels or directions tied to the
+  amount. (#66)
 
 ## [0.4.0] - 2026-08-25
 

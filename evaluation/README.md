@@ -20,3 +20,13 @@ train and development files. Holdout counts, ciphertext identity, review-complet
 counts, and signature live in `holdout.public.json`. This separation lets the
 repository verify one 750-case dataset without committing holdout plaintext or
 private key material.
+
+## Status reasons
+
+Print a histogram of span status reasons for the public train and dev splits.
+The report uses the strict evaluation config with the all-token requirement
+disabled. Use `--backend rust` to run it with the Rust alignment backend.
+
+```sh
+uv run python -m evaluation.doc_attribution --tuning-bundle evaluation/data/v1/tuning
+```

@@ -74,7 +74,7 @@ A bare `str` is treated as a `SourceDocument` with an auto-assigned id (`"source
 
 ### SpanCitations
 
-A `SpanCitations` has four fields.
+The default `SpanCitations` result has four fields.
 
 `answer_span` is the `AnswerSpan` this set of citations belongs to. It carries the segment text plus `char_start` / `char_end` in the full answer string, and a `kind` of `"sentence"`, `"clause"`, or `"paragraph"`.
 
@@ -83,6 +83,12 @@ A `SpanCitations` has four fields.
 `retrieval_support` is a list of `RetrievalSupport` objects. These are passages the candidate selector picked up (by inverted index, lexical prefilter, or embedding similarity) that did not localize into a `Citation`. They are evidence-of-interest, not a grounded citation.
 
 `status` is one of `"supported"`, `"partial"`, or `"unsupported"`. It comes from the best exact `Citation`, never from embedding similarity. A high embedding score that never localizes is a `RetrievalSupport`, not a `Citation`, and it does not flip the status. The model validator on `SpanCitations` enforces that `"unsupported"` requires an empty `citations` list, and that `"supported"` or `"partial"` requires at least one.
+
+Set `CitationConfig(report_possible_source=True)` to include a `status_reason`
+and the names of any `contradiction_checks` that fired. A qualifying partial or
+unsupported result can also include a `possible_source` with the source ID,
+source index, half-open passage offsets, and retrieval score. A related
+passage can be the likely source of a claim it does not establish.
 
 ### Status Rules
 
@@ -120,7 +126,11 @@ The rule that ties inputs and outputs together is the evidence equality invarian
 
 Status is driven by the best exact citation's `answer_coverage` and the contradiction check. Embedding similarity, lexical overlap, and the inverted index are used to **select** candidate passages; they are not what flips a span to `"supported"`. A passage that scores well on embedding but never localizes into a `Citation` lands in `retrieval_support` and does not change the status.
 
-Concretely: the per-span logic in `_span_status` looks at `citations[0].components["answer_coverage"]`. If that coverage meets `supported_answer_coverage` and `check_contradiction` is clean, the status is `"supported"`. If contradiction fires, the status is `"partial"` (not `"unsupported"`). If coverage is below the threshold, the status is `"partial"`. If `citations` is empty, the status is `"unsupported"`.
+The per-span decision uses `citations[0].components["answer_coverage"]` and
+checks contradiction against that citation's full candidate passage. If
+coverage meets `supported_answer_coverage` and the checks are clear, the
+status is `"supported"`. A contradiction or low coverage produces
+`"partial"`. An empty citation list produces `"unsupported"`.
 
 ## How Candidates Get Chosen
 

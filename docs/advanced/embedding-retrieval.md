@@ -87,6 +87,12 @@ for result in results:
 
 `retrieval_support` is only emitted when a candidate is selected and has either a positive lexical score or an embedding score at or above `min_embedding_similarity`. Embedding-only extras carry `lexical_score == 0.0`; lexical seeds carry the IDF overlap. This split lets you see at a glance which channel found the passage.
 
+With `report_possible_source=True`, a qualifying partial or unsupported span
+can also report the top retrieval passage in `possible_source`. This uses
+the cosine similarity already computed for candidate retrieval. See
+[Status diagnostics](../configuration/citation-config.md#status-diagnostics)
+for score and shared-token requirements.
+
 ## Configuration
 
 Several `CitationConfig` and `CitationWeights` fields shape the embedder path.
