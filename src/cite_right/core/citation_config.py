@@ -4,7 +4,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    SerializerFunctionWrapHandler,
+    model_serializer,
+    model_validator,
+)
 
 if TYPE_CHECKING:
     pass
@@ -35,6 +42,8 @@ class CitationConfig(BaseModel):
         multi_span_max_spans: Maximum number of evidence spans to return per
             citation after merging. If exceeded, the citation falls back to a single
             contiguous evidence span.
+        report_possible_source: Return span status reasons, contradiction checks,
+            and a possible source match when retrieval yields a qualifying passage.
 
     Presets:
         Use class methods for common configurations:
@@ -81,6 +90,15 @@ class CitationConfig(BaseModel):
     multi_span_evidence: bool = False
     multi_span_merge_gap_chars: int = 16
     multi_span_max_spans: int = 5
+    report_possible_source: bool = False
+
+    # Let Pydantic derive the serialization schema from the model fields.
+    @model_serializer(mode="wrap")
+    def _serialize(self, handler: SerializerFunctionWrapHandler):  # noqa: ANN202
+        data = handler(self)
+        if not self.report_possible_source:
+            data.pop("report_possible_source", None)
+        return data
 
     @model_validator(mode="before")
     @classmethod

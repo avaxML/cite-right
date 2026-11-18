@@ -43,6 +43,10 @@ def align_citations(
 
 `list[SpanCitations]`: A list of citation results, one per answer span. Each result contains the span text, its status, and ranked citations.
 
+Set `report_possible_source=True` on the config to include a status reason,
+contradiction check names, and a possible source match when a passage
+qualifies. See [SpanCitations](data-models.md#spancitations).
+
 ### Example
 
 ```python

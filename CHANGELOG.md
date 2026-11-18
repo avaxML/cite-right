@@ -2,6 +2,15 @@
 
 All notable changes to cite-right will be documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- Opt-in per-span status reasons and contradiction check names. With
+  `report_possible_source=True`, a partial or unsupported span can also
+  report the likely source passage and its retrieval score. The hint score
+  is stable when reusing a prepared corpus. (#75)
+
 ## [0.4.0] - 2026-08-25
 
 ### Added

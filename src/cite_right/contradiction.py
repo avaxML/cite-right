@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import re
 import unicodedata
+from collections.abc import Iterator
 
 _FUNCTION_WORDS = frozenset(
     {
@@ -74,17 +75,7 @@ def check_contradiction(answer_text: str, evidence_text: str) -> bool:
     Returns:
         True if contradiction is detected, False otherwise
     """
-    if has_negation_mismatch(answer_text, evidence_text):
-        return True
-    if has_number_mismatch(answer_text, evidence_text):
-        return True
-    if has_entity_swap(answer_text, evidence_text):
-        return True
-    if has_temporal_polarity_mismatch(answer_text, evidence_text):
-        return True
-    if has_number_context_mismatch(answer_text, evidence_text):
-        return True
-    return False
+    return next(iter_contradiction_checks(answer_text, evidence_text), None) is not None
 
 
 def has_negation_mismatch(answer_text: str, evidence_text: str) -> bool:
@@ -366,3 +357,19 @@ def extract_number_context(text: str, number: str) -> list[str]:
             words = group.strip().split()
             context_words.extend(w.lower() for w in words if not re.match(r"^\d", w))
     return context_words
+
+
+_CONTRADICTION_CHECKS = (
+    has_negation_mismatch,
+    has_number_mismatch,
+    has_entity_swap,
+    has_temporal_polarity_mismatch,
+    has_number_context_mismatch,
+)
+
+
+def iter_contradiction_checks(answer_text: str, evidence_text: str) -> Iterator[str]:
+    """Yield the names of triggered checks in evaluation order."""
+    for check in _CONTRADICTION_CHECKS:
+        if check(answer_text, evidence_text):
+            yield check.__name__
