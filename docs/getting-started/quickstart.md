@@ -199,15 +199,7 @@ If an embedder is set on `from_sources`, the corpus also builds an embedding ind
 
 ## What Status Comes From
 
-Status comes from the top-ranked exact citation. Coverage at or above
-`supported_answer_coverage` gives `"supported"` when the contradiction checks
-are clear. Low coverage or a contradiction gives `"partial"`. When no
-citation survives, the status is `"unsupported"`.
-
-Set `CitationConfig(report_possible_source=True)` to see each span's reason
-and which contradiction checks fired. Partial and unsupported spans can also
-return a likely source passage for inspection. See
-[Status diagnostics](../configuration/citation-config.md#status-diagnostics).
+Status is driven by the top-ranked exact `Citation` and the contradiction check, not by embedding similarity. Concretely, the per-span logic in `_span_status` looks at `citations[0].components["answer_coverage"]`. If that coverage meets `supported_answer_coverage` and `check_contradiction` is clean, the status is `"supported"`. If contradiction fires, the status is `"partial"`, never `"unsupported"` — the evidence exists, it just conflicts with the claim. If coverage is below the threshold, the status is `"partial"`. If `citations` is empty, the status is `"unsupported"`. A high embedding score that never localizes is `retrieval_support`, not a `Citation`, and it does not change the status.
 
 ## Next Steps
 

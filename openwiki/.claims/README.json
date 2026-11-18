@@ -1,0 +1,178 @@
+{
+  "schemaVersion": 1,
+  "pageVersion": "sha256:75a7b16508f5a936ddf2f5a1d711523fd7ddd6f4783a854b1f2c7b5012bfb35d",
+  "claims": [
+    {
+      "id": "claim_e7343f7d646a42c289f58825d2f1b091",
+      "statement": "openwiki/INSTRUCTIONS.md is the only hand-authored file in the generated tree: OpenWiki reads it on every run as the brief (public path list, voice, invariants, agent-only rules) and never overwrites it, so it is the durable input for changing documentation shape while generated pages are regenerated output.",
+      "evidence": [
+        {
+          "resource": "repo://AGENTS.md#L1-L16",
+          "version": "repo-lines-v1:sha256:3f65427f27766385406120665601b3866f854937467101977cfcd5ab695bd575:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVmMTgwZjljMTI2OTAzYmNjMzMxYWE5NTQ1NmU0OTQ0NGE3ZDRkMDExZThhMmE4M2Y1ZGM4NzAyMzkxODEyZDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA5Zjc4NzE0ODkzYWE3Nzk0MmNlYTFjNGEyZTAyMzFkYmI3ZmEyYTQxYTcwYzgxNDYwYTNjNjc1NjJkYTNhYWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://CLAUDE.md#L1-L7",
+          "version": "repo-lines-v1:sha256:cd617c809957b5aeb601ce9856109475f6da8ed78835148d17c3097dd4daa848:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNWYxODBmOWMxMjY5MDNiY2MzMzFhYTk1NDU2ZTQ5NDQ0YTdkNGQwMTFlOGEyYTgzZjVkYzg3MDIzOTE4MTJkMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDlmNzg3MTQ4OTNhYTc3OTQyY2VhMWM0YTJlMDIzMWRiYjdmYTJhNDFhNzBjODE0NjBhM2M2NzU2MmRhM2FhYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_184438c7f40b4401a39817db696e7605",
+      "statement": "The tree splits into public pages that mirror mkdocs.yml (index.md plus 16 content pages across getting-started, concepts, configuration, integrations, advanced) and agent-only pages (quickstart.md, README.md, and testing/), with the docs/api reference staying hand-maintained via mkdocstrings rather than generated under openwiki/.",
+      "evidence": [
+        {
+          "resource": "repo://mkdocs.yml#L55-L62",
+          "version": "repo-lines-v1:sha256:0f40fa874250454e2f6477a96297bb81109100ccb3e1297b64c8d64e7a774e53:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZjVlNDJmYjBmNjJlN2EzYzVkODY1NzZmNTcyMjg3NjI3MGQ3ZWQ5MWMxNWE5NGIwZDQwY2M2OGVmMTQzYWYxNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNWM4OWIyNWVjODQ5ZDhkNmViYmM4MjVlNWUwM2VjMWRlYWU2NjY0NzQzNzNhMzJiNWJjNTc5NDJjMjRiYjMwOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiODlmMGNhYzNkZGFmMWZkYmJhNTdjOGEzODBmYThkMTEwMTQ5MTY1YWQ4MWM2MGFiZjFmMWM3NjQ3MTNlYTlhYyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMWZiZTg0ZmM0NWUxZjIzZTYzY2M0YTI3OWRlMDRlOGQ1M2RmNTczY2FiMzA2NjU5NjkwYTc2ZWQ5NDBhNWRhMCJ9"
+        },
+        {
+          "resource": "repo://scripts/publish_openwiki_to_docs.py#L21-L53",
+          "version": "repo-lines-v1:sha256:fe0ecf0c5f1dc5dd42de947382884b0f0fefd0628f8eb17a4376dc1c9ec32fa0:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxOTQzMTUzNzhmN2I5NzU5OWE1YjM4OTRiYjZlYTc2OWE5Y2Q4OGY1MDc1OGI4Y2JmODNmY2EyODJhYjVhMDEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEwM2RmNWExODM4MDQ3NGRjODllZjE0NGI2NDg2YzJjNTU5MWE4ZTU5NGQ5YmVjNjFlYWNmZTY3NWQ0OWUzMzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA3MmEzMGMxOTcwODk4OGVmMzIzMmIyZjViNWI0MWEyYzU1ODEwYTE4MWFhODcwODlhYzI4YjZmN2JjNTQxNTQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_8214c034d32a4328b068e380b1b68ff5",
+      "statement": "The OpenWiki blocks in AGENTS.md and CLAUDE.md make retrieval just-in-time rather than startup reading (search only when asked, when unfamiliar architecture or dependency behavior materially affects the task, or when source inspection leaves an important uncertainty), state that source and tests are authoritative over a brief's unknowns, and direct agents to openwiki/quickstart.md when retrieval tools are unavailable; CLAUDE.md includes AGENTS.md via @AGENTS.md so the two stay in step.",
+      "evidence": [
+        {
+          "resource": "repo://.github/workflows/openwiki-update.yml#L62-L79",
+          "version": "repo-lines-v1:sha256:d70ced16c064dd91fe4f29d55d7b2baa374ebd7a3cdc8eb8442fd5df8c06dcdb:eyJzZWxlY3RlZExpbmVDb3VudCI6MTgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk4MDg3NTA5Y2RjMTFjMTNmZTg3YThlYWUwYTNjMjIyNThkYWE4ZDg5ZDZkN2ZmYzAwOGMzNTg3OWVhYjkwNzIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNjOTlhZmNmNzkzMDA5ZDMxYWY2YjQ0OWY5MGRiOGM3ZTEyYjI4ZjRjMjJjOWFkNmRhZWNlMjUxMTIzNzNiMTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUwMzBhYWYwN2ZiYWUzMjZiM2I2ODk4NjdmZDBjNDEyZGQ5M2I4MmM1M2VkZDZlNjYyN2FhMTlhODQzNjYzNjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE4NjVlZTVhNjMzMjM1YTE1MTJhMmE3NjJhNDZjNzgyNjgxMGY5YzUyNDVmYThjN2JiMjE3NGE3NDdhZTliYTcifQ"
+        },
+        {
+          "resource": "repo://AGENTS.md#L3-L16",
+          "version": "repo-lines-v1:sha256:737ce7e692a4c5565387cc7fc765da6063dd15726d075bfbc4e018da2569d28b:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI0ODM2ZWQ3ZTAwNTM3NzVhMGE5NjZjZTg2MTM0YjIzNDdkODUxYTdiMDJmNDgxMmJlYjJjNTlkMWM2OGQ1MjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA5Zjc4NzE0ODkzYWE3Nzk0MmNlYTFjNGEyZTAyMzFkYmI3ZmEyYTQxYTcwYzgxNDYwYTNjNjc1NjJkYTNhYWEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjoyLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRiODU5ZTU1ZTRiMmQyNjJiNTQ2NGJlOTdkZWMyMTNhYWViMWU1Y2NkMDBkNDEwMjBkZGFkNDEzZWRiNzc2ZWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+        },
+        {
+          "resource": "repo://CLAUDE.md#L1-L7",
+          "version": "repo-lines-v1:sha256:cd617c809957b5aeb601ce9856109475f6da8ed78835148d17c3097dd4daa848:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNWYxODBmOWMxMjY5MDNiY2MzMzFhYTk1NDU2ZTQ5NDQ0YTdkNGQwMTFlOGEyYTgzZjVkYzg3MDIzOTE4MTJkMCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDlmNzg3MTQ4OTNhYTc3OTQyY2VhMWM0YTJlMDIzMWRiYjdmYTJhNDFhNzBjODE0NjBhM2M2NzU2MmRhM2FhYSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjAsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_972ee1acffb4402392dc37a1ce35f5b4",
+      "statement": "The OpenWiki Update workflow regenerates the tree in CI on push to main, workflow_dispatch, and a daily cron, using a full-history checkout, OPENWIKI_PROVIDER=openrouter with the repository secret OPENROUTER_API_KEY, and it delivers generated openwiki/, docs/, AGENTS.md, and CLAUDE.md changes to main only via a pull request on branch openwiki/update.",
+      "evidence": [
+        {
+          "resource": "repo://.github/workflows/openwiki-update.yml#L18-L24",
+          "version": "repo-lines-v1:sha256:f5b53e88e1e4831673326ab039d7761f4c48ec056c00dd3a143ce516337405fc:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOTAxOGZiYzc4YjI2OTQyNTRjMzA2ZGM3ZDdlMTI1OTNmYjYxNzUwYzljNDRhOTAxNzRjMDAwYTlhYmYxMjk2NCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMzUyNjI0N2VkZTAwNmU5YmRhYjljNjg1MDcyODQyNWQxYjQxNjZjYWY1Y2FjNTBjZjA5NTVjNDRkMjRjMWE4ZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNjExMDEyMzI2YjU2MzI2NzRmNTEzZWI0NWIxMDgzNzlmMjQ3YWZmYjJkZWUyODE4NzAzZDI2NmNiMDMxNDNjMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYTZmN2QzN2ZiMjk3Mzk5ZmVhMmE1Y2VmMWNjNDAyOGM4OTk3OWE5MDUwYTkyODU2ZjBkOTZlMWMxOGJhMTlhNyJ9"
+        },
+        {
+          "resource": "repo://.github/workflows/openwiki-update.yml#L30-L43",
+          "version": "repo-lines-v1:sha256:9f9a3f1f9b110c65be6c42b8c51f5bd46adbacc567ffeb878aaec5bb18f00b05:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMzMzczMzRhZWMwZGNiMjRlNDBlM2MyMGRjMDlkNTlhZjY3NDNkMDI3ZGJmZjUwYzFhY2EwODk3NDcxMTc2NzAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBiMzJiOTg3MjYzZGYyMTYzZTcyNmQ0OGI5MmY2Zjk2NTE0OGNiNmI2ZDI4MzE3OTE1MTRjOTM5ZjgzN2ExNDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNiYTVhZmZkODIzMWMwZTgxYmJjZDQyMTU0YTFjYzkwZTg2ZWZmNjYzNTVjMDQ4Y2U1NWIzMjM3YmRhYzNhMWQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUwNDc3YWE5MmUzODQ5YzFlNGM4ZTA2MWE1YTM5YjNiYzA2Y2Q1N2MxNGYxZGJkZTBlYTI5MTExMDVlYTBkN2IifQ"
+        },
+        {
+          "resource": "repo://.github/workflows/openwiki-update.yml#L50-L79",
+          "version": "repo-lines-v1:sha256:159e09dfd71015fcf5f1ede91776a714191ec1563ac16ae73cce3204f052a130:eyJzZWxlY3RlZExpbmVDb3VudCI6MzAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcwZThmOWZhNDBlN2JkMDQ5OWQxYzBkODNmZDc1OGFhODViMzA4NDJkYmQ2MWYwZWE2YjdhZTEwZWZlYzc2ZDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNjOTlhZmNmNzkzMDA5ZDMxYWY2YjQ0OWY5MGRiOGM3ZTEyYjI4ZjRjMjJjOWFkNmRhZWNlMjUxMTIzNzNiMTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZiYTEwNjQzYTEwNDQzNjIxZDAwNGQxZjM0ZTNkYTkxYWNkYzU5MDg4Y2Y5ZDY0MjkwZjU2OTI0NmQ0YmQyMmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE4NjVlZTVhNjMzMjM1YTE1MTJhMmE3NjJhNDZjNzgyNjgxMGY5YzUyNDVmYThjN2JiMjE3NGE3NDdhZTliYTcifQ"
+        },
+        {
+          "resource": "repo://scripts/openwiki_update.sh#L17-L26",
+          "version": "repo-lines-v1:sha256:877b54100b0b2a66479c308222205d35b69df79f275e891a19359b31f965fcc9:eyJzZWxlY3RlZExpbmVDb3VudCI6MTAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMyNWJjZWU3NTA5ZDAxZmMwZjhkZWJiNmI5Zjc4NWQyYTBlMTdlMGFkZTQxZDgxOTAxM2JkMDczOGVkNjcxYjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU0NTczMjVhNGE5YjY2NDEwNjlkNmNmNDk3MmM0OGUxNTQzYWE4NDUyOGM1YmE1Yjc0YjNlMjMyZTZhYjMzN2EiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJlMDkzNmViNjUzYTVmN2ZhMzgyMDU3ZGNlYmQyYzExYTM4NDY0YjA1YjUxZWMxNTZmZWMyMjBmMWE5YmRjYjAifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_6b569a2acfcc4430a6f1b5646ebc2160",
+      "statement": "scripts/publish_openwiki_to_docs.py is an unconditional, credential-free step of the update job that copies the listed public paths from openwiki/ into docs/ and can be re-run locally with python3 scripts/publish_openwiki_to_docs.py, optionally with --openwiki and --docs overrides.",
+      "evidence": [
+        {
+          "resource": "repo://.github/workflows/openwiki-update.yml#L55-L57",
+          "version": "repo-lines-v1:sha256:4ca62a164577a9ffef5997e43162c6c6d9c68daaae1f84e0c45e1984c2b246f6:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYWE1MDA5MGJiYzBmYzY2ODkwMTI3ZTU1ZTdhNDRkNzQ5Mjc5MmRhMTYxNDJhYWI5ZmE5NTMwNDdmZWNjNjczZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNzRkYzI3ZGVkZjQxNTgxYWEwOTI2MDQ1ZjgxNDZjMzViODhjZWY0OWM3OTYxODU4ODFiMWRmNGM1MWRkZGZlMiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTM0M2E0ODY3MGMwNmI4MDdhMGVkODA3NjU1ZWU2OGRjNDFjMmQ5MGExYWZkNjI0NWU5YjlmZWIxYTgxMmQzZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNTJhYjg1NTVhOTUyZmRiYThlMTNiZDYyN2M5N2QxMjk2NTQ5ZTVhZmE3ZDA5ZDM4MGJmY2NlZjQ4ZTRmYzBjNiJ9"
+        },
+        {
+          "resource": "repo://scripts/openwiki_update.sh#L16-L26",
+          "version": "repo-lines-v1:sha256:bd5a5928e0757e39c850ce0c93fb6b6277374b890b5c1e6f8665b15b2cd40568:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU4NTkyYTA0NTFjODEzYjMyYjA1MzA1MTc5MjE4ZGJhYWQ2NzJkY2I1MzQ1ZWNlZWZlODc5ZWMwNjMyNzg1N2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMyNWJjZWU3NTA5ZDAxZmMwZjhkZWJiNmI5Zjc4NWQyYTBlMTdlMGFkZTQxZDgxOTAxM2JkMDczOGVkNjcxYjAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk3ZjRhMDk5OWUxMGY0MjU5OWFkZjNjNDZlZTc5OTZmZWNiNjg1YWUyNmRjZDEyZGI2MGNhNzZkNjYyYTllNDUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJlMDkzNmViNjUzYTVmN2ZhMzgyMDU3ZGNlYmQyYzExYTM4NDY0YjA1YjUxZWMxNTZmZWMyMjBmMWE5YmRjYjAifQ"
+        },
+        {
+          "resource": "repo://scripts/publish_openwiki_to_docs.py#L178-L202",
+          "version": "repo-lines-v1:sha256:068bfbb516268f4b3106e436730c2f454e32f9add9b7abe75fa57f9ed05d039c:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI0NWVjYjJlNGJlZGI1OTVjNzZlMDc3ZWE5ODQ2MzU0MjNhNDc5ZWU1YjQ0ODRhNDkwNzEzMmFiZTBkYjIwZGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk4NzVhMDJhNzQyOTllZTQ5ZDExYzMzNTIwMzc0OWIxZjFhMWNjODFhYzE2OTM3OTI3NTk4MTU5ZGQ3YzAxMzMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA4NzBkZWRlNDUxNTUxMjkwOWZkZTc3OGIzOWM1NGY0MTQzOTE4Njk3MWVlNjM0MDZkODljNmY5MDk5NjM4YjMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjhlNzk3Y2M0MjQ3NjYzYmZmZTkwYmY0Mzc2MDFmNjQ3OGEwNTgwNjE0MmMyMjI1MDMxMTFiNTQ2MWVjYzU5NzYifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_a804ae0d961148a58fd22c15a46b0172",
+      "statement": "The publisher publishes only its PUBLIC_PATHS tuple, strips OKF front matter, rewrites openwiki/-prefixed Markdown and HTML hrefs to destination-relative paths, and skips OKF directory listings plus the .claims/ and testing/ trees, api/, assets/, stylesheets/, INSTRUCTIONS.md, .last-update.json, and README.md, so a missing or unpublished source is reported as a skip rather than an error.",
+      "evidence": [
+        {
+          "resource": "repo://scripts/publish_openwiki_to_docs.py#L134-L169",
+          "version": "repo-lines-v1:sha256:498bf5e615ca332a4641e5c309f90142f937517d42e4d536c1248641e3fc029c:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk1ZTc4MzQ3N2QwNDcxNWQ2Zjc2N2ZmN2JkNzU5YmMyZDc1ZjRlZjAxODY2Y2EyMjc0MjVmZjdkM2ViZjhmZjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImYwY2JjMTIzZmE4M2UxOTU5NjI3Njc4MzNjMzFlZTM3Mjg1MzY3ZTJkOWJlODVkMTFkNGJkMDg5ZDQ4M2E3M2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUyMzljMWQzYmEzOTc5MzdiZDdjMWM0YmY0ODlkN2I5OWNlM2YxMjM3NDU5MDU4MDdmMWZlMTc4MjI2YzFhMDEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNkZTcxNDI1ZGE2YmE3NzFlYjM2ZmVmYTI0ZWYzOTNhYWZkZDNhYmI3Y2M4ZjEwODMzMWQ0YzJjZWQzYTVhMDkifQ"
+        },
+        {
+          "resource": "repo://scripts/publish_openwiki_to_docs.py#L171-L181",
+          "version": "repo-lines-v1:sha256:4e0b64e078539eb6b05ab0e7ed2bdb360c3cfedc4bd32f5bb3a6da6eed17c66e:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTYwMGE3M2QyZTAyZjM1MmI5MGZlZjFkOGQ2MzgxMWJhNGE4ZWUwYzFiZWFhN2FlNDY1OGYzNmFhMmUxOTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJlZTRlZDNhNmIzZWY0ZDlkYzJlNWQ0YjgzZDUxMWIxN2UzMmU5NTA5ZDdjYjhiMDc5ZGQ5NTgwZTZkZmM2MTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUwNDY5MTc2YjFmZjU2NjAwZGNjYTUwMjZiZjVjZjZhZGNmZWM4OTNiNmJkNWNkZTFjMGViMjVkOTMyOTE3YjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE0ZmYzYzAwODA3ODkwMTllZDliMWFjZWJlMzZlMzljZGIwNzVhYjY5MjNjOWU2OWE5OThjNzU5NTlhOGYzNzIifQ"
+        },
+        {
+          "resource": "repo://scripts/publish_openwiki_to_docs.py#L21-L53",
+          "version": "repo-lines-v1:sha256:fe0ecf0c5f1dc5dd42de947382884b0f0fefd0628f8eb17a4376dc1c9ec32fa0:eyJzZWxlY3RlZExpbmVDb3VudCI6MzMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxOTQzMTUzNzhmN2I5NzU5OWE1YjM4OTRiYjZlYTc2OWE5Y2Q4OGY1MDc1OGI4Y2JmODNmY2EyODJhYjVhMDEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEwM2RmNWExODM4MDQ3NGRjODllZjE0NGI2NDg2YzJjNTU5MWE4ZTU5NGQ5YmVjNjFlYWNmZTY3NWQ0OWUzMzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA3MmEzMGMxOTcwODk4OGVmMzIzMmIyZjViNWI0MWEyYzU1ODEwYTE4MWFhODcwODlhYzI4YjZmN2JjNTQxNTQifQ"
+        },
+        {
+          "resource": "repo://scripts/publish_openwiki_to_docs.py#L58-L66",
+          "version": "repo-lines-v1:sha256:a8369fee25fdc5a01e48e5c8b3daef900c85086e8747236ffda25b8bff6fad9f:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNjMxMGI0NDhjYzQxMmJiYWNmZDk1MjZhNmI0NmI0YTEzZDkwOTM2MmU3NDNjZDI1YjVmNzkxMDE0OTNhNzc3MSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOThlYWI2OWQ5NDgzODRlZTJhNDk1NWE4MDUwNTc3MWE2YjRiYTNhZWIzMzBmNjg3YTYwZTAzY2ExYzdhOTMyOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZWNiNGU5Njk4ZDY1OTg2OGExYTUxMDJmMDY3OGQ3ZjczNGI1ZjU2MTk1OTM3NDkzZjg2NGFmYmNkNGU1ODMzOSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiMTVmMzVmMjgyODRkMGE3ZWFiNjhiMWJlMjllZDRhMjlmODU3NWVmODdmNjEyMDgyYjMxNWUwMTMyMzk0MDFiYyJ9"
+        },
+        {
+          "resource": "repo://scripts/publish_openwiki_to_docs.py#L85-L91",
+          "version": "repo-lines-v1:sha256:df302257d4e4c2d534c6c2a688096192ba373d08b75ed3bb339aed87f1aec1c3:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYzc0MThlZDk0OGM3Mzk3ZGZhZDU0ODYwMTFjMTg4M2UxYTE0YmVhNDFhMjNhY2M5YmNkOWJlODE3MjBiMWRkNiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNGFiNGIzYTFlYWI3YTdhNmUxNDU4ZDNlNzc3YjhiZjhhYzk4M2MzYzcyYjg3NmM4YWZkN2U3ODAwNjE4MjZlNyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYTdjZDlkZmIzODIxZWUxMTJmYTQ1YWE0MTY0ZTRlMDI0YjczMGY3NjVlN2MwYjk2MTI2ZTEzOWYwZTRjMTVkNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYjY5ZWVmYTNiMmZiNzc3OGRmYjliNDkyNWI3NjBlMmI4OTAzNjdiODkxNjE0MzY3NDU3MjVkYjIyNDI3ZTQ3ZSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_4bff483f655d414abf6ed47be0205d80",
+      "statement": "quickstart.md is unpublished by omission rather than by rule: it is not listed in PUBLIC_PATHS and is not covered by the SKIP_NAMES entry for README.md.",
+      "evidence": [
+        {
+          "resource": "repo://scripts/publish_openwiki_to_docs.py#L21-L40",
+          "version": "repo-lines-v1:sha256:86550d388ed340335a6ac4ec5cfb1cd1bedddd71f3fd77bd0511bb890ea13536:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxOTQzMTUzNzhmN2I5NzU5OWE1YjM4OTRiYjZlYTc2OWE5Y2Q4OGY1MDc1OGI4Y2JmODNmY2EyODJhYjVhMDEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEwM2RmNWExODM4MDQ3NGRjODllZjE0NGI2NDg2YzJjNTU5MWE4ZTU5NGQ5YmVjNjFlYWNmZTY3NWQ0OWUzMzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA4OGIyNzRhNTdjNDAwYjE2OTc5ZDdjMzc3MjEwYjg1ZjFiZjVlMGI3MmY2ODYyYmZjMTBhOGU3MjA0NzEwNmEifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_93d0511b3a12438abd61c1fa219ff778",
+      "statement": "Merging the openwiki/update PR is what deploys the site: the Deploy Documentation workflow runs mkdocs build --strict and publishes to GitHub Pages on pushes to main touching docs/** or mkdocs.yml, so a broken link or a nav entry with no file fails the build.",
+      "evidence": [
+        {
+          "resource": "repo://.github/workflows/docs.yml#L35-L43",
+          "version": "repo-lines-v1:sha256:23462a158a2889330e1421b6a9ca33ebb71130efcd097b1c31a60463d3a8f65e:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiNWNlOGI4MmUzODA1YTNhMTgwMDNmMmZlNDVkNGY1ZGJiNDdhZmRlOGMyZGRmNTU5Y2VkMmI0ZmRjNGY0MDYzOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMTRmZTBlYjgwMzhlZjUwNzYxYzNhZjdhNTVjMTI0NjZiZWNmNzI4NGIxNWNkYzAyMGY5YjU3OTcwY2FlNzRlNCIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOGJlMWZjM2FhMjMzMDU5OGU3MTlmOGNiN2M1NWJjZGQwODI5OGUwYjM5ZmI3NDJiMzdmZTkwYTI2ZmJhZGFiZiJ9"
+        },
+        {
+          "resource": "repo://.github/workflows/docs.yml#L4-L9",
+          "version": "repo-lines-v1:sha256:031a2c6f235ed9d707e47333ecef6682ce60175b71743601bcaee7d529a7101d:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMWUwZTJkZGFhNjYyMjlmMDA4YTI5ZDEyOGQzMGFkOWEyOTUyNTZmODU0YmFkZjMyNDA5YWQwNDcyNGI1MDU2NyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMGVhNTJmOWU2YmVkM2M1YTFmNzJjNmE3NGE4YmEzMzJjNjM4ZjE0NzVjZjIyN2YyOWJmNWZjMmMyZjA1Zjg0ZCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOWI1NjNkNGJmYWU5MzAxMWUxNDNhNjg2ODcwZDkzOGE3MzdiZjc3NGMyN2E4OTNjNTJmOWJmMjY2YzgxZWY3MSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODU0MzUzMDEzZGNjZmVjZDU4OGJlNTcwZDQxZjQ0YzNmMDlhM2E5NWYyZTgxMGJjNjI1ZDYyMTE3NWJiMGQ5ZCJ9"
+        },
+        {
+          "resource": "repo://.github/workflows/docs.yml#L53-L61",
+          "version": "repo-lines-v1:sha256:ff08ec09f691f8d24c601bf70b2226cc8c9c50e4fbe707d58b0e6e681cf9aa4c:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMjI3NDYzMzRmZGJkNjUxMzIzOWYxMzI2ZGI4YjYxMjc1N2I1YjMyYzA4MDhiNTA4MWE5OTM3ZjY1MzNiOGRiOSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNzYzNDEzMmExYjlhZTA2ZDhiNDliNjVlNjRiZWE1MTFkZDYwYjk3Y2RiMmE0MzVlNDZkMDBiMjBiNTA4MmNkYyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjE4NzE3NjVkZDY3ZDJkYjYzOGJiYTc3NjZjZWQ4NjJhM2I2MWM1Zjc1OTEzZjcyNTM2ZjlkZTZkZTk5ZTI0OSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjAsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNiMGM0NDI5OGZjMWMxNDlhZmJmNGM4OTk2ZmI5MjQyN2FlNDFlNDY0OWI5MzRjYTQ5NTk5MWI3ODUyYjg1NSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_14f1a786996e46c49b011e6b0169b7f5",
+      "statement": "CI selects the generation model at runtime from free OpenRouter ids and retries the next candidate on provider-side failures; this rotation is CI machinery rather than page content, and no paid model id is required to understand or use the tree.",
+      "evidence": [
+        {
+          "resource": "repo://scripts/openwiki_pick_model.py#L3-L16",
+          "version": "repo-lines-v1:sha256:1c96f47fbafc3b3cb2d25094907a78ffa2870968982e5605f75ba0d7b21f8f86:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEzMDNlY2RkNGE0ZDEwZjE5YzczZmQ0MmZkMTI0MzdmZDMzNTRhODI2ODE2MDVkYTUyNTVhOTdhMzkwNjhkYmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjoyLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIwYmU1NzY5Zjg3ZTBkZGE2ZDMwMmM1OGU2NjgyM2Y3MzYwYjNjMjU3NjZiODgzZDEzODVjZDI3NjYxODY5YTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU1YjZlODcwNmI0MzA0N2YyYTZkYjY3ZjEzMjYzODU5NTYwNGU2N2YzNjk2Njg3NmNlMDE1OGYwMDUzZTZiZDEifQ"
+        },
+        {
+          "resource": "repo://scripts/openwiki_update.sh#L3-L8",
+          "version": "repo-lines-v1:sha256:5dbf384abf7e9673b5335cb4757652eea0c46b74ff89456c56d49a427dd3dfdc:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMzJjNDg1OGUyMmNjMmM5NjdiNDIxNTBmYTU1MDU2MmEyYzgzOWMyY2ViY2FhYjkxY2FiZGY2ZjRkYTAyMDAyMiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNGVjOWZjNDQxMTdmOWQyNDgyY2EzMGQ0NWNiYzVkM2Y5Nzc3N2ZkZGE1OTVkNDFlNDA1M2NkZTAwNWM0ZjczNSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjIsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzNmZjhjNmVhMGE3ZDEwOTIxNWRkMzNmMDc4YzRkZmYwNTkyMjY5MGYzMmE2M2EwNzViY2E1MDM5OWJkOTMzYiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZjA2MGMyYWYyZDk3Y2E4ZGFkMTA3OTg3NmFhNDUxODFiYzEyZWIxZWUzYWUwMzgxMDhjZDUzNjNlZWZiNWIwYSJ9"
+        }
+      ]
+    },
+    {
+      "id": "claim_124cfc26508045f99d5b9e9f2bde3d9a",
+      "statement": "Agent-only depth lives under openwiki/testing/ (contract-tests.md, pytest-markers.md) plus quickstart.md and this orientation page, and only one documentation site exists: no second public tree such as architecture/, operations/, or workflows/ and no /wiki/-style URL.",
+      "evidence": [
+        {
+          "resource": "repo://mkdocs.yml#L3-L5",
+          "version": "repo-lines-v1:sha256:873d0b6b1a7d41fe85cd96469292a1713e6e098fc5858b789a7b9d2e44f26cea:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZmMyMWZiZTBjZDJmYzFhMGVmMGI3NDJiZGE5MzFmNzdkMDI3OWY3NjVjMDBjOTY4MDczYzgyMmRiNjNkZDhlYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNGRjZDhmOWNjYzM2NTIyNzBmZjRkNDc4OTMzMWI4NzJjNDRkNmFkMTQ3ZGU4ZjAxMTBmZDJjN2RkMTczMzE1MyIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjIsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDhiNjY1ZWMwYTVlNWRkZDBjZWU4NTM1NzEzMzA0NDhmMjc5NDc5ZTRkODVkM2VlYjM3NDZhZDg0NDgxNDljNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNzc4YmRkNTFjNGJmM2U4YjkzMzhiNDJhNmJiZTE3NDcyZTNmZDgzMGFjMzExNTg1MzI0NmY1M2Y5OGNkYTdmNyJ9"
+        },
+        {
+          "resource": "repo://scripts/publish_openwiki_to_docs.py#L40-L53",
+          "version": "repo-lines-v1:sha256:9cc6b100dd4681a0ac21c7e1e401e90c86f779fb854434a9254d5bef0fdb8347:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4OTNmNDBlMzc4MWViODk2YzgyZDA0NmEwODA2N2ExMWUzNWNkZjJmMWRmYWYyNmZlYTkwYjhkYjY2NzY0MTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImE2MmUzMThhM2RiZjNkMGNmYzkwZWQ5YTJhNmE2MDIyNTMxNGZlMDk2ODdhODdkZGU5NTNhYmE3NjliYzBkMjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjA3MmEzMGMxOTcwODk4OGVmMzIzMmIyZjViNWI0MWEyYzU1ODEwYTE4MWFhODcwODlhYzI4YjZmN2JjNTQxNTQifQ"
+        }
+      ]
+    }
+  ],
+  "verification": {
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-18T17:47:47.227Z"
+  }
+}
