@@ -667,6 +667,7 @@ def _process_answer_span(
             retrieval_support=retrieval_support,
             candidates=candidates,
             candidate_ranking=selected,
+            idf=idf,
             rust_corpus=rust_corpus,
             config=cfg,
         ),

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from functools import reduce
+from operator import add
 from typing import Literal, Sequence
 
 import pytest
@@ -144,6 +146,24 @@ def test_diagnostics_have_exact_backend_and_entry_point_parity() -> None:
             assert result.model_dump(
                 include=_DIAGNOSTIC_FIELDS
             ) == reference.model_dump(include=_DIAGNOSTIC_FIELDS)
+
+
+def test_hint_score_is_independent_of_retrieval_sum_order(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pytest.importorskip("cite_right._core")
+    # Exercise left-to-right float addition even on Python with compensated sum.
+    monkeypatch.setattr(
+        "cite_right.citations.sum", lambda values: reduce(add, values, 0), raising=False
+    )
+    config = _with_diagnostics(_config())
+    prepared = PreparedCitationCorpus.from_sources(SOURCES, config=config)
+    for answer, _, _ in RESTATEMENTS:
+        [reused] = prepared.align(answer, backend="python")
+        fresh = _align(answer, SOURCES, config, "python", "one-shot")
+        assert reused.possible_source is not None
+        assert fresh.possible_source is not None
+        assert reused.possible_source.score == fresh.possible_source.score, answer
 
 
 @pytest.mark.parametrize("path", ["one-shot", "prepared"])

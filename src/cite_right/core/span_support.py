@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 import unicodedata
 from collections.abc import Sequence
+from math import fsum
 from typing import TYPE_CHECKING
 
 from cite_right.contradiction import iter_contradiction_checks
@@ -24,6 +25,7 @@ from cite_right.text.content_coverage import STOPWORDS
 
 if TYPE_CHECKING:
     from cite_right._core import PreparedCorpus as RustPreparedCorpus
+    from cite_right.core.prepared_corpus import IdfWeights
 
 _STATUS_BY_REASON: dict[StatusReason, SpanStatus] = {
     "supported": "supported",
@@ -62,6 +64,7 @@ def build_span_citations(
     retrieval_support: list[RetrievalSupport],
     candidates: Sequence[Candidate],
     candidate_ranking: Sequence[tuple[int, float, float]],
+    idf: IdfWeights,
     rust_corpus: RustPreparedCorpus | None,
     config: CitationConfig,
 ) -> SpanCitations:
@@ -75,6 +78,7 @@ def build_span_citations(
             rust_corpus,
             embedding_score,
             lexical_score,
+            idf,
             config,
         )
     return SpanCitations(
@@ -133,14 +137,9 @@ def _possible_source_match(
     rust_corpus: RustPreparedCorpus | None,
     embedding_score: float,
     lexical_score: float,
+    idf: IdfWeights,
     config: CitationConfig,
 ) -> PossibleSourceMatch | None:
-    lexical_match = lexical_score > 0.0 and lexical_score >= config.min_answer_coverage
-    embedding_match = (
-        embedding_score > 0.0 and embedding_score >= config.min_embedding_similarity
-    )
-    if not (lexical_match or embedding_match):
-        return None
     if _is_short_or_boilerplate(answer_tokens):
         return None
     passage_tokens = (
@@ -150,7 +149,29 @@ def _possible_source_match(
     )
     if not _has_content_anchors(answer_tokens, passage_tokens):
         return None
+
+    if lexical_score > 0.0:
+        lexical_score = _hint_lexical_score(
+            answer_tokens.token_ids, passage_tokens, idf
+        )
+    lexical_match = lexical_score > 0.0 and lexical_score >= config.min_answer_coverage
+    embedding_match = (
+        embedding_score > 0.0 and embedding_score >= config.min_embedding_similarity
+    )
+    if not (lexical_match or embedding_match):
+        return None
     return _source_match(candidate, max(embedding_score, lexical_score))
+
+
+def _hint_lexical_score(
+    answer_tokens: Sequence[int], passage_tokens: Sequence[int], idf: IdfWeights
+) -> float:
+    # A reused tokenizer can assign different IDs to unseen words, changing set order.
+    answer_set = set(answer_tokens)
+    overlap = answer_set.intersection(passage_tokens)
+    return fsum(idf.get(token, 1.0) for token in overlap) / fsum(
+        idf.get(token, 1.0) for token in answer_set
+    )
 
 
 def _source_match(candidate: Candidate, score: float) -> PossibleSourceMatch | None:
