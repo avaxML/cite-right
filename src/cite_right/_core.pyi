@@ -68,6 +68,11 @@ class PyCitationResult:
     supports: list[PyRetrievalSupport]
     num_alignments: int
 
+class AliasRemap:
+    """Immutable token ID equivalences for the native citation builders."""
+
+    def __init__(self, ids: dict[int, int]) -> None: ...
+
 class PreparedCorpus:
     """Prepared corpus kept in Rust (opaque to Python)."""
 
@@ -89,6 +94,10 @@ class PreparedCorpus:
         self, query_tokens: Sequence[int], max_candidates: int
     ) -> list[int]:
         """Query inverted index for seed candidates."""
+        ...
+
+    def get_candidate_postings(self, query_tokens: Sequence[int]) -> list[list[int]]:
+        """Get distinct candidate indices for each token in query order."""
         ...
 
     def get_idf(self) -> list[tuple[int, float]]:
@@ -129,6 +138,7 @@ class PreparedCorpus:
         mismatch_score: int,
         gap_score: int,
         query_stopword_ids: Sequence[int],
+        alias_remap: AliasRemap | None = None,
     ) -> PyCitationResult:
         """Build citations directly from PreparedCorpus without Python marshalling.
 
@@ -179,6 +189,7 @@ def rust_build_citations_fast(
     gap_score: int = ...,
     *,
     query_stopword_ids: Sequence[int],
+    alias_remap: AliasRemap | None = None,
 ) -> str: ...
 def align_pair(
     seq1: Sequence[int],

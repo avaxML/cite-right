@@ -4,6 +4,10 @@ All notable changes to cite-right will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- `CitationConfig.term_aliases` lets callers declare equivalent single words for citation retrieval and alignment on Python and Rust. When aliases are enabled, a span needs full content-word coverage to be `supported`. (#85)
+
 ### Fixed
 
 - Python and Rust apply the same content coverage rule to citation admission. Custom tokenizers can provide citations using the existing public tokenization interface. (#84)

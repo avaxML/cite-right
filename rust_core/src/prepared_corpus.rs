@@ -5,6 +5,7 @@ use std::collections::{HashMap, HashSet};
 
 use crate::inverted_index::InvertedIndex;
 use crate::smith_waterman;
+use crate::term_aliases::{remap_token_ids, AliasRemap};
 
 /// Type alias for candidate metadata tuple
 type CandidateMetadata = (usize, usize, usize, Vec<(usize, usize)>);
@@ -163,6 +164,29 @@ impl PreparedCorpus {
         self.inverted_index.query(py, query_tokens, max_candidates)
     }
 
+    /// Get distinct candidate indices for each token in query order.
+    pub fn get_candidate_postings(
+        &self,
+        py: Python<'_>,
+        query_tokens: Vec<u32>,
+    ) -> Vec<Vec<usize>> {
+        py.detach(|| {
+            query_tokens
+                .into_iter()
+                .map(|token| {
+                    let mut candidate_indices = Vec::new();
+                    // Postings for each candidate are added together during preparation.
+                    for posting in self.inverted_index.get_postings(token) {
+                        if candidate_indices.last() != Some(&posting.candidate_index) {
+                            candidate_indices.push(posting.candidate_index);
+                        }
+                    }
+                    candidate_indices
+                })
+                .collect()
+        })
+    }
+
     /// Get IDF weights
     pub fn get_idf(&self) -> Vec<(u32, f64)> {
         self.idf.iter().map(|(&k, &v)| (k, v)).collect()
@@ -205,6 +229,21 @@ impl PreparedCorpus {
 
     /// Build citations directly from PreparedCorpus without Python marshalling
     /// This eliminates the overhead of copying full source texts to Python and back
+    #[pyo3(signature = (
+        answer_tokens,
+        candidate_indices,
+        lexical_scores,
+        embed_scores,
+        source_id_map,
+        base_offset_map,
+        config_tuple,
+        multi_span_config,
+        match_score,
+        mismatch_score,
+        gap_score,
+        query_stopword_ids,
+        alias_remap=None
+    ))]
     #[allow(clippy::too_many_arguments)]
     pub fn build_citations(
         &self,
@@ -221,7 +260,9 @@ impl PreparedCorpus {
         mismatch_score: i32,
         gap_score: i32,
         query_stopword_ids: Vec<u32>,
+        alias_remap: Option<PyRef<'_, AliasRemap>>,
     ) -> PyResult<PyCitationResult> {
+        let alias_ids = alias_remap.as_deref().map(|remap| &remap.ids);
         py.detach(|| {
             use rayon::prelude::*;
 
@@ -244,6 +285,7 @@ impl PreparedCorpus {
             let stopword_ids = query_stopword_ids.into_iter().collect();
 
             // Align answer_tokens against each candidate in parallel
+            let alignment_answer_tokens = remap_token_ids(&answer_tokens, alias_ids);
             let params = smith_waterman::ScoreParams {
                 match_score,
                 mismatch_score,
@@ -256,18 +298,20 @@ impl PreparedCorpus {
                 .par_iter()
                 .map(|&idx| {
                     if let Some(candidate) = self.candidates.get(idx) {
+                        let alignment_candidate_tokens =
+                            remap_token_ids(&candidate.token_ids, alias_ids);
                         if multi_span_evidence {
                             let (alignment, match_blocks) =
                                 smith_waterman::smith_waterman_match_blocks(
-                                    &answer_tokens,
-                                    &candidate.token_ids,
+                                    &alignment_answer_tokens,
+                                    &alignment_candidate_tokens,
                                     params,
                                 );
                             Some((alignment, Some(match_blocks)))
                         } else {
                             let alignment = smith_waterman::smith_waterman(
-                                &answer_tokens,
-                                &candidate.token_ids,
+                                &alignment_answer_tokens,
+                                &alignment_candidate_tokens,
                                 params,
                             );
                             Some((alignment, None))
@@ -311,6 +355,7 @@ impl PreparedCorpus {
                             multi_span_merge_gap_chars,
                             multi_span_max_spans,
                             &stopword_ids,
+                            alias_ids,
                         )
                     })
                 })
@@ -376,6 +421,7 @@ impl PreparedCorpus {
         multi_span_merge_gap_chars: i32,
         multi_span_max_spans: usize,
         stopword_ids: &HashSet<u32>,
+        alias_ids: Option<&HashMap<u32, u32>>,
     ) -> Option<CitationOrSupport> {
         let candidate = self.candidates.get(candidate_index)?;
         let source_text = self.source_texts.get(candidate.source_index)?;
@@ -399,6 +445,7 @@ impl PreparedCorpus {
             answer_tokens,
             &candidate.token_ids,
             stopword_ids,
+            alias_ids,
         );
 
         if alignment.score < min_alignment_score
@@ -441,7 +488,10 @@ impl PreparedCorpus {
         // Check all tokens requirement
         if require_all_tokens && alignment.matches != answer_len {
             let evidence_tokens = &candidate.token_ids[alignment.token_start..alignment.token_end];
-            if !tokens_match(answer_tokens, evidence_tokens) {
+            if !tokens_match(
+                &remap_token_ids(answer_tokens, alias_ids),
+                &remap_token_ids(evidence_tokens, alias_ids),
+            ) {
                 return self.build_support_internal(
                     candidate,
                     candidate_index,

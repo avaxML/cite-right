@@ -2,12 +2,21 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from collections.abc import Mapping
+from typing import Self
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    SerializerFunctionWrapHandler,
+    field_validator,
+    model_serializer,
+    model_validator,
+)
 
-if TYPE_CHECKING:
-    pass
+from cite_right.contradiction import is_protected_alias
+from cite_right.text.term_aliases import is_single_word, normalize_alias
 
 
 class CitationWeights(BaseModel):
@@ -81,6 +90,65 @@ class CitationConfig(BaseModel):
     multi_span_evidence: bool = False
     multi_span_merge_gap_chars: int = 16
     multi_span_max_spans: int = 5
+
+    term_aliases: tuple[tuple[str, ...], ...] = Field(
+        default=(),
+        description=(
+            "Groups of equivalent single words. Declaring aliases also requires "
+            "every content word of the answer to be matched. Unmatched content "
+            "words keep the span `partial` when a citation is available."
+        ),
+    )
+
+    @field_validator("term_aliases")
+    @classmethod
+    def _validate_term_aliases(
+        cls, groups: tuple[tuple[str, ...], ...]
+    ) -> tuple[tuple[str, ...], ...]:
+        seen: set[str] = set()
+        normalized_groups = []
+        for group in groups:
+            if len(group) < 2:
+                raise ValueError(
+                    f"alias group {group!r} needs at least two distinct terms"
+                )
+            normalized = []
+            for term in group:
+                word = normalize_alias(term)
+                if (
+                    term.isnumeric()
+                    or not is_single_word(word)
+                    or is_protected_alias(word)
+                ):
+                    raise ValueError(
+                        f"invalid alias term {term!r}; use a single non-numeric word without negation or polarity markers"
+                    )
+                if word in seen:
+                    raise ValueError(
+                        f"duplicate alias term {term!r} after normalization"
+                    )
+                seen.add(word)
+                normalized.append(word)
+            normalized_groups.append(tuple(sorted(normalized)))
+        return tuple(sorted(normalized_groups))
+
+    def model_copy(
+        self, *, update: Mapping[str, object] | None = None, deep: bool = False
+    ) -> Self:
+        if update and "term_aliases" in update:
+            aliases = CitationConfig.model_validate(
+                {"term_aliases": update["term_aliases"]}
+            ).term_aliases
+            update = {**update, "term_aliases": aliases}
+        return super().model_copy(update=update, deep=deep)
+
+    @model_serializer(mode="wrap")
+    # A return annotation would replace Pydantic's generated field schema.
+    def _serialize_config(self, handler: SerializerFunctionWrapHandler):  # noqa: ANN202
+        payload = handler(self)
+        if not self.term_aliases:
+            payload.pop("term_aliases", None)
+        return payload
 
     @model_validator(mode="before")
     @classmethod

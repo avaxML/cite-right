@@ -7,6 +7,7 @@ mod inverted_index;
 mod prepare;
 mod prepared_corpus;
 mod smith_waterman;
+mod term_aliases;
 
 type MatchBlocks = Vec<(usize, usize)>;
 type AlignmentDetails = (i32, usize, usize, usize, usize, usize, usize);
@@ -377,7 +378,8 @@ fn rust_align_batch_candidates(
     mismatch_score=-1,
     gap_score=-1,
     *,
-    query_stopword_ids
+    query_stopword_ids,
+    alias_remap=None
 ))]
 #[allow(clippy::too_many_arguments, clippy::type_complexity)]
 fn rust_build_citations_fast(
@@ -404,7 +406,9 @@ fn rust_build_citations_fast(
     mismatch_score: i32,
     gap_score: i32,
     query_stopword_ids: Vec<u32>,
+    alias_remap: Option<PyRef<'_, term_aliases::AliasRemap>>,
 ) -> PyResult<String> {
+    let alias_ids = alias_remap.as_deref().map(|remap| &remap.ids);
     py.detach(|| {
         // Build candidates
         let candidates: Vec<citation_fast::Candidate> = candidates_data
@@ -441,6 +445,7 @@ fn rust_build_citations_fast(
         // Build config
         let cfg = citation_fast::Config {
             stopword_ids: query_stopword_ids.into_iter().collect(),
+            alias_ids,
             min_alignment_score: config_tuple.0,
             min_answer_coverage: config_tuple.1,
             min_final_score: config_tuple.2,
@@ -457,11 +462,13 @@ fn rust_build_citations_fast(
         };
 
         // Run SW alignments (with or without match blocks)
+        let alignment_answer_tokens = term_aliases::remap_token_ids(&answer_tokens, alias_ids);
         let candidate_token_lists: Vec<Vec<u32>> = candidate_indices
             .iter()
             .map(|&idx| {
                 if idx < candidates.len() {
-                    candidates[idx].token_ids.clone()
+                    term_aliases::remap_token_ids(&candidates[idx].token_ids, alias_ids)
+                        .into_owned()
                 } else {
                     Vec::new()
                 }
@@ -477,7 +484,7 @@ fn rust_build_citations_fast(
         let alignments: Vec<citation_fast::Alignment> = if cfg.multi_span_evidence {
             // Use align_batch_with_match_blocks for multi-span support
             smith_waterman::align_batch_with_match_blocks(
-                &answer_tokens,
+                &alignment_answer_tokens,
                 &candidate_token_lists,
                 params,
             )
@@ -492,7 +499,7 @@ fn rust_build_citations_fast(
             .collect()
         } else {
             // Standard align_batch without match blocks
-            smith_waterman::align_batch(&answer_tokens, &candidate_token_lists, params)
+            smith_waterman::align_batch(&alignment_answer_tokens, &candidate_token_lists, params)
                 .into_iter()
                 .map(|a| citation_fast::Alignment {
                     score: a.score,
@@ -532,5 +539,6 @@ fn _core(module: &Bound<'_, PyModule>) -> PyResult<()> {
     module.add_function(wrap_pyfunction!(rust_build_citations_fast, module)?)?;
     module.add_class::<inverted_index::InvertedIndex>()?;
     module.add_class::<prepared_corpus::PreparedCorpus>()?;
+    module.add_class::<term_aliases::AliasRemap>()?;
     Ok(())
 }

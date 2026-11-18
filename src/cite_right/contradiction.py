@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import re
 import unicodedata
+from collections.abc import Callable
 
 _FUNCTION_WORDS = frozenset(
     {
@@ -64,7 +65,70 @@ _SENTENCE_START_STOPWORDS = _FUNCTION_WORDS | {
 }
 
 
-def check_contradiction(answer_text: str, evidence_text: str) -> bool:
+_NEGATION_PATTERNS = (
+    r"\bnot\b",
+    r"\bnever\b",
+    r"\bno\b",
+    r"n't\b",
+    r"\bneither\b",
+    r"\bnor\b",
+    r"\bnobody\b",
+    r"\bnothing\b",
+    r"\bnowhere\b",
+    r"\bhadn\'t\b",
+    r"\bhasn\'t\b",
+    r"\bhaven\'t\b",
+    r"\bisn\'t\b",
+    r"\bwasn\'t\b",
+    r"\bweren\'t\b",
+    r"\bwon\'t\b",
+    r"\bwouldn\'t\b",
+    r"\bdon\'t\b",
+    r"\bdoesn\'t\b",
+    r"\bdidn\'t\b",
+    r"\bcan\'t\b",
+    r"\bcannot\b",
+    r"\bcouldn\'t\b",
+    r"\bshouldn\'t\b",
+    r"\bmustn\'t\b",
+)
+
+_TEMPORAL_CONTRADICTIONS = (
+    (r"\bbc\b", r"\bago\b"),
+    (r"\bce\b", r"\bbc\b"),
+    (r"\bad\b", r"\bbc\b"),
+    (r"\bbce\b", r"\bce\b"),
+)
+
+_POLARITY_CONTRADICTIONS = (
+    (r"\boppose[ds]?\b", r"\b(?:support|urge[ds]?|advocate[ds]?|promote[ds]?)\b"),
+    (r"\bsupport[s]?\b", r"\b(?:oppose[ds]?|reject[s]?|resist[s]?)\b"),
+    (r"\breject[s]?\b", r"\b(?:accept[s]?|approve[s]?|endorse[ds]?)\b"),
+    (r"\bdenied\b", r"\b(?:confirmed|admitted|acknowledged)\b"),
+    (r"\bfailed\b", r"\b(?:succeeded|achieved|accomplished)\b"),
+)
+
+
+def is_protected_alias(term: str) -> bool:
+    """Return whether an alias would equate a contradiction marker or number."""
+    return bool(
+        extract_numbers(term)
+        or contains_negation(term)
+        or any(
+            re.search(pattern, term)
+            for pair in (*_TEMPORAL_CONTRADICTIONS, *_POLARITY_CONTRADICTIONS)
+            for pattern in pair
+        )
+    )
+
+
+def check_contradiction(
+    answer_text: str,
+    evidence_text: str,
+    *,
+    entity_aliases: Callable[[str], str] | None = None,
+    normalize_negation: Callable[[str], str] | None = None,
+) -> bool:
     """Check if evidence contradicts the answer.
 
     Args:
@@ -74,11 +138,17 @@ def check_contradiction(answer_text: str, evidence_text: str) -> bool:
     Returns:
         True if contradiction is detected, False otherwise
     """
-    if has_negation_mismatch(answer_text, evidence_text):
+    negation_answer = (
+        normalize_negation(answer_text) if normalize_negation else answer_text
+    )
+    negation_evidence = (
+        normalize_negation(evidence_text) if normalize_negation else evidence_text
+    )
+    if has_negation_mismatch(negation_answer, negation_evidence):
         return True
     if has_number_mismatch(answer_text, evidence_text):
         return True
-    if has_entity_swap(answer_text, evidence_text):
+    if has_entity_swap(answer_text, evidence_text, entity_aliases=entity_aliases):
         return True
     if has_temporal_polarity_mismatch(answer_text, evidence_text):
         return True
@@ -110,35 +180,8 @@ def contains_negation(text: str) -> bool:
         True if negation markers found
     """
     lower = text.lower()
-    negation_patterns = [
-        r"\bnot\b",
-        r"\bnever\b",
-        r"\bno\b",
-        r"n't\b",
-        r"\bneither\b",
-        r"\bnor\b",
-        r"\bnobody\b",
-        r"\bnothing\b",
-        r"\bnowhere\b",
-        r"\bhadn\'t\b",
-        r"\bhasn\'t\b",
-        r"\bhaven\'t\b",
-        r"\bisn\'t\b",
-        r"\bwasn\'t\b",
-        r"\bweren\'t\b",
-        r"\bwon\'t\b",
-        r"\bwouldn\'t\b",
-        r"\bdon\'t\b",
-        r"\bdoesn\'t\b",
-        r"\bdidn\'t\b",
-        r"\bcan\'t\b",
-        r"\bcannot\b",
-        r"\bcouldn\'t\b",
-        r"\bshouldn\'t\b",
-        r"\bmustn\'t\b",
-    ]
 
-    for pattern in negation_patterns:
+    for pattern in _NEGATION_PATTERNS:
         if re.search(pattern, lower):
             return True
     return False
@@ -182,7 +225,12 @@ def extract_numbers(text: str) -> list[str]:
     return [num.replace(",", "") for num in numbers]
 
 
-def has_entity_swap(answer_text: str, evidence_text: str) -> bool:
+def has_entity_swap(
+    answer_text: str,
+    evidence_text: str,
+    *,
+    entity_aliases: Callable[[str], str] | None = None,
+) -> bool:
     """Check if entities (proper nouns) differ between answer and evidence.
 
     Args:
@@ -199,6 +247,9 @@ def has_entity_swap(answer_text: str, evidence_text: str) -> bool:
 
     answer_set = set(answer_entities)
     evidence_set = set(evidence_entities)
+    if entity_aliases:
+        answer_set = set(map(entity_aliases, answer_set))
+        evidence_set = set(map(entity_aliases, evidence_set))
     unique_in_answer = answer_set - evidence_set
     unique_in_evidence = evidence_set - answer_set
     return bool(unique_in_answer and unique_in_evidence)
@@ -241,31 +292,18 @@ def has_temporal_polarity_mismatch(answer_text: str, evidence_text: str) -> bool
     answer_lower = answer_text.lower()
     evidence_lower = evidence_text.lower()
 
-    temporal_contradictions = [
-        (r"\bbc\b", r"\bago\b"),
-        (r"\bce\b", r"\bbc\b"),
-        (r"\bad\b", r"\bbc\b"),
-        (r"\bbce\b", r"\bce\b"),
-    ]
-    if _paired_marker_mismatch(answer_lower, evidence_lower, temporal_contradictions):
+    if _paired_marker_mismatch(answer_lower, evidence_lower, _TEMPORAL_CONTRADICTIONS):
         return True
 
-    polarity_contradictions = [
-        (r"\boppose[ds]?\b", r"\b(?:support|urge[ds]?|advocate[ds]?|promote[ds]?)\b"),
-        (r"\bsupport[s]?\b", r"\b(?:oppose[ds]?|reject[s]?|resist[s]?)\b"),
-        (r"\breject[s]?\b", r"\b(?:accept[s]?|approve[s]?|endorse[ds]?)\b"),
-        (r"\bdenied\b", r"\b(?:confirmed|admitted|acknowledged)\b"),
-        (r"\bfailed\b", r"\b(?:succeeded|achieved|accomplished)\b"),
-    ]
     return _paired_marker_mismatch(
-        answer_lower, evidence_lower, polarity_contradictions
+        answer_lower, evidence_lower, _POLARITY_CONTRADICTIONS
     )
 
 
 def _paired_marker_mismatch(
     answer_lower: str,
     evidence_lower: str,
-    pairs: list[tuple[str, str]],
+    pairs: tuple[tuple[str, str], ...],
 ) -> bool:
     """Return True if exactly one side of a contradictory marker pair matches."""
     for left, right in pairs:
