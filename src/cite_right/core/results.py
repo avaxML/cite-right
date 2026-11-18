@@ -2,9 +2,17 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal, Mapping
+from typing import Any, Literal, Mapping, TypeAlias
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    SerializerFunctionWrapHandler,
+    computed_field,
+    model_serializer,
+    model_validator,
+)
 
 
 class TokenizedText(BaseModel):
@@ -299,6 +307,32 @@ class RetrievalSupport(BaseModel):
     lexical_score: float
 
 
+class PossibleSourceMatch(BaseModel):
+    """Location and retrieval score of the most likely source passage."""
+
+    model_config = ConfigDict(frozen=True)
+
+    source_id: str
+    source_index: int
+    char_start: int
+    char_end: int
+    score: float
+
+    @model_validator(mode="after")
+    def _validate_range(self) -> PossibleSourceMatch:
+        if not 0 <= self.char_start < self.char_end:
+            raise ValueError(
+                "char_start and char_end must specify a non-negative, non-empty range"
+            )
+        return self
+
+
+SpanStatus: TypeAlias = Literal["supported", "partial", "unsupported"]
+StatusReason: TypeAlias = Literal[
+    "supported", "below_coverage", "contradiction", "no_candidate"
+]
+
+
 class SpanCitations(BaseModel):
     """Citations for a single answer span.
 
@@ -313,12 +347,17 @@ class SpanCitations(BaseModel):
             localized into an exact citation.
         status: Overall citation status for this span:
 
-            - ``"supported"``: Top-ranked citation has answer_coverage >= threshold
-              (default 0.6). The claim is well-grounded in sources.
-            - ``"partial"``: Has citations but below supported threshold.
-              Some evidence exists but coverage is incomplete.
+            - ``"supported"``: Top-ranked citation passes the answer coverage
+              threshold (default 0.6), contradiction checks, and full content
+              coverage when aliases are enabled.
+            - ``"partial"``: Has citations and fails at least one support check.
             - ``"unsupported"``: No citations found. This span may be
               hallucinated or paraphrased beyond recognition.
+        status_reason: Reason for the status when diagnostics are enabled.
+        contradiction_checks: Names of all checks that fired against the best
+            citation's passage, or an empty list when none fired.
+        possible_source: Location and retrieval score of a qualifying passage
+            for a non-supported span. This hint does not establish support.
 
     Example:
         >>> results = align_citations(answer, sources)
@@ -334,7 +373,19 @@ class SpanCitations(BaseModel):
     answer_span: AnswerSpan
     citations: list[Citation]
     retrieval_support: list[RetrievalSupport] = Field(default_factory=list)
-    status: Literal["supported", "partial", "unsupported"]
+    status: SpanStatus
+    status_reason: StatusReason | None = None
+    contradiction_checks: list[str] | None = None
+    possible_source: PossibleSourceMatch | None = None
+
+    # Let Pydantic derive the serialization schema from the model fields.
+    @model_serializer(mode="wrap")
+    def _serialize(self, handler: SerializerFunctionWrapHandler):  # noqa: ANN202
+        data = handler(self)
+        for field in ("status_reason", "contradiction_checks", "possible_source"):
+            if data.get(field) is None:
+                data.pop(field, None)
+        return data
 
     @model_validator(mode="after")
     def _validate_status_matches_exact_citations(self) -> "SpanCitations":

@@ -1,9 +1,15 @@
 """Tests for contradiction detection in citations."""
 
+from typing import Literal
+
 import pytest
 
 from cite_right import CitationConfig, align_citations
 from cite_right.contradiction import check_contradiction, has_entity_swap
+
+from .conftest import requires_rust
+
+Backend = Literal["python", "rust"]
 
 
 def test_negation_mismatch_marked_unsupported() -> None:
@@ -249,6 +255,156 @@ def test_entity_swap_keeps_role_changes(answer: str, source: str) -> None:
 
 
 @pytest.mark.parametrize(
+    "backend", ["python", pytest.param("rust", marks=requires_rust)]
+)
+@pytest.mark.parametrize(
+    ("answer", "source"),
+    [
+        ("The inspector was Alice.", "The inspector was Bob."),
+        ("THE INSPECTOR WAS ALICE.", "THE INSPECTOR WAS BOB."),
+        ("Alice and Maria signed the form.", "Bob and Maria signed the form."),
+        (
+            "Alice, the inspector, signed the form.",
+            "Bob, the inspector, signed the form.",
+        ),
+        (
+            "The board hired Northwind for the project.",
+            "The board hired Woodgrove for the project.",
+        ),
+        (
+            "The board will select Alice for the project.",
+            "The board will select Bob for the project.",
+        ),
+        (
+            "Paris and Oslo submitted the bid.",
+            "Rome and Oslo submitted the bid.",
+        ),
+        (
+            "Alice supervised Bob during the scheduled inspection.",
+            "Bob supervised Alice during the scheduled inspection.",
+        ),
+    ],
+    ids=[
+        "role-noun",
+        "uppercase-role-noun",
+        "coordinated-people",
+        "appositive",
+        "object",
+        "selection-object",
+        "coordinated-places",
+        "exchanged-roles",
+    ],
+)
+def test_entity_changes_block_support(
+    answer: str, source: str, backend: Backend
+) -> None:
+    config = CitationConfig(report_possible_source=True)
+    [span] = align_citations(answer, [source], config=config, backend=backend)
+    assert span.status == "partial"
+    assert span.status_reason == "contradiction"
+    assert span.contradiction_checks == ["has_entity_swap"]
+    assert (
+        span.citations[0].components["answer_coverage"]
+        >= config.supported_answer_coverage
+    )
+
+
+@pytest.mark.parametrize(
+    "backend", ["python", pytest.param("rust", marks=requires_rust)]
+)
+def test_aliases_remap_names_in_matching_roles(backend: Backend) -> None:
+    config = CitationConfig(
+        report_possible_source=True, term_aliases=(("Alice", "Alicia"),)
+    )
+    source = "Alice and Maria signed the form."
+    [equivalent] = align_citations(
+        "Alicia and Maria signed the form.", [source], config=config, backend=backend
+    )
+    assert equivalent.status == "supported"
+    assert equivalent.contradiction_checks == []
+
+    [changed] = align_citations(
+        "Bob and Maria signed the form.", [source], config=config, backend=backend
+    )
+    assert changed.status == "partial"
+    assert changed.contradiction_checks == ["has_entity_swap"]
+
+
+@pytest.mark.parametrize(
+    "backend", ["python", pytest.param("rust", marks=requires_rust)]
+)
+@pytest.mark.parametrize(
+    ("answer", "source", "clears_coverage"),
+    [
+        ("Click Save", "Click Cancel", False),
+        (
+            "Click Save to close the settings panel.",
+            "Click Cancel to close the settings panel.",
+            True,
+        ),
+        ("Click Save, then tap Close.", "Press Cancel, then tap Close.", True),
+        (
+            "Click Save to close the settings panel, then click Cancel to reopen it.",
+            "Click Cancel to close the settings panel, then click Save to reopen it.",
+            True,
+        ),
+        (
+            "Click Save to close the settings panel.",
+            "Click Cancel to close the settings panel, then click Save to reopen it.",
+            True,
+        ),
+    ],
+    ids=["short", "high-coverage", "shared-second-step", "swapped-steps", "extra-step"],
+)
+def test_changed_control_target_blocks_support(
+    backend: Backend, answer: str, source: str, clears_coverage: bool
+) -> None:
+    config = CitationConfig(report_possible_source=True)
+    [span] = align_citations(answer, [source], config=config, backend=backend)
+    assert span.status == "partial"
+    assert span.status_reason == "contradiction"
+    assert span.contradiction_checks == ["has_control_target_mismatch"]
+    [citation] = span.citations
+    assert (
+        citation.components["answer_coverage"] >= config.supported_answer_coverage
+    ) == clears_coverage
+
+
+@pytest.mark.parametrize(
+    "backend", ["python", pytest.param("rust", marks=requires_rust)]
+)
+def test_aliases_remap_control_targets(backend: Backend) -> None:
+    config = CitationConfig(
+        report_possible_source=True, term_aliases=(("Save", "Apply"), ("click", "tap"))
+    )
+    [span] = align_citations(
+        'Click "Save" to close the settings panel.',
+        ["Tap the Apply button to close the settings panel."],
+        config=config,
+        backend=backend,
+    )
+    assert span.status == "supported"
+    assert span.contradiction_checks == []
+
+
+@pytest.mark.parametrize(
+    "backend", ["python", pytest.param("rust", marks=requires_rust)]
+)
+def test_control_location_does_not_change_the_target(backend: Backend) -> None:
+    [span] = align_citations(
+        "Click Save to keep your changes.",
+        ["Click Save on the toolbar to keep your changes."],
+        config=CitationConfig(report_possible_source=True),
+        backend=backend,
+    )
+    assert span.status == "supported"
+    assert span.contradiction_checks == []
+
+
+@pytest.mark.parametrize(
+    "backend", ["python", pytest.param("rust", marks=requires_rust)]
+)
+@pytest.mark.parametrize(
     ("answer", "source"),
     [
         (
@@ -265,8 +421,10 @@ def test_entity_swap_keeps_role_changes(answer: str, source: str) -> None:
         ),
     ],
 )
-def test_issue69_restatements_are_supported(answer: str, source: str) -> None:
-    [span] = align_citations(answer, [source], config=CitationConfig())
+def test_issue69_restatements_are_supported(
+    answer: str, source: str, backend: Backend
+) -> None:
+    [span] = align_citations(answer, [source], config=CitationConfig(), backend=backend)
     assert span.status == "supported"
 
 

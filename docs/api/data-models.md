@@ -99,6 +99,9 @@ class SpanCitations(BaseModel):
     citations: list[Citation]
     retrieval_support: list[RetrievalSupport] = []
     status: Literal["supported", "partial", "unsupported"]
+    status_reason: StatusReason | None = None
+    contradiction_checks: list[str] | None = None
+    possible_source: PossibleSourceMatch | None = None
 ```
 
 **Fields:**
@@ -109,7 +112,26 @@ class SpanCitations(BaseModel):
 
 **retrieval_support** (`list[RetrievalSupport]`): Retrieval-only support signals for passages selected during lexical and/or embedding candidate search that did not produce an exact localized citation.
 
-**status** (`Literal["supported", "partial", "unsupported"]`): Overall support level based on exact citation answer coverage. Retrieval support does not change status.
+**status** (`Literal["supported", "partial", "unsupported"]`): Overall support level based on the best citation's coverage and contradiction checks. Retrieval support does not change status.
+
+With `CitationConfig(report_possible_source=True)`, `status_reason` is
+`"supported"`, `"below_coverage"`, `"contradiction"`, or `"no_candidate"`.
+`"below_coverage"` covers both the answer coverage threshold and the full
+content coverage requirement when aliases are enabled.
+`contradiction_checks` contains the names of all checks that fired. A
+qualifying partial or unsupported span can also include `possible_source`.
+Serialization omits diagnostic fields whose values are `None`.
+
+### PossibleSourceMatch
+
+`source_id` and `source_index` identify the candidate's source.
+`char_start` and `char_end` locate the candidate passage with half-open
+document-relative offsets. A match in a `SourceChunk` fits its declared range.
+`score` is the greater of the candidate's lexical overlap and embedding
+similarity.
+
+The match identifies the passage most likely to be the source. The
+passage can be related to a claim without establishing it.
 
 ### AnswerSpan
 

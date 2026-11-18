@@ -4,6 +4,7 @@ Checks for:
 - Negation mismatches (answer says "X is not Y" but source says "X is Y")
 - Number mismatches (answer says "15%" but source says "20%")
 - Entity-token mismatches in key positions
+- Control targets that differ in matching instructions
 - Temporal/polarity markers (BC vs ago, oppose vs support, etc.)
 - Number context mismatches (same number, different slot)
 """
@@ -12,6 +13,9 @@ from __future__ import annotations
 
 import re
 import unicodedata
+from collections.abc import Callable, Iterator
+
+from cite_right.text.segmenter_simple import SimpleSegmenter
 
 _FUNCTION_WORDS = frozenset(
     {
@@ -64,7 +68,71 @@ _SENTENCE_START_STOPWORDS = _FUNCTION_WORDS | {
 }
 
 
-def check_contradiction(answer_text: str, evidence_text: str) -> bool:
+_NEGATION_PATTERNS = (
+    r"\bnot\b",
+    r"\bnever\b",
+    r"\bno\b",
+    r"n't\b",
+    r"\bneither\b",
+    r"\bnor\b",
+    r"\bnobody\b",
+    r"\bnothing\b",
+    r"\bnowhere\b",
+    r"\bhadn\'t\b",
+    r"\bhasn\'t\b",
+    r"\bhaven\'t\b",
+    r"\bisn\'t\b",
+    r"\bwasn\'t\b",
+    r"\bweren\'t\b",
+    r"\bwon\'t\b",
+    r"\bwouldn\'t\b",
+    r"\bdon\'t\b",
+    r"\bdoesn\'t\b",
+    r"\bdidn\'t\b",
+    r"\bcan\'t\b",
+    r"\bcannot\b",
+    r"\bcouldn\'t\b",
+    r"\bshouldn\'t\b",
+    r"\bmustn\'t\b",
+)
+
+_TEMPORAL_CONTRADICTIONS = (
+    (r"\bbc\b", r"\bago\b"),
+    (r"\bce\b", r"\bbc\b"),
+    (r"\bad\b", r"\bbc\b"),
+    (r"\bbce\b", r"\bce\b"),
+)
+
+_POLARITY_CONTRADICTIONS = (
+    (r"\boppose[ds]?\b", r"\b(?:support|urge[ds]?|advocate[ds]?|promote[ds]?)\b"),
+    (r"\bsupport[s]?\b", r"\b(?:oppose[ds]?|reject[s]?|resist[s]?)\b"),
+    (r"\breject[s]?\b", r"\b(?:accept[s]?|approve[s]?|endorse[ds]?)\b"),
+    (r"\bdenied\b", r"\b(?:confirmed|admitted|acknowledged)\b"),
+    (r"\bfailed\b", r"\b(?:succeeded|achieved|accomplished)\b"),
+)
+
+
+def is_protected_alias(term: str) -> bool:
+    """Return whether an alias would equate a contradiction marker or number."""
+    return bool(
+        extract_numbers(term)
+        or contains_negation(term)
+        or any(
+            re.search(pattern, term)
+            for pair in (*_TEMPORAL_CONTRADICTIONS, *_POLARITY_CONTRADICTIONS)
+            for pattern in pair
+        )
+    )
+
+
+def check_contradiction(
+    answer_text: str,
+    evidence_text: str,
+    *,
+    entity_aliases: Callable[[str], str] | None = None,
+    normalize_negation: Callable[[str], str] | None = None,
+    normalize_temporal_clause: Callable[[str], str] | None = None,
+) -> bool:
     """Check if evidence contradicts the answer.
 
     Args:
@@ -74,17 +142,14 @@ def check_contradiction(answer_text: str, evidence_text: str) -> bool:
     Returns:
         True if contradiction is detected, False otherwise
     """
-    if has_negation_mismatch(answer_text, evidence_text):
-        return True
-    if has_number_mismatch(answer_text, evidence_text):
-        return True
-    if has_entity_swap(answer_text, evidence_text):
-        return True
-    if has_temporal_polarity_mismatch(answer_text, evidence_text):
-        return True
-    if has_number_context_mismatch(answer_text, evidence_text):
-        return True
-    return False
+    checks = iter_contradiction_checks(
+        answer_text,
+        evidence_text,
+        entity_aliases=entity_aliases,
+        normalize_negation=normalize_negation,
+        normalize_temporal_clause=normalize_temporal_clause,
+    )
+    return next(checks, None) is not None
 
 
 def has_negation_mismatch(answer_text: str, evidence_text: str) -> bool:
@@ -110,35 +175,8 @@ def contains_negation(text: str) -> bool:
         True if negation markers found
     """
     lower = text.lower()
-    negation_patterns = [
-        r"\bnot\b",
-        r"\bnever\b",
-        r"\bno\b",
-        r"n't\b",
-        r"\bneither\b",
-        r"\bnor\b",
-        r"\bnobody\b",
-        r"\bnothing\b",
-        r"\bnowhere\b",
-        r"\bhadn\'t\b",
-        r"\bhasn\'t\b",
-        r"\bhaven\'t\b",
-        r"\bisn\'t\b",
-        r"\bwasn\'t\b",
-        r"\bweren\'t\b",
-        r"\bwon\'t\b",
-        r"\bwouldn\'t\b",
-        r"\bdon\'t\b",
-        r"\bdoesn\'t\b",
-        r"\bdidn\'t\b",
-        r"\bcan\'t\b",
-        r"\bcannot\b",
-        r"\bcouldn\'t\b",
-        r"\bshouldn\'t\b",
-        r"\bmustn\'t\b",
-    ]
 
-    for pattern in negation_patterns:
+    for pattern in _NEGATION_PATTERNS:
         if re.search(pattern, lower):
             return True
     return False
@@ -189,21 +227,24 @@ _NameRole = tuple[str, str]
 _UNIT_NAMES = frozenset(
     {"eur", "usd", "gbp", "cad", "aud", "jpy", "kg", "mg", "km", "cm", "mm", "kwh"}
 )
-_CONTROL_VERBS = frozenset(
-    {
-        "click",
-        "clicked",
-        "clicks",
-        "choose",
-        "hit",
-        "open",
-        "press",
-        "select",
-        "tap",
-        "toggle",
-        "use",
-    }
+_CONTROL_ACTIONS = frozenset({"click", "clicked", "clicks", "press", "tap"})
+_CONTROL_VERBS = _CONTROL_ACTIONS | {
+    "choose",
+    "hit",
+    "open",
+    "select",
+    "toggle",
+    "use",
+}
+_CONTROL_INSTRUCTION = re.compile(
+    r"""(?:^|(?<=[.!?,;\n])|\b(?:and|then)\b)[ \t]*(?:please[ \t]+)?
+    (?:click|press|tap)[ \t]+(?:the[ \t]+)?
+    (?:["“'‘`]([^"”'’`\n]+)["”'’`]|([^,.:;!?\n]+?))
+    (?=[ \t]+(?:to|when|after|before|if|on|in|under|then|and)\b|[,.:;!?\n]|$)
+    """,
+    re.VERBOSE,
 )
+_CONTROL_CONTEXT_END = re.compile(r"[,.:;!?\n]|\b(?:and[ \t]+)?then\b")
 _CONTROL_LABELS = frozenset(
     {
         "button",
@@ -218,6 +259,7 @@ _CONTROL_LABELS = frozenset(
         "toolbar",
     }
 )
+_APPOSITIVE = re.compile(r"[ \t]*,[ \t]*(?:a|an|the)[ \t]+[^,.:;!?•\n]+,", re.I)
 _DISPLAY_VERBS = frozenset(
     {
         "display",
@@ -304,10 +346,22 @@ _NON_NAME_WORDS = (
 )
 
 
-def has_entity_swap(answer_text: str, evidence_text: str) -> bool:
-    """Check for absent names occupying a corresponding role on both sides."""
+def has_entity_swap(
+    answer_text: str,
+    evidence_text: str,
+    *,
+    entity_aliases: Callable[[str], str] | None = None,
+) -> bool:
+    """Check for different names occupying corresponding roles."""
     answer_words, answer_names = _find_named_roles(answer_text)
     evidence_words, evidence_names = _find_named_roles(evidence_text)
+    if entity_aliases is not None:
+        answer_words = set(map(entity_aliases, answer_words))
+        evidence_words = set(map(entity_aliases, evidence_words))
+        answer_names = [(entity_aliases(name), roles) for name, roles in answer_names]
+        evidence_names = [
+            (entity_aliases(name), roles) for name, roles in evidence_names
+        ]
     answer_roles = {
         role
         for name, roles in answer_names
@@ -320,7 +374,37 @@ def has_entity_swap(answer_text: str, evidence_text: str) -> bool:
         if name not in answer_words
         for role in roles
     }
-    return not answer_roles.isdisjoint(evidence_roles)
+    return not answer_roles.isdisjoint(evidence_roles) or _names_exchanged_roles(
+        answer_names, evidence_names
+    )
+
+
+def _names_exchanged_roles(
+    answer_names: list[tuple[str, list[_NameRole]]],
+    evidence_names: list[tuple[str, list[_NameRole]]],
+) -> bool:
+    def by_role(
+        mentions: list[tuple[str, list[_NameRole]]],
+    ) -> dict[_NameRole, set[str]]:
+        result: dict[_NameRole, set[str]] = {}
+        for name, roles in mentions:
+            for role in roles:
+                result.setdefault(role, set()).add(name)
+        return result
+
+    answer = by_role(answer_names)
+    evidence = by_role(evidence_names)
+    replacements = set()
+    for role in answer.keys() & evidence.keys():
+        if len(answer[role]) == len(evidence[role]) == 1:
+            (answer_name,) = answer[role]
+            (evidence_name,) = evidence[role]
+            if answer_name == evidence_name:
+                continue
+            if (evidence_name, answer_name) in replacements:
+                return True
+            replacements.add((answer_name, evidence_name))
+    return False
 
 
 def extract_entities(text: str) -> list[str]:
@@ -337,6 +421,7 @@ def _find_named_roles(
     raw_words = [match.group() for match in matches]
     words = [word.casefold() for word in raw_words]
     heading = _looks_like_heading(normalized, raw_words, words)
+    right_anchors = _right_anchors(normalized, matches, raw_words, words)
 
     mentions: list[tuple[str, list[_NameRole]]] = []
     clause_start = previous_end = 0
@@ -347,27 +432,30 @@ def _find_named_roles(
             clause_start = index
         if not _looks_like_name(raw, word):
             continue
-        after = _right_anchor(normalized, matches, words, index)
-        roles = _local_name_roles(words, index, leading, after, heading, clause_start)
+        roles = _local_name_roles(
+            words, index, leading, right_anchors[index], heading, clause_start
+        )
         if roles:
             mentions.append((word, roles))
     return set(words), mentions
 
 
 def _looks_like_heading(text: str, raw_words: list[str], words: list[str]) -> bool:
-    if (
-        len(words) >= 4
-        and _ends_with_assertion(text)
-        and raw_words[0].isupper()
+    if not all(
+        raw[0].isupper() or word in _FUNCTION_WORDS
+        for raw, word in zip(raw_words, words, strict=True)
+    ):
+        return False
+    if len(words) < 4 or not _ends_with_assertion(text):
+        return True
+    if words[0] in _ARTICLES and _role_before_copula(words, len(words) - 1, 0):
+        return False
+    return not (
+        raw_words[0].isupper()
         and not _looks_like_adverb(words[0])
         and raw_words[1].isupper()
         and words[1].endswith("ed")
         and words[2] in _ARTICLES
-    ):
-        return False
-    return all(
-        raw[0].isupper() or word in _FUNCTION_WORDS
-        for raw, word in zip(raw_words, words, strict=True)
     )
 
 
@@ -415,7 +503,10 @@ def _local_name_roles(
         return []
 
     roles: list[_NameRole] = []
-    if _has_left_anchor(before, after, leading):
+    subject = _role_before_copula(words, index, clause_start)
+    if subject:
+        roles.append(("after", subject))
+    elif _has_left_anchor(before, after, leading):
         roles.append(("after", before))
     if after and after not in _SENTENCE_START_STOPWORDS:
         roles.append(("before", after))
@@ -433,22 +524,46 @@ def _has_left_anchor(before: str, after: str, leading: str) -> bool:
         before in _RECIPIENT_VERBS and after in _ARTICLES
     ):
         return True
-    return not after and before.isalpha() and before not in _NON_NAME_WORDS
+    return (
+        (not after or after in _NAME_PREPOSITIONS)
+        and before.isalpha()
+        and (before not in _NON_NAME_WORDS or before in _CONTROL_VERBS)
+    )
 
 
-def _right_anchor(
-    text: str, matches: list[re.Match[str]], words: list[str], index: int
-) -> str:
-    next_index = index + 1
-    if next_index == len(words):
-        return ""
-    if _is_clause_gap(text[matches[index].end() : matches[next_index].start()]):
-        return ""
-    after = words[next_index]
-    if after.endswith("ly") and next_index + 1 < len(words):
-        gap = text[matches[next_index].end() : matches[next_index + 1].start()]
-        return "" if _is_clause_gap(gap) else words[next_index + 1]
-    return after
+def _right_anchors(
+    text: str, matches: list[re.Match[str]], raw_words: list[str], words: list[str]
+) -> list[str]:
+    # Work backwards so each name in a coordinated subject can reuse the next anchor.
+    anchors = [""] * len(words)
+    for index in range(len(words) - 2, -1, -1):
+        end = matches[index].end()
+        following = index + 1
+        gap = text[end : matches[following].start()]
+        if _is_clause_gap(gap):
+            continue
+        if gap.strip() == "," and words[following] in _ARTICLES:
+            appositive = _APPOSITIVE.match(text, end)
+            if appositive is not None:
+                end = appositive.end()
+                while following < len(words) and matches[following].start() < end:
+                    following += 1
+                if following == len(words) or _is_clause_gap(
+                    text[end : matches[following].start()]
+                ):
+                    continue
+        after = words[following]
+        if after in {"and", "or"} and following + 1 < len(words):
+            if not _is_clause_gap(
+                text[matches[following].end() : matches[following + 1].start()]
+            ) and _looks_like_name(raw_words[following + 1], words[following + 1]):
+                anchors[index] = anchors[following + 1]
+                continue
+        if after.endswith("ly") and following + 1 < len(words):
+            gap = text[matches[following].end() : matches[following + 1].start()]
+            after = "" if _is_clause_gap(gap) else words[following + 1]
+        anchors[index] = after
+    return anchors
 
 
 def _explicit_name_role(
@@ -501,17 +616,85 @@ def _interface_or_layout(
     if index == clause_start + 1 and before in _COPULAS:
         return True
     recent_words = words[max(clause_start, index - 3) : index]
-    return _has_control_context(recent_words, before)
+    return _has_control_context(recent_words, before, words[clause_start])
 
 
-def _has_control_context(recent_words: list[str], before: str) -> bool:
-    return any(word in _CONTROL_VERBS for word in recent_words) or (
-        before in _DISPLAY_VERBS
-        and any(word in _CONTROL_LABELS for word in recent_words[:-1])
+def _has_control_context(recent_words: list[str], before: str, start: str) -> bool:
+    return (
+        any(word in _CONTROL_ACTIONS for word in recent_words)
+        or (start in _CONTROL_VERBS and before in _CONTROL_VERBS)
+        or (
+            before in _DISPLAY_VERBS
+            and any(word in _CONTROL_LABELS for word in recent_words[:-1])
+        )
     )
 
 
-def has_temporal_polarity_mismatch(answer_text: str, evidence_text: str) -> bool:
+def _control_steps(
+    text: str, aliases: Callable[[str], str] | None
+) -> list[tuple[tuple[str, ...], tuple[str, ...]]]:
+    normalized = unicodedata.normalize("NFKC", text).casefold()
+    matches = list(_CONTROL_INSTRUCTION.finditer(normalized))
+    steps = []
+    for index, match in enumerate(matches):
+        quoted, plain = match.groups()
+        words = _NAME_TOKEN.findall(quoted or plain)
+        if plain and len(words) > 1 and words[-1] in _CONTROL_LABELS:
+            words.pop()
+        if not words:
+            continue
+        end = (
+            matches[index + 1].start() if index + 1 < len(matches) else len(normalized)
+        )
+        boundary = _CONTROL_CONTEXT_END.search(normalized, match.end(), end)
+        context = _NAME_TOKEN.findall(
+            normalized, match.end(), boundary.start() if boundary else end
+        )
+        if aliases is not None:
+            words = list(map(aliases, words))
+            context = list(map(aliases, context))
+        steps.append((tuple(context), tuple(words)))
+    return steps
+
+
+def has_control_target_mismatch(
+    answer_text: str,
+    evidence_text: str,
+    *,
+    entity_aliases: Callable[[str], str] | None = None,
+) -> bool:
+    """Detect substituted targets in explicit click, press, or tap instructions."""
+    answer_steps = _control_steps(answer_text, entity_aliases)
+    if not answer_steps:
+        return False
+    evidence_steps = _control_steps(evidence_text, entity_aliases)
+    if [context for context, _ in answer_steps] == [
+        context for context, _ in evidence_steps
+    ]:
+        return answer_steps != evidence_steps
+
+    # A target can occur in the passage and still belong to a different step.
+    evidence_by_context: dict[tuple[str, ...], set[tuple[str, ...]]] = {}
+    for context, target in evidence_steps:
+        if context:
+            evidence_by_context.setdefault(context, set()).add(target)
+    if any(
+        context in evidence_by_context and target not in evidence_by_context[context]
+        for context, target in answer_steps
+    ):
+        return True
+
+    answer_targets = {target for _, target in answer_steps}
+    evidence_targets = {target for _, target in evidence_steps}
+    return bool(answer_targets - evidence_targets and evidence_targets - answer_targets)
+
+
+def has_temporal_polarity_mismatch(
+    answer_text: str,
+    evidence_text: str,
+    *,
+    normalize_clause: Callable[[str], str] | None = None,
+) -> bool:
     """Check for temporal or polarity contradictions.
 
     Args:
@@ -524,31 +707,49 @@ def has_temporal_polarity_mismatch(answer_text: str, evidence_text: str) -> bool
     answer_lower = answer_text.lower()
     evidence_lower = evidence_text.lower()
 
-    temporal_contradictions = [
-        (r"\bbc\b", r"\bago\b"),
-        (r"\bce\b", r"\bbc\b"),
-        (r"\bad\b", r"\bbc\b"),
-        (r"\bbce\b", r"\bce\b"),
-    ]
-    if _paired_marker_mismatch(answer_lower, evidence_lower, temporal_contradictions):
+    if _paired_marker_mismatch(answer_lower, evidence_lower, _TEMPORAL_CONTRADICTIONS):
+        return True
+    if _has_reversed_before_after(answer_lower, evidence_lower, normalize_clause):
         return True
 
-    polarity_contradictions = [
-        (r"\boppose[ds]?\b", r"\b(?:support|urge[ds]?|advocate[ds]?|promote[ds]?)\b"),
-        (r"\bsupport[s]?\b", r"\b(?:oppose[ds]?|reject[s]?|resist[s]?)\b"),
-        (r"\breject[s]?\b", r"\b(?:accept[s]?|approve[s]?|endorse[ds]?)\b"),
-        (r"\bdenied\b", r"\b(?:confirmed|admitted|acknowledged)\b"),
-        (r"\bfailed\b", r"\b(?:succeeded|achieved|accomplished)\b"),
-    ]
     return _paired_marker_mismatch(
-        answer_lower, evidence_lower, polarity_contradictions
+        answer_lower, evidence_lower, _POLARITY_CONTRADICTIONS
     )
+
+
+def _has_reversed_before_after(
+    answer_lower: str,
+    evidence_lower: str,
+    normalize_clause: Callable[[str], str] | None,
+) -> bool:
+    """Detect a flipped temporal marker between the same two clauses."""
+    clauses = _split_temporal_claim(answer_lower, normalize_clause)
+    if len(clauses) != 3:
+        return False
+    first, marker, second = clauses
+    opposite = "after" if marker == "before" else "before"
+    reversed_claim = [first, opposite, second]
+    return any(
+        _split_temporal_claim(segment.text, normalize_clause) == reversed_claim
+        for segment in SimpleSegmenter().segment(evidence_lower)
+    )
+
+
+def _split_temporal_claim(
+    text: str, normalize_clause: Callable[[str], str] | None
+) -> list[str]:
+    normalized = " ".join(text.split()).rstrip(".!?;")
+    clauses = re.split(r",? (before|after) ", normalized)
+    if normalize_clause is not None and len(clauses) == 3:
+        first, marker, second = clauses
+        return [normalize_clause(first), marker, normalize_clause(second)]
+    return clauses
 
 
 def _paired_marker_mismatch(
     answer_lower: str,
     evidence_lower: str,
-    pairs: list[tuple[str, str]],
+    pairs: tuple[tuple[str, str], ...],
 ) -> bool:
     """Return True if exactly one side of a contradictory marker pair matches."""
     for left, right in pairs:
@@ -649,3 +850,34 @@ def extract_number_context(text: str, number: str) -> list[str]:
             words = group.strip().split()
             context_words.extend(w.lower() for w in words if not re.match(r"^\d", w))
     return context_words
+
+
+def iter_contradiction_checks(
+    answer_text: str,
+    evidence_text: str,
+    *,
+    entity_aliases: Callable[[str], str] | None = None,
+    normalize_negation: Callable[[str], str] | None = None,
+    normalize_temporal_clause: Callable[[str], str] | None = None,
+) -> Iterator[str]:
+    """Yield the names of triggered checks in evaluation order."""
+    negation_answer, negation_evidence = answer_text, evidence_text
+    if normalize_negation is not None:
+        negation_answer = normalize_negation(answer_text)
+        negation_evidence = normalize_negation(evidence_text)
+    if has_negation_mismatch(negation_answer, negation_evidence):
+        yield "has_negation_mismatch"
+    if has_number_mismatch(answer_text, evidence_text):
+        yield "has_number_mismatch"
+    if has_entity_swap(answer_text, evidence_text, entity_aliases=entity_aliases):
+        yield "has_entity_swap"
+    if has_temporal_polarity_mismatch(
+        answer_text, evidence_text, normalize_clause=normalize_temporal_clause
+    ):
+        yield "has_temporal_polarity_mismatch"
+    if has_number_context_mismatch(answer_text, evidence_text):
+        yield "has_number_context_mismatch"
+    if has_control_target_mismatch(
+        answer_text, evidence_text, entity_aliases=entity_aliases
+    ):
+        yield "has_control_target_mismatch"

@@ -15,7 +15,9 @@ The Rust extension exposes three layers over the existing Python API.
 
 `align_pair`, `align_pair_details`, `align_pair_blocks_details`, `align_batch_details`, `align_batch_blocks_details`, `align_best`, `align_best_details`, and `align_topk_details` are the alignment entry points. `align_pair_blocks_details` and `align_batch_blocks_details` additionally return the per-alignment `match_blocks` needed by `CitationConfig(multi_span_evidence=True)`. The Rust `RustSmithWatermanAligner` selects between these depending on the configuration; the construction-time check requires the relevant entry point to be present, so a mismatched extension fails fast rather than silently producing empty `evidence_spans`.
 
-The legacy JSON-shaped `rust_build_citations_fast` is also exposed on `_core` and is used by `citations.py` to build a `Citation` / `RetrievalSupport` list without round-tripping source text through Python. The newer `PreparedCorpus.build_citations` path on the Rust `PreparedCorpus` object eliminates that round-trip further: source texts and offsets stay in Rust and the result returns only the citation and support structs.
+`cite_right._core` is a private module. Its internal `rust_build_citations_fast` function accepts candidate data from Python and returns citations and retrieval support as JSON. The internal `PreparedCorpus.build_citations` method keeps source texts and offsets in Rust and returns citation and retrieval support structs.
+
+Both builders require `query_stopword_ids: Sequence[int]` for query token IDs excluded from content coverage. Both accept `alias_remap: AliasRemap | None = None` for equivalent token IDs in alignment and coverage. These arguments are keyword-only for `rust_build_citations_fast`.
 
 ## When Rust Prepare Runs
 

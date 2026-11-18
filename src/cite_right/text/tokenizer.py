@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import unicodedata
+from collections.abc import Mapping
+from copy import copy
 from functools import lru_cache
+from types import MappingProxyType
 
 from cite_right.core.results import TokenizedText
 
@@ -82,6 +85,16 @@ class SimpleTokenizer:
         self._config = config or TokenizerConfig()
         self._vocab: dict[str, int] = {}
         self._next_id = 1
+
+    def fork(self) -> "SimpleTokenizer":
+        """Return a tokenizer with an independent copy of this ID namespace."""
+        tokenizer = copy(self)
+        tokenizer._vocab = self._vocab.copy()
+        return tokenizer
+
+    def vocabulary(self) -> Mapping[str, int]:
+        """Expose normalized IDs without allowing callers to modify them."""
+        return MappingProxyType(self._vocab)
 
     def tokenize(self, text: str) -> TokenizedText:
         """Tokenizes the input text into normalized token ids and spans.
@@ -234,21 +247,28 @@ def _normalized_symbol(char: str) -> str:
     return _normalize_punctuation(normalized)
 
 
+_APOSTROPHES = {"\u2018": "'", "\u2019": "'", "\u02bc": "'"}
+_APOSTROPHE_TRANSLATION = str.maketrans(_APOSTROPHES)
+_PUNCTUATION_TRANSLATION = str.maketrans(
+    {
+        **_APOSTROPHES,
+        "\u2010": "-",
+        "\u2011": "-",
+        "\u2012": "-",
+        "\u2013": "-",
+        "\u2212": "-",
+    }
+)
+
+
+def normalize_apostrophes(text: str) -> str:
+    """Map typographic apostrophes for checks that preserve the original words."""
+    return text.translate(_APOSTROPHE_TRANSLATION)
+
+
 def _normalize_punctuation(text: str) -> str:
     """Map quote and dash variants that should not affect matching."""
-    translation = str.maketrans(
-        {
-            "\u2018": "'",
-            "\u2019": "'",
-            "\u02bc": "'",
-            "\u2010": "-",
-            "\u2011": "-",
-            "\u2012": "-",
-            "\u2013": "-",
-            "\u2212": "-",
-        }
-    )
-    return text.translate(translation)
+    return text.translate(_PUNCTUATION_TRANSLATION)
 
 
 @lru_cache(maxsize=10000)

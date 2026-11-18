@@ -4,9 +4,36 @@ All notable changes to cite-right will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Opt-in per-span status reasons and contradiction check names. With
+  `report_possible_source=True`, a partial or unsupported span can also
+  report the likely source passage and its retrieval score. The hint score
+  is stable when reusing a prepared corpus. (#75)
+- Citations include `content_coverage` in `Citation.components` by default. (#84)
+- `CitationConfig.term_aliases` lets callers declare equivalent single words
+  for citation retrieval and alignment on Python and Rust. When aliases are
+  enabled, a cited span with incomplete content coverage stays `partial`
+  even if it meets the answer coverage threshold. (#85)
+
 ### Fixed
 
-- Entity-swap detection distinguishes names in corresponding roles from UI controls, headings, unit codes, and spelling that differs only in casing. This changes how default settings classify affected restatements. (#69)
+- Python and Rust use the same content coverage rule to admit citations,
+  including with custom tokenizers that implement the public tokenization
+  interface. Reordered text can move from `unsupported` to `partial` or
+  `supported` when content coverage meets the admission threshold and the span
+  passes the corresponding support checks. Punctuation-only overlap no longer
+  produces citations and can leave a span `unsupported`. (#84)
+- Reversing `before` and `after` between matching clauses now downgrades a span
+  from `supported` to `partial` and reports a contradiction when diagnostics
+  are enabled. (#84)
+- Entity-swap detection compares names in corresponding roles and honors caller
+  aliases. Faithful restatements that previously triggered on capitalization,
+  headings, UI labels, or unit codes can move from `partial` to `supported`
+  under the default settings. Names exchanged between matching roles and
+  changed targets in matching click, press, or tap steps can move a span from
+  `supported` to `partial` even when shared wording meets the answer coverage
+  threshold. (#69)
 
 ## [0.4.0] - 2026-08-25
 
