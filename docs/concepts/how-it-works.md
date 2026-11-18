@@ -129,13 +129,14 @@ After all candidates are aligned, the surviving citations are sorted determinist
 
 After sorting, the same source with the same evidence-span tuple is collapsed (deduped), `max_citations_per_source` caps how many citations any one source contributes, and the list is trimmed to `top_k`. `retrieval_support` is ranked independently by `retrieval_score` and trimmed to `max_retrieval_support`.
 
-**Contradiction.** `check_contradiction` in `src/cite_right/contradiction.py` is the cheap channel that runs over the **full candidate passage**, not the truncated Smith-Waterman evidence. Truncated evidence hides leftover tokens (e.g. "BC" or "of which came in the first half") that would otherwise make the slot mismatch visible. The check fires on:
+**Contradiction.** `iter_contradiction_checks` in `src/cite_right/contradiction.py` checks the full candidate passage. The alignment excerpt can omit tokens that reveal a mismatch, such as "BC" or "of which came in the first half". The checks cover:
 
 - Negation mismatch: one side has a negation marker, the other does not.
 - Number mismatch: numbers differ between the answer and the candidate.
 - Leftover n-gram slot: a shared number attaches to different content words in each side.
-- Entity swap: capitalized entities differ between the two sides. A declared alias group identifies equivalent entity terms.
-- Temporal / polarity mismatch: BC vs ago, oppose vs support, and similar paired markers.
+- Entity swap compares casefolded names in corresponding local roles. Declared aliases count as equivalent names. Capitalized headings and interface labels alone do not establish a name role.
+- Temporal or polarity mismatch covers paired markers such as BC and ago, as well as reversed `before` and `after` between matching clauses.
+- Control target mismatch compares labels in click, press, or tap steps. It uses nearby instruction wording to tell steps apart and treats declared aliases as equivalent labels.
 
 When any of those fire against the best-ranked citation, the span status is forced to `"partial"`. The status is never forced to `"unsupported"` by contradiction: there is evidence, it just conflicts with the claim. So source "The vaccine is safe and effective." and answer "The vaccine is not safe." resolves to `"partial"` with citations, not to `"unsupported"`. Shared tokens that would otherwise bless a contradictory statement as `"supported"` are downgraded for the same reason.
 

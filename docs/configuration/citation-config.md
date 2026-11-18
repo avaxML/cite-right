@@ -238,8 +238,9 @@ Status is decided on the best-ranked citation. The cheap contradiction check in 
 - Negation mismatch: one side has a negation marker, the other does not.
 - Number mismatch: numbers differ between the answer and the candidate.
 - Leftover n-gram slot: a shared number attaches to different content words in each side.
-- Entity swap: capitalized entities differ between the two sides.
-- Temporal or polarity mismatch: BC vs ago, oppose vs support, and similar paired markers.
+- Entity swap compares casefolded names in corresponding local roles and honors declared aliases. Interface controls, headings, and unit codes need a name role to count.
+- Temporal or polarity mismatch covers paired markers such as BC and ago, as well as reversed `before` and `after` between matching clauses.
+- Control target mismatch catches different labels in matching click, press, or tap steps and honors declared aliases.
 
 When any of those fire, the span is forced to `"partial"` even if `answer_coverage` clears `supported_answer_coverage`. Contradiction never produces `"unsupported"`; the citation survived, it just conflicts with the claim.
 

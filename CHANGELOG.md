@@ -27,6 +27,13 @@ All notable changes to cite-right will be documented in this file.
 - Reversing `before` and `after` between matching clauses now downgrades a span
   from `supported` to `partial` and reports a contradiction when diagnostics
   are enabled. (#84)
+- Entity-swap detection compares names in corresponding roles and honors caller
+  aliases. Faithful restatements that previously triggered on capitalization,
+  headings, UI labels, or unit codes can move from `partial` to `supported`
+  under the default settings. Names exchanged between matching roles and
+  changed targets in matching click, press, or tap steps can move a span from
+  `supported` to `partial` even when shared wording meets the answer coverage
+  threshold. (#69)
 
 - Rust prepare honors `TokenizerConfig.normalize_numbers`, `normalize_percent`,
   and `normalize_currency` for comma-grouped numbers and percent and currency

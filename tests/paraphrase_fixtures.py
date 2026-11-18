@@ -199,9 +199,9 @@ BASE_POSITIVE_STATUSES = {
     "quantity": "partial",
     "actor": "partial",
     "cartridge-sentence": "unsupported",
-    "polishing-sentence": "partial",
-    "polarity-sentence": "partial",
-    "quantity-sentence": "partial",
+    "polishing-sentence": "supported",
+    "polarity-sentence": "supported",
+    "quantity-sentence": "supported",
     "apply-label-sentence": "supported",
 }
 

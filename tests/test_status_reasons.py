@@ -87,16 +87,19 @@ def test_restatement_source(
     base = _align(answer, SOURCES, config, backend, path)
     span = _align(answer, SOURCES, _with_diagnostics(config), backend, path)
 
-    assert (
-        span.status
-        == base.status
-        == ("unsupported" if reason == "no_candidate" else "partial")
-    )
+    status_by_reason = {
+        "no_candidate": "unsupported",
+        "below_coverage": "partial",
+        "supported": "supported",
+    }
+    assert span.status == base.status == status_by_reason[reason]
     assert span.status_reason == reason
-    assert span.contradiction_checks == (
-        ["has_entity_swap"] if reason == "contradiction" else []
-    )
+    assert span.contradiction_checks == []
     assert span.model_dump(exclude=_DIAGNOSTIC_FIELDS) == base.model_dump()
+    if reason == "supported":
+        assert span.possible_source is None
+        assert span.citations[0].source_id == source_id
+        return
     assert span.possible_source is not None
     hint = span.possible_source
     assert hint.source_id == source_id
@@ -238,7 +241,9 @@ def test_hint_score_is_independent_of_retrieval_sum_order(
     )
     config = _with_diagnostics(_config())
     prepared = PreparedCitationCorpus.from_sources(SOURCES, config=config)
-    for answer, _, _ in RESTATEMENTS:
+    for answer, _, reason in RESTATEMENTS:
+        if reason == "supported":
+            continue
         [reused] = prepared.align(answer, backend="python")
         fresh = _align(answer, SOURCES, config, "python", "one-shot")
         assert reused.possible_source is not None

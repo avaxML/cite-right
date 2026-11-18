@@ -39,22 +39,22 @@ RESTATEMENTS = (
     (
         "Loosen the clamp with a wrench before taking out the cartridge.",
         "clamp",
-        "contradiction",
+        "below_coverage",
     ),
     (
         "Rotate the dial until the amber lamp shines, then remove the lid.",
         "lid",
-        "contradiction",
+        "supported",
     ),
     (
         "Push the lever to engage the catch after reinstalling the plate.",
         "plate",
-        "contradiction",
+        "below_coverage",
     ),
     (
         "Unplug the cable before doing maintenance on the chassis.",
         "cable",
-        "contradiction",
+        "below_coverage",
     ),
     (
         "From the Setup menu, select Privacy Options before pressing Apply.",
