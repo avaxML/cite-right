@@ -14,6 +14,8 @@ import re
 import unicodedata
 from collections.abc import Iterator
 
+from cite_right.text.segmenter_simple import SimpleSegmenter
+
 _FUNCTION_WORDS = frozenset(
     {
         "a",
@@ -240,6 +242,8 @@ def has_temporal_polarity_mismatch(answer_text: str, evidence_text: str) -> bool
     ]
     if _paired_marker_mismatch(answer_lower, evidence_lower, temporal_contradictions):
         return True
+    if _has_reversed_before_after(answer_lower, evidence_lower):
+        return True
 
     polarity_contradictions = [
         (r"\boppose[ds]?\b", r"\b(?:support|urge[ds]?|advocate[ds]?|promote[ds]?)\b"),
@@ -251,6 +255,25 @@ def has_temporal_polarity_mismatch(answer_text: str, evidence_text: str) -> bool
     return _paired_marker_mismatch(
         answer_lower, evidence_lower, polarity_contradictions
     )
+
+
+def _has_reversed_before_after(answer_lower: str, evidence_lower: str) -> bool:
+    """Detect a flipped temporal marker between the same two clauses."""
+    clauses = _split_temporal_claim(answer_lower)
+    if len(clauses) != 3:
+        return False
+    first, marker, second = clauses
+    opposite = "after" if marker == "before" else "before"
+    reversed_claim = [first, opposite, second]
+    return any(
+        _split_temporal_claim(segment.text) == reversed_claim
+        for segment in SimpleSegmenter().segment(evidence_lower)
+    )
+
+
+def _split_temporal_claim(text: str) -> list[str]:
+    normalized = " ".join(text.split()).rstrip(".!?;")
+    return re.split(r",? (before|after) ", normalized)
 
 
 def _paired_marker_mismatch(
