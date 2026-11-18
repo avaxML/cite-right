@@ -137,14 +137,23 @@ class PreparedCorpus:
         ...
 
 def rust_tokenize_and_prepare(
-    source_texts: Sequence[str], window_size: int, stride: int
+    source_texts: Sequence[str],
+    window_size: int,
+    stride: int,
+    *,
+    normalize_numbers: bool,
+    normalize_percent: bool,
+    normalize_currency: bool,
 ) -> PreparedCorpus:
-    """Tokenize and prepare sources, returning a Rust-side corpus object.
+    """Internal binding to tokenize sources and build a Rust-side corpus.
 
     Args:
         source_texts: List of source text strings
         window_size: Window size in sentences
         stride: Stride size in sentences
+        normalize_numbers: Strip thousands-separator commas from numbers
+        normalize_percent: Map ``%`` to ``percent``
+        normalize_currency: Map ``$``/``€``/``£`` to ``dollar``/``euro``/``pound``
 
     Returns:
         PreparedCorpus object (opaque Rust object)

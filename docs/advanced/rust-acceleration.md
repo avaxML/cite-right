@@ -1,7 +1,7 @@
 
 # Rust Acceleration
 
-Cite-Right 0.4.0 ships an optional native extension, `cite_right._core`, that reimplements the prepare phase, the inverted index, and Smith-Waterman alignment in Rust. The extension is published as abi3 wheels (`abi3-py311`), including linux/aarch64, plus an sdist. When the extension is importable, the library uses it automatically. When it is not, the same pipeline runs on a pure-Python fallback path so the public API is unchanged.
+Cite-Right ships an optional internal native extension, `cite_right._core`, that reimplements the prepare phase, the inverted index, and Smith-Waterman alignment in Rust. The extension is published as abi3 wheels (`abi3-py311`), including linux/aarch64, plus an sdist. When the extension is importable, the library uses it automatically. When it is not, the same pipeline runs on a pure-Python fallback path so the public API is unchanged.
 
 The hot path stays the same shape either way: prepare tokenizes sources, builds passage windows, computes IDF, and (on the default path) fills an inverted index; per answer span the pipeline picks candidate windows, then Smith-Waterman localizes the citation. The Rust extension accelerates each of those stages; it does not change which stages run. The inverted index only chooses which windows to align. Smith-Waterman still localizes `char_start` / `char_end`.
 
@@ -9,7 +9,7 @@ The hot path stays the same shape either way: prepare tokenizes sources, builds 
 
 The Rust extension exposes three layers over the existing Python API.
 
-`rust_tokenize_and_prepare(source_texts, window_size, stride) -> PreparedCorpus` tokenizes the source corpus, generates passage windows, computes IDF, and builds the inverted index in one Rust call. The Python `SimpleTokenizer` vocabulary is then synchronized from the Rust side so the answer-side tokenizer maps tokens to the same IDs. Per-passage `token_ids` and `token_spans` are kept on the Rust `PreparedCorpus` and fetched on demand at alignment time, avoiding the cost of copying large token arrays back to Python after prepare.
+The internal binding `rust_tokenize_and_prepare(source_texts, window_size, stride, *, normalize_numbers, normalize_percent, normalize_currency) -> PreparedCorpus` takes three required keyword-only booleans from the Python `SimpleTokenizer`'s `TokenizerConfig`. It tokenizes the source corpus using those flags, generates passage windows, computes IDF, and builds the inverted index in one Rust call. The Python `SimpleTokenizer` vocabulary is then synchronized from the Rust side so the answer-side tokenizer maps tokens to the same IDs. Per-passage `token_ids` and `token_spans` are kept on the Rust `PreparedCorpus` and fetched on demand at alignment time, avoiding the cost of copying large token arrays back to Python after prepare.
 
 `query_index(query_tokens, max_candidates) -> list[int]` and `InvertedIndex.query(query_tokens, max_candidates) -> list[int]` both implement the same conjunctive rare-token intersect: tokens are sorted by posting count, the intersection of the rarest tokens is taken first, and the result is capped at `max_candidates`. The result is a list of candidate global indices that survive to Smith-Waterman.
 

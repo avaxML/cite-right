@@ -24,6 +24,17 @@ All notable changes to cite-right will be documented in this file.
   from `supported` to `partial` and reports a contradiction when diagnostics
   are enabled. (#84)
 
+- Rust prepare honors `TokenizerConfig.normalize_numbers`, `normalize_percent`,
+  and `normalize_currency` for comma-grouped numbers and percent and currency
+  symbols (`%`, `$`, `€`, and `£`), including NFKC-equivalent symbols such as
+  `￡`, `﹩`, and `﹪`. On the default Rust path, restatements of the same
+  comma-grouped amount can move from `partial` to `supported`. The internal
+  `rust_tokenize_and_prepare` binding takes the three flags as required keyword
+  arguments. The shared contradiction check can now downgrade `supported`
+  spans to `partial` for changed signs, numeric values, percentage markers,
+  explicit currency units, or conflicting labels or directions tied to the
+  amount. (#66)
+
 ## [0.4.0] - 2026-08-25
 
 ### Added

@@ -14,7 +14,53 @@ import re
 import unicodedata
 from collections.abc import Iterator
 
+from cite_right.text.content_coverage import STOPWORDS
 from cite_right.text.segmenter_simple import SimpleSegmenter
+
+_CURRENCY_CODES = {
+    "usd": "usd",
+    "eur": "€",
+    "gbp": "£",
+    "cad": "cad",
+    "aud": "aud",
+    "nzd": "nzd",
+}
+_CURRENCY_RESTATEMENT_UNITS = {
+    "$": ("",),
+    "€": ("",),
+    "£": ("",),
+    **{code: ("", "$") for code in ("usd", "cad", "aud", "nzd")},
+}
+_CURRENCY_UNITS = {
+    **_CURRENCY_CODES,
+    "$": "$",
+    "dollar": "$",
+    "dollars": "$",
+    "€": "€",
+    "euro": "€",
+    "euros": "€",
+    "£": "£",
+    "pound": "£",
+    "pounds": "£",
+}
+_PERCENT_UNITS = {"%", "percent", "percentage", "pct"}
+_UNIT_WORDS = "|".join(unit for unit in _CURRENCY_UNITS if unit.isalpha())
+_CODE_WORDS = "|".join(_CURRENCY_CODES)
+_QUANTITY = re.compile(
+    r"(?:(?<![\w.,])([-+−])[ \t]*)?"
+    rf"(?:([$€£]|\b(?:{_CODE_WORDS})\b)(?:[ \t]*[$€£])?[ \t]*(?:([-+−])[ \t]*)?)?"
+    r"\b(\d+(?:[.,]\d+)*)"
+    rf"(?:[ \t]*([%$€£]|\b(?:percentage[ \t]+points|percent|percentage|pct|{_UNIT_WORDS})\b))?",
+    re.IGNORECASE,
+)
+_GROUPED_NUMBER = re.compile(r"\d{1,3}(?:,\d{3})+(?:\.\d+)?")
+_WORDS_BEFORE_QUANTITY = re.compile(r"(?:\b[^\W\d_]+[\s:]+){1,4}$")
+_WORD_AFTER_QUANTITY = re.compile(r"[ \t]+([^\W\d_]+)")
+_OPPOSING_QUANTITY_LABELS = (
+    ({"credit", "credits"}, {"debit", "debits", "debt", "debts"}),
+    ({"gain", "gains", "yield", "yields"}, {"loss", "losses"}),
+    ({"increase", "increases", "higher"}, {"decrease", "decreases", "lower"}),
+)
 
 _FUNCTION_WORDS = frozenset(
     {
@@ -138,7 +184,7 @@ def contains_negation(text: str) -> bool:
 
 
 def has_number_mismatch(answer_text: str, evidence_text: str) -> bool:
-    """Check if numbers differ between answer and evidence.
+    """Check whether the evidence contains each quantity in the answer.
 
     Args:
         answer_text: The answer claim text
@@ -147,17 +193,60 @@ def has_number_mismatch(answer_text: str, evidence_text: str) -> bool:
     Returns:
         True if number mismatch detected
     """
-    answer_numbers = extract_numbers(answer_text)
-    evidence_numbers = extract_numbers(evidence_text)
+    answer_values = {value for value, _, _ in _iter_quantities(answer_text)}
+    evidence_values = {
+        restatement
+        for value, _, _ in _iter_quantities(evidence_text)
+        for restatement in _quantity_restatements(value)
+    }
+    if not answer_values or not evidence_values:
+        return False
 
-    if answer_numbers and evidence_numbers:
-        answer_set = set(answer_numbers)
-        evidence_set = set(evidence_numbers)
-        unique_in_answer = answer_set - evidence_set
-        if unique_in_answer and len(unique_in_answer) == len(answer_set):
-            return True
+    return bool(answer_values - evidence_values)
 
-    return False
+
+def _quantity_restatements(value: tuple[str, str]) -> Iterator[tuple[str, str]]:
+    """Allow a restatement to omit a monetary amount's denomination."""
+    yield value
+    number, unit = value
+    for restated_unit in _CURRENCY_RESTATEMENT_UNITS.get(unit, ()):
+        yield number, restated_unit
+
+
+def _iter_quantities(
+    text: str,
+) -> Iterator[tuple[tuple[str, str], re.Match[str], bool]]:
+    """Yield the normalized quantity, its match, and whether it has grouping or units."""
+    text = unicodedata.normalize("NFKC", text)
+    previous_end = None
+    for match in _QUANTITY.finditer(text):
+        sign, prefix, prefix_sign, number, suffix = match.groups()
+        # An intervening dash between quantities is a range delimiter.
+        if (
+            sign
+            and previous_end is not None
+            and not text[previous_end : match.start()].strip()
+        ):
+            sign = None
+        previous_end = match.end()
+
+        grouped = _GROUPED_NUMBER.fullmatch(number) is not None
+        if grouped:
+            number = number.replace(",", "")
+        if (sign or prefix_sign) in ("-", "−"):
+            number = "-" + number
+
+        prefix_unit = (prefix or "").lower()
+        suffix_unit = (suffix or "").lower()
+        raw_unit = prefix_unit or suffix_unit
+        if prefix_unit not in _CURRENCY_CODES and suffix_unit in _CURRENCY_CODES:
+            raw_unit = suffix_unit
+        unit = _CURRENCY_UNITS.get(raw_unit, "")
+        if raw_unit in _PERCENT_UNITS:
+            unit = "%"
+        elif raw_unit.startswith("percentage"):
+            unit = "percentage points"
+        yield (number, unit), match, grouped or bool(unit)
 
 
 def extract_numbers(text: str) -> list[str]:
@@ -319,11 +408,70 @@ def has_number_context_mismatch(answer_text: str, evidence_text: str) -> bool:
             number,
         ):
             return True
+    return _has_marked_number_slot_mismatch(answer_text, evidence_text)
+
+
+def _has_marked_number_slot_mismatch(answer_text: str, evidence_text: str) -> bool:
+    evidence_slots: dict[tuple[str, str], set[tuple[str, str, bool]]] = {}
+    for value, slots in _marked_number_slots(evidence_text).items():
+        for restatement in _quantity_restatements(value):
+            evidence_slots.setdefault(restatement, set()).update(slots)
+
+    for quantity, words in _marked_number_slots(answer_text).items():
+        if quantity not in evidence_slots:
+            continue
+        # Require a shared nearby qualifier before treating a different label
+        # as a conflict. A quantity may appear in several slots in the passage.
+        alternatives = evidence_slots[quantity]
+        for qualifier, label, marked in words:
+            labels = {
+                word
+                for anchor, word, other_marked in alternatives
+                if anchor == qualifier and (marked or other_marked)
+            }
+            if label in labels:
+                continue
+            if any(
+                (label in left and labels & right) or (label in right and labels & left)
+                for left, right in _OPPOSING_QUANTITY_LABELS
+            ):
+                return True
     return False
 
 
+def _marked_number_slots(
+    text: str,
+) -> dict[tuple[str, str], set[tuple[str, str, bool]]]:
+    slots: dict[tuple[str, str], set[tuple[str, str, bool]]] = {}
+    previous_end = 0
+    for value, quantity_match, marked in _iter_quantities(text):
+        before = _WORDS_BEFORE_QUANTITY.search(
+            quantity_match.string, previous_end, quantity_match.start()
+        )
+        previous_end = quantity_match.end()
+        if before:
+            words = [
+                word
+                for word in before[0].casefold().replace(":", " ").split()
+                if word not in STOPWORDS
+            ]
+            if len(words) >= 2:
+                slots.setdefault(value, set()).add((words[-2], words[-1], marked))
+        if value[1] in ("%", "percentage points"):
+            after = _WORD_AFTER_QUANTITY.match(
+                quantity_match.string, quantity_match.end()
+            )
+            if after:
+                slots.setdefault(value, set()).add(("", after[1].casefold(), True))
+    return slots
+
+
 def _content_words(words: list[str]) -> set[str]:
-    return {word for word in words if word not in _FUNCTION_WORDS}
+    return {
+        word
+        for word in words
+        if word not in _FUNCTION_WORDS and word not in _CURRENCY_CODES
+    }
 
 
 def _number_slot_mismatch(
