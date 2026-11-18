@@ -4,7 +4,7 @@ import math
 import time
 from bisect import bisect_left, bisect_right
 from collections.abc import Sequence
-from typing import Callable
+from typing import Callable, cast
 
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr
 
@@ -342,11 +342,8 @@ def build_embedding_index(
         return None
 
     # Check if embedder supports document-level span pooling
-    if (
-        hasattr(embedder, "supports_span_pooling")
-        and callable(embedder.supports_span_pooling)
-        and embedder.supports_span_pooling()  # pyright: ignore[reportAttributeAccessIssue]
-    ):
+    supports_span_pooling = getattr(embedder, "supports_span_pooling", None)
+    if callable(supports_span_pooling) and supports_span_pooling():
         return build_embedding_index_from_document_spans(embedder, candidates)
 
     # Fallback to per-passage encoding
@@ -404,7 +401,10 @@ def build_embedding_index_from_document_spans(
             # Fallback to per-passage encoding
             span_embeddings = embedder.encode([passage.text for passage in passages])
         else:
-            span_embeddings = encode_method(source_text, passages)  # pyright: ignore[reportAttributeAccessIssue]
+            encode_spans = cast(
+                Callable[[str, Sequence[Passage]], list[list[float]]], encode_method
+            )
+            span_embeddings = encode_spans(source_text, passages)
 
         # Update the embedding dimension if needed (first source)
         if first_idx == source_candidates[0][0]:

@@ -271,9 +271,7 @@ class DocumentSpanEmbedder:
                 source_text_attr = getattr(passage, "source_text", None)
                 if isinstance(source_text_attr, str):
                     texts.append(
-                        source_text_attr[
-                            passage.doc_char_start : passage.doc_char_end
-                        ]
+                        source_text_attr[passage.doc_char_start : passage.doc_char_end]
                     )
                 else:
                     texts.append("")
