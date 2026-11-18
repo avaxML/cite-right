@@ -237,4 +237,4 @@ class OnnxMiniLmEmbedder:
         # Divide by the number of non-masked tokens
         sum_mask = np.sum(mask_expanded, axis=1).clip(min=1e-9)
 
-        return sum_embeddings / sum_mask
+        return np.divide(sum_embeddings, sum_mask, dtype=np.float32)
