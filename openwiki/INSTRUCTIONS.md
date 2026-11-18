@@ -43,6 +43,9 @@ API Reference on the site is `docs/api/` via mkdocstrings (`api/core-functions.m
 `openwiki/`. On public pages, point at the public types in prose. Do not send
 readers to a wiki.
 
+The 0.5.0 upgrade guide is maintained in `docs/upgrading/0.5.md`. Link to it
+from Home with `upgrading/0.5.md` and keep the guide in `docs/`.
+
 Public-to-public links must use those paths (relative is fine, for example
 `../concepts/how-it-works.md`). Do not use `/openwiki/` or `openwiki/` in
 reader-facing hrefs. Do not link public pages at `testing/`.
@@ -100,10 +103,14 @@ character-accurate citations. When a language model answers from retrieved
 documents, you call `align_citations` (in `src/cite_right/citations.py`) and
 get per-span status plus `char_start` / `char_end` for highlighting.
 
-0.4.0 is index-first on the default Rust path. An inverted index and rare-token
-intersect choose which source windows are worth aligning. Smith-Waterman still
-localizes the citation. The public API is unchanged: `align_citations` and
-`PreparedCitationCorpus`.
+On the default Rust path, an inverted index and rare-token intersection choose
+which source windows Smith-Waterman aligns. The public entry points are
+`align_citations` and `PreparedCitationCorpus`.
+
+In 0.5.0, Python and Rust use the same content coverage rule for citation
+admission. This release refines contradiction checks, demotes secondaries
+that fail support checks on `supported` spans, and adds opt-in status
+diagnostics and term aliases. Use the upgrade guide for behavior details.
 
 ```python
 from cite_right import SourceDocument, align_citations
@@ -128,18 +135,18 @@ Offsets are a Python half-open interval. After chunk rebasing,
 
 ## Installation
 
-Maintain `getting-started/installation.md`. Python 3.11+. 0.4.0 ships abi3
+Maintain `getting-started/installation.md`. Python 3.11+. 0.5.0 ships abi3
 wheels (`abi3-py311`), linux/aarch64 wheels, and an sdist.
 
 ```bash
-pip install cite-right==0.4.0
+pip install cite-right==0.5.0
 ```
 
 ```bash
-pip install "cite-right[embeddings]==0.4.0"
-pip install "cite-right[spacy]==0.4.0"
-pip install "cite-right[huggingface]==0.4.0"
-pip install "cite-right[tiktoken]==0.4.0"
+pip install "cite-right[embeddings]==0.5.0"
+pip install "cite-right[spacy]==0.5.0"
+pip install "cite-right[huggingface]==0.5.0"
+pip install "cite-right[tiktoken]==0.5.0"
 ```
 
 You can combine extras. SpaCy still needs `python -m spacy download en_core_web_sm`.
@@ -327,7 +334,7 @@ Then call `align_citations` as usual.
 Prefer `evidence_spans` or `exact_evidence` for precise attribution. Legacy
 `evidence` / `char_start` / `char_end` stay a contiguous enclosing span.
 
-**Embedding Retrieval.** `pip install "cite-right[embeddings]==0.4.0"`, then
+**Embedding Retrieval.** `pip install "cite-right[embeddings]==0.5.0"`, then
 `SentenceTransformerEmbedder("all-MiniLM-L6-v2")`. Index-first still chooses
 lexical seeds. `_add_embedding_candidates` may add non-index windows. Those
 still need Smith-Waterman. `retrieval_support` is not a `Citation` and does

@@ -25,6 +25,9 @@
 - MkDocs config: `mkdocs.yml`
 - Coding agents: `openwiki/` (brief in `openwiki/INSTRUCTIONS.md`; generated pages appear after CI runs with `OPENROUTER_API_KEY`). Public site copy lives in `docs/`.
 
+## What's new in 0.5.0
+
+Python and Rust now use the same content coverage rule for citation admission. The release also improves checks for changed amounts, clause order, names, and UI control targets, and adds opt-in diagnostics and caller-defined term aliases. If you use 0.4.0, review the [upgrade guide](docs/upgrading/0.5.md) for status and citation changes.
 
 ## Install
 

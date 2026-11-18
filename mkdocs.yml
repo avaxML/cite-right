@@ -68,6 +68,7 @@ nav:
   - Getting Started:
     - Installation: getting-started/installation.md
     - Quickstart: getting-started/quickstart.md
+    - Upgrade to 0.5.0: upgrading/0.5.md
   - Core Concepts:
     - How It Works: concepts/how-it-works.md
     - Citation Alignment: concepts/citation-alignment.md

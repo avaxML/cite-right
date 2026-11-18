@@ -1,7 +1,7 @@
 
 # Performance Tuning
 
-Cite-Right's 0.4.0 pipeline is index-first: an inverted index plus rare-token intersect chooses which source windows are worth aligning, then Smith-Waterman localizes the citation on those hits (plus any optional embedding extras). That choice is the single biggest reason `align_citations` is faster in 0.4.0 than in 0.3.x. This page covers the cost model, the configuration levers that actually move steady-state latency, the reuse patterns that matter for high-volume workloads, and how to read the per-span metrics the library can emit.
+Cite-Right uses an inverted index and rare-token intersection to choose which source windows Smith-Waterman should align. An optional embedder can add candidates. Index-first retrieval was the main reason `align_citations` was faster in 0.4.0 than in 0.3.x. This page covers the cost model, configuration options that affect steady-state latency, reuse patterns for high-volume workloads, and per-span metrics.
 
 ## The Cost Model
 

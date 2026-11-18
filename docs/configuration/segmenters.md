@@ -79,7 +79,7 @@ Because both are the defaults, calling `align_citations(answer, sources)` with n
 `SpacySegmenter` and `SpacyAnswerSegmenter` wrap a spaCy language model (default `en_core_web_sm`). They require the `spacy` extra and the model itself. Install both before importing:
 
 ```bash
-pip install "cite-right[spacy]==0.4.0"
+pip install "cite-right[spacy]==0.5.0"
 python -m spacy download en_core_web_sm
 ```
 
@@ -109,7 +109,7 @@ Reuse one segmenter instance across calls; each constructor loads the spaCy pipe
 Install the extra before importing:
 
 ```bash
-pip install "cite-right[pysbd]==0.4.0"
+pip install "cite-right[pysbd]==0.5.0"
 ```
 
 `PySBDSegmenter` only implements the `Segmenter` protocol (source side). It is not used as an answer segmenter; `SimpleAnswerSegmenter` or `SpacyAnswerSegmenter` cover that role.

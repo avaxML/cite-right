@@ -8,9 +8,11 @@ Cite-Right is a Python library for citation-backed AI applications, similar to a
 
 Traditional citation systems link entire paragraphs or documents to generated text. Cite-Right returns **character-accurate offsets** that point to the exact location in your source documents. A frontend can highlight the supporting text when a user clicks a sentence in the answer.
 
-0.4.0 is index-first. An inverted index and rare-token intersect choose which source windows are worth aligning. Smith-Waterman still localizes the citation. The index does not replace alignment, and it does not run Smith-Waterman over every window.
+An inverted index and rare-token intersection choose which source windows Smith-Waterman aligns.
 
-The public API is unchanged: `align_citations` and `PreparedCitationCorpus`. Span status is `"supported"`, `"partial"`, or `"unsupported"`. There is no `"partially_supported"` status.
+## What's new in 0.5.0
+
+The Python and Rust citation builders now agree on content coverage. This release also refines contradiction checks and adds opt-in status diagnostics and term aliases. Review the [0.5.0 upgrade guide](upgrading/0.5.md) for changes to span status and citation output.
 
 ## Core Capabilities
 
@@ -24,7 +26,7 @@ Every sentence in your generated answer can be traced back to its origin. When y
 
 Not every claim in a generated answer will have source support. Cite-Right categorizes each answer span as `"supported"`, `"partial"`, or `"unsupported"` based on how well it aligns with the provided sources. Cheap contradiction (negation, number, leftover n-gram slot, entity swap) downgrades to `"partial"`, not `"unsupported"`.
 
-The `compute_hallucination_metrics` function aggregates these results into a groundedness score. Cite-Right is a groundedness and citation tagger, not a clean hallucination detector. On RAGTruth test (2,675 answers), quality matched 0.3.1: false-supported on gold hallucinations is about 1.6%, and unsupported precision is about 14%. If `partial` counts, gold hallucinations are rarely blessed as `supported`.
+The `compute_hallucination_metrics` function aggregates these results into a groundedness score. On the RAGTruth test set of 2,675 answers, 0.4.0 matched 0.3.1. About 1.6% of gold hallucinations received `supported`, and precision for `unsupported` was about 14%.
 
 ### Fact-Level Verification
 
@@ -38,23 +40,23 @@ The `source_id` field identifies which document contains the supporting evidence
 
 The `evidence` field contains the actual text extracted from the source document. You can verify that this matches the document slice by checking that `source.text[citation.char_start:citation.char_end] == citation.evidence`, a property that always holds true.
 
-The `score` field indicates the alignment quality, with higher values representing stronger matches. The `components` dictionary breaks down this score into its constituent parts, including normalized alignment, answer coverage, evidence coverage, lexical overlap, and optional embedding similarity.
+The `score` field indicates the alignment quality, with higher values representing stronger matches. The `components` dictionary reports alignment metrics, including answer coverage and content coverage, along with lexical and embedding scores.
 
 ## Installation
 
 ```bash
-pip install cite-right==0.4.0
+pip install cite-right==0.5.0
 ```
 
-0.4.0 ships abi3 wheels (`abi3-py311`), linux/aarch64 wheels, and an sdist.
+0.5.0 ships abi3 wheels (`abi3-py311`), linux/aarch64 wheels, and an sdist.
 
 Several optional features require additional packages. Semantic retrieval using sentence embeddings needs the embeddings extra. SpaCy-based sentence segmentation requires the spacy extra. Support for transformer tokenizers from HuggingFace or OpenAI's tiktoken are available through their respective extras.
 
 ```bash
-pip install "cite-right[embeddings]==0.4.0"  # For semantic retrieval
-pip install "cite-right[spacy]==0.4.0"       # For improved segmentation
-pip install "cite-right[huggingface]==0.4.0" # For BERT/RoBERTa tokenizers
-pip install "cite-right[tiktoken]==0.4.0"    # For GPT tokenizers
+pip install "cite-right[embeddings]==0.5.0"  # For semantic retrieval
+pip install "cite-right[spacy]==0.5.0"       # For improved segmentation
+pip install "cite-right[huggingface]==0.5.0" # For BERT/RoBERTa tokenizers
+pip install "cite-right[tiktoken]==0.5.0"    # For GPT tokenizers
 ```
 
 Rust prepare still runs when an embedder is set. Embedding-only `retrieval_support` still respects `min_embedding_similarity`.
