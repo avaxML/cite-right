@@ -1,7 +1,15 @@
 """Tests for contradiction detection in citations."""
 
+from typing import Literal
+
+import pytest
+
 from cite_right import CitationConfig, align_citations
-from cite_right.contradiction import check_contradiction
+from cite_right.contradiction import check_contradiction, has_entity_swap
+
+from .conftest import requires_rust
+
+Backend = Literal["python", "rust"]
 
 
 def test_negation_mismatch_marked_unsupported() -> None:
@@ -171,3 +179,324 @@ def test_check_contradiction_uses_passage_not_truncated_span() -> None:
     assert not check_contradiction("The structure was built over 300 years BC", passage)
     # Number-slot leftover still flags truncated evidence via 'ago'.
     assert check_contradiction(answer, truncated)
+
+
+@pytest.mark.parametrize(
+    ("answer", "source"),
+    [
+        (
+            "Open Settings, choose Privacy, then press Save.",
+            "In the Settings menu select the privacy tab and click Apply to keep your changes.",
+        ),
+        ("Export Options", "Download Options"),
+        ("Report Layout.", "Archive Layout."),
+        ("Summary: Review the report.", "Overview: Review the report."),
+        ("The toolbar shows Export.", "The toolbar shows Download."),
+        (
+            "Plan • “Is Loading” appears while the plan details are displayed.",
+            "Plan • “Is Refreshing” appears while the plan details are displayed.",
+        ),
+        ("- First find the source.", "- Next find the source."),
+        ("– First find the source.", "– Next find the source."),
+        ("Summary only; review the report.", "Overview only; review the report."),
+        (
+            "With the “EXPORT” toolbar visible, continue editing the document.",
+            "With the “Download” toolbar visible, continue editing the document.",
+        ),
+        ("1. First find the source.", "1. Next find the source."),
+        (
+            "Use the Search field to find a document.",
+            "Use the Filter field to find a document.",
+        ),
+        (
+            "Maria approved the london budget.",
+            "maria approved the London budget.",
+        ),
+        ("Step 2: Select Export", "Step 2: Choose Download"),
+        ("Menu: Open Details.", "Menu: View Summary."),
+        ("• Review Queue", "• Inspect Inbox"),
+        ("Use 5 EUR for the allowance.", "Use 5 KG for the allowance."),
+        (
+            "Click Settings, then select advanced.",
+            "Click settings, then select Advanced.",
+        ),
+    ],
+)
+def test_entity_swap_ignores_interface_and_layout(answer: str, source: str) -> None:
+    assert not has_entity_swap(answer, source)
+
+
+@pytest.mark.parametrize(
+    ("answer", "source"),
+    [
+        ("Revenue rose in Paris.", "Revenue rose in London."),
+        ("Maria Lopez approved the budget.", "James Chen approved the budget."),
+        ("The board picked Maria.", "The board picked James."),
+        ("The board chose Maria.", "The board chose James."),
+        ("The reviewer was Maria.", "The reviewer was James."),
+        (
+            "The owner has been Maria since the start of the project.",
+            "The owner is James and has been since the start of the project.",
+        ),
+        (
+            "Reviewer: Maria approved the budget.",
+            "Reviewer: James approved the budget.",
+        ),
+        ("Reviewer: Maria", "Reviewer: James"),
+        ("The product is Photoshop.", "The product is Lightroom."),
+        ('The product is "Photoshop".', 'The product is "Lightroom".'),
+        ("Upgrade to the Pro plan.", "Upgrade to the Team plan."),
+        ("Select the Pro Plan.", "Select the Team Plan."),
+        ('Upgrade to the "Pro" plan.', 'Upgrade to the "Team" plan.'),
+    ],
+)
+def test_entity_swap_keeps_role_changes(answer: str, source: str) -> None:
+    assert has_entity_swap(answer, source)
+
+
+@pytest.mark.parametrize(
+    "backend", ["python", pytest.param("rust", marks=requires_rust)]
+)
+@pytest.mark.parametrize(
+    ("answer", "source"),
+    [
+        ("The inspector was Alice.", "The inspector was Bob."),
+        ("THE INSPECTOR WAS ALICE.", "THE INSPECTOR WAS BOB."),
+        ("Alice and Maria signed the form.", "Bob and Maria signed the form."),
+        (
+            "Alice, the inspector, signed the form.",
+            "Bob, the inspector, signed the form.",
+        ),
+        (
+            "The board hired Northwind for the project.",
+            "The board hired Woodgrove for the project.",
+        ),
+        (
+            "The board will select Alice for the project.",
+            "The board will select Bob for the project.",
+        ),
+        (
+            "Paris and Oslo submitted the bid.",
+            "Rome and Oslo submitted the bid.",
+        ),
+        (
+            "Alice supervised Bob during the scheduled inspection.",
+            "Bob supervised Alice during the scheduled inspection.",
+        ),
+    ],
+    ids=[
+        "role-noun",
+        "uppercase-role-noun",
+        "coordinated-people",
+        "appositive",
+        "object",
+        "selection-object",
+        "coordinated-places",
+        "exchanged-roles",
+    ],
+)
+def test_entity_changes_block_support(
+    answer: str, source: str, backend: Backend
+) -> None:
+    config = CitationConfig(report_possible_source=True)
+    [span] = align_citations(answer, [source], config=config, backend=backend)
+    assert span.status == "partial"
+    assert span.status_reason == "contradiction"
+    assert span.contradiction_checks == ["has_entity_swap"]
+    assert (
+        span.citations[0].components["answer_coverage"]
+        >= config.supported_answer_coverage
+    )
+
+
+@pytest.mark.parametrize(
+    "backend", ["python", pytest.param("rust", marks=requires_rust)]
+)
+def test_aliases_remap_names_in_matching_roles(backend: Backend) -> None:
+    config = CitationConfig(
+        report_possible_source=True, term_aliases=(("Alice", "Alicia"),)
+    )
+    source = "Alice and Maria signed the form."
+    [equivalent] = align_citations(
+        "Alicia and Maria signed the form.", [source], config=config, backend=backend
+    )
+    assert equivalent.status == "supported"
+    assert equivalent.contradiction_checks == []
+
+    [changed] = align_citations(
+        "Bob and Maria signed the form.", [source], config=config, backend=backend
+    )
+    assert changed.status == "partial"
+    assert changed.contradiction_checks == ["has_entity_swap"]
+
+
+@pytest.mark.parametrize(
+    "backend", ["python", pytest.param("rust", marks=requires_rust)]
+)
+@pytest.mark.parametrize(
+    ("answer", "source", "clears_coverage"),
+    [
+        ("Click Save", "Click Cancel", False),
+        (
+            "Click Save to close the settings panel.",
+            "Click Cancel to close the settings panel.",
+            True,
+        ),
+        ("Click Save, then tap Close.", "Press Cancel, then tap Close.", True),
+        (
+            "Click Save to close the settings panel, then click Cancel to reopen it.",
+            "Click Cancel to close the settings panel, then click Save to reopen it.",
+            True,
+        ),
+        (
+            "Click Save to close the settings panel.",
+            "Click Cancel to close the settings panel, then click Save to reopen it.",
+            True,
+        ),
+    ],
+    ids=["short", "high-coverage", "shared-second-step", "swapped-steps", "extra-step"],
+)
+def test_changed_control_target_blocks_support(
+    backend: Backend, answer: str, source: str, clears_coverage: bool
+) -> None:
+    config = CitationConfig(report_possible_source=True)
+    [span] = align_citations(answer, [source], config=config, backend=backend)
+    assert span.status == "partial"
+    assert span.status_reason == "contradiction"
+    assert span.contradiction_checks == ["has_control_target_mismatch"]
+    [citation] = span.citations
+    assert (
+        citation.components["answer_coverage"] >= config.supported_answer_coverage
+    ) == clears_coverage
+
+
+@pytest.mark.parametrize(
+    "backend", ["python", pytest.param("rust", marks=requires_rust)]
+)
+def test_aliases_remap_control_targets(backend: Backend) -> None:
+    config = CitationConfig(
+        report_possible_source=True, term_aliases=(("Save", "Apply"), ("click", "tap"))
+    )
+    [span] = align_citations(
+        'Click "Save" to close the settings panel.',
+        ["Tap the Apply button to close the settings panel."],
+        config=config,
+        backend=backend,
+    )
+    assert span.status == "supported"
+    assert span.contradiction_checks == []
+
+
+@pytest.mark.parametrize(
+    "backend", ["python", pytest.param("rust", marks=requires_rust)]
+)
+def test_control_location_does_not_change_the_target(backend: Backend) -> None:
+    [span] = align_citations(
+        "Click Save to keep your changes.",
+        ["Click Save on the toolbar to keep your changes."],
+        config=CitationConfig(report_possible_source=True),
+        backend=backend,
+    )
+    assert span.status == "supported"
+    assert span.contradiction_checks == []
+
+
+@pytest.mark.parametrize(
+    "backend", ["python", pytest.param("rust", marks=requires_rust)]
+)
+@pytest.mark.parametrize(
+    ("answer", "source"),
+    [
+        (
+            "Also, sealed samples may never be stored in cupboards.",
+            "Sealed samples may never be stored in cupboards.",
+        ),
+        (
+            "Luneston to Pineford: Up to 600 kg in 5 working days.",
+            "Luneston to Pineford: up to 600 kg for 385.00 EUR in 5 working days.",
+        ),
+        (
+            "Plan • “Is Loading”: review the Pro plan details and payment options when the preview opens.",
+            "Plan • “Is Refreshing”: review the Pro plan details and payment options when the preview opens.",
+        ),
+    ],
+)
+def test_issue69_restatements_are_supported(
+    answer: str, source: str, backend: Backend
+) -> None:
+    [span] = align_citations(answer, [source], config=CitationConfig(), backend=backend)
+    assert span.status == "supported"
+
+
+@pytest.mark.parametrize(
+    ("answer", "passage"),
+    [
+        (
+            "The board awarded Maria the maintenance contract for the third quarter.",
+            "The board awarded James the maintenance contract for the third quarter.",
+        ),
+        (
+            "The instructor gave Maria the equipment manual.",
+            "The instructor gave James the equipment manual.",
+        ),
+        ("ALICE SIGNED THE CONTRACT.", "BOB SIGNED THE CONTRACT."),
+        ("“EMILY SIGNED THE CONTRACT.”", "“HOLLY SIGNED THE CONTRACT.”"),
+        ("‹EMILY SIGNED THE CONTRACT.›", "‹HOLLY SIGNED THE CONTRACT.›"),
+        ("„EMILY SIGNED THE CONTRACT.“", "„HOLLY SIGNED THE CONTRACT.“"),
+        ("»EMILY SIGNED THE CONTRACT.«", "»HOLLY SIGNED THE CONTRACT.«"),
+    ],
+    ids=[
+        "recipient-before-determiner",
+        "irregular-verb-recipient",
+        "uppercase-statement",
+        "quoted-uppercase-statement",
+        "guillemet-uppercase-statement",
+        "german-uppercase-statement",
+        "reversed-guillemet-uppercase-statement",
+    ],
+)
+def test_entity_swap_keeps_actor_roles_in_complete_statements(
+    answer: str, passage: str
+) -> None:
+    assert has_entity_swap(answer, passage)
+    [span] = align_citations(answer, [passage], config=CitationConfig())
+    assert span.status == "partial"
+
+
+@pytest.mark.parametrize(
+    ("answer", "passage"),
+    [
+        ("EXPORT DEVICE SETTINGS.", "IMPORT DEVICE SETTINGS."),
+        (
+            "RARELY ARCHIVED THE SHARED PROJECT FILE.",
+            "SELDOM ARCHIVED THE SHARED PROJECT FILE.",
+        ),
+        ("ACCIDENTALLY DELETED A FILE?", "RECENTLY DELETED A FILE?"),
+        ("PREVIOUSLY ARCHIVED A FILE.", "AUTOMATICALLY ARCHIVED A FILE."),
+        (
+            "FULLY RESTORED THE SHARED PROJECT FILE.",
+            "COMPLETELY RESTORED THE SHARED PROJECT FILE.",
+        ),
+        (
+            "INADVERTENTLY ERASED THE SHARED PROJECT FILE?!",
+            "UNINTENTIONALLY ERASED THE SHARED PROJECT FILE?!",
+        ),
+        (
+            "INADVERTENTLY ERASED THE SHARED PROJECT FILE.",
+            "PERMANENTLY ERASED THE SHARED PROJECT FILE.",
+        ),
+    ],
+)
+def test_entity_swap_ignores_uppercase_layout_heading(
+    answer: str, passage: str
+) -> None:
+    assert not has_entity_swap(answer, passage)
+
+
+@pytest.mark.parametrize("verb", ["clicked", "tapped"])
+def test_control_label_before_an_article_is_not_a_recipient(verb: str) -> None:
+    answer = f"I {verb} Export the first time the toolbar opened."
+    passage = f"I {verb} Download the first time the toolbar opened."
+    assert not has_entity_swap(answer, passage)
+    [span] = align_citations(answer, [passage], config=CitationConfig())
+    assert span.status == "supported"

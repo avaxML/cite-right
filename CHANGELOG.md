@@ -27,6 +27,25 @@ All notable changes to cite-right will be documented in this file.
 - Reversing `before` and `after` between matching clauses now downgrades a span
   from `supported` to `partial` and reports a contradiction when diagnostics
   are enabled. (#84)
+- Entity-swap detection compares names in corresponding roles and honors caller
+  aliases. Faithful restatements that previously triggered on capitalization,
+  headings, UI labels, or unit codes can move from `partial` to `supported`
+  under the default settings. Names exchanged between matching roles and
+  changed targets in matching click, press, or tap steps can move a span from
+  `supported` to `partial` even when shared wording meets the answer coverage
+  threshold. (#69)
+
+- Rust prepare honors `TokenizerConfig.normalize_numbers`, `normalize_percent`,
+  and `normalize_currency` for comma-grouped numbers and percent and currency
+  symbols (`%`, `$`, `€`, and `£`), including NFKC-equivalent symbols such as
+  `￡`, `﹩`, and `﹪`. On the default Rust path, restatements of the same
+  comma-grouped amount can move from `partial` to `supported`. The internal
+  `rust_tokenize_and_prepare` binding takes the three flags as required keyword
+  arguments. The shared contradiction check can now downgrade `supported`
+  spans to `partial` for changed signs, numeric values, percentage markers,
+  explicit currency units, or conflicting labels or directions tied to the
+  amount. (#66)
+
 - On a `supported` span, secondary citations now have to pass the same support
   checks as the primary citation, including full content coverage when term
   aliases are enabled. Secondaries that fail move to `retrieval_support` before
