@@ -148,6 +148,86 @@ def test_diagnostics_have_exact_backend_and_entry_point_parity() -> None:
             ) == reference.model_dump(include=_DIAGNOSTIC_FIELDS)
 
 
+@pytest.mark.parametrize("path", ["one-shot", "prepared"])
+@pytest.mark.parametrize(
+    ("passage", "answer", "reason", "checks", "content_coverage"),
+    [
+        pytest.param(
+            "Polish the casing with a cloth.",
+            "buff the porcelain casing with a cloth.",
+            "below_coverage",
+            [],
+            0.75,
+            id="unmatched-alias",
+        ),
+        pytest.param(
+            "Polish the casing with a cloth.",
+            "don’t buff the casing with a cloth.",
+            "contradiction",
+            ["has_negation_mismatch"],
+            0.75,
+            id="negation",
+        ),
+        pytest.param(
+            "Polish the casing with a cloth.",
+            "Buff the casing with a cloth.",
+            "supported",
+            [],
+            1.0,
+            id="equivalent-entity-tokens",
+        ),
+        pytest.param(
+            "Polish the casing before lifting the lid.",
+            "Buff the casing after lifting the lid.",
+            "contradiction",
+            ["has_temporal_polarity_mismatch"],
+            1.0,
+            id="reversed-timing",
+        ),
+        pytest.param(
+            "Polish the casing before lifting the lid.",
+            "Buff the casing before lifting the lid.",
+            "supported",
+            [],
+            1.0,
+            id="equivalent-timing",
+        ),
+    ],
+)
+def test_alias_diagnostics_have_backend_and_entry_point_parity(
+    passage: str,
+    answer: str,
+    reason: str,
+    checks: list[str],
+    content_coverage: float,
+    backend: Backend,
+    path: PathName,
+) -> None:
+    sources = [passage]
+    config = _config().model_copy(
+        update={"term_aliases": (("polish", "buff"), ("ceramic", "porcelain"))}
+    )
+    base = _align(answer, sources, config, backend, path)
+    diagnostics = _with_diagnostics(config)
+    span = _align(answer, sources, diagnostics, backend, path)
+    reference = _align(answer, sources, diagnostics, "python", "one-shot")
+
+    assert span.status == ("supported" if reason == "supported" else "partial")
+    assert span.status_reason == reason
+    assert span.contradiction_checks == checks
+    assert (span.possible_source is None) == (reason == "supported")
+    [citation] = span.citations
+    assert citation.components["answer_coverage"] >= config.supported_answer_coverage
+    assert citation.components["content_coverage"] == content_coverage
+    assert citation.evidence == passage[citation.char_start : citation.char_end]
+    if span.possible_source is not None:
+        assert span.possible_source.score == citation.components["lexical_score"]
+    assert span.model_dump(include=_DIAGNOSTIC_FIELDS) == reference.model_dump(
+        include=_DIAGNOSTIC_FIELDS
+    )
+    assert base.model_dump() == span.model_dump(exclude=_DIAGNOSTIC_FIELDS)
+
+
 def test_hint_score_is_independent_of_retrieval_sum_order(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

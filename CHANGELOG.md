@@ -11,6 +11,10 @@ All notable changes to cite-right will be documented in this file.
   report the likely source passage and its retrieval score. The hint score
   is stable when reusing a prepared corpus. (#75)
 - Citations include `content_coverage` in `Citation.components` by default. (#84)
+- `CitationConfig.term_aliases` lets callers declare equivalent single words
+  for citation retrieval and alignment on Python and Rust. When aliases are
+  enabled, a cited span with incomplete content coverage stays `partial`
+  even if it meets the answer coverage threshold. (#85)
 
 ### Fixed
 

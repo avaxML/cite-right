@@ -77,6 +77,8 @@ With the default `SimpleTokenizer` and `SimpleSegmenter`, the internal Rust prep
 
 Candidate selection reduces the search space before alignment. 0.4.0 is index-first on the default Rust path: an inverted index maps tokens to passage windows, and for each answer span the rare-token posting lists are intersected. Only those hits move on to Smith-Waterman. `max_candidates_lexical` (default 200) caps how many seeds the index can keep.
 
+When the answer contains a term declared in `CitationConfig.term_aliases`, lexical retrieval combines postings for equivalent spellings before applying the candidate caps. Each alignment call resolves the groups against its token IDs. The prepared index keeps its original vocabulary and postings.
+
 The index is a recall shortcut. Smith-Waterman still localizes every citation. The index chooses which windows get aligned; alignment is not skipped.
 
 When the index returns no hits, the older lexical prefilter is the fallback: for each candidate passage, an IDF-weighted overlap with the answer tokens is computed and the top scoring passages move on. The lexical prefilter is also the candidate-selection path when the Rust extension is missing or when a custom tokenizer/segmenter is in use, because then `PreparedCitationCorpus.from_sources` leaves `inverted_index=None` and `rust_corpus=None`.
@@ -98,6 +100,8 @@ flowchart TD
 ### Step 5: Smith-Waterman Alignment
 
 Each surviving candidate is aligned to the answer span by Smith-Waterman, a dynamic-programming local-alignment algorithm. The implementation in `src/cite_right/core/aligner_py.py` is the reference; the Rust equivalent is exposed by `RustSmithWatermanAligner` in `src/cite_right/core/aligner_rust.py`. The Rust backend reproduces the Python traceback exactly, including match counts and floating-point rounding, so the two backends agree on status and offsets on the same input.
+
+On both backends, declared aliases count as equal token IDs in alignment and content coverage. The original token positions still determine the evidence. See [Caller-supplied term aliases](../configuration/citation-config.md#caller-supplied-term-aliases).
 
 The alignment returns a score plus the token range within the candidate passage. Two coverage signals are then computed on the same alignment:
 
@@ -130,16 +134,16 @@ After sorting, the same source with the same evidence-span tuple is collapsed (d
 - Negation mismatch: one side has a negation marker, the other does not.
 - Number mismatch: numbers differ between the answer and the candidate.
 - Leftover n-gram slot: a shared number attaches to different content words in each side.
-- Entity swap: capitalized entities differ between the two sides.
+- Entity swap: capitalized entities differ between the two sides. A declared alias group identifies equivalent entity terms.
 - Temporal / polarity mismatch: BC vs ago, oppose vs support, and similar paired markers.
 
 When any of those fire against the best-ranked citation, the span status is forced to `"partial"`. The status is never forced to `"unsupported"` by contradiction: there is evidence, it just conflicts with the claim. So source "The vaccine is safe and effective." and answer "The vaccine is not safe." resolves to `"partial"` with citations, not to `"unsupported"`. Shared tokens that would otherwise bless a contradictory statement as `"supported"` are downgraded for the same reason.
 
-**Status.** Status comes from the top-ranked `Citation`'s `answer_coverage` component, not from its overall score. The exact rule:
+**Status.** The top-ranked citation determines the status of a cited span.
 
-- If the best citation's answer coverage meets `supported_answer_coverage` (default `0.6`) and no contradiction fired, the span is `"supported"`.
-- If citations exist but `answer_coverage` is below the threshold, or a contradiction fired, the span is `"partial"`.
-- If no citations survive filtering, the span is `"unsupported"`.
+- The span is `"supported"` if the best citation's answer coverage meets `supported_answer_coverage` (default `0.6`) and no contradiction fired. With aliases enabled, the best citation must also have `content_coverage == 1.0` across its candidate passage.
+- All other cited spans are `"partial"`.
+- Spans without a surviving citation are `"unsupported"`.
 
 `retrieval_support` is intentionally outside this decision: a high embedding score that never localizes is evidence-of-interest, not a grounded citation. It is the diagnostic that a recall signal fired but Smith-Waterman could not pin a span.
 

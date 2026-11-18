@@ -347,10 +347,10 @@ class SpanCitations(BaseModel):
             localized into an exact citation.
         status: Overall citation status for this span:
 
-            - ``"supported"``: Top-ranked citation has answer_coverage >= threshold
-              (default 0.6). The claim is well-grounded in sources.
-            - ``"partial"``: Has citations but below supported threshold.
-              Some evidence exists but coverage is incomplete.
+            - ``"supported"``: Top-ranked citation passes the answer coverage
+              threshold (default 0.6), contradiction checks, and full content
+              coverage when aliases are enabled.
+            - ``"partial"``: Has citations and fails at least one support check.
             - ``"unsupported"``: No citations found. This span may be
               hallucinated or paraphrased beyond recognition.
         status_reason: Reason for the status when diagnostics are enabled.

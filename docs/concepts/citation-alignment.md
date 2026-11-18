@@ -92,9 +92,9 @@ passage can be the likely source of a claim it does not establish.
 
 ### Status Rules
 
-`"supported"` means the top-ranked `Citation` has `answer_coverage >= supported_answer_coverage` (default 0.6) and the cheap contradiction check did not fire.
+`"supported"` means the top-ranked citation meets `supported_answer_coverage` (default 0.6) and no contradiction check fired. With `term_aliases` enabled, its `content_coverage` must also equal `1.0`.
 
-`"partial"` means citations exist but the supported threshold was not met, **or** the contradiction check fired. The literal is `"partial"`, never `"partially_supported"`. Contradiction (negation, number mismatch, leftover n-gram slot, entity swap) downgrades to `"partial"`, not `"unsupported"`, because the evidence exists — it just conflicts with the claim.
+`"partial"` means a citation exists and fails one or more of the support checks.
 
 `"unsupported"` means no citation survived filtering. The span may be hallucinated, or it may be content from outside the provided sources. `"unsupported"` is "no localized citation survived," not a high-precision hallucination label.
 
@@ -124,13 +124,12 @@ The rule that ties inputs and outputs together is the evidence equality invarian
 
 ## What Status Comes From
 
-Status is driven by the best exact citation's `answer_coverage` and the contradiction check. Embedding similarity, lexical overlap, and the inverted index are used to **select** candidate passages; they are not what flips a span to `"supported"`. A passage that scores well on embedding but never localizes into a `Citation` lands in `retrieval_support` and does not change the status.
+The [status rules](#status-rules) use coverage from the best exact citation.
+Contradiction checks inspect that citation's full candidate passage.
 
-The per-span decision uses `citations[0].components["answer_coverage"]` and
-checks contradiction against that citation's full candidate passage. If
-coverage meets `supported_answer_coverage` and the checks are clear, the
-status is `"supported"`. A contradiction or low coverage produces
-`"partial"`. An empty citation list produces `"unsupported"`.
+Embedding similarity, lexical overlap, and the inverted index select candidate
+passages. A passage that scores well on embedding but never localizes into a
+`Citation` lands in `retrieval_support` and does not change the status.
 
 ## How Candidates Get Chosen
 

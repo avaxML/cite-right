@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import re
 import unicodedata
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 
 from cite_right.text.content_coverage import STOPWORDS
 from cite_right.text.segmenter_simple import SimpleSegmenter
@@ -113,7 +113,71 @@ _SENTENCE_START_STOPWORDS = _FUNCTION_WORDS | {
 }
 
 
-def check_contradiction(answer_text: str, evidence_text: str) -> bool:
+_NEGATION_PATTERNS = (
+    r"\bnot\b",
+    r"\bnever\b",
+    r"\bno\b",
+    r"n't\b",
+    r"\bneither\b",
+    r"\bnor\b",
+    r"\bnobody\b",
+    r"\bnothing\b",
+    r"\bnowhere\b",
+    r"\bhadn\'t\b",
+    r"\bhasn\'t\b",
+    r"\bhaven\'t\b",
+    r"\bisn\'t\b",
+    r"\bwasn\'t\b",
+    r"\bweren\'t\b",
+    r"\bwon\'t\b",
+    r"\bwouldn\'t\b",
+    r"\bdon\'t\b",
+    r"\bdoesn\'t\b",
+    r"\bdidn\'t\b",
+    r"\bcan\'t\b",
+    r"\bcannot\b",
+    r"\bcouldn\'t\b",
+    r"\bshouldn\'t\b",
+    r"\bmustn\'t\b",
+)
+
+_TEMPORAL_CONTRADICTIONS = (
+    (r"\bbc\b", r"\bago\b"),
+    (r"\bce\b", r"\bbc\b"),
+    (r"\bad\b", r"\bbc\b"),
+    (r"\bbce\b", r"\bce\b"),
+)
+
+_POLARITY_CONTRADICTIONS = (
+    (r"\boppose[ds]?\b", r"\b(?:support|urge[ds]?|advocate[ds]?|promote[ds]?)\b"),
+    (r"\bsupport[s]?\b", r"\b(?:oppose[ds]?|reject[s]?|resist[s]?)\b"),
+    (r"\breject[s]?\b", r"\b(?:accept[s]?|approve[s]?|endorse[ds]?)\b"),
+    (r"\bdenied\b", r"\b(?:confirmed|admitted|acknowledged)\b"),
+    (r"\bfailed\b", r"\b(?:succeeded|achieved|accomplished)\b"),
+)
+
+
+def is_protected_alias(term: str) -> bool:
+    """Return whether an alias would equate a contradiction marker or number."""
+    return bool(
+        extract_numbers(term)
+        or contains_negation(term)
+        or any(
+            re.search(pattern, term)
+            for pair in (*_TEMPORAL_CONTRADICTIONS, *_POLARITY_CONTRADICTIONS)
+            for pattern in pair
+        )
+    )
+
+
+def check_contradiction(
+    answer_text: str,
+    evidence_text: str,
+    *,
+    entity_aliases: Callable[[str], str] | None = None,
+    normalize_negation: Callable[[str], str] | None = None,
+    normalize_temporal_clause: Callable[[str], str] | None = None,
+) -> bool:
     """Check if evidence contradicts the answer.
 
     Args:
@@ -123,7 +187,14 @@ def check_contradiction(answer_text: str, evidence_text: str) -> bool:
     Returns:
         True if contradiction is detected, False otherwise
     """
-    return next(iter_contradiction_checks(answer_text, evidence_text), None) is not None
+    checks = iter_contradiction_checks(
+        answer_text,
+        evidence_text,
+        entity_aliases=entity_aliases,
+        normalize_negation=normalize_negation,
+        normalize_temporal_clause=normalize_temporal_clause,
+    )
+    return next(checks, None) is not None
 
 
 def has_negation_mismatch(answer_text: str, evidence_text: str) -> bool:
@@ -149,35 +220,8 @@ def contains_negation(text: str) -> bool:
         True if negation markers found
     """
     lower = text.lower()
-    negation_patterns = [
-        r"\bnot\b",
-        r"\bnever\b",
-        r"\bno\b",
-        r"n't\b",
-        r"\bneither\b",
-        r"\bnor\b",
-        r"\bnobody\b",
-        r"\bnothing\b",
-        r"\bnowhere\b",
-        r"\bhadn\'t\b",
-        r"\bhasn\'t\b",
-        r"\bhaven\'t\b",
-        r"\bisn\'t\b",
-        r"\bwasn\'t\b",
-        r"\bweren\'t\b",
-        r"\bwon\'t\b",
-        r"\bwouldn\'t\b",
-        r"\bdon\'t\b",
-        r"\bdoesn\'t\b",
-        r"\bdidn\'t\b",
-        r"\bcan\'t\b",
-        r"\bcannot\b",
-        r"\bcouldn\'t\b",
-        r"\bshouldn\'t\b",
-        r"\bmustn\'t\b",
-    ]
 
-    for pattern in negation_patterns:
+    for pattern in _NEGATION_PATTERNS:
         if re.search(pattern, lower):
             return True
     return False
@@ -264,7 +308,12 @@ def extract_numbers(text: str) -> list[str]:
     return [num.replace(",", "") for num in numbers]
 
 
-def has_entity_swap(answer_text: str, evidence_text: str) -> bool:
+def has_entity_swap(
+    answer_text: str,
+    evidence_text: str,
+    *,
+    entity_aliases: Callable[[str], str] | None = None,
+) -> bool:
     """Check if entities (proper nouns) differ between answer and evidence.
 
     Args:
@@ -281,6 +330,9 @@ def has_entity_swap(answer_text: str, evidence_text: str) -> bool:
 
     answer_set = set(answer_entities)
     evidence_set = set(evidence_entities)
+    if entity_aliases:
+        answer_set = set(map(entity_aliases, answer_set))
+        evidence_set = set(map(entity_aliases, evidence_set))
     unique_in_answer = answer_set - evidence_set
     unique_in_evidence = evidence_set - answer_set
     return bool(unique_in_answer and unique_in_evidence)
@@ -310,7 +362,12 @@ def extract_entities(text: str) -> list[str]:
     return entities
 
 
-def has_temporal_polarity_mismatch(answer_text: str, evidence_text: str) -> bool:
+def has_temporal_polarity_mismatch(
+    answer_text: str,
+    evidence_text: str,
+    *,
+    normalize_clause: Callable[[str], str] | None = None,
+) -> bool:
     """Check for temporal or polarity contradictions.
 
     Args:
@@ -323,52 +380,49 @@ def has_temporal_polarity_mismatch(answer_text: str, evidence_text: str) -> bool
     answer_lower = answer_text.lower()
     evidence_lower = evidence_text.lower()
 
-    temporal_contradictions = [
-        (r"\bbc\b", r"\bago\b"),
-        (r"\bce\b", r"\bbc\b"),
-        (r"\bad\b", r"\bbc\b"),
-        (r"\bbce\b", r"\bce\b"),
-    ]
-    if _paired_marker_mismatch(answer_lower, evidence_lower, temporal_contradictions):
+    if _paired_marker_mismatch(answer_lower, evidence_lower, _TEMPORAL_CONTRADICTIONS):
         return True
-    if _has_reversed_before_after(answer_lower, evidence_lower):
+    if _has_reversed_before_after(answer_lower, evidence_lower, normalize_clause):
         return True
 
-    polarity_contradictions = [
-        (r"\boppose[ds]?\b", r"\b(?:support|urge[ds]?|advocate[ds]?|promote[ds]?)\b"),
-        (r"\bsupport[s]?\b", r"\b(?:oppose[ds]?|reject[s]?|resist[s]?)\b"),
-        (r"\breject[s]?\b", r"\b(?:accept[s]?|approve[s]?|endorse[ds]?)\b"),
-        (r"\bdenied\b", r"\b(?:confirmed|admitted|acknowledged)\b"),
-        (r"\bfailed\b", r"\b(?:succeeded|achieved|accomplished)\b"),
-    ]
     return _paired_marker_mismatch(
-        answer_lower, evidence_lower, polarity_contradictions
+        answer_lower, evidence_lower, _POLARITY_CONTRADICTIONS
     )
 
 
-def _has_reversed_before_after(answer_lower: str, evidence_lower: str) -> bool:
+def _has_reversed_before_after(
+    answer_lower: str,
+    evidence_lower: str,
+    normalize_clause: Callable[[str], str] | None,
+) -> bool:
     """Detect a flipped temporal marker between the same two clauses."""
-    clauses = _split_temporal_claim(answer_lower)
+    clauses = _split_temporal_claim(answer_lower, normalize_clause)
     if len(clauses) != 3:
         return False
     first, marker, second = clauses
     opposite = "after" if marker == "before" else "before"
     reversed_claim = [first, opposite, second]
     return any(
-        _split_temporal_claim(segment.text) == reversed_claim
+        _split_temporal_claim(segment.text, normalize_clause) == reversed_claim
         for segment in SimpleSegmenter().segment(evidence_lower)
     )
 
 
-def _split_temporal_claim(text: str) -> list[str]:
+def _split_temporal_claim(
+    text: str, normalize_clause: Callable[[str], str] | None
+) -> list[str]:
     normalized = " ".join(text.split()).rstrip(".!?;")
-    return re.split(r",? (before|after) ", normalized)
+    clauses = re.split(r",? (before|after) ", normalized)
+    if normalize_clause is not None and len(clauses) == 3:
+        first, marker, second = clauses
+        return [normalize_clause(first), marker, normalize_clause(second)]
+    return clauses
 
 
 def _paired_marker_mismatch(
     answer_lower: str,
     evidence_lower: str,
-    pairs: list[tuple[str, str]],
+    pairs: tuple[tuple[str, str], ...],
 ) -> bool:
     """Return True if exactly one side of a contradictory marker pair matches."""
     for left, right in pairs:
@@ -530,17 +584,28 @@ def extract_number_context(text: str, number: str) -> list[str]:
     return context_words
 
 
-_CONTRADICTION_CHECKS = (
-    has_negation_mismatch,
-    has_number_mismatch,
-    has_entity_swap,
-    has_temporal_polarity_mismatch,
-    has_number_context_mismatch,
-)
-
-
-def iter_contradiction_checks(answer_text: str, evidence_text: str) -> Iterator[str]:
+def iter_contradiction_checks(
+    answer_text: str,
+    evidence_text: str,
+    *,
+    entity_aliases: Callable[[str], str] | None = None,
+    normalize_negation: Callable[[str], str] | None = None,
+    normalize_temporal_clause: Callable[[str], str] | None = None,
+) -> Iterator[str]:
     """Yield the names of triggered checks in evaluation order."""
-    for check in _CONTRADICTION_CHECKS:
-        if check(answer_text, evidence_text):
-            yield check.__name__
+    negation_answer, negation_evidence = answer_text, evidence_text
+    if normalize_negation is not None:
+        negation_answer = normalize_negation(answer_text)
+        negation_evidence = normalize_negation(evidence_text)
+    if has_negation_mismatch(negation_answer, negation_evidence):
+        yield "has_negation_mismatch"
+    if has_number_mismatch(answer_text, evidence_text):
+        yield "has_number_mismatch"
+    if has_entity_swap(answer_text, evidence_text, entity_aliases=entity_aliases):
+        yield "has_entity_swap"
+    if has_temporal_polarity_mismatch(
+        answer_text, evidence_text, normalize_clause=normalize_temporal_clause
+    ):
+        yield "has_temporal_polarity_mismatch"
+    if has_number_context_mismatch(answer_text, evidence_text):
+        yield "has_number_context_mismatch"

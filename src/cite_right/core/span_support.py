@@ -22,10 +22,12 @@ from cite_right.core.results import (
     TokenizedText,
 )
 from cite_right.text.content_coverage import STOPWORDS
+from cite_right.text.tokenizer import normalize_apostrophes
 
 if TYPE_CHECKING:
     from cite_right._core import PreparedCorpus as RustPreparedCorpus
     from cite_right.core.prepared_corpus import IdfWeights
+    from cite_right.text.term_aliases import TermAliases
 
 _STATUS_BY_REASON: dict[StatusReason, SpanStatus] = {
     "supported": "supported",
@@ -67,8 +69,12 @@ def build_span_citations(
     idf: IdfWeights,
     rust_corpus: RustPreparedCorpus | None,
     config: CitationConfig,
+    term_aliases: TermAliases | None,
+    uses_alias_retrieval: bool,
 ) -> SpanCitations:
-    reason, checks = _status_reason(answer_span.text, citations, candidates, config)
+    reason, checks = _status_reason(
+        answer_span.text, citations, candidates, config, term_aliases
+    )
     possible_source = None
     if config.report_possible_source and reason != "supported" and candidate_ranking:
         index, embedding_score, lexical_score = candidate_ranking[0]
@@ -80,6 +86,7 @@ def build_span_citations(
             lexical_score,
             idf,
             config,
+            uses_alias_retrieval=uses_alias_retrieval,
         )
     return SpanCitations(
         answer_span=answer_span,
@@ -97,6 +104,7 @@ def _status_reason(
     citations: Sequence[Citation],
     candidates: Sequence[Candidate],
     config: CitationConfig,
+    term_aliases: TermAliases | None,
 ) -> tuple[StatusReason, list[str] | None]:
     checks: list[str] | None = [] if config.report_possible_source else None
     if not citations:
@@ -104,7 +112,13 @@ def _status_reason(
 
     best = citations[0]
     triggered = iter_contradiction_checks(
-        answer_text, _contradiction_context(best, candidates)
+        answer_text,
+        _contradiction_context(best, candidates),
+        entity_aliases=term_aliases.canonical_word if term_aliases else None,
+        normalize_negation=normalize_apostrophes if term_aliases else None,
+        normalize_temporal_clause=term_aliases.canonicalize_clause
+        if term_aliases
+        else None,
     )
     if checks is None:
         contradiction = next(triggered, None) is not None
@@ -113,9 +127,10 @@ def _status_reason(
         contradiction = bool(checks)
     if contradiction:
         return "contradiction", checks
-    if (
-        float(best.components.get("answer_coverage", 0.0))
-        >= config.supported_answer_coverage
+    if float(
+        best.components.get("answer_coverage", 0.0)
+    ) >= config.supported_answer_coverage and (
+        not config.term_aliases or best.components.get("content_coverage") == 1.0
     ):
         return "supported", checks
     return "below_coverage", checks
@@ -139,6 +154,8 @@ def _possible_source_match(
     lexical_score: float,
     idf: IdfWeights,
     config: CitationConfig,
+    *,
+    uses_alias_retrieval: bool,
 ) -> PossibleSourceMatch | None:
     if _is_short_or_boilerplate(answer_tokens):
         return None
@@ -150,7 +167,7 @@ def _possible_source_match(
     if not _has_content_anchors(answer_tokens, passage_tokens):
         return None
 
-    if lexical_score > 0.0:
+    if lexical_score > 0.0 and not uses_alias_retrieval:
         lexical_score = _hint_lexical_score(
             answer_tokens.token_ids, passage_tokens, idf
         )

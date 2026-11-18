@@ -1,6 +1,7 @@
 //! Fast citation building using JSON for Python interop
 
 use crate::content_coverage::{adequate_coverage, content_token_coverage};
+use crate::term_aliases::remap_token_ids;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
@@ -39,8 +40,9 @@ pub struct RetrievalSupport {
 }
 
 // Lightweight config for citation building
-pub struct Config {
+pub struct Config<'a> {
     pub stopword_ids: HashSet<u32>,
+    pub alias_ids: Option<&'a HashMap<u32, u32>>,
     pub min_alignment_score: i32,
     pub min_answer_coverage: f64,
     pub min_final_score: f64,
@@ -86,7 +88,7 @@ pub fn build_citations_json(
     alignments: Vec<Alignment>,
     lexical_scores: &[f64],
     embed_scores: &[f64],
-    cfg: Config,
+    cfg: Config<'_>,
 ) -> String {
     let results: Vec<_> = candidate_indices
         .par_iter()
@@ -143,7 +145,7 @@ fn process_alignment(
     alignment: &Alignment,
     lexical_score: f64,
     embed_score: f64,
-    cfg: &Config,
+    cfg: &Config<'_>,
 ) -> Option<Either> {
     let answer_len = answer_tokens.len();
     let evidence_len = (alignment.token_end - alignment.token_start).max(1);
@@ -153,8 +155,13 @@ fn process_alignment(
     let normalized_alignment =
         alignment.score as f64 / (cfg.match_score as f64 * answer_len.max(1) as f64);
 
-    let passage_coverage =
-        content_token_coverage(answer_tokens, &candidate.token_ids, &cfg.stopword_ids);
+    let alias_ids = cfg.alias_ids;
+    let passage_coverage = content_token_coverage(
+        answer_tokens,
+        &candidate.token_ids,
+        &cfg.stopword_ids,
+        alias_ids,
+    );
 
     // Check thresholds
     if alignment.score < cfg.min_alignment_score
@@ -185,7 +192,10 @@ fn process_alignment(
     // Check all tokens requirement
     if cfg.require_all_tokens && alignment.matches != answer_len {
         let evidence_tokens = &candidate.token_ids[alignment.token_start..alignment.token_end];
-        if !tokens_match(answer_tokens, evidence_tokens) {
+        if !tokens_match(
+            &remap_token_ids(answer_tokens, alias_ids),
+            &remap_token_ids(evidence_tokens, alias_ids),
+        ) {
             return build_support(
                 candidate,
                 normalized_alignment,
@@ -258,7 +268,7 @@ fn process_alignment(
 fn extract_evidence_spans(
     candidate: &Candidate,
     alignment: &Alignment,
-    cfg: &Config,
+    cfg: &Config<'_>,
 ) -> Option<Vec<EvidenceSpan>> {
     // Try multi-span extraction first if enabled and we have disjoint match blocks
     if cfg.multi_span_evidence && alignment.match_blocks.len() > 1 {
@@ -274,7 +284,7 @@ fn extract_evidence_spans(
 fn extract_multi_span_evidence(
     candidate: &Candidate,
     alignment: &Alignment,
-    cfg: &Config,
+    cfg: &Config<'_>,
 ) -> Option<Vec<EvidenceSpan>> {
     let mut spans = Vec::new();
 
@@ -375,7 +385,7 @@ fn build_support(
     evidence_coverage: f64,
     lexical_score: f64,
     embed_score: f64,
-    cfg: &Config,
+    cfg: &Config<'_>,
 ) -> Option<Either> {
     if lexical_score <= 0.0 && embed_score < 0.3 {
         return None;
