@@ -179,7 +179,14 @@ def rust_build_citations_fast(
     gap_score: int = ...,
     *,
     query_stopword_ids: Sequence[int],
-) -> str: ...
+) -> str:
+    """Build citations as JSON using the internal legacy Rust builder.
+
+    The required keyword-only query_stopword_ids contains the query token IDs
+    excluded from content coverage.
+    """
+    ...
+
 def align_pair(
     seq1: Sequence[int],
     seq2: Sequence[int],
