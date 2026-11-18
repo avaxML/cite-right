@@ -46,6 +46,13 @@ All notable changes to cite-right will be documented in this file.
   explicit currency units, or conflicting labels or directions tied to the
   amount. (#66)
 
+- On a `supported` span, secondary citations now have to pass the same support
+  checks as the primary citation, including full content coverage when term
+  aliases are enabled. Secondaries that fail move to `retrieval_support` before
+  the per-span and per-source citation limits are applied, so a lower-ranked
+  supporting citation can fill the available slot. The primary citation and
+  span status stay the same. (#67)
+
 ## [0.4.0] - 2026-08-25
 
 ### Added

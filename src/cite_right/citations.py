@@ -48,8 +48,9 @@ from cite_right.core.results import (
     SourceChunk,
     SourceDocument,
     SpanCitations,
+    StatusReason,
 )
-from cite_right.core.span_support import build_span_citations
+from cite_right.core.span_support import build_span_citations, citation_status_reason
 from cite_right.models.base import Embedder
 from cite_right.models.embedding_index import EmbeddingIndex
 from cite_right.text.content_coverage import (
@@ -633,7 +634,14 @@ def _process_answer_span(
         num_alignments += extra_alignments
         alignment_time = (time.perf_counter() - align_start) * 1000
 
-    citations = _rank_and_limit_citations(citations, cfg)
+    citations, reason, checks = _classify_and_limit_citations(
+        citations,
+        retrieval_support,
+        answer_span.text,
+        candidates,
+        cfg,
+        term_aliases,
+    )
     if term_aliases:
         citations = [
             citation.model_copy(
@@ -647,6 +655,8 @@ def _process_answer_span(
         span_citations=build_span_citations(
             answer_span=answer_span,
             answer_tokens=answer_tokenized,
+            reason=reason,
+            checks=checks,
             citations=citations,
             retrieval_support=retrieval_support,
             candidates=candidates,
@@ -654,7 +664,6 @@ def _process_answer_span(
             idf=idf,
             rust_corpus=rust_corpus,
             config=cfg,
-            term_aliases=term_aliases,
             uses_alias_retrieval=uses_alias_retrieval,
         ),
         num_alignments=num_alignments,
@@ -1604,11 +1613,71 @@ def _token_span_to_char_span(
     return span_start, span_end
 
 
-def _rank_and_limit_citations(
+def _classify_and_limit_citations(
+    citations: list[Citation],
+    retrieval_support: list[RetrievalSupport],
+    answer_text: str,
+    candidates: Sequence[Candidate],
+    cfg: CitationConfig,
+    term_aliases: TermAliases | None,
+) -> tuple[list[Citation], StatusReason, list[str] | None]:
+    citations.sort(key=lambda citation: _citation_sort_key(citation, cfg))
+    # The quotas always admit the highest-ranked citation when per-source citations
+    # are enabled. Classify that citation before filtering any of the secondaries.
+    primary = citations[0] if citations and cfg.max_citations_per_source > 0 else None
+    reason, checks = citation_status_reason(
+        answer_text,
+        primary,
+        candidates,
+        cfg,
+        term_aliases,
+        report_checks=cfg.report_possible_source,
+    )
+    demoted: list[Citation] = []
+    if primary is not None and reason == "supported":
+        supported = [primary]
+        for citation in citations[1:]:
+            secondary_reason, _ = citation_status_reason(
+                answer_text, citation, candidates, cfg, term_aliases
+            )
+            if secondary_reason == "supported":
+                supported.append(citation)
+            else:
+                demoted.append(citation)
+        citations = supported
+
+    citations = _limit_ranked_citations(citations, cfg)
+    if demoted and cfg.max_retrieval_support > 0:
+        _append_demoted_support(retrieval_support, demoted, citations, candidates)
+    return citations, reason, checks
+
+
+def _append_demoted_support(
+    retrieval_support: list[RetrievalSupport],
+    demoted: list[Citation],
+    citations: list[Citation],
+    candidates: Sequence[Candidate],
+) -> None:
+    seen = {entry.candidate_index for entry in retrieval_support}
+    seen.update(citation.candidate_index for citation in citations)
+    for citation in demoted:
+        index = citation.candidate_index
+        if index in seen:
+            continue
+        seen.add(index)
+        retrieval_support.append(
+            _build_retrieval_support(
+                candidates[index],
+                citation.score,
+                float(citation.components.get("lexical_score", 0.0)),
+                float(citation.components.get("embedding_score", 0.0)),
+            )
+        )
+
+
+def _limit_ranked_citations(
     citations: list[Citation], cfg: CitationConfig
 ) -> list[Citation]:
-    citations.sort(key=lambda c: _citation_sort_key(c, cfg))
-
     seen: set[tuple[str, tuple[tuple[int, int], ...]]] = set()
     per_source: dict[str, int] = {}
     output: list[Citation] = []
@@ -1638,7 +1707,7 @@ def _rank_retrieval_support(
     retrieval_support: list[RetrievalSupport],
     cfg: CitationConfig,
 ) -> list[RetrievalSupport]:
-    """Rank retrieval-only support entries by retrieval signal only."""
+    """Rank retrieval-only support entries by their weighted score."""
     retrieval_support.sort(
         key=lambda support: (
             -support.retrieval_score,

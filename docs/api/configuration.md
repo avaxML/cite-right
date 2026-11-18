@@ -83,7 +83,7 @@ match. See [Status diagnostics](../configuration/citation-config.md#status-diagn
 
 **max_citations_per_source** (`int`): Cap on citations returned from a single source per answer span.
 
-**max_retrieval_support** (`int`): Cap on retrieval-only support passages returned per answer span when exact citations are unavailable.
+**max_retrieval_support** (`int`): Cap on retrieval support passages per answer span, including passages from demoted secondary citations.
 
 **prefer_source_order** (`bool`): When scores tie, prefer earlier sources (True) or earlier character positions (False).
 

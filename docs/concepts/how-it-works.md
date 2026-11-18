@@ -120,14 +120,19 @@ When `multi_span_evidence=True`, the alignment can return disjoint `match_blocks
 
 ### Step 7: Ranking, Contradiction Check, and Status
 
-After all candidates are aligned, the surviving citations are sorted deterministically, deduplicated, trimmed, and passed to the contradiction check, which finally sets the span status.
+After alignment, the best-ranked citation determines the span status. On a
+supported span, the pipeline checks the remaining citations for support before
+applying the citation limits.
 
 **Ranking.** The sort key is built by `_citation_sort_key` in `src/cite_right/citations.py`. The primary key is `-citation.score`. Ties break on `prefer_source_order`:
 
 - Default (`prefer_source_order=True`): earlier `source_index`, then earlier `char_start`, then longer evidence span, then `candidate_index`.
 - `prefer_source_order=False`: earlier `char_start`, then longer evidence span, then `source_index`, then `candidate_index`.
 
-After sorting, the same source with the same evidence-span tuple is collapsed (deduped), `max_citations_per_source` caps how many citations any one source contributes, and the list is trimmed to `top_k`. `retrieval_support` is ranked independently by `retrieval_score` and trimmed to `max_retrieval_support`.
+After support filtering, the ranked citations are deduplicated by source and
+evidence-span tuple. `max_citations_per_source` caps how many citations any one
+source contributes, and `top_k` caps the list for the span. `retrieval_support`
+is ranked independently by `retrieval_score` and trimmed to `max_retrieval_support`.
 
 **Contradiction.** `iter_contradiction_checks` in `src/cite_right/contradiction.py` checks the full candidate passage. The alignment excerpt can omit tokens that reveal a mismatch, such as "BC" or "of which came in the first half". The checks cover:
 
@@ -145,6 +150,12 @@ When any of those fire against the best-ranked citation, the span status is forc
 - The span is `"supported"` if the best citation's answer coverage meets `supported_answer_coverage` (default `0.6`) and no contradiction fired. With aliases enabled, the best citation must also have `content_coverage == 1.0` across its candidate passage.
 - All other cited spans are `"partial"`.
 - Spans without a surviving citation are `"unsupported"`.
+
+On a `"supported"` span, each secondary citation has to pass the same
+coverage and contradiction checks as the primary. The pipeline demotes
+secondaries that fail, so a lower-ranked supporting citation can fill the
+available slot. Each demoted entry uses the citation's weighted `score` as
+`retrieval_score` and competes for a slot under `max_retrieval_support`.
 
 `retrieval_support` is intentionally outside this decision: a high embedding score that never localizes is evidence-of-interest, not a grounded citation. It is the diagnostic that a recall signal fired but Smith-Waterman could not pin a span.
 

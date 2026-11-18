@@ -112,7 +112,7 @@ for result in results:
         print(f"  From {citation.source_id}: {citation.evidence!r}")
 ```
 
-By default, up to `top_k` citations are returned per answer span (default `top_k=3`). Use `max_citations_per_source` (default `2`) to cap how many citations any one source can contribute to a single span. `retrieval_support` is the list of passages the index or embedder selected that did not localize into an exact citation; it is informational and does not change the status.
+By default, up to `top_k` citations are returned per answer span (default `top_k=3`). Use `max_citations_per_source` (default `2`) to cap how many citations any one source can contribute to a single span. `retrieval_support` lists selected passages without a citation and passages from demoted secondary citations. It is informational and does not affect the span status.
 
 ## Handling Multi-Sentence Answers
 

@@ -292,7 +292,7 @@ class Citation(BaseModel):
 
 
 class RetrievalSupport(BaseModel):
-    """A retrieval-only support signal without localized evidence spans."""
+    """Passage-level metadata for a selected or demoted candidate."""
 
     model_config = ConfigDict(frozen=True)
 
@@ -342,9 +342,8 @@ class SpanCitations(BaseModel):
         answer_span: The answer segment these citations correspond to.
         citations: List of Citation objects, ranked by score (best first).
             May be empty if no citations met the minimum thresholds.
-        retrieval_support: List of retrieval-only support signals for passages
-            selected during lexical and/or embedding candidate search but not
-            localized into an exact citation.
+        retrieval_support: List of selected passages that did not produce a
+            citation or were demoted after failing secondary support checks.
         status: Overall citation status for this span:
 
             - ``"supported"``: Top-ranked citation passes the answer coverage

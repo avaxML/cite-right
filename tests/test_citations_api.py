@@ -15,7 +15,7 @@ from cite_right import (
     SourceDocument,
     align_citations,
 )
-from cite_right.citations import _rank_and_limit_citations
+from cite_right.citations import _citation_sort_key, _limit_ranked_citations
 from cite_right.core.aligner_py import SmithWatermanAligner
 from cite_right.core.citation_config import CitationConfig, CitationWeights
 from cite_right.core.prepared_corpus import (
@@ -252,7 +252,8 @@ def test_rank_and_limit_citations_prefers_source_order_in_equal_score_ties() -> 
         ),
     ]
 
-    ranked = _rank_and_limit_citations(citations, cfg)
+    citations.sort(key=lambda citation: _citation_sort_key(citation, cfg))
+    ranked = _limit_ranked_citations(citations, cfg)
 
     assert [citation.source_id for citation in ranked] == [
         "earlier-source",
@@ -282,7 +283,8 @@ def test_rank_and_limit_citations_prefers_earlier_position_when_source_order_dis
         ),
     ]
 
-    ranked = _rank_and_limit_citations(citations, cfg)
+    citations.sort(key=lambda citation: _citation_sort_key(citation, cfg))
+    ranked = _limit_ranked_citations(citations, cfg)
 
     assert [citation.source_id for citation in ranked] == [
         "later-source",
@@ -332,7 +334,8 @@ def test_rank_and_limit_citations_dedupes_by_source_and_evidence_span_tuple() ->
         ),
     ]
 
-    ranked = _rank_and_limit_citations(citations, cfg)
+    citations.sort(key=lambda citation: _citation_sort_key(citation, cfg))
+    ranked = _limit_ranked_citations(citations, cfg)
 
     assert [(citation.source_id, citation.candidate_index) for citation in ranked] == [
         ("source-a", 1),
@@ -383,7 +386,8 @@ def test_rank_and_limit_citations_applies_per_source_cap_after_deduping() -> Non
         ),
     ]
 
-    ranked = _rank_and_limit_citations(citations, cfg)
+    citations.sort(key=lambda citation: _citation_sort_key(citation, cfg))
+    ranked = _limit_ranked_citations(citations, cfg)
 
     assert [(citation.source_id, citation.candidate_index) for citation in ranked] == [
         ("source-a", 3),
@@ -908,3 +912,43 @@ def test_align_citations_python_and_rust_backends_match() -> None:
     python = align_citations(answer, sources, config=config, backend="python")
     rust = align_citations(answer, sources, config=config, backend="rust")
     assert rust == python
+
+
+@pytest.mark.parametrize("max_retrieval_support", [None, 0])
+def test_align_citations_keeps_only_supporting_sources(
+    max_retrieval_support: int | None,
+) -> None:
+    answer = "Backups containing customer records are rotated every 90 days."
+    retention = SourceDocument(
+        id="retention",
+        text=(
+            "Data Retention Policy. Backups containing customer records are "
+            "rotated every 90 days. Audit logs are kept for seven years."
+        ),
+    )
+    security = SourceDocument(
+        id="security",
+        text=(
+            "Information Security Policy. Customer records are encrypted at rest. "
+            "Backups are stored in a separate region."
+        ),
+    )
+
+    config = (
+        None
+        if max_retrieval_support is None
+        else CitationConfig(max_retrieval_support=max_retrieval_support)
+    )
+    (span,) = align_citations(answer, [retention, security], config=config)
+
+    assert span.status == "supported"
+    assert [c.source_id for c in span.citations] == ["retention"]
+    expected_support = (
+        {
+            "Customer records are encrypted at rest.",
+            "Backups are stored in a separate region.",
+        }
+        if max_retrieval_support is None
+        else set()
+    )
+    assert {s.passage_text for s in span.retrieval_support} == expected_support

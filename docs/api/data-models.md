@@ -110,7 +110,7 @@ class SpanCitations(BaseModel):
 
 **citations** (`list[Citation]`): Ranked list of exact localized citations, best match first.
 
-**retrieval_support** (`list[RetrievalSupport]`): Retrieval-only support signals for passages selected during lexical and/or embedding candidate search that did not produce an exact localized citation.
+**retrieval_support** (`list[RetrievalSupport]`): Selected passages without a citation and passages from demoted secondary citations.
 
 **status** (`Literal["supported", "partial", "unsupported"]`): Overall support level based on the best citation's coverage and contradiction checks. Retrieval support does not change status.
 
@@ -234,7 +234,7 @@ exact_spans = citation.evidence_spans
 
 ### RetrievalSupport
 
-Represents a retrieval-only support signal without localized evidence spans.
+Represents a candidate passage returned as retrieval support.
 
 **Location:** `src/cite_right/core/results.py`
 
@@ -253,7 +253,9 @@ class RetrievalSupport(BaseModel):
 
 **Fields:**
 
-**retrieval_score** (`float`): Combined retrieval score used for ranking support passages.
+**retrieval_score** (`float`): Weighted score used for ranking support passages.
+When a secondary citation is demoted, this field carries its original
+`Citation.score`.
 
 **source_id** (`str`): Identifier of the source document.
 
@@ -271,7 +273,9 @@ class RetrievalSupport(BaseModel):
 
 **lexical_score** (`float`): Lexical overlap score from candidate selection.
 
-Retrieval support is returned when a passage is selected during candidate search but does not produce an exact localized citation. Use it for semantic recall and UI hints, not as proof of exact grounding.
+Retrieval support includes selected passages that do not produce a citation
+and secondary citations that fail the support checks on a `"supported"` span.
+Use these passages for semantic recall and UI hints.
 
 ### EvidenceSpan
 

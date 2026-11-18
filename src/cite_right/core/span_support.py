@@ -62,6 +62,8 @@ def build_span_citations(
     *,
     answer_span: AnswerSpan,
     answer_tokens: TokenizedText,
+    reason: StatusReason,
+    checks: list[str] | None,
     citations: list[Citation],
     retrieval_support: list[RetrievalSupport],
     candidates: Sequence[Candidate],
@@ -69,12 +71,8 @@ def build_span_citations(
     idf: IdfWeights,
     rust_corpus: RustPreparedCorpus | None,
     config: CitationConfig,
-    term_aliases: TermAliases | None,
     uses_alias_retrieval: bool,
 ) -> SpanCitations:
-    reason, checks = _status_reason(
-        answer_span.text, citations, candidates, config, term_aliases
-    )
     possible_source = None
     if config.report_possible_source and reason != "supported" and candidate_ranking:
         index, embedding_score, lexical_score = candidate_ranking[0]
@@ -99,21 +97,23 @@ def build_span_citations(
     )
 
 
-def _status_reason(
+def citation_status_reason(
     answer_text: str,
-    citations: Sequence[Citation],
+    citation: Citation | None,
     candidates: Sequence[Candidate],
     config: CitationConfig,
     term_aliases: TermAliases | None,
+    *,
+    report_checks: bool = False,
 ) -> tuple[StatusReason, list[str] | None]:
-    checks: list[str] | None = [] if config.report_possible_source else None
-    if not citations:
+    """Classify a citation using its full passage and the configured support rules."""
+    checks: list[str] | None = [] if report_checks else None
+    if citation is None:
         return "no_candidate", checks
 
-    best = citations[0]
     triggered = iter_contradiction_checks(
         answer_text,
-        _contradiction_context(best, candidates),
+        candidates[citation.candidate_index].passage.text or citation.evidence,
         entity_aliases=term_aliases.canonical_word if term_aliases else None,
         normalize_negation=normalize_apostrophes if term_aliases else None,
         normalize_temporal_clause=term_aliases.canonicalize_clause
@@ -128,22 +128,12 @@ def _status_reason(
     if contradiction:
         return "contradiction", checks
     if float(
-        best.components.get("answer_coverage", 0.0)
+        citation.components.get("answer_coverage", 0.0)
     ) >= config.supported_answer_coverage and (
-        not config.term_aliases or best.components.get("content_coverage") == 1.0
+        not config.term_aliases or citation.components.get("content_coverage") == 1.0
     ):
         return "supported", checks
     return "below_coverage", checks
-
-
-def _contradiction_context(citation: Citation, candidates: Sequence[Candidate]) -> str:
-    """Keep the full passage so alignment cannot hide a contradiction (#48)."""
-    for candidate in candidates:
-        if candidate.global_index == citation.candidate_index:
-            passage = candidate.passage.text
-            if passage:
-                return passage
-    return citation.evidence
 
 
 def _possible_source_match(
