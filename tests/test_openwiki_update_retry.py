@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -10,16 +11,25 @@ import pytest
 SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "openwiki_update.sh"
 
 
-def _check(tmp_path: Path, text: str) -> int:
+def _bash() -> str:
+    if sys.platform != "win32":
+        return "bash"
+    git_exec_path = subprocess.check_output(
+        ["git", "--exec-path"], text=True, encoding="utf-8"
+    ).strip()
+    return str(Path(git_exec_path).parents[2] / "bin" / "bash.exe")
+
+
+def _check(tmp_path: Path, text: str) -> subprocess.CompletedProcess[str]:
     log = tmp_path / "openwiki.log"
     log.write_text(text, encoding="utf-8")
     result = subprocess.run(
-        ["bash", str(SCRIPT), "--check-retryable", str(log)],
+        [_bash(), SCRIPT.as_posix(), "--check-retryable", log.as_posix()],
         check=False,
         capture_output=True,
         text=True,
     )
-    return result.returncode
+    return result
 
 
 @pytest.mark.parametrize(
@@ -41,7 +51,8 @@ def _check(tmp_path: Path, text: str) -> int:
     ],
 )
 def test_retryable_logs(tmp_path: Path, text: str) -> None:
-    assert _check(tmp_path, text) == 0
+    result = _check(tmp_path, text)
+    assert result.returncode == 0, result.stderr
 
 
 @pytest.mark.parametrize(
@@ -57,4 +68,5 @@ def test_retryable_logs(tmp_path: Path, text: str) -> None:
     ],
 )
 def test_non_retryable_logs(tmp_path: Path, text: str) -> None:
-    assert _check(tmp_path, text) != 0
+    result = _check(tmp_path, text)
+    assert result.returncode == 1, result.stderr
