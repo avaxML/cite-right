@@ -141,10 +141,10 @@ fn iter_token_spans(text: &str) -> Vec<(usize, usize)> {
                 let ch = chars[idx].1;
                 if ch.is_numeric() {
                     idx += 1;
-                } else if (ch == '.' || ch == ',') && idx > 0 && idx + 1 < chars.len() {
+                } else if is_number_separator(ch) && idx + 1 < chars.len() {
                     // Only include . or , if between digits
-                    let prev_is_digit = idx > 0 && chars[idx - 1].1.is_numeric();
-                    let next_is_digit = idx + 1 < chars.len() && chars[idx + 1].1.is_numeric();
+                    let prev_is_digit = chars[idx - 1].1.is_numeric();
+                    let next_is_digit = chars[idx + 1].1.is_numeric();
                     if prev_is_digit && next_is_digit {
                         idx += 1;
                     } else {
@@ -226,6 +226,14 @@ fn is_symbol_char(c: char) -> bool {
         (folded.next(), folded.next()),
         (Some('%' | '$' | '\u{20ac}' | '\u{a3}'), None)
     )
+}
+
+fn is_number_separator(c: char) -> bool {
+    if c.is_ascii() {
+        return matches!(c, '.' | ',');
+    }
+    let mut folded = std::iter::once(c).nfkc();
+    matches!((folded.next(), folded.next()), (Some('.' | ','), None))
 }
 
 fn normalize_punctuation(text: &str) -> String {

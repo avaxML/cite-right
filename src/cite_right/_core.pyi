@@ -145,7 +145,7 @@ def rust_tokenize_and_prepare(
     normalize_percent: bool,
     normalize_currency: bool,
 ) -> PreparedCorpus:
-    """Tokenize and prepare sources, returning a Rust-side corpus object.
+    """Internal binding to tokenize sources and build a Rust-side corpus.
 
     Args:
         source_texts: List of source text strings

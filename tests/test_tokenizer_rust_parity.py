@@ -18,6 +18,7 @@ CORPUS = [
     "$1,200 and £3,000",
     "34% vs 34 ％",
     "２,４１０ ＄",
+    "２，４１０．１２ ＄",
     "٢,٤١٠",
     "￡5 ﹩6 ﹪",
     "don’t re‑enter – 455.00",
@@ -107,17 +108,105 @@ def test_default_rust_prepare_matches_python_prepare(source: str, answer: str) -
     assert rust_citation.evidence == py_citation.evidence
 
 
-@requires_rust
-def test_comma_grouped_restatement_is_supported_on_default_path() -> None:
-    span, citation = _align(
-        "Closing balance: 2,410.12 EUR.",
-        "The closing balance was 2,410.12.",
-        SimpleTokenizer(),
+PREPARE_BACKENDS = [pytest.param("rust", marks=requires_rust), "python"]
+
+
+@pytest.mark.parametrize("backend", PREPARE_BACKENDS)
+def test_grouped_number_restatement_is_supported(backend: str) -> None:
+    use_rust = backend == "rust"
+    corpus = PreparedCitationCorpus.from_sources(
+        ["Closing balance: 2,410.12 EUR."], use_rust=use_rust
     )
+    assert (corpus.rust_corpus is not None) == use_rust
+
+    [span] = corpus.align("The closing balance was 2410.12.", backend=backend)
 
     assert span.status == "supported"
+    [citation] = span.citations
     assert citation.components["matches"] == 3.0
     assert citation.evidence == "Closing balance: 2,410.12"
+
+
+@pytest.mark.parametrize("backend", PREPARE_BACKENDS)
+@pytest.mark.parametrize(
+    ("source", "answer"),
+    [
+        ("Copper yield: 25﹪.", "The copper yield was 25 percent."),
+        ("Copper credit: 10€.", "The copper credit was 10 euro."),
+        ("Copper credit: € 10.", "Copper credit: €10."),
+        ("Copper credit: USD 10.", "Copper credit: $10."),
+        ("Copper credit: CAD $10.", "Copper credit: $10 CAD."),
+        ("Copper credit: CAD $10.", "Copper credit: $10."),
+        ("Copper alloy price: $10.", "Copper alloy cost: $10."),
+        ("Sample range: 30 - 40.", "Sample range: 30–40."),
+    ],
+)
+def test_equivalent_quantity_restatements_stay_supported(
+    source: str, answer: str, backend: str
+) -> None:
+    corpus = PreparedCitationCorpus.from_sources([source], use_rust=backend == "rust")
+    assert (corpus.rust_corpus is not None) == (backend == "rust")
+
+    [span] = corpus.align(answer, backend=backend)
+
+    assert span.status == "supported"
+
+
+@pytest.mark.parametrize("backend", PREPARE_BACKENDS)
+@pytest.mark.parametrize(
+    ("source", "answer"),
+    [
+        ("Closing balance: 2,410.12 EUR.", "The closing balance was 2470.12."),
+        ("Closing balance: 2,410.12 EUR.", "The closing balance was −2410.12."),
+        ("Closing balance: -2,410.12 EUR.", "The closing balance was 2410.12."),
+        ("Closing balance: 2,410.12 EUR.", "The closing balance was − 2410.12."),
+        ("Closing balance: − 2,410.12 EUR.", "The closing balance was 2410.12."),
+        ("Closing balance: 2,41.", "The closing balance was 241."),
+        ("Copper credit: $1,100.", "Copper credit: €1100."),
+        ("Copper credit: $ 1,100.", "Copper credit: € 1100."),
+        ("Copper credit: $1,100 CAD.", "Copper credit: $1100 USD."),
+        ("Closing balance: 2,410.12%.", "The closing balance was 2410.12."),
+        ("Copper yield: 2,410.12%.", "Copper yield: 2410.12 percentage points."),
+        (
+            "Copper score: 1,100 and silver score: 50.",
+            "Copper score was 1100 and silver score was 80.",
+        ),
+        ("Copper yield: 25﹪.", "Copper losses: 25 percent."),
+        ("Copper yield: 25﹪ decrease.", "Copper yield was 25 percent increase."),
+        ("Copper credit: £10.", "Copper debt: £10."),
+        ("Copper credit: CAD $10.", "Copper debt: $10."),
+        ("Copper credit: 1,100.", "Copper debit: 1100."),
+    ],
+    ids=[
+        "amount",
+        "negative-answer",
+        "negative-source",
+        "spaced-negative-answer",
+        "spaced-negative-source",
+        "decimal-comma",
+        "currency",
+        "spaced-currency",
+        "explicit-dollar-currency",
+        "percent",
+        "percentage-points",
+        "multiple-amounts",
+        "percent-label",
+        "percent-direction",
+        "currency-label",
+        "unqualified-currency-label",
+        "grouped-number-label",
+    ],
+)
+def test_changed_quantity_is_never_supported(
+    source: str, answer: str, backend: str
+) -> None:
+    use_rust = backend == "rust"
+    corpus = PreparedCitationCorpus.from_sources([source], use_rust=use_rust)
+    assert (corpus.rust_corpus is not None) == use_rust
+
+    [span] = corpus.align(answer, backend=backend)
+
+    assert span.status == "partial"
 
 
 @requires_rust
