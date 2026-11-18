@@ -15,7 +15,7 @@ The internal binding `rust_tokenize_and_prepare(source_texts, window_size, strid
 
 `align_pair`, `align_pair_details`, `align_pair_blocks_details`, `align_batch_details`, `align_batch_blocks_details`, `align_best`, `align_best_details`, and `align_topk_details` are the alignment entry points. `align_pair_blocks_details` and `align_batch_blocks_details` additionally return the per-alignment `match_blocks` needed by `CitationConfig(multi_span_evidence=True)`. The Rust `RustSmithWatermanAligner` selects between these depending on the configuration; the construction-time check requires the relevant entry point to be present, so a mismatched extension fails fast rather than silently producing empty `evidence_spans`.
 
-The legacy JSON-shaped `rust_build_citations_fast` is also exposed on `_core` and is used by `citations.py` to build a `Citation` / `RetrievalSupport` list without round-tripping source text through Python. The newer `PreparedCorpus.build_citations` path on the Rust `PreparedCorpus` object eliminates that round-trip further: source texts and offsets stay in Rust and the result returns only the citation and support structs.
+`cite_right._core` is a private module. Its internal `rust_build_citations_fast` function accepts candidate data from Python and returns citations and retrieval support as JSON. It takes a required keyword-only `query_stopword_ids: Sequence[int]` argument containing the query token IDs excluded from content coverage. The internal `PreparedCorpus.build_citations` method also requires `query_stopword_ids`. It keeps source texts and offsets in Rust and returns citation and retrieval support structs.
 
 ## When Rust Prepare Runs
 

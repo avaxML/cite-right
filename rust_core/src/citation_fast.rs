@@ -1,8 +1,9 @@
 //! Fast citation building using JSON for Python interop
 
+use crate::content_coverage::{adequate_coverage, content_token_coverage};
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CitationResult {
@@ -39,6 +40,7 @@ pub struct RetrievalSupport {
 
 // Lightweight config for citation building
 pub struct Config {
+    pub stopword_ids: HashSet<u32>,
     pub min_alignment_score: i32,
     pub min_answer_coverage: f64,
     pub min_final_score: f64,
@@ -151,10 +153,13 @@ fn process_alignment(
     let normalized_alignment =
         alignment.score as f64 / (cfg.match_score as f64 * answer_len.max(1) as f64);
 
+    let passage_coverage =
+        content_token_coverage(answer_tokens, &candidate.token_ids, &cfg.stopword_ids);
+
     // Check thresholds
     if alignment.score < cfg.min_alignment_score
         || alignment.token_start >= alignment.token_end
-        || answer_coverage < cfg.min_answer_coverage
+        || !adequate_coverage(answer_coverage, passage_coverage, cfg.min_answer_coverage)
     {
         return build_support(
             candidate,
@@ -216,6 +221,7 @@ fn process_alignment(
     components.insert("normalized_alignment".to_string(), normalized_alignment);
     components.insert("matches".to_string(), alignment.matches as f64);
     components.insert("answer_coverage".to_string(), answer_coverage);
+    components.insert("content_coverage".to_string(), passage_coverage);
     components.insert("evidence_coverage".to_string(), evidence_coverage);
     components.insert("lexical_score".to_string(), lexical_score);
     components.insert("embedding_score".to_string(), embed_score);
