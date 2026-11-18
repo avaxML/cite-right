@@ -1,0 +1,206 @@
+"""Classify ranked citations and attach optional retrieval diagnostics."""
+
+from __future__ import annotations
+
+import re
+import unicodedata
+from collections.abc import Sequence
+from typing import TYPE_CHECKING
+
+from cite_right.contradiction import iter_contradiction_checks
+from cite_right.core.citation_config import CitationConfig
+from cite_right.core.prepared_corpus import Candidate
+from cite_right.core.results import (
+    AnswerSpan,
+    Citation,
+    PossibleSourceMatch,
+    RetrievalSupport,
+    SpanCitations,
+    SpanStatus,
+    StatusReason,
+    TokenizedText,
+)
+from cite_right.text.content_coverage import STOPWORDS
+
+if TYPE_CHECKING:
+    from cite_right._core import PreparedCorpus as RustPreparedCorpus
+
+_STATUS_BY_REASON: dict[StatusReason, SpanStatus] = {
+    "supported": "supported",
+    "below_coverage": "partial",
+    "contradiction": "partial",
+    "no_candidate": "unsupported",
+}
+_ANCHOR_STOPWORDS = STOPWORDS | {"whether"}
+_MARKDOWN_ITEM_PREFIX = re.compile(
+    r"^[ \t]*(?:>[ \t]*|(?:[-+*]|\d+[.)]|\[[xX ]\])[ \t]+)+",
+    re.MULTILINE,
+)
+_NON_CLAIM_SPAN = re.compile(
+    r"""
+    \#{1,6}[ \t]+
+    | [^\n]+\n[ \t]*(?:=+|-{2,})[ \t]*$
+    | (?:document\s+)?(?:revision|version|(?:last\s+)?updated|last\s+revised|author|date|metadata)\s*:
+    | last\s+(?:revised|updated)\s+(?:on\s+)?(?:[a-z]+\s+)?\d[\d\s,./-]*$
+    | (?:revision|document)\s+metadata\s+follows[.!?]*$
+    | (?:here['’]s|(?:here|below|the\s+following)\s+(?:is|are))\s+
+      (?:(?:a|an|the|brief|quick|short|general)\s+)*
+      (?:overview|summary|introduction|outline|recap)(?:\s+of\b[^:;\n]*)?[.!?:;]*$
+    | (?:please\s+)?(?:always\s+)?(?:carefully\s+)?(?:follow|read|consult|check)\s+
+      (?:(?:all|the|general|safety)\s+)*(?:instructions|directions|guidelines|manual)
+      (?:\s+(?:carefully|for\s+details|before\s+proceeding))?[.!?:;]*$
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
+
+
+def build_span_citations(
+    *,
+    answer_span: AnswerSpan,
+    answer_tokens: TokenizedText,
+    citations: list[Citation],
+    retrieval_support: list[RetrievalSupport],
+    candidates: Sequence[Candidate],
+    candidate_ranking: Sequence[tuple[int, float, float]],
+    rust_corpus: RustPreparedCorpus | None,
+    config: CitationConfig,
+) -> SpanCitations:
+    reason, checks = _status_reason(answer_span.text, citations, candidates, config)
+    possible_source = None
+    if config.report_possible_source and reason != "supported" and candidate_ranking:
+        index, embedding_score, lexical_score = candidate_ranking[0]
+        possible_source = _possible_source_match(
+            answer_tokens,
+            candidates[index],
+            rust_corpus,
+            embedding_score,
+            lexical_score,
+            config,
+        )
+    return SpanCitations(
+        answer_span=answer_span,
+        citations=citations,
+        retrieval_support=retrieval_support,
+        status=_STATUS_BY_REASON[reason],
+        status_reason=reason if config.report_possible_source else None,
+        contradiction_checks=checks,
+        possible_source=possible_source,
+    )
+
+
+def _status_reason(
+    answer_text: str,
+    citations: Sequence[Citation],
+    candidates: Sequence[Candidate],
+    config: CitationConfig,
+) -> tuple[StatusReason, list[str] | None]:
+    checks: list[str] | None = [] if config.report_possible_source else None
+    if not citations:
+        return "no_candidate", checks
+
+    best = citations[0]
+    triggered = iter_contradiction_checks(
+        answer_text, _contradiction_context(best, candidates)
+    )
+    if checks is None:
+        contradiction = next(triggered, None) is not None
+    else:
+        checks.extend(triggered)
+        contradiction = bool(checks)
+    if contradiction:
+        return "contradiction", checks
+    if (
+        float(best.components.get("answer_coverage", 0.0))
+        >= config.supported_answer_coverage
+    ):
+        return "supported", checks
+    return "below_coverage", checks
+
+
+def _contradiction_context(citation: Citation, candidates: Sequence[Candidate]) -> str:
+    """Keep the full passage so alignment cannot hide a contradiction (#48)."""
+    for candidate in candidates:
+        if candidate.global_index == citation.candidate_index:
+            passage = candidate.passage.text
+            if passage:
+                return passage
+    return citation.evidence
+
+
+def _possible_source_match(
+    answer_tokens: TokenizedText,
+    candidate: Candidate,
+    rust_corpus: RustPreparedCorpus | None,
+    embedding_score: float,
+    lexical_score: float,
+    config: CitationConfig,
+) -> PossibleSourceMatch | None:
+    lexical_match = lexical_score > 0.0 and lexical_score >= config.min_answer_coverage
+    embedding_match = (
+        embedding_score > 0.0 and embedding_score >= config.min_embedding_similarity
+    )
+    if not (lexical_match or embedding_match):
+        return None
+    if _is_short_or_boilerplate(answer_tokens):
+        return None
+    passage_tokens = (
+        candidate.token_ids
+        if rust_corpus is None
+        else rust_corpus.get_candidate_tokens([candidate.global_index])[0]
+    )
+    if not _has_content_anchors(answer_tokens, passage_tokens):
+        return None
+    return _source_match(candidate, max(embedding_score, lexical_score))
+
+
+def _source_match(candidate: Candidate, score: float) -> PossibleSourceMatch | None:
+    source = candidate.source
+    char_start = source.base_doc_offset + candidate.passage.doc_char_start
+    char_end = source.base_doc_offset + candidate.passage.doc_char_end
+    if not 0 <= source.base_doc_offset <= char_start < char_end:
+        return None
+    if (
+        source.declared_doc_char_end is not None
+        and char_end > source.declared_doc_char_end
+    ):
+        return None
+    return PossibleSourceMatch(
+        source_id=source.source_id,
+        source_index=source.source_index,
+        char_start=char_start,
+        char_end=char_end,
+        score=score,
+    )
+
+
+def _is_short_or_boilerplate(answer_tokens: TokenizedText) -> bool:
+    text = unicodedata.normalize("NFKC", answer_tokens.text).strip()
+    text = _MARKDOWN_ITEM_PREFIX.sub("", text).strip("*_~").strip()
+    return (
+        len(answer_tokens.token_ids) <= 3
+        or ((text.istitle() or text.isupper()) and not text.endswith((".", "!", "?")))
+        or _NON_CLAIM_SPAN.match(text) is not None
+    )
+
+
+def _has_content_anchors(
+    answer_tokens: TokenizedText, passage_tokens: Sequence[int]
+) -> bool:
+    """Require two distinct shared word tokens beyond function words."""
+    shared = set(passage_tokens).intersection(answer_tokens.token_ids)
+    anchors: set[int] = set()
+    for token, (start, end) in zip(
+        answer_tokens.token_ids, answer_tokens.token_spans, strict=True
+    ):
+        if token not in shared:
+            continue
+        word = (
+            unicodedata.normalize("NFKC", answer_tokens.text[start:end])
+            .casefold()
+            .strip()
+        )
+        if word not in _ANCHOR_STOPWORDS and any(char.isalpha() for char in word):
+            anchors.add(token)
+            if len(anchors) >= 2:
+                return True
+    return False
