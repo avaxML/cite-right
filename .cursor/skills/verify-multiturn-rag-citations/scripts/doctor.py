@@ -62,7 +62,9 @@ def main() -> int:
     results = align_citations(answer, [source])
     if not results or results[0].status != "supported" or not results[0].citations:
         report["ok"] = False
-        report["error"] = "self-test align_citations did not return a supported citation"
+        report["error"] = (
+            "self-test align_citations did not return a supported citation"
+        )
         report["statuses"] = [r.status for r in results]
         print(json.dumps(report, indent=2))
         return 1
@@ -90,8 +92,14 @@ def main() -> int:
         import urllib.request
 
         try:
-            with urllib.request.urlopen(demo_url.rstrip("/") + "/api/citations", timeout=3) as resp:
-                report["demo"] = {"url": demo_url, "status": resp.status, "reachable": True}
+            with urllib.request.urlopen(
+                demo_url.rstrip("/") + "/api/citations", timeout=3
+            ) as resp:
+                report["demo"] = {
+                    "url": demo_url,
+                    "status": resp.status,
+                    "reachable": True,
+                }
         except (urllib.error.URLError, TimeoutError, OSError) as exc:
             report["ok"] = False
             report["demo"] = {"url": demo_url, "reachable": False, "error": str(exc)}

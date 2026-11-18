@@ -38,12 +38,12 @@ _ensure_src_path()
 from cite_right import (  # noqa: E402
     PreparedCitationCorpus,
     SourceDocument,
+    SpanCitations,
     align_citations,
     annotate_answer,
     format_with_citations,
     get_citation_summary,
 )
-
 
 CORPUS: list[SourceDocument] = [
     SourceDocument(
@@ -76,7 +76,9 @@ def retrieve(query: str, *, k: int = 2) -> list[SourceDocument]:
     tokens = {t.lower() for t in query.split() if len(t) > 3}
 
     def score(doc: SourceDocument) -> int:
-        hay = set(doc.text.lower().split()) | set(doc.id.lower().replace("_", " ").split())
+        hay = set(doc.text.lower().split()) | set(
+            doc.id.lower().replace("_", " ").split()
+        )
         return sum(1 for t in tokens if t in hay or t in doc.id.lower())
 
     ranked = sorted(CORPUS, key=score, reverse=True)
@@ -124,7 +126,9 @@ TURNS: list[TurnSpec] = [
         retrieve_query="Acme Q4 revenue earnings",
         expected_status="unsupported",
         expect_empty_citations=True,
-        forbidden_source_ids=frozenset({"q4_earnings", "press_release", "europe_sales"}),
+        forbidden_source_ids=frozenset(
+            {"q4_earnings", "press_release", "europe_sales"}
+        ),
     ),
     TurnSpec(
         turn_id="turn4_conversational_wrapper",
@@ -137,7 +141,9 @@ TURNS: list[TurnSpec] = [
 ]
 
 
-def _serialize_span(span_citations: Any, source_by_id: dict[str, SourceDocument]) -> dict[str, Any]:
+def _serialize_span(
+    span_citations: SpanCitations, source_by_id: dict[str, SourceDocument]
+) -> dict[str, Any]:
     citations = []
     for c in span_citations.citations:
         source = source_by_id.get(c.source_id)
@@ -149,7 +155,9 @@ def _serialize_span(span_citations: Any, source_by_id: dict[str, SourceDocument]
                 "char_start": c.char_start,
                 "char_end": c.char_end,
                 "evidence": c.evidence,
-                "offset_invariant": sliced == c.evidence if source is not None else False,
+                "offset_invariant": sliced == c.evidence
+                if source is not None
+                else False,
                 "answer_coverage": c.components.get("answer_coverage"),
             }
         )
@@ -180,7 +188,9 @@ def _check_invariants(
         for citation in result.citations:
             source = source_by_id.get(citation.source_id)
             if source is None:
-                failures.append(f"citation source_id {citation.source_id!r} not in this turn's sources")
+                failures.append(
+                    f"citation source_id {citation.source_id!r} not in this turn's sources"
+                )
                 continue
             sliced = source.text[citation.char_start : citation.char_end]
             if sliced != citation.evidence:
@@ -221,13 +231,17 @@ def drive_turn(spec: TurnSpec) -> dict[str, Any]:
                 f"retriever missed required sources {sorted(spec.required_source_ids)}; "
                 f"got {source_ids}"
             )
-        if spec.expected_status == "supported" and not (cited_ids & spec.required_source_ids):
+        if spec.expected_status == "supported" and not (
+            cited_ids & spec.required_source_ids
+        ):
             failures.append(
                 f"citations {sorted(cited_ids)} did not include required "
                 f"{sorted(spec.required_source_ids)}"
             )
 
-    if spec.forbidden_source_ids is not None and (cited_ids & spec.forbidden_source_ids):
+    if spec.forbidden_source_ids is not None and (
+        cited_ids & spec.forbidden_source_ids
+    ):
         failures.append(
             f"cited forbidden leftover sources {sorted(cited_ids & spec.forbidden_source_ids)}"
         )
@@ -302,7 +316,9 @@ def main() -> int:
         ],
         default="all",
     )
-    parser.add_argument("--run-id", default=os.environ.get("VERIFY_RUN_ID") or str(int(time.time())))
+    parser.add_argument(
+        "--run-id", default=os.environ.get("VERIFY_RUN_ID") or str(int(time.time()))
+    )
     args = parser.parse_args()
 
     out_dir = evidence_dir(args.run_id)
@@ -339,7 +355,9 @@ def main() -> int:
             "run_id": args.run_id,
             "ok": ok,
             "turns": selected,
-            "prepared_corpus": prepared if args.feature == "prepared-corpus-session" else None,
+            "prepared_corpus": prepared
+            if args.feature == "prepared-corpus-session"
+            else None,
         }
     else:
         ok = all(feature_ok.values())
@@ -371,10 +389,17 @@ def main() -> int:
         if t.get("failures"):
             lines.append(f"  failures: {t['failures']}")
     if payload.get("prepared_corpus"):
-        lines.append(f"prepared_corpus ok={prepared['ok']} failures={prepared['failures']}")
+        lines.append(
+            f"prepared_corpus ok={prepared['ok']} failures={prepared['failures']}"
+        )
     summary_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
-    print(json.dumps({"ok": ok, "evidence": str(out_path), "summary": str(summary_path)}, indent=2))
+    print(
+        json.dumps(
+            {"ok": ok, "evidence": str(out_path), "summary": str(summary_path)},
+            indent=2,
+        )
+    )
     if not ok:
         print(summary_path.read_text(encoding="utf-8"), file=sys.stderr)
         return 1
