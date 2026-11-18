@@ -24,8 +24,6 @@ All notable changes to cite-right will be documented in this file.
   from `supported` to `partial` and reports a contradiction when diagnostics
   are enabled. (#84)
 
-### Fixed
-
 - Rust prepare honors `TokenizerConfig.normalize_numbers`, `normalize_percent`,
   and `normalize_currency` for comma-grouped numbers and percent and currency
   symbols (`%`, `$`, `€`, and `£`), including NFKC-equivalent symbols such as
