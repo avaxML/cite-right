@@ -71,7 +71,7 @@ Each source is windowed into overlapping passages, controlled by `CitationConfig
 
 Both the answer spans and the source passages run through the same tokenizer instance (the default `SimpleTokenizer`). The tokenizer applies Unicode NFKC normalization and case-folding, so superficially different tokens map to the same ID. Each token keeps its `(start_char, end_char)` in the original text, so once Smith-Waterman matches tokens, the offsets can be re-expressed as character positions.
 
-With the default `SimpleTokenizer` and `SimpleSegmenter`, the Rust prepare path takes over tokenization and windowing (`rust_tokenize_and_prepare`); the Python tokenizer's vocabulary is then synchronized from Rust so the answer-side tokens map to the same IDs as the source-side ones. A custom tokenizer or segmenter takes the Python fallback path.
+With the default `SimpleTokenizer` and `SimpleSegmenter`, the internal Rust prepare binding handles tokenization and windowing using the Python tokenizer's normalization flags. The Python tokenizer then loads the Rust vocabulary so the answer-side tokens map to the same IDs as the source-side tokens. A custom tokenizer or segmenter takes the Python fallback path.
 
 ### Step 4: Index-First Candidate Selection
 
