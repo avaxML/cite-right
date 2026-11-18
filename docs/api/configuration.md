@@ -17,6 +17,7 @@ class CitationConfig(BaseModel):
     min_answer_coverage: float = 0.2
     supported_answer_coverage: float = 0.6
     min_embedding_similarity: float = 0.3
+    report_possible_source: bool = False
 
     # Passage windowing
     window_size_sentences: int = 1
@@ -59,6 +60,10 @@ class CitationConfig(BaseModel):
 **supported_answer_coverage** (`float`): Answer coverage threshold for `supported` status.
 
 **min_embedding_similarity** (`float`): Minimum embedding similarity required for embedding-only `retrieval_support` when an embedder is enabled. Lexical scores are filled only for index seeds.
+
+**report_possible_source** (`bool`). Enables status reasons and contradiction
+check names. A partial or unsupported span can also have a possible source
+match. See [Status diagnostics](../configuration/citation-config.md#status-diagnostics).
 
 ### Passage Windowing
 
