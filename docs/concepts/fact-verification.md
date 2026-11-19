@@ -68,7 +68,7 @@ A `Claim` is a frozen Pydantic model with `text`, `char_start`, `char_end`, the 
 The decomposer requires the spaCy extra. Install it and the model before constructing one:
 
 ```bash
-pip install "cite-right[spacy]==0.5.0"
+pip install "cite-right[spacy]==0.4.0"
 python -m spacy download en_core_web_sm
 ```
 
@@ -205,8 +205,8 @@ The two share the underlying `align_citations` output, so running both on the sa
 `verify_facts`, `FactVerificationConfig`, `FactVerificationMetrics`, `ClaimVerification`, `SimpleClaimDecomposer`, and `Claim` are in the base install. `SpacyClaimDecomposer` is in the base install too, but constructing one needs the spaCy runtime and the named model. See [Installation](../getting-started/installation.md) for the full set of extras and the Python version requirement.
 
 ```bash
-pip install cite-right==0.5.0
-pip install "cite-right[spacy]==0.5.0"
+pip install cite-right==0.4.0
+pip install "cite-right[spacy]==0.4.0"
 python -m spacy download en_core_web_sm
 ```
 

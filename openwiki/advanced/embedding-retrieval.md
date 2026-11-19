@@ -4,8 +4,8 @@ title: Embedding Retrieval
 description: How to enable semantic candidate expansion in Cite-Right using sentence-transformers, and how it interacts with index-first retrieval and Smith-Waterman localization.
 tags: [embeddings, semantic-retrieval, sentence-transformers, embedder, candidate-selection, retrieval-support, smith-waterman, citation-config]
 verified:
-  - by: openwiki/0.4.0
-    at: 2026-08-26T03:32:47.432Z
+  - by: openwiki/0.9.0
+    at: 2026-11-19T03:14:58.424Z
 sources:
   - id: openwiki-source-05ccef8d4cf1698187f20464
     resource: repo://pyproject.toml
@@ -25,7 +25,7 @@ sources:
     resource: repo://src/cite_right/models/embedding_index.py
   - id: openwiki-source-b90e114ae4f90cba0402e394
     resource: repo://src/cite_right/models/sbert_embedder.py
-generated: {by: "openwiki/0.4.0", at: "2026-08-26T03:32:47.432Z"}
+generated: { by: "openwiki/0.9.0", at: "2026-11-19T03:14:58.424Z" }
 ---
 
 # Embedding Retrieval
@@ -52,6 +52,8 @@ sequenceDiagram
     SW-->>Res: Citation + retrieval_support
 ```
 
+The diagram shows the index-first invariant. `_select_candidates` seeds selection from the inverted index (or `rust_corpus.query_index` on the default Rust path), fills IDF lexical scores only for those index seeds, and only then lets `_add_embedding_candidates` add non-index windows queried from the `EmbeddingIndex` with the answer-span vector. Embedding-only extras keep `lexical_score == 0.0`, and every selected window still goes through Smith-Waterman alignment.
+
 `retrieval_support` is a separate channel. A passage that the index or embedder selected but Smith-Waterman could not localize is emitted as `RetrievalSupport`, not as a `Citation`, and it never flips `status`. A span with no localized evidence is `"unsupported"` even when the embedder is confident.
 
 ## Installation And First Run
@@ -59,7 +61,7 @@ sequenceDiagram
 Embedding retrieval is an optional extra on top of the default install.
 
 ```bash
-pip install "cite-right[embeddings]==0.4.0"
+pip install "cite-right[embeddings]==0.5.0"
 ```
 
 Then point `align_citations` at an embedder.
@@ -75,7 +77,7 @@ The first call encodes every source passage and the answer spans. `PreparedCitat
 
 ## SentenceTransformerEmbedder
 
-`SentenceTransformerEmbedder(model_name)` is a thin wrapper over the `sentence-transformers` library. It exposes the single `encode(texts) -> list[list[float]]` method that the `Embedder` protocol expects, plus an in-process LRU cache keyed on `(text, model_name)` so repeated queries for the same passage do not re-encode.
+`SentenceTransformerEmbedder(model_name)` is a thin wrapper over the `sentence-transformers` library. It exposes the single `encode(texts) -> list[list[float]]` method that the `Embedder` protocol expects, plus an in-process LRU cache keyed on `(text, model_name)` so repeated queries for the same passage do not re-encode. The cache is module-level and bounded (`_MAX_EMBEDDING_CACHE_SIZE = 10_000`), so it persists across embedder instances within a process.
 
 ```python
 from cite_right import SentenceTransformerEmbedder
@@ -88,7 +90,7 @@ embedder = SentenceTransformerEmbedder("all-MiniLM-L6-v2")
 
 ## Custom Embedders
 
-Anything that implements `Embedder.encode(texts) -> list[list[float]]` plugs in. The protocol is runtime-checkable, so a duck-typed class works.
+Anything that implements `Embedder.encode(texts) -> list[list[float]]` plugs in. The protocol is runtime-checkable (`@runtime_checkable` in `src/cite_right/models/base.py`), so a duck-typed class works.
 
 ```python
 from typing import Sequence
@@ -114,7 +116,7 @@ for result in results:
         print(support.passage_text)
 ```
 
-`retrieval_support` is only emitted when a candidate is selected and has either a positive lexical score or an embedding score at or above `min_embedding_similarity`. Embedding-only extras carry `lexical_score == 0.0`; lexical seeds carry the IDF overlap. This split lets you see at a glance which channel found the passage.
+`retrieval_support` is only emitted when a candidate is selected and has either a positive lexical score or an embedding score at or above `min_embedding_similarity`. Embedding-only extras carry `lexical_score == 0.0`; lexical seeds carry the IDF overlap. This split lets you see at a glance which channel found the passage. `RetrievalSupport` entries are capped by `max_retrieval_support` (default 3) and ranked by `retrieval_score`.
 
 ## Configuration
 
@@ -145,13 +147,13 @@ results = align_citations(answer, sources, embedder=embedder, config=config)
 
 ## How Candidates Are Combined
 
-`select_candidates` merges three sources in order: inverted-index seeds (or `rust_corpus.query_index` on the default Rust path), lexical prefilter, and the embedding top-k. The first two feed each other because lexical scores are filled only for the index seeds; embedding-only extras keep `lexical_score == 0.0`. Ranking uses `max(embedding_score, lexical_score)`, so a strong embedder hit on a non-seed window can still make the cut.
+`_select_candidates` merges three sources in order: inverted-index seeds (or `rust_corpus.query_index` on the default Rust path), lexical prefilter, and the embedding top-k. The first two feed each other because lexical scores are filled only for the index seeds; embedding-only extras keep `lexical_score == 0.0`. Ranking uses `max(embedding_score, lexical_score)`, so a strong embedder hit on a non-seed window can still make the cut.
 
 Once the merged set is in hand, every selected window still goes through Smith-Waterman. A weak Smith-Waterman pass on an embedding-only window can still produce a `Citation` if the same passage also has enough content-word overlap with the answer (the sequential-coverage rule, not paraphrase-only), and otherwise degrades into `retrieval_support` with the embedding score attached.
 
 ## Rust Prepare With An Embedder
 
-Rust prepare still runs with an embedder when `SimpleTokenizer` and `SimpleSegmenter` are in use. The embedding index is built on those prepared candidates. The 0.3.x skip of Rust prepare on the embedder path is gone. A custom tokenizer or segmenter takes the Python fallback path, and the embedding index is then built on the Python candidates instead. The public API is unchanged: `align_citations(answer, sources, embedder=...)` and `PreparedCitationCorpus.from_sources(..., embedder=...)`.
+Rust prepare still runs with an embedder when `SimpleTokenizer` and `SimpleSegmenter` are in use. The embedding index is then built on those prepared candidates. A custom tokenizer or segmenter takes the Python fallback path, and the embedding index is then built on the Python candidates instead. The public API is unchanged: `align_citations(answer, sources, embedder=...)` and `PreparedCitationCorpus.from_sources(..., embedder=...)`.
 
 ## When Embedding Retrieval Helps
 
@@ -159,7 +161,7 @@ Rust prepare still runs with an embedder when `SimpleTokenizer` and `SimpleSegme
 - Domains with stable synonyms (revenue / earnings / sales) where the source uses one term and the answer uses another.
 - Long source corpora where recall on the first-pass index drops citations a human reader would expect.
 
-Note that on the 50-case pack with no embedder, 0.4.0 p50 wall time is about 12.4ms versus about 175.8ms in 0.3.1. Embedder encoding is extra cost on top of the no-embedder numbers. Initialize the embedder once per process and pass the same instance into `align_citations` for repeated queries; `PreparedCitationCorpus` will keep the encoded source index for the lifetime of the corpus object.
+Embedder encoding is extra cost on top of the no-embedder numbers. Initialize the embedder once per process and pass the same instance into `align_citations` for repeated queries; `PreparedCitationCorpus` will keep the encoded source index for the lifetime of the corpus object.
 
 ## When It Is Not Worth It
 

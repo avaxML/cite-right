@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:ce085b9d419a6c0f6f7899f1b44b850fd3abd14e6cccefe90185941d7e827af7",
+  "pageVersion": "sha256:0fd8bb8bb5f791a6856ddbac7898f87abd436022fe507722412c34df40df2e42",
   "claims": [
     {
       "id": "claim_dd8f2b581f514a6e88a3cae7b3253d85",
       "statement": "The LlamaIndex integration lives in src/cite_right/integrations.py and exposes two adapter functions: from_llamaindex_nodes (TextNode / NodeWithScore → SourceDocument) and from_llamaindex_chunks (TextNode / NodeWithScore with offset metadata → SourceChunk). Both are re-exported from the top-level cite_right package.",
       "evidence": [
         {
-          "resource": "repo://src/cite_right/__init__.py#L44-L60",
+          "resource": "repo://src/cite_right/__init__.py#L45-L61",
           "version": "repo-lines-v1:sha256:3b9af0f99132e1bddbd2da59235deeb0de3d8ba3f340bf31b3f48b94dea4cdc3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk2Y2VlMWY2YmJhYmE5ODAwOWRjNDBjMTEwZTAwYTgxM2FmOGYxZDEzOGE2ZWEzMDJjMmRmODZlMTgxYmQ3NWQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhZmJhMDUyN2MzOTUzYzRiNmUwZTViNTczOWJhODM2MTJmODA1M2JjZGM5NDY2NzMwMTkzY2QxZDU5MGI0MDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZjOGMyYjIyMGVlZWU2Njc0MDcwODUzZWY1MmZhZDM1NTBkYjNiYTgzZjEyMjc2NzMzMGU2NjAwMmY5MTc4ZTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcxY2U2NmYxNGIzZjg3MzAzZjY0MGU3YjA2MTQ5YWE2NTNmMTJlNWY2MjMzMmM2MDVhOGZhMTg3NGViOWIyOTUifQ"
         },
         {
@@ -101,7 +101,7 @@
       "statement": "The SourceChunk chunk-rebase contract holds for the LlamaIndex chunk adapter: after the pipeline adds base_doc_offset to the alignment result, source.text[citation.char_start:citation.char_end] == citation.evidence is satisfied even without document_text, because the alignment pipeline's slice helper falls back to chunk-local slicing when the parent text is not supplied.",
       "evidence": [
         {
-          "resource": "repo://src/cite_right/core/results.py#L111-L162",
+          "resource": "repo://src/cite_right/core/results.py#L119-L170",
           "version": "repo-lines-v1:sha256:af562243ab05fb1a0ca7bdfbd1bb27de39bf7e78d2b5353e48125ef2070f3231:eyJzZWxlY3RlZExpbmVDb3VudCI6NTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc5ODFiYTU0NjYzZWU3YTZmYjYyMGQ0YTY3MjU3MmI1NmIzMDkxNjg3OTc4NGI2YzZmNDMxNzg0MWYxYWRjOTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEyYWIwOTBiY2QxNjIwZmE2MmVhZWUxNTdhNzRmY2E2MzVhYTI5ZTEyY2JmZmQ2MThiNTc5MmQ4N2JjMDNhM2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZiZDFhOGU4YWI3NGY2NWU3MDU4MDNlM2RkZjMwZThmZWM0NDRlMmYwMWM2MzNiM2M4ZTRkOGZkOWM0MDcwZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc3MWY3MDIwMWRkY2U2MTI2Y2ExNWFhZTZiOGY5ZGZkZmZhM2RiNGFlOTY4YzQ1OTAwZGQxZTk5N2NmMTI4MWMifQ"
         },
         {
@@ -109,10 +109,50 @@
           "version": "repo-lines-v1:sha256:54cafe5a5dc29816c9f9c564f5ee266e605d8e5aa61f8cf0de44319934bf98da:eyJzZWxlY3RlZExpbmVDb3VudCI6NTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc4ZDNjZTlmZTM0Y2YzMzk3ODdjYTdiNWMyNjFmMmFiZTJlZWNjNTI0OTJjODRjZTlmYTFlOTM3OGU2Y2RkNGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhMTFjMDU2N2QwYTVmOWU5YjEzNWY2NWNkMjUzNzJkZmQ2Mjg3NzVmN2MxZWQyNTNmOGJhZDQyZGQyZDY2NjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQ3MjIzMTA2ZmQ4NzQyYjcwZWEyMzNmOWRjMzU5ZjRiMDJiYmIwNjliNzI4M2VlZjc2MjQ5OTUxNmJkN2I5YzgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ3NTRiNDVjM2ZlMmNiYWFiZTJiNTFmYWQ0MWRjNWMxNzBkYmQxYmI3ODY3NTQ4ZWEyYWQ2OWJiM2QwMWFmOWUifQ"
         }
       ]
+    },
+    {
+      "id": "claim_f33ef0ce08d14190a4762dbe84d96c72",
+      "statement": "LlamaIndex node metadata is opaque to citation alignment: from_llamaindex_nodes/from_llamaindex_chunks copy node.metadata onto SourceDocument/SourceChunk but the alignment pipeline never reads it; Citation and EvidenceSpan output is derived solely from localized Smith-Waterman alignment evidence (absolute offsets computed as base_doc_offset + passage.doc_char_start + token span), and the NodeWithScore retrieval score is discarded during the unwrap.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L1531-L1555",
+          "version": "repo-lines-v1:sha256:23f965bd989a9b2520aea88fb49221fa7e485c53fe06334a7e7d5434fca327bb:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgwNGYwZWJhNzM0MDc2YzNjOWIzY2MzYjI3MDlhMmQ2ODMyYzk3M2Y2MjIzMTJjNzRiYmQ3YTY3ZDc3N2FmZGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVlN2M5NTdiY2I0NGZiNjczYzk4YjAwNTBhNzVkMzgwODJkYjgxZDkxOGRlMzEzYTNmMDdjMTIzNTMwNmQ3ZWMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYwZDVkOWExZTk0ODYxZDYyNjA5Nzk1YjE2NjExZmFlZTVmZmMyMzgxZDQ1MjM3NWFmZDNhYzg5ODFiOGE5NzciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjE3MGFjYjgxYTRhMjljYjU2ZmE0YjgxZjgwNGY2YTZkNjAxOTliNDNmOGJmMDJiMGI0MjE1NzUyZGE3NzBiODEifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/core/results.py#L118-L124",
+          "version": "repo-lines-v1:sha256:5f5e07d66a6d71ff91e792ccf262ccfba928ae90348c7c0fc7f909454b0fc573:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOWRlYmQ2NWY3OWNhOTI2NDQxNDQ1OGU1OWE3OTYzMWFhNmYwNDgzYjg2ODM2OGJkZGM3NjU2OWQ2MTI4ZWI5YSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYWJkM2MyOTU1NTMyMWIzM2U5ODQ0ZjBjNmYxMTNkODM1NWUxNGI2ODZjMzQzMzY5NDI0M2MwYWU2NzkxMzJlOCJ9"
+        },
+        {
+          "resource": "repo://src/cite_right/integrations.py#L129-L170",
+          "version": "repo-lines-v1:sha256:5b2ae0fdb94c96cb5e6ac929a4a50e0ca0a59bdfe5d94b5cdd98d05b3220d8d4:eyJzZWxlY3RlZExpbmVDb3VudCI6NDIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFlYmQ3OGZhNTg0YTFkYTBkZDgwODc1MmI0ZTJjMTg0ZjdlMThlZjY1MzI1ZDNiM2ExY2EyZTZmZTc5ZTFmOWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU0N2M5YzIzZDM0OWU0ODAxNDY4NTZmNGJiYzRjZjI4MDE2MDJjNjg4ZmM5MGY3ZmI3MmZiNWFiYTdmNTMzODYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZlZWY0Nzg2ZDIxMmExODAxZjg2NTE4OTMwMmNiMDRiMTZmYjE5MDI0OTAwMzI0ZDUyOTY2YzRhZmU1OWRkYTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRkNjMzZjEzNTgwZGFiNGNkYTgxYWM0OTg4MGYwMjYyOTFlN2UwZWNlOWY4NGM5Njc1Mjc0NWU1NTg1ZjRhY2QifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/integrations.py#L172-L264",
+          "version": "repo-lines-v1:sha256:232bf776725c7d5b0c70e43e671aac8fcecf8548d6f059cf05b218fcc266eb5f:eyJzZWxlY3RlZExpbmVDb3VudCI6OTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxNTI4ZTQ1NzQxYTI0NWZlZWZlZDNkOTlhYzI5NmE5NmMzNzM0NWJjMzZlOTE2ODE2MWY3YTZmYmQwZjY2MzAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdmNzczMWU0MjNmNTYzODI0MDQ4ZjBmZDI2MzNiNGYwODAxMmIyZGRiMjgzYTE4OGM3ZmZjNGRkZjQwYzkxN2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjI5ZTYyMGEzZWMyYjhiYmI5M2U2NTIyOTQ1OTE1MWU2ODI0ZWJiMTFiYjlkOGY0NjEyN2NlNjhhZWZmNmMxM2MiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAyNTlmNTdiYmU5N2Q3YTUxZGY4MjVlZmVlNzNmNjY0MjNiOWI5MmI1ODBiMjUwMTNiOThjMjZlZDVlZjliMmQifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_46f1785f905040b08c9d7aaca95c877a",
+      "statement": "The LlamaIndex chunk adapter omits SourceChunk.document_text, so evidence is re-sliced chunk-locally via _slice_source_text's full_text fallback; building SourceChunk directly with the true parent text instead enables the model validator that requires document_text[doc_char_start:doc_char_end] to exactly equal chunk text and raises ValueError otherwise.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L1469-L1475",
+          "version": "repo-lines-v1:sha256:eaf9fe4b8419d12fda75f5962f221453d31edb1817144b49559aea99ca20e90e:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTNjM2I3MGM2NTIzNWQxZmVkYzVjODE5Y2VmZGUzZDMwOGU2ZmVmODVjNDliM2UwMTBmZGE5ODlkZmIxODIyOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOGY5NThhZmI0NzdiMTMxOWFmZDU0MmZjNTkxOGFlMDcyNzU4NDdlMzQ0MzczNzhjMmE0OGNlYzFhNzhlMDY2MiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiYzdjNDZkNjc2ZjljM2VhYjY5Nzk5MmYzYzUzZmFiZjgzYzM0YWY5OTM0MGQ1NTkzMTlhOWVkZTk0MTg2ZWYwNyJ9"
+        },
+        {
+          "resource": "repo://src/cite_right/core/prepared_corpus.py#L432-L468",
+          "version": "repo-lines-v1:sha256:1f4b46e5427ba858676879c3b4891328753e1be9624c6fb325419d7d741d2e21:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc4Mzk1YTY3NWQ3MDBmZDBjOWI1YTM1NGJjNmVhOWE0ODU1MGFmMWQzYThkZTJkNjM1YzQ5NTRlMzUzNTRjZTciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YjE2NjczNGIxNGI0YWFjNzkwMGFlZDM3MTlhNjczMDBjNDA1ZWE0NTBkNDY2MWEyOWU1N2ViNTM0ZTIxNzUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjczM2I5ZDc3YWQ5ZDU3ODcyNjI4MTI1NDIyNjM0ZjI4OWJlODBjMGQ0MjI4ZDliOTA5NjA3OTExZjk1ZjhhZmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBmMGJhODVhOGU3NjNjNWYwNzM5NDE1OTk2YjQ5YjUyOGEzYzE4YjIzNzllMGMwYTg0YmNhZjgyNjgzNWFlNzcifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/core/results.py#L156-L170",
+          "version": "repo-lines-v1:sha256:2be032003de36d228d88835c8c9880593107b878ba5e5f41be1e5b32d82b3d48:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEyYWIwOTBiY2QxNjIwZmE2MmVhZWUxNTdhNzRmY2E2MzVhYTI5ZTEyY2JmZmQ2MThiNTc5MmQ4N2JjMDNhM2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkzYzQyYjRjN2M0NzQ0ODU0OGVlMzdlOWJmZWY3ZGVjYjFkNDI1MWY0ZTlkYTc2MDIyM2JmNGY1MTJiMTI0YjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc3MWY3MDIwMWRkY2U2MTI2Y2ExNWFhZTZiOGY5ZGZkZmZhM2RiNGFlOTY4YzQ1OTAwZGQxZTk5N2NmMTI4MWMifQ"
+        }
+      ]
     }
   ],
   "verification": {
-    "by": "openwiki/0.4.0",
-    "at": "2026-08-26T03:32:47.432Z"
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-19T03:14:58.424Z"
   }
 }

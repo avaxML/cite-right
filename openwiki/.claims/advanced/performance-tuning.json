@@ -1,18 +1,22 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:65c7053d7b80029e7c59266477e658fb396e0a23349d3e6dda7ebc3eab19a22c",
+  "pageVersion": "sha256:81771c2b6d47d963d72c5c7d1cce8275b09b2852f7294749d3ea1d6ed2b020cd",
   "claims": [
     {
       "id": "claim_7f734e27a28048bd8fa9287689629b3b",
       "statement": "0.4.0 citation alignment is index-first: an inverted index over source passage windows plus rare-token intersect chooses which windows Smith-Waterman runs on, and Smith-Waterman still localizes the citation on those hits (plus optional embedding extras) — alignment does not run on every window or on every answer-span × window pair.",
       "evidence": [
         {
-          "resource": "repo://src/cite_right/citations.py#L1180-L1232",
-          "version": "repo-lines-v1:sha256:e18b9435c09451ad7703bcd6bb8063ffcc95e181a0304c3020ac77b65daa476b:eyJzZWxlY3RlZExpbmVDb3VudCI6NTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhiYTA1ZDkwZWViYmRhMmRhYmU0NTUxZmFkYjhmMTVhYzE4OWRlNjQ1ZDQ2OWVlYTY0OWQ3OTQwYzc5ZWI3ZDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE2NjYzZjIxZjVjOTNiNTU3MTZjOGYwODhlYmU3OTQyNzYxMTlhZmVmODhmZjQ1NjhkZjk5MTc3NjkzNmFiOTUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM3MWQwNjhkYmQwOWZkNDM2NzQxOWJkYjM3ZWMwNTNlMjFhNjhjODQ5NDA0NzNmNGE5NTdkMmIwZGI0NmE0YWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZlNTg2ZmYxNDM3ZjgyMGEzOTI2NzBjZjc2YzU5YmFiMjhiNjhjOWMwMGRkY2M5ZGI0NDViNTc5YWIyODk5OTYifQ"
+          "resource": "repo://src/cite_right/citations.py#L1270-L1318",
+          "version": "repo-lines-v1:sha256:7b91208ac2c160a7f916c55a94ada8de320247d0fc8c6e6a2bcead5e40e61efe:eyJzZWxlY3RlZExpbmVDb3VudCI6NDksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhiYTA1ZDkwZWViYmRhMmRhYmU0NTUxZmFkYjhmMTVhYzE4OWRlNjQ1ZDQ2OWVlYTY0OWQ3OTQwYzc5ZWI3ZDIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIzYjRmMDU3NTQxYjA0ODIxYmY4OGIwZDU3YTYyNDFjMDE5OWE0MGNhNjljODQ0ZjFhM2NmOGQxZGM4YzFjZDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjM3MWQwNjhkYmQwOWZkNDM2NzQxOWJkYjM3ZWMwNTNlMjFhNjhjODQ5NDA0NzNmNGE5NTdkMmIwZGI0NmE0YWEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImZmYTE4ZjI2ODg4ZmY3ZmFhYjBiYTk5YjI1MGYyYjg2OTg3MzViOTg1YTdhMDQyNWJkNmRhYTc0MjJmMTA2YzcifQ"
         },
         {
-          "resource": "repo://src/cite_right/citations.py#L1338-L1354",
-          "version": "repo-lines-v1:sha256:4a2042275e7aea0ecf343b786dcfbca39e973467aebee1e7aa668ef8e67bffda:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YTIwNTgyYjRlZmEyMDI0NTllNzRmYzk5ZTM0OWY2MjAyZTIzZjgwMDg2Y2E3Y2M1ZWM4OWRhZDkxNGY2ODgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM3NTdhMGFkN2MxMDg1MjQ1N2YyOTA1NjEyNzgxNjI2ZDFkYzEyZmVjZTNhYzY4NjllMmJiNjk5MThlODkxNTkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJiZjc1MjkwZWYxZmM5OTM2Yzk3ZGVjMzc0ZmIzOGI5ZGEzYWQxMWVkZjNiMzYxMGJhNzNkNzM2ODEyMzIyOTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM3OTNmNzgzYTRjOTdlNjgyYjdkYzUzZjFlYWUxM2ZiNzdhZjAzZGY0YTZkNGIzY2RkNTc2NDViYmE5MGY1OWMifQ"
+          "resource": "repo://src/cite_right/citations.py#L1328-L1353",
+          "version": "repo-lines-v1:sha256:5fece426c002b4d8b46050b281b64e842a1f258634271b2db3b7a6ad13ccbd5f:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjczZWI3MDU4YjA5YTcyMmYxYTljOTEyNDFhMGFlYTNiYTUzMzI1MWU0ZTQ3MjYyOTIzMGEyMjI1MjdiMWU1MDQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFlMTczMjE3ODQzOTZlZWViZTU1YjQzMDY3OWU1Y2VjNzM3YzBhYzM5ZDZkZjJmNWFkM2VmN2QzNDhmZmUxMmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjE3MjJlZGJkMGYyMDEyM2QzYWEyNjM2YmZiNGMyMmMzY2RkZmJiZTBmYjZlYmYyYmI5MjE4ZjM4NTVmY2IwNmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMwZGQwMjg5MWIwZjE5YzZkYmMxYmNhZTQ0N2FhZjljYTNiMTNlNGJjNzQ2NTM1OGJhNDQwZjZjMmY1MDE0YTEifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/citations.py#L1431-L1466",
+          "version": "repo-lines-v1:sha256:fb2ed215cbc7f76c9af217b084edb7f89e2815481b149321b637dbdf3dfbfe6f:eyJzZWxlY3RlZExpbmVDb3VudCI6MzYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU2YTIwNTgyYjRlZmEyMDI0NTllNzRmYzk5ZTM0OWY2MjAyZTIzZjgwMDg2Y2E3Y2M1ZWM4OWRhZDkxNGY2ODgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFlMjNiNTZiOWUxZDFiMzgyOGRiOGU0ZWMyMzc1YWZlNTBmNTg1ODc5ZjU2YjU1NGRhNmNiNmExNzZlYjFiNjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImJiZjc1MjkwZWYxZmM5OTM2Yzk3ZGVjMzc0ZmIzOGI5ZGEzYWQxMWVkZjNiMzYxMGJhNzNkNzM2ODEyMzIyOTEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM4MTJkZDg1YWMyMGNiY2E2YjQ2MzY1YWYzZWEwMTEwYjViMzAxZWUwODI2ODdjMzVhYWI3MTY3MDc4YjcxOWQifQ"
         }
       ]
     },
@@ -21,8 +25,8 @@
       "statement": "Rust prepare still runs with an embedder when SimpleTokenizer and SimpleSegmenter are in use; the embedding index is built on the prepared candidates and the 0.3.x skip of Rust prepare on the embedder path is gone.",
       "evidence": [
         {
-          "resource": "repo://src/cite_right/core/prepared_corpus.py#L142-L292",
-          "version": "repo-lines-v1:sha256:0aea187f787e276935ca2d94039824c27c2377ebf76d0e27cb0f9f57bf046dab:eyJzZWxlY3RlZExpbmVDb3VudCI6MTUxLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiIwMWJhNDcxOWM4MGI2ZmU5MTFiMDkxYTdjMDUxMjRiNjRlZWVjZTk2NGUwOWMwNThlZjhmOTgwNWRhY2E1NDZiIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIxNzJkN2MwMGUzMGNkZDU4NzIwNDFhNzUxMGFmNzAyYjEyM2ViZGExYzI0NjRlNGE0ZWI5ZjlmYmY2NjY0ZWZmIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiI1Mzc4ZDMxYWMwOTM5ODE2NDQ4YmVkZGJkNDMyNDlhYTE1YjAxOThjNTQxNWQyODZlODI1MWVlZDhmODQ1MWU0IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI1NDY3OGI1NjM4YWUxNzY3ZGVmYmFiNDMxNGFjMTk3YTc3NTYwMzllNjc3OWEzZWUxMjJkYzUxMWYxODNhMGQwIn0"
+          "resource": "repo://src/cite_right/core/prepared_corpus.py#L196-L292",
+          "version": "repo-lines-v1:sha256:bd6f4f647636f3d4988ba485bbd1c5f1e699849bca3ceb1d365b88443f24c066:eyJzZWxlY3RlZExpbmVDb3VudCI6OTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZjNjhmMTAyNWQ0NzNhYmJmNzFlNzEzMDY4MDAzMDFlMzc5MDQ5Y2JmOTZlYjQ0YzJhMGE4ZjNhMzdkMDkxYjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZlNTE5ZTU1MDdhOTA4MTRkN2ViZWMxMzU5ZWVhOTcxODRlZjMxNDk1NTYwODY3NTI2MmNiMzc0MTZiOWVlMDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU4Y2I1MjMwNjhmZDQ4NjUzZDcwZjFkNmQ1MzJkMmUyNDJmYzJmODE1NGZhYmVjZjFkYmVjZjE0MzUyYTU5MjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE2YzkxYmM2MTZkM2Y0ZDI5YzE3MjcxYTVlNTI2Y2QxNGE4ZDBlYzJiMTVkNWY4MjVkMzNiYTRlOTIwNDU3NTQifQ"
         }
       ]
     },
@@ -31,11 +35,11 @@
       "statement": "CitationConfig caps candidate selection with max_candidates_lexical (default 200) on inverted-index seeds, max_candidates_embedding (default 200) on embedding top-k additions, and max_candidates_total (default 400) on the merged set, with surviving candidates ranked by max(embedding_score, lexical_score) before Smith-Waterman.",
       "evidence": [
         {
-          "resource": "repo://src/cite_right/citations.py#L1357-L1373",
+          "resource": "repo://src/cite_right/citations.py#L1450-L1466",
           "version": "repo-lines-v1:sha256:6e9b2a144007f78dfb1e5d84fcb798493f5d28266a443fbb5140500b617a9414:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUzYmU1M2FjNDY2M2YzNTZjM2QxNjIzNDQ1ZjY2YjEwNjVlNjI2ZTk0OGM5ZTMxZTljZjU2NzY0MDFkZDRjNWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFlMjNiNTZiOWUxZDFiMzgyOGRiOGU0ZWMyMzc1YWZlNTBmNTg1ODc5ZjU2YjU1NGRhNmNiNmExNzZlYjFiNjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjA3MWFiMTMzMWZkOTljZmQzYzdjNTI4Y2VmNTUzMDk5MWRiMzc3NmQxYmQwZWQzOGU5MDBiNmFjY2ZkYzEwZjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM4MTJkZDg1YWMyMGNiY2E2YjQ2MzY1YWYzZWEwMTEwYjViMzAxZWUwODI2ODdjMzVhYWI3MTY3MDc4YjcxOWQifQ"
         },
         {
-          "resource": "repo://src/cite_right/core/citation_config.py#L62-L67",
+          "resource": "repo://src/cite_right/core/citation_config.py#L73-L78",
           "version": "repo-lines-v1:sha256:ed19ee3a3fdbc71d0356b5e89818c1a5a9a4754db162926dc054b712c9ba0959:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOGZlNzQ3ZTUxMGQzY2NjZDZmZWY3YjQyNjM3MmNlZTdmZWZjN2MyMTFmOWJkOTdiYTNhOThiM2QyYmNkY2RkNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjlkY2ZhMGRjMWNlYjg3YzQ0ZjZkMTk4ZDcyMTdiNjZiYWEzMzE5YjFhY2VmZTAzMzY3Mjk5Njk3MmVjOWRhOSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDU5NjIxNDVkNDMwNGUzYWNkMzBkZWRhMDk2YTQwM2I4ZTg3MTA3N2ZhMDQwNzJkZmE5ZTBjNjQxNThkYWQ4MSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZDZmNzE1NmU4ZDQ3MThmN2U0NzdmM2NiMTRlMGU5NDFiNjZiMmZkNDRiZDU0NzQwZDE5NjVmNGJlMDA4YzBjMiJ9"
         }
       ]
@@ -45,7 +49,7 @@
       "statement": "CitationConfig.fast() sets top_k=1, max_candidates_lexical=50, max_candidates_embedding=50, max_candidates_total=100, max_citations_per_source=1, and max_retrieval_support=1; window sizes and alignment scoring stay at the defaults.",
       "evidence": [
         {
-          "resource": "repo://src/cite_right/core/citation_config.py#L157-L182",
+          "resource": "repo://src/cite_right/core/citation_config.py#L232-L257",
           "version": "repo-lines-v1:sha256:dbe360a25817970ddd50a083b5dcbc6eb679b6418c6dfc76414434f3bb38c11a:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgyMGI0NTNmNWUwYzkyZDVmNmMyNTFhNWVhMTk2MGQ3MmYzYmQwNzk1NmFlODU3ZGEyMGUzMWE4OGM1NTk2OWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MDlhNTNhNjE4ZDAyOGUxZDMwMDBjMGE3YWJjZWVjYmU1ZmIzN2Y0ZTUxMWVmZTQ2NjQzZmFkNmU2Njg3MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc5ZmI4NTZjNTMxNmQxOTMxZTQxYjI2NTkwZmI3N2RmYjc1ZjcwNjhkYWI5ZmRhZGEwZjNkM2FlYzQ3OTBmMWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYxODM4ZDUzYjhiMjRlYzdiYmNlMTY4NDhlNTA3NjA0OGMxYmNmNTVkOGNhNTY5MmRhNmUzNjdkYmMwYWE1NzUifQ"
         }
       ]
@@ -55,8 +59,12 @@
       "statement": "PreparedCitationCorpus.from_sources runs the Rust prepare path when cite_right._core is importable and SimpleTokenizer plus SimpleSegmenter are in use, and falls back to the Python path when the Rust extension is missing or a custom tokenizer/segmenter is supplied; inverted_index is left as None on the Python fallback.",
       "evidence": [
         {
-          "resource": "repo://src/cite_right/core/prepared_corpus.py#L126-L292",
-          "version": "repo-lines-v1:sha256:eb8bc3d264d0e4082bf0e6ad4269b1818c1f8cee451dd5cc456b7ca2e6c75d11:eyJzZWxlY3RlZExpbmVDb3VudCI6MTY3LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI4MjBiNDUzZjVlMGM5MmQ1ZjZjMjUxYTVlYTE5NjBkNzJmM2JkMDc5NTZhZTg1N2RhMjBlMzFhODhjNTU5NjlmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIxNzJkN2MwMGUzMGNkZDU4NzIwNDFhNzUxMGFmNzAyYjEyM2ViZGExYzI0NjRlNGE0ZWI5ZjlmYmY2NjY0ZWZmIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MywicHJlY2VkaW5nQ29udGV4dEhhc2giOiJmNzc4NjU4M2RjMDFjYjdlNjliYzA1YzZhMzI2Y2NlZGNlYTIzMzc3NjFiNDMwYmU2NmNlZWM0MGU4MjQ3NzAwIiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MywiZm9sbG93aW5nQ29udGV4dEhhc2giOiI1NDY3OGI1NjM4YWUxNzY3ZGVmYmFiNDMxNGFjMTk3YTc3NTYwMzllNjc3OWEzZWUxMjJkYzUxMWYxODNhMGQwIn0"
+          "resource": "repo://src/cite_right/core/prepared_corpus.py#L130-L193",
+          "version": "repo-lines-v1:sha256:ebfc7be3c09b35b8d384a1f8461de1a332ec278a2c13a31ed079a57c39f8892d:eyJzZWxlY3RlZExpbmVDb3VudCI6NjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZiZWEyNzc3NzI3ZjRkZGRiMmQxNzFjNDc5ZjVhODQ0ZDk3M2QwZWYwNTY4NmVmODBmZDYyNmQwNGQxNjhiNzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE3MmQ3YzAwZTMwY2RkNTg3MjA0MWE3NTEwYWY3MDJiMTIzZWJkYTFjMjQ2NGU0YTRlYjlmOWZiZjY2NjRlZmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFjMTQ1NTg1MDhmYWFkZjQ2MzRlZTZmNGI0Nzc5OGIxYmVmNDY0N2RjOGYwNmJhYjY4MzQ4MmRhMDAyMDU3MzMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRiOWVjNjIzMGJhMjc4NWIxMmQ4YzJjZDE4ZWI2OTM5MzY2Y2JmNGNjMjJmMjA2N2NlZDk2MTgzYzAxZjJjYzQifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/core/prepared_corpus.py#L196-L292",
+          "version": "repo-lines-v1:sha256:bd6f4f647636f3d4988ba485bbd1c5f1e699849bca3ceb1d365b88443f24c066:eyJzZWxlY3RlZExpbmVDb3VudCI6OTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZjNjhmMTAyNWQ0NzNhYmJmNzFlNzEzMDY4MDAzMDFlMzc5MDQ5Y2JmOTZlYjQ0YzJhMGE4ZjNhMzdkMDkxYjUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZlNTE5ZTU1MDdhOTA4MTRkN2ViZWMxMzU5ZWVhOTcxODRlZjMxNDk1NTYwODY3NTI2MmNiMzc0MTZiOWVlMDMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImU4Y2I1MjMwNjhmZDQ4NjUzZDcwZjFkNmQ1MzJkMmUyNDJmYzJmODE1NGZhYmVjZjFkYmVjZjE0MzUyYTU5MjciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImE2YzkxYmM2MTZkM2Y0ZDI5YzE3MjcxYTVlNTI2Y2QxNGE4ZDBlYzJiMTVkNWY4MjVkMzNiYTRlOTIwNDU3NTQifQ"
         }
       ]
     },
@@ -65,15 +73,15 @@
       "statement": "PreparedCitationCorpus exposes embedding_build_time_ms as a one-time per-build cost; align_citations(answer, sources, on_metrics=callback) emits an AlignmentMetrics with total_time_ms, num_answer_spans, num_candidates, num_alignments, alignment_time_ms, and embedding_time_ms (which adds the corpus build time on the first call).",
       "evidence": [
         {
-          "resource": "repo://src/cite_right/citations.py#L161-L186",
+          "resource": "repo://src/cite_right/citations.py#L166-L191",
           "version": "repo-lines-v1:sha256:1efb80b17b5d140d4e174325bb4d990680ac6eb5680619a5d5a007dbef5d4611:eyJzZWxlY3RlZExpbmVDb3VudCI6MjYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk4YzM2YWU0ZDM0YTEyZjA4YmJhZDMwMmFhMzRkYzcwMmVlMGNhYzk5NmVmODdmNzQ0YTI2YzAyYTFlYjlkMzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjUzZTVmMDBiZDI3YWQyY2ZlNWQ4YWE4OWNjY2ZkNjJlNmIxNTYxOTJiZThjMTliZTkyNWM2NDk1N2RiNTQzNzAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgxYzE5YmUyNTRmMjMzNTUxN2FhODM2NGJhYTk3ZDM5ZjRjN2FhODYwMWQxYTg5MzJkNmYwMzdmZDY1MDExNzYifQ"
         },
         {
-          "resource": "repo://src/cite_right/core/prepared_corpus.py#L119-L124",
+          "resource": "repo://src/cite_right/core/prepared_corpus.py#L122-L127",
           "version": "repo-lines-v1:sha256:99adbffd412b90ad0848ab14e0a1b1aa0c78fe5a710c742d6b0e878c8accf3d3:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiM2NmNDhiOTk5ZTQyYzZjYzU2NDQ3MmVjNWJlNmM1ZjhlNmViMGEyNjExMzI0YmY0YWMwMWFmMzQxMjJhMzMzZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMGQ0OTIwYTYyYmY4YzUzYzg0MzdiMWMxMmI2ODFmZWQ2NzFmM2M1ODJjZTQzOWQ0NWM1MTc1NjgyY2NjM2M1NSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMGUwMWFhOWE0NjhmZTMwOTJiNTUyZDI1YTcwY2QyOWYyYjExYTQ3MGZjZTc1OTBiYWZiYmFkNDM4MmEzYjU1NyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiM2JmYWEwMGJjYWEwNDZkNGEwYjA5OWYwZGNjYTliZDZjYjI2ZDQ2NTA5NDc0ZGY0YzNjYzk5ODlhZTMyZjJmZCJ9"
         },
         {
-          "resource": "repo://src/cite_right/core/prepared_corpus.py#L52-L60",
+          "resource": "repo://src/cite_right/core/prepared_corpus.py#L54-L62",
           "version": "repo-lines-v1:sha256:0c201316e4b2719624c5bbb730323918a38db38722d87e5b6cc3b01cabe8eaab:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMTUyMTFiMWU0NzgyYjkwYjkwNmE3Njg5ZGE2ZWJjZTllNzQ4NGYyYzA3ZDFiM2FhODJlNzM2YTg3OWI0YTYxYyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiNjczYzA5YjUzY2VlNGFhZTJlYWFlNjdjMTc1ZmE1ODg3ZjlkMWM1MWNkZWYwZjk0MTk2MjllZDk1Njc4N2MyYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjA1M2I5ZDIxZGQ2OGNjZmY5ZDIxNmM5NmE4MTI1ZWZjMmFkOWY3YTM2MjQ0MzhmYmRkMGM3ZmRhYmUyZGEyZSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTFmZmExOWUxMDQ0ODlhNjc4ZDZiNjM1YWVmMDM4NjBjNTc3ZTkxOTE0ODBlZjg4NTM2ODM3OWZkYTRhMDVjYiJ9"
         }
       ]
@@ -83,8 +91,20 @@
       "statement": "The Rust extension releases the Python GIL during alignment and is thread-safe, so a ThreadPoolExecutor calling align_citations or corpus.align can use multiple cores; the pure-Python alignment is GIL-bound.",
       "evidence": [
         {
-          "resource": "repo://src/cite_right/citations.py#L1-L52",
-          "version": "repo-lines-v1:sha256:dc06671a84dd1bf23b5775ee559b59a9298ad5c68f94702621e48adf5118da94:eyJzZWxlY3RlZExpbmVDb3VudCI6NTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUzODRiZmRiMmRmMzgwYjY1NTdjYzdhNzFkMTY4OTE0MTViY2NhYTg3Njk5NDA2ZTIzNmY3NTJjNjQxNTM4OWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhZmJhMDUyN2MzOTUzYzRiNmUwZTViNTczOWJhODM2MTJmODA1M2JjZGM5NDY2NzMwMTkzY2QxZDU5MGI0MDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgxZWY4MzRmNjYzODY5OWVkNjYzNjg1ZjMzZjA1YzRhZThkZjU2MzNiNTc0MmRiODBjNWNjNmFmMWJkMGMzMjAifQ"
+          "resource": "repo://rust_core/src/inverted_index.rs#L31-L41",
+          "version": "repo-lines-v1:sha256:766570018344f3261c96a7a97d888c56a093d93c7aa7f2bc2937c482eca290bf:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIwZDJhZTEwMGM2NWE4NWUzZDBlYjdjMWUzZTUxMDNiMDIxMGZiMDhiNzQ2ZTRjYjk0MmVkOTU1OGUyYWJjYTUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ2NmFhYTkxZWY4NDA4NzRkZWNiOGYzZGY0MTI2MjE2MmVkNGExNDNhNWNmNjJlYzIyNTU0YWMyMGE2MzA1YzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVhMjE3YzlkY2ZhMDE0OTA0MDkxOGQwMWRhZWExOWFjNmVjMGU3MjVhZTE5ZmIwODI5M2QyYmM5ODQyNTExNzEifQ"
+        },
+        {
+          "resource": "repo://rust_core/src/lib.rs#L29-L37",
+          "version": "repo-lines-v1:sha256:a3d24287439160b191871464dd0ef0a50b03115dabc7bad86a8e2fcf59eb169c:eyJzZWxlY3RlZExpbmVDb3VudCI6OSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYWQ5ZTEyNTQ2NDI1NTc2ZDNkZWFlOGM5YjlkYmYxMjhkNWQ2ZGRhZjVkN2ZlODU3OTM0OTI3ZGVmZmEzYjlkZCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiM2U4ODhhOTA0Y2RkNGI0ODEwODJkMDYwN2Q5MmU2YzA0YjhhM2M5N2NiMmFlZTEzNTNlODQ4ZjI0YjYxMDVjNSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiNDNkODBjMWI0ODg2YTAyMjhkMjU2YTI2YmY2ZWQyMjljY2Y3NTIwYjdhMTdlMjg4ZDUyNWMyODAwMTcxMjE3YSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiM2U3ZjYxZjMxYjA2YzZiNGNjMDg0NDZkMjVmYzE2MGVmNWYxMjEyOGMzNzQ0NzBiNmQzNjExNjQ0MWZjY2MxOCJ9"
+        },
+        {
+          "resource": "repo://rust_core/src/prepared_corpus.rs#L124-L130",
+          "version": "repo-lines-v1:sha256:fc61bd997b1ef4b5ca51f51233677aa2ffdcbf1534c947752e47e97f0667c0f4:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZmIxNjQ4N2U1NGZiMzNhMmNmYjZlNjAwYjkzNjgwMjA3MGQ1MTJhYjRmMDVjYjc0YWY0ZDE0MTYwNzg0MmI4ZiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZjliMTk4MmU4ZGQ3NDgxMTgxNDZiMzlhMmQwMDYyZjQwODFlMzQ3NzliODY3NWMyMzRjNGZiMTI0ZGMzOTM5MCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZWU5MTE2MzYwODM5MzE1OGMyMWI1MzRhM2FlNzdjNmE5ODY3ODljNTZjNmEyMjYzNGZmNzQ3YjMwZjIxNDQ1MSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiM2M3ODZiMWI3NmJjNWI3MWVkYmIwY2M0MDg3ZTJjZjQ3NTNjYTI3YzVmM2RjODhhMzVjODY2NzkyMDk2MjAxZCJ9"
+        },
+        {
+          "resource": "repo://src/cite_right/citations.py#L1177-L1201",
+          "version": "repo-lines-v1:sha256:98af598bf9ed04c815927cee52408d4f96c0d3da198c34843e6374929823b73d:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJhYzIxNWIyZGE1MTFhNzk4N2RjNzM3OTQzZTc0MmJlM2RhZGEyMDk1ZTRmYTEwMzAwMGMxZjhmZjg0ZjlmZDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRlNTRmNzc5ZDliOTVjMDc3ODlhM2VjNmYxMWMyZjZiNjg3MDc1OTQ5ZDJjMjgwMTFlM2Y3NTVmMDNmMDNiOTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFjMmM2OTQ3N2FmYjY3MzdlMDQzZTUyMDZlMWMyYTE0MTM0MGY4NGNhODI4NGY3YTkyM2IxYzQ2ZGMwZTA0OTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJkMjhlZjFiZDBlMjU1Mzc0MDgxNDc0ZDU0MWM0Zjk2N2RmYjg3NGU0ZTFhNzA2Y2RlN2VkZmM4MmU3MzZlNWUifQ"
         }
       ]
     },
@@ -93,7 +113,7 @@
       "statement": "align_citations accepts backend=\"auto\" (default, Rust if available else Python), backend=\"python\" (force pure Python), and backend=\"rust\" (require Rust, raise ImportError if missing).",
       "evidence": [
         {
-          "resource": "repo://src/cite_right/citations.py#L72-L110",
+          "resource": "repo://src/cite_right/citations.py#L77-L115",
           "version": "repo-lines-v1:sha256:54c72758a0c91acd7ae1f315401b547a1b813926aaa0e84cd216abc189c0cd2b:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQzYjI4NWNiODZjYjMwNjUwMTRlZWQxNzk5ZWZlZTI5MGY4ZjczZWM3Mzc1ZTU5YmRhNGJmMTY3OTMyM2JmZjkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJhYjE3ZGRkZTFlNTk4YTA2ZGU2YjNjMTllZjZmMjc1ODI5N2M0ODgzMjI2ODkxYmNiNjY4OTkxYjk1YWQwMjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ3MGM2MmMxYzAxZGIyMzk0ZjQ0YTYwMGY0MTQxODdiZGNiMTQ1MmZhZDMwNzgwNjM1Mzg4Y2M3NTNiNTlkMzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRlNWZiNmNjNWQzMDAyYWFlNzEyOWVmYjg4MGQ3ZjhhNzE2MTgxZGU0NDU3MzNiZTNmODA2M2ViMjQyYTJjNjcifQ"
         }
       ]
@@ -103,22 +123,44 @@
       "statement": "On the 50-case pack with no embedder, 0.4.0 p50 wall time is about 12.4ms versus about 175.8ms in 0.3.1, roughly 14×; spp is 81.3% versus 83.4%. RAGTruth test quality on 2,675 answers matched 0.3.1. Embedder encoding is extra cost on top of the no-embedder numbers.",
       "evidence": [
         {
-          "resource": "repo://src/cite_right/citations.py#L1-L52",
-          "version": "repo-lines-v1:sha256:dc06671a84dd1bf23b5775ee559b59a9298ad5c68f94702621e48adf5118da94:eyJzZWxlY3RlZExpbmVDb3VudCI6NTIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUzODRiZmRiMmRmMzgwYjY1NTdjYzdhNzFkMTY4OTE0MTViY2NhYTg3Njk5NDA2ZTIzNmY3NTJjNjQxNTM4OWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZhZmJhMDUyN2MzOTUzYzRiNmUwZTViNTczOWJhODM2MTJmODA1M2JjZGM5NDY2NzMwMTkzY2QxZDU5MGI0MDgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgxZWY4MzRmNjYzODY5OWVkNjYzNjg1ZjMzZjA1YzRhZThkZjU2MzNiNTc0MmRiODBjNWNjNmFmMWJkMGMzMjAifQ"
+          "resource": "repo://bench_rust.py#L43-L67",
+          "version": "repo-lines-v1:sha256:2327905b18a9ecb2dec321d606a505878e5576e7b11a7ba775d1337154b739a0:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM1MzYwYzAyODQ4NzhjMWQzNTc5OTEwNWZjMmIyNTUwN2Y0YmFmYTYyNjg4YjFmNjNkYjYzNjVmYzNlNTAyNmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjdlOTBlMGI4YjQ5ZThjODUyNTdjNGY5MmYyNTUyNTJhODcxZDY2MGYzZDEwNDJlN2NiNDNjZDI4N2Q2N2E3MjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlhYmNlYTRmZjViNGI3YmUxYWZmOWEyNGYwNjhkZTYxMDYzNTEzMGVhMDQ3OGI4ZDc1ODM3Njc3ZmIxOTdkNTAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjU5YzkxN2NmNjgxN2RiMDZkZGVlYTAyYTM5MTViMzNiY2FhYWVmMTVhZDk1NjBiYTIwZTZjMGQ5MjZiZmUzZjgifQ"
         },
         {
-          "resource": "repo://src/cite_right/core/citation_config.py#L1-L82",
-          "version": "repo-lines-v1:sha256:25e77b4c353649539bb4da61f5f4519cf0827011b04b4e597f8bed92d371b015:eyJzZWxlY3RlZExpbmVDb3VudCI6ODIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjRmMDU3ZDUwNzhiNDIzYjNhNDViYThiODM2MmQ4ZWY4YmI5YTNkZTUzMTAwNGE0NGU5NTNjNzZiYmRkZGQzNjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA3Mjk0MWQ0YTgzNmVmYzg4OWFlNWRlMWMyMmU0ZTJkNDNiYjA0MGExNmJiNWVjNDZiMTVhNDZjYzE3NzU1ZjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM1MzYwOWY5NGFlMzI0NzY3YTgxODM0YzdjZDdiNTJjYWFlMDk0NzI4ODNkZjk1MmJjNzVhNjNhODllZTEzYTkifQ"
+          "resource": "repo://src/cite_right/citations.py#L262-L268",
+          "version": "repo-lines-v1:sha256:40ab8e978aea3ee949709389ed0566b0032062ea59c4d5468a2b8d246a87aa19:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZmE3MWYzODAzZTIxZmRlNWIxYTc0NTk2YmNhMzVkZjM1N2E5NmJjNDc2YWVjMWZkNGY0NGEwNGNjNzI3ZjZmNSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjA1NWMyMmYzNjQwZDcxOTM0NjJiMjVhOWY4OTZmYzkwZDU1NmYwNzA5NzlhZTRiNjEwMmQzNGQ3NDZlYTBjZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiZDIwMDRmN2JlYzQ3YTIyZjRhMWEyODhkY2VhZmE3ZWJmNDg5MGU5YWJlZWZlMmFjZjg0N2RkMTRkYzQ0N2RmMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiOTcxMWQ5OTE2MDZhMDAyNzYxYmJiNmU5NzJhNTE0YjFlM2NmZDk4YWRmZTg0YWM2NWNiZGRjNDMwMTk2YTRmNyJ9"
         },
         {
-          "resource": "repo://src/cite_right/core/prepared_corpus.py#L1-L60",
-          "version": "repo-lines-v1:sha256:cffb2841f239bfddef5324d57ade8bc4d475a0a7a327cc7c2af10e98ce74f99d:eyJzZWxlY3RlZExpbmVDb3VudCI6NjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUzODRiZmRiMmRmMzgwYjY1NTdjYzdhNzFkMTY4OTE0MTViY2NhYTg3Njk5NDA2ZTIzNmY3NTJjNjQxNTM4OWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY3M2MwOWI1M2NlZTRhYWUyZWFhZTY3YzE3NWZhNTg4N2Y5ZDFjNTFjZGVmMGY5NDE5NjI5ZWQ5NTY3ODdjMmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjkxZmZhMTllMTA0NDg5YTY3OGQ2YjYzNWFlZjAzODYwYzU3N2U5MTkxNDgwZWY4ODUzNjgzNzlmZGE0YTA1Y2IifQ"
+          "resource": "repo://src/cite_right/core/citation_config.py#L75-L82",
+          "version": "repo-lines-v1:sha256:6a6bfa63a235b80bc143af2d59a0caa450657845bfb3dbf6b63a5a2120c15b34:eyJzZWxlY3RlZExpbmVDb3VudCI6OCwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDFiYTQ3MTljODBiNmZlOTExYjA5MWE3YzA1MTI0YjY0ZWVlY2U5NjRlMDljMDU4ZWY4Zjk4MDVkYWNhNTQ2YiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMWRiYzAwMGQ4Y2ZkZjE0NTQ3MTY5MjZhN2E5ZGM4ZmQ1NzIxYjY3MmY4YWUwN2NhZDYwYmI1ZTg4NjE4MjNhMSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiN2EyOGUyOWRhYjJhOTVlZjBmMGQ1MTdmOTQ3MzI4NTExMWUyM2E3MmRhNzNiYWFkNjEyZWYwNTkxN2E4MzBiNSIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTlhZTViODNjNjMxZGY2ODc3NDkzMjhhNDQwMzBhMTU5NTAzMzMyOTIzOTU1NzczYjk1MGJjNWZhY2QyOGM2OCJ9"
+        },
+        {
+          "resource": "repo://src/cite_right/core/prepared_corpus.py#L270-L288",
+          "version": "repo-lines-v1:sha256:47da8cffe4cc6cb49a9b5f77fc39a2afc9ea067038e2fa0ec27fdcd0077dc3a8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU0ZDM4ZjRkMThmNDgzM2VkYTA0MzEzODQ1YTRhZDg3MGRhYmIyMzBlNDI5MmY1MWUyNTQ3ZGMyMjliOGQ1NDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjI1OWQzOGI4YjFmNDEzZmEwNDYxMDFkOWYxZmU1ZmE2YzMxNWU5ZjlhNDE1YjU5N2JiZWU1YmJhYWVjMDlkYjciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjFmMzRkMjM3NTlhNTgxYzg5MmRmMjdmZGIxMmQwMDM2YjZiNjE3NmM2MThjNWM1YWM0ZWUzOTdlNGNiYzllZGUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI4YjIzNGU0NGMwMWZlNWU1YTM0YWY1NWM3OWNiODFiNTZkYzU5ZGJmOTNiMDYzMDI4ZTQyNDdmZDhiMDQyNzcifQ"
+        }
+      ]
+    },
+    {
+      "id": "claim_63daa6398f1a4380a10d7acce5795967",
+      "statement": "PreparedCitationCorpus holds the source-side state (inverted index, IDF, passages, embedding index) so repeated align calls skip re-tokenization, re-indexing, and re-encoding of the source side; with an embedder, per-answer encoding is limited to answer spans, the one-time source-side embedding build is exposed as corpus.embedding_build_time_ms, and align_citations folds it into the on_metrics embedding_time_ms.",
+      "evidence": [
+        {
+          "resource": "repo://src/cite_right/citations.py#L168-L191",
+          "version": "repo-lines-v1:sha256:821ed265a54149b34d3064a9236ac5e29d007c6f12caf58b609d0298428d4c0b:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM3NGJhZmQzN2Y2NjdlNWYwY2VkN2VkN2MyZTM5YTkxODc0Y2Q5YWEyMDdlM2IwNDVjZDM0ZTU1ZDU5ODM1MDAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImI1YmRhOWRjNTU1ZDY0OTk0ZjQ2Y2Q3NDM4MmJlMjZkZWFhZGE0OTYwYzNiZDdhYWEzZWY1ZTllOTVmMjlmNTMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgxYzE5YmUyNTRmMjMzNTUxN2FhODM2NGJhYTk3ZDM5ZjRjN2FhODYwMWQxYTg5MzJkNmYwMzdmZDY1MDExNzYifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/core/prepared_corpus.py#L105-L128",
+          "version": "repo-lines-v1:sha256:10fb0a20120be9e995054c3f13ff350ec959dc92ce94bf54a023435668b5ec45:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ4ZDQ1Zjg3NjMyM2NkMTBjODU1N2E3OTllMmY5YTA5NzEyYzI2NTUwNDNmNzRmYTg5NDAwYzVjZDAyN2UzN2UiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYyOTg1ZTBmOGJjYWY0YTg5NjM4NjEyZTE2ODRjMmQyMmM5ZjFhYTFjOTA4ZWI3NzU5NDQ2NzcwMzEwNDlmM2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjZhMDcyZjU4ODg5NTUxNjdmMzNlODNlYTBlZTllZDNlMWU1ZjAyMmYwY2Y0MDRiYWQxYmVkMzA3YzQwMGY5NTQifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/core/prepared_corpus.py#L130-L193",
+          "version": "repo-lines-v1:sha256:ebfc7be3c09b35b8d384a1f8461de1a332ec278a2c13a31ed079a57c39f8892d:eyJzZWxlY3RlZExpbmVDb3VudCI6NjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImZiZWEyNzc3NzI3ZjRkZGRiMmQxNzFjNDc5ZjVhODQ0ZDk3M2QwZWYwNTY4NmVmODBmZDYyNmQwNGQxNjhiNzciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjE3MmQ3YzAwZTMwY2RkNTg3MjA0MWE3NTEwYWY3MDJiMTIzZWJkYTFjMjQ2NGU0YTRlYjlmOWZiZjY2NjRlZmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFjMTQ1NTg1MDhmYWFkZjQ2MzRlZTZmNGI0Nzc5OGIxYmVmNDY0N2RjOGYwNmJhYjY4MzQ4MmRhMDAyMDU3MzMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRiOWVjNjIzMGJhMjc4NWIxMmQ4YzJjZDE4ZWI2OTM5MzY2Y2JmNGNjMjJmMjA2N2NlZDk2MTgzYzAxZjJjYzQifQ"
         }
       ]
     }
   ],
   "verification": {
-    "by": "openwiki/0.4.0",
-    "at": "2026-08-26T03:32:47.432Z"
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-19T03:14:58.424Z"
   }
 }
