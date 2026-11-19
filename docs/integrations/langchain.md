@@ -10,7 +10,7 @@ This page walks the two conversions, the `id_key` and `start_key` / `end_key` kn
 The LangChain adapters import `langchain_core.documents` at module load. If that package is not present, the import paths are still exported but resolve to `None`, the `LANGCHAIN_AVAILABLE` flag is `False`, and the adapter functions raise `ImportError` with a hint.
 
 ```bash
-pip install "cite-right[langchain]==0.4.0"
+pip install "cite-right[langchain]==0.5.0"
 ```
 
 The extra is `langchain-core>=0.3.0` (see `pyproject.toml`). You do not need the full `langchain` distribution; `langchain-core` is enough to use the adapters with any LangChain-compatible retriever (FAISS, Chroma, Pinecone, the `langchain_community` integrations, etc.).

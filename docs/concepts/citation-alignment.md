@@ -80,7 +80,7 @@ The default `SpanCitations` result has four fields.
 
 `citations` is a list of `Citation` objects, ranked best first. Empty when no citation met the minimum thresholds. Each `Citation` is exact and localized: a `source_id`, a half-open `char_start` / `char_end` into the source, and an `evidence` string that slices cleanly from the source.
 
-`retrieval_support` is a list of `RetrievalSupport` objects. These are passages the candidate selector picked up (by inverted index, lexical prefilter, or embedding similarity) that did not localize into a `Citation`. They are evidence-of-interest, not a grounded citation.
+`retrieval_support` is a list of `RetrievalSupport` objects. It can include passages retrieved without an admitted citation and secondary passages demoted for failing the support checks on a `supported` span.
 
 `status` is one of `"supported"`, `"partial"`, or `"unsupported"`. It comes from the best exact `Citation`, never from embedding similarity. A high embedding score that never localizes is a `RetrievalSupport`, not a `Citation`, and it does not flip the status. The model validator on `SpanCitations` enforces that `"unsupported"` requires an empty `citations` list, and that `"supported"` or `"partial"` requires at least one.
 
@@ -110,7 +110,7 @@ for result in results:
         print(citation.score, citation.components)
 ```
 
-`source_id` is the document identifier. `source_index` is the position in the input list. `char_start` and `char_end` are the half-open offsets of the legacy contiguous evidence view in the source. `evidence` is the text sliced by that range. `score` is a weighted sum of `components` (`alignment_score`, `normalized_alignment`, `matches`, `answer_coverage`, `evidence_coverage`, `lexical_score`, `embedding_score`).
+`source_id` is the document identifier. `source_index` is the position in the input list. `char_start` and `char_end` are the half-open offsets of the legacy contiguous evidence view in the source. `evidence` is the text sliced by that range. `components` includes alignment metrics, lexical and embedding scores, and `content_coverage`, the fraction of answer content tokens matched in the full candidate passage.
 
 When `CitationConfig(multi_span_evidence=True)`, `evidence_spans` carries the precise non-contiguous regions and `exact_evidence` joins them with `" ... "`. The legacy `char_start` / `char_end` / `evidence` stay a contiguous enclosing span in that mode. See [Multi-Span Evidence](../advanced/multi-span-evidence.md).
 

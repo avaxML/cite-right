@@ -4,6 +4,8 @@ All notable changes to cite-right will be documented in this file.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-18
+
 ### Added
 
 - Opt-in per-span status reasons and contradiction check names. With
@@ -16,42 +18,38 @@ All notable changes to cite-right will be documented in this file.
   enabled, a cited span with incomplete content coverage stays `partial`
   even if it meets the answer coverage threshold. (#85)
 
+### Changed
+
+- Python and Rust admit citations using the same content coverage rule,
+  including with custom tokenizers that implement the public interface.
+  Reordered text can move from `unsupported` to `partial` or `supported` if
+  it meets the relevant thresholds and checks. Spans cited on punctuation
+  overlap alone can become `unsupported`. Reversing `before` and `after`
+  between matching clauses can move `supported` spans to `partial`. (#84)
+- Faithful restatements can move from `partial` to `supported` when
+  capitalization, headings, UI labels, or unit codes previously triggered an
+  entity-swap check. Swapped names in matching roles or changed click, press,
+  or tap targets can move `supported` spans to `partial`. The check honors
+  caller aliases when enabled. (#69)
+- Equivalent comma-grouped amounts can move from `partial` to `supported`
+  on the default Rust path. Changes to signs, values, percentage markers,
+  explicit currency units, or conflicting labels or directions tied to an
+  amount can move `supported` spans to `partial`. (#66)
+- On a `supported` span, secondary citations must pass the primary support
+  checks. Passages that fail are eligible for `retrieval_support`. Demotion
+  happens before per-span and per-source citation limits, so a lower-ranked
+  supporting citation can fill the slot. The primary citation still
+  determines span status. (#67)
+
 ### Fixed
 
-- Python and Rust use the same content coverage rule to admit citations,
-  including with custom tokenizers that implement the public tokenization
-  interface. Reordered text can move from `unsupported` to `partial` or
-  `supported` when content coverage meets the admission threshold and the span
-  passes the corresponding support checks. Punctuation-only overlap no longer
-  produces citations and can leave a span `unsupported`. (#84)
-- Reversing `before` and `after` between matching clauses now downgrades a span
-  from `supported` to `partial` and reports a contradiction when diagnostics
-  are enabled. (#84)
-- Entity-swap detection compares names in corresponding roles and honors caller
-  aliases. Faithful restatements that previously triggered on capitalization,
-  headings, UI labels, or unit codes can move from `partial` to `supported`
-  under the default settings. Names exchanged between matching roles and
-  changed targets in matching click, press, or tap steps can move a span from
-  `supported` to `partial` even when shared wording meets the answer coverage
-  threshold. (#69)
-
-- Rust prepare honors `TokenizerConfig.normalize_numbers`, `normalize_percent`,
-  and `normalize_currency` for comma-grouped numbers and percent and currency
-  symbols (`%`, `$`, `€`, and `£`), including NFKC-equivalent symbols such as
-  `￡`, `﹩`, and `﹪`. On the default Rust path, restatements of the same
-  comma-grouped amount can move from `partial` to `supported`. The internal
-  `rust_tokenize_and_prepare` binding takes the three flags as required keyword
-  arguments. The shared contradiction check can now downgrade `supported`
-  spans to `partial` for changed signs, numeric values, percentage markers,
-  explicit currency units, or conflicting labels or directions tied to the
-  amount. (#66)
-
-- On a `supported` span, secondary citations now have to pass the same support
-  checks as the primary citation, including full content coverage when term
-  aliases are enabled. Secondaries that fail move to `retrieval_support` before
-  the per-span and per-source citation limits are applied, so a lower-ranked
-  supporting citation can fill the available slot. The primary citation and
-  span status stay the same. (#67)
+- Rust prepare honors `TokenizerConfig.normalize_numbers`,
+  `normalize_percent`, and `normalize_currency`, including compatibility
+  forms of percent and currency symbols. The internal
+  `rust_tokenize_and_prepare` binding takes these as required keyword-only
+  arguments. (#66)
+- OpenWiki CI tries the next model on retryable provider failures and limits
+  completion `TypeError` retries to errors involving the `choices` field. (#63)
 
 ## [0.4.0] - 2026-08-25
 

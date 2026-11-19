@@ -1,7 +1,7 @@
 
 # How It Works
 
-Cite-Right takes a generated answer plus a set of source documents and returns per-span citations with character-accurate offsets into the source. The pipeline lives in `src/cite_right/citations.py` and the prepared-corpus helpers in `src/cite_right/core/prepared_corpus.py`. The public entry point is `align_citations`, optionally accelerated by the `PreparedCitationCorpus` form. The public API is unchanged across 0.4.0: span status is exactly one of `"supported"`, `"partial"`, or `"unsupported"`. The literal is `"partial"`, never `"partially_supported"`.
+Cite-Right takes a generated answer plus a set of source documents and returns per-span citations with character-accurate offsets into the source. The pipeline lives in `src/cite_right/citations.py` and the prepared-corpus helpers in `src/cite_right/core/prepared_corpus.py`. The public entry point is `align_citations`, optionally accelerated by the `PreparedCitationCorpus` form. Span status is one of `"supported"`, `"partial"`, or `"unsupported"`.
 
 This page is the end-to-end orientation. The I/O surface (`SourceDocument`, `SourceChunk`, `SpanCitations`, `char_start` / `char_end`) is on [Citation Alignment](citation-alignment.md). The advanced knobs (multi-span evidence, embedder recall, the Rust extension) have their own pages: [Multi-Span Evidence](../advanced/multi-span-evidence.md), [Embedding Retrieval](../advanced/embedding-retrieval.md), [Rust Acceleration](../advanced/rust-acceleration.md), and [Performance Tuning](../advanced/performance-tuning.md).
 
@@ -75,7 +75,7 @@ With the default `SimpleTokenizer` and `SimpleSegmenter`, the internal Rust prep
 
 ### Step 4: Index-First Candidate Selection
 
-Candidate selection reduces the search space before alignment. 0.4.0 is index-first on the default Rust path: an inverted index maps tokens to passage windows, and for each answer span the rare-token posting lists are intersected. Only those hits move on to Smith-Waterman. `max_candidates_lexical` (default 200) caps how many seeds the index can keep.
+Candidate selection reduces the search space before alignment. On the default Rust path, an inverted index maps tokens to passage windows, and candidate selection intersects the rare-token posting lists for each answer span. Only those hits move on to Smith-Waterman. `max_candidates_lexical` (default 200) caps how many seeds the index can keep.
 
 When the answer contains a term declared in `CitationConfig.term_aliases`, lexical retrieval combines postings for equivalent spellings before applying the candidate caps. Each alignment call resolves the groups against its token IDs. The prepared index keeps its original vocabulary and postings.
 
@@ -202,4 +202,4 @@ The pipeline is shaped to avoid Smith-Waterman on the entire source corpus:
 - Index-first retrieval makes candidate selection proportional to posting-list intersection on rare tokens, not to `answer_spans * passages`.
 - Smith-Waterman remains quadratic in the length of the sequences being aligned, but it runs only on index hits (plus optional embedding extras), not on every passage.
 
-On the 50-case pack with no embedder, 0.4.0 p50 wall time is about 12.4ms versus about 175.8ms in 0.3.1, roughly 14×. Sentence-per-passage (spp) is 81.3% versus 83.4%. RAGTruth test quality on 2,675 answers matched 0.3.1. Released wheels are abi3 (`abi3-py311`) and include linux/aarch64 plus an sdist. Install with `pip install cite-right==0.4.0`. The optional embedder adds encoding cost on top of the no-embedder numbers. See [Performance Tuning](../advanced/performance-tuning.md) and [Rust Acceleration](../advanced/rust-acceleration.md) for the knobs that move those numbers.
+On the 50-case pack with no embedder, 0.4.0 p50 wall time is about 12.4ms versus about 175.8ms in 0.3.1, roughly 14×. Sentence-per-passage (spp) is 81.3% versus 83.4%. RAGTruth test quality on 2,675 answers matched 0.3.1. Released wheels are abi3 (`abi3-py311`) and include linux/aarch64 plus an sdist. Install with `pip install cite-right==0.5.0`. The optional embedder adds encoding cost on top of the no-embedder numbers. See [Performance Tuning](../advanced/performance-tuning.md) and [Rust Acceleration](../advanced/rust-acceleration.md) for the knobs that move those numbers.

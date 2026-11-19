@@ -36,7 +36,7 @@ candidate passage takes precedence.
 Embedding retrieval is an optional extra on top of the default install.
 
 ```bash
-pip install "cite-right[embeddings]==0.4.0"
+pip install "cite-right[embeddings]==0.5.0"
 ```
 
 Then point `align_citations` at an embedder.

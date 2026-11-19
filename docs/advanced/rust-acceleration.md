@@ -135,7 +135,7 @@ uv sync --frozen
 uv run maturin develop --release
 ```
 
-`--release` enables optimizations; development builds without it are significantly slower. The Rust extension requires a C compiler in addition to Rust. On Linux install `build-essential` or the platform equivalent; on macOS install the Xcode command line tools; on Windows install Visual Studio Build Tools with the C++ workload. When you do not need a source build, install from PyPI with `pip install cite-right==0.4.0`.
+`--release` enables optimizations; development builds without it are significantly slower. The Rust extension requires a C compiler in addition to Rust. On Linux install `build-essential` or the platform equivalent; on macOS install the Xcode command line tools; on Windows install Visual Studio Build Tools with the C++ workload. When you do not need a source build, install from PyPI with `pip install cite-right==0.5.0`.
 
 ## When To Use The Pure-Python Backend
 
