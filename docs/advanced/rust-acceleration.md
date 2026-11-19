@@ -1,7 +1,7 @@
 
 # Rust Acceleration
 
-Cite-Right ships an optional internal native extension, `cite_right._core`, that reimplements the prepare phase, the inverted index, and Smith-Waterman alignment in Rust. The extension is published as abi3 wheels (`abi3-py311`), including linux/aarch64, plus an sdist. When the extension is importable, the library uses it automatically. When it is not, the same pipeline runs on a pure-Python fallback path so the public API is unchanged.
+Cite-Right ships an optional native extension, `cite_right._core`, that reimplements the prepare phase, the inverted index, and Smith-Waterman alignment in Rust. The extension is published as abi3 wheels (`abi3-py311`), including linux/aarch64, plus an sdist. When the extension is importable, the library uses it automatically. When it is not, the same pipeline runs on a pure-Python fallback path so the public API is unchanged.
 
 The hot path stays the same shape either way: prepare tokenizes sources, builds passage windows, computes IDF, and (on the default path) fills an inverted index; per answer span the pipeline picks candidate windows, then Smith-Waterman localizes the citation. The Rust extension accelerates each of those stages; it does not change which stages run. The inverted index only chooses which windows to align. Smith-Waterman still localizes `char_start` / `char_end`.
 
@@ -15,9 +15,7 @@ The internal binding `rust_tokenize_and_prepare(source_texts, window_size, strid
 
 `align_pair`, `align_pair_details`, `align_pair_blocks_details`, `align_batch_details`, `align_batch_blocks_details`, `align_best`, `align_best_details`, and `align_topk_details` are the alignment entry points. `align_pair_blocks_details` and `align_batch_blocks_details` additionally return the per-alignment `match_blocks` needed by `CitationConfig(multi_span_evidence=True)`. The Rust `RustSmithWatermanAligner` selects between these depending on the configuration; the construction-time check requires the relevant entry point to be present, so a mismatched extension fails fast rather than silently producing empty `evidence_spans`.
 
-`cite_right._core` is a private module. Its internal `rust_build_citations_fast` function accepts candidate data from Python and returns citations and retrieval support as JSON. The internal `PreparedCorpus.build_citations` method keeps source texts and offsets in Rust and returns citation and retrieval support structs.
-
-Both builders require `query_stopword_ids: Sequence[int]` for query token IDs excluded from content coverage. Both accept `alias_remap: AliasRemap | None = None` for equivalent token IDs in alignment and coverage. These arguments are keyword-only for `rust_build_citations_fast`.
+Both Rust citation builders — the legacy JSON-shaped `rust_build_citations_fast` on `_core` and the newer `PreparedCorpus.build_citations` method — require `query_stopword_ids` (the query token IDs excluded from content coverage) and accept an optional `alias_remap` (`AliasRemap`) for equivalent token IDs in alignment and coverage. In `rust_build_citations_fast`, both arguments are keyword-only and `query_stopword_ids` is newly required. The corpus path keeps source texts and offsets in Rust and returns only the citation and support structs; the legacy path returns a JSON string that `citations.py` parses into `Citation` / `RetrievalSupport` lists. `PreparedCitationCorpus.align` wires `AliasRemap(term_aliases.ids)` into `build_citations` automatically when `term_aliases` is configured.
 
 ## When Rust Prepare Runs
 
@@ -27,6 +25,8 @@ Both builders require `query_stopword_ids: Sequence[int]` for query token IDs ex
 - `cite_right._core` imports successfully.
 - The tokenizer is a `SimpleTokenizer`.
 - The source segmenter is a `SimpleSegmenter`.
+
+A custom tokenizer or segmenter forces the Python prepare path regardless of `use_rust` or extension availability; the resulting corpus keeps `inverted_index=None` (and `rust_corpus=None`), so alignment falls back to the Python lexical prefilter and `SmithWatermanAligner`.
 
 When any of those is false, the Python prepare path runs: source passages are built, candidates are built from `SimpleTokenizer`, and IDF is computed in Python. The resulting `PreparedCitationCorpus` has `inverted_index=None` and `rust_corpus=None`, and `_select_candidates` falls back to lexical prefilter on each span.
 
@@ -41,13 +41,13 @@ If the Rust path raises during `from_sources`, the corpus is rebuilt on the Pyth
 ```python
 from cite_right import align_citations
 
-# Default. Uses Rust if cite_right._core is importable, else pure Python.
+# Default. Uses Rust when cite_right._core imports, else pure Python.
 results = align_citations(answer, sources, backend="auto")
 
 # Force the pure-Python aligner (SmithWatermanAligner).
 results = align_citations(answer, sources, backend="python")
 
-# Require Rust. Raises RuntimeError if the extension is missing.
+# Require Rust. Raises RuntimeError when unavailable.
 results = align_citations(answer, sources, backend="rust")
 ```
 
@@ -62,7 +62,7 @@ If `cite_right._core` is not importable, every step that the extension would do 
 - **Prepare.** `PreparedCitationCorpus.from_sources` skips the Rust `_from_sources_rust` branch and runs the Python prepare path. The corpus has `rust_corpus=None` and `inverted_index=None`. The same `PreparedCitationCorpus` type, the same `align` API.
 - **Inverted index.** `_select_candidates` calls `_add_lexical_candidates` directly. There is no conjunctive rare-token intersect, but the same `max_candidates_lexical` cap applies. For paraphrase-heavy content where the index is the recall win, the Python path is the more likely failure mode.
 - **Alignment.** `_default_aligner` returns a `SmithWatermanAligner` (pure Python). The aligner computes the same alignment matrix and supports `return_match_blocks=True`, so multi-span evidence is still available on the fallback path.
-- **Citation building.** The Python `process_alignment_to_citation` path is used; the Rust `rust_build_citations_fast` and `PreparedCorpus.build_citations` paths are skipped silently.
+- **Citation building.** The Python `_build_python_citations` path is used; the Rust `rust_build_citations_fast` and `PreparedCorpus.build_citations` paths are skipped silently.
 
 ```python
 try:
@@ -101,7 +101,7 @@ The Rust extension allocates outside Python's managed heap. `tracemalloc` will n
 
 ## Correctness Guarantees
 
-The Rust implementation is required to match Python outputs exactly. That is enforced by tests, not just aimed for. The same `Citation` struct comes out of either backend: same `status`, same `char_start` / `char_end`, same `evidence`, same `evidence_spans` (when `multi_span_evidence=True`), same `components`, same `retrieval_support` (when present). Deterministic tie-breaking and identical score normalization are part of the contract, not aspirational. Edge cases including empty sequences, single-token sequences, and sequences with no matches are handled identically.
+The Rust implementation is required to match Python outputs exactly. That is enforced by the Python/Rust parity contract tests, not just aimed for. The same `Citation` struct comes out of either backend: same `status`, same `char_start` / `char_end`, same `evidence`, same `evidence_spans` (when `multi_span_evidence=True`), same `components`, same `retrieval_support` (when present). Deterministic tie-breaking and identical score normalization are part of the contract, not aspirational. Edge cases including empty sequences, single-token sequences, and sequences with no matches are handled identically.
 
 If a call must match between the two backends (audit, regression check), the simplest pattern is to run both and compare:
 
@@ -135,7 +135,7 @@ uv sync --frozen
 uv run maturin develop --release
 ```
 
-`--release` enables optimizations; development builds without it are significantly slower. The Rust extension requires a C compiler in addition to Rust. On Linux install `build-essential` or the platform equivalent; on macOS install the Xcode command line tools; on Windows install Visual Studio Build Tools with the C++ workload. When you do not need a source build, install from PyPI with `pip install cite-right==0.5.0`.
+`--release` enables optimizations; development builds without it are significantly slower. The Rust extension requires a C compiler in addition to Rust. On Linux install `build-essential` or the platform equivalent; on macOS install the Xcode command line tools; on Windows install Visual Studio Build Tools with the C++ workload. When you do not need a source build, install from PyPI with `pip install cite-right`.
 
 ## When To Use The Pure-Python Backend
 

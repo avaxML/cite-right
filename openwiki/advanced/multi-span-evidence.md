@@ -4,8 +4,8 @@ title: Multi-Span Evidence
 description: How CitationConfig(multi_span_evidence=True) exposes non-contiguous evidence regions on a Citation via evidence_spans, with gap merging and a max-spans fallback to the legacy contiguous span.
 tags: [multi-span, evidence, citation-config, smith-waterman, match-blocks, exact-evidence, source-chunk, citation-alignment]
 verified:
-  - by: openwiki/0.4.0
-    at: 2026-08-26T03:32:47.432Z
+  - by: openwiki/0.9.0
+    at: 2026-11-19T03:14:58.424Z
 sources:
   - id: openwiki-source-b1f252781b2a8b1f101b4564
     resource: repo://rust_core/src/citation_fast.rs
@@ -25,9 +25,13 @@ sources:
     resource: repo://src/cite_right/core/aligner_rust.py
   - id: openwiki-source-376cf838d701ccf9f40efc03
     resource: repo://src/cite_right/core/citation_config.py
+  - id: openwiki-source-b3431af41a97a9253d6038b0
+    resource: repo://src/cite_right/core/prepared_corpus.py
   - id: openwiki-source-32f69dac67cf7ab0d63041c2
     resource: repo://src/cite_right/core/results.py
-generated: {by: "openwiki/0.4.0", at: "2026-08-26T03:32:47.432Z"}
+  - id: openwiki-source-5efe25e83718d5c05dbced26
+    resource: repo://src/cite_right/core/span_support.py
+generated: { by: "openwiki/0.9.0", at: "2026-11-19T03:14:58.424Z" }
 ---
 
 # Multi-Span Evidence
@@ -52,7 +56,7 @@ flowchart LR
     EX --> LEG[Citation.evidence<br/>Citation.char_start/end<br/>stay enclosing]
 ```
 
-The default / Rust path produces identical multi-span output to the pure-Python fallback. Rust prepare and Rust alignment both populate `match_blocks` when `multi_span_evidence=True`; the result is normalized through the same `_alignment_to_evidence_spans` path before it reaches a `Citation`.
+There are two routes to a `Citation`. On the Python path the aligner returns `Alignment.match_blocks` and `_alignment_to_evidence_spans` in `src/cite_right/citations.py` turns them into `EvidenceSpan` objects. On the Rust corpus fast path (`PreparedCorpus.build_citations` / `rust_build_citations_fast`) the same extraction runs natively in `rust_core/src/citation_fast.rs` and `rust_core/src/prepared_corpus.rs`, so the spans never cross back through the Python helper. Both routes implement the same merge and max-spans rules, and the Python/Rust parity tests assert identical output, so backend choice does not change which spans are returned.
 
 ## Enabling Multi-Span Evidence
 
@@ -75,7 +79,15 @@ config = CitationConfig(multi_span_evidence=True)
 results = align_citations(answer, sources, config=config)
 ```
 
-When the option is off, `Citation.evidence_spans` still carries a single-element list whose span matches the enclosing `evidence` field. When the option is on, the list has one entry per distinct matched region.
+The option is off by default. When it is on, both aligners are constructed with `return_match_blocks=True`, so `Citation.evidence_spans` may hold multiple disjoint spans while the legacy `evidence` / `char_start` / `char_end` fields stay one contiguous enclosing span that can include bridge text. When it is off, `evidence_spans` still carries a single-element list whose span matches the enclosing `evidence` field, and the aligners run without match-block traceback.
+
+```python
+citation = results[0].citations[0]
+print(len(citation.evidence_spans))   # e.g. 2
+print(citation.exact_evidence)        # e.g. "alpha beta ... gamma delta"
+for span in citation.evidence_spans:
+    print(f"{span.char_start}:{span.char_end} -> {span.evidence!r}")
+```
 
 ## Reading The Spans
 
@@ -199,9 +211,11 @@ for citation in results[0].citations:
 
 ## Backend Parity
 
-`CitationConfig(multi_span_evidence=True)` produces identical `Citation.evidence_spans` and `Citation.exact_evidence` on the pure-Python and Rust backends. The Python `SmithWatermanAligner` populates `match_blocks` through a detailed traceback in `src/cite_right/core/aligner_py.py`; the Rust `RustSmithWatermanAligner` populates them through the `align_pair_blocks_details` / `align_batch_blocks_details` paths. The build raises if the Rust extension is too old to expose those entry points, so a mismatched extension fails fast at construction time rather than producing silently empty `evidence_spans`.
+`CitationConfig(multi_span_evidence=True)` produces identical `Citation.evidence_spans` and `Citation.exact_evidence` on the pure-Python and Rust backends. The Python `SmithWatermanAligner` populates `match_blocks` through a detailed traceback in `src/cite_right/core/aligner_py.py`; the Rust `RustSmithWatermanAligner` populates them through the `align_pair_blocks_details` / `align_batch_blocks_details` paths, and the Rust corpus fast path through `smith_waterman_match_blocks` / `align_batch_with_match_blocks`. The build raises if the Rust extension is too old to expose those entry points, so a mismatched extension fails fast at construction time rather than producing silently empty `evidence_spans`.
 
-Rust prepare, including the index, still runs with multi-span on when `SimpleTokenizer` and `SimpleSegmenter` are in use. The same `PreparedCitationCorpus` is reused across many answers; the multi-span extraction is a per-alignment step, not a per-corpus step.
+The Python/Rust contract tests compare `Alignment.match_blocks` directly (tests/test_alignment_rust_parity.py) and compare full multi-span citation output across backends (tests/test_citations_multi_span.py), so backend choice does not change which spans are returned.
+
+Rust prepare, including the index, takes no multi-span input: `multi_span_evidence` is passed only at citation-build time. The same `PreparedCitationCorpus` is reused across many answers; the multi-span extraction is a per-alignment step, not a per-corpus step.
 
 ## Configuration Reference
 

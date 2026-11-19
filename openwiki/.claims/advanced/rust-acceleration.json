@@ -1,22 +1,22 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:3b8c5ec1dd3b6957d9dc27d2b220d46ea780b728bd5e8e7a02b036529a01a3c4",
+  "pageVersion": "sha256:e310fbbf065f2a005c285efbea204c66ef4176273ad13b645464799bf5f5f376",
   "claims": [
     {
       "id": "claim_bdd136ee0dd1493c809f4a4342180383",
-      "statement": "Cite-Right 0.4.0 ships an optional native extension at cite_right._core that reimplements prepare, the inverted index, and Smith-Waterman alignment in Rust, published as abi3 wheels (abi3-py311) including linux/aarch64 plus an sdist.",
+      "statement": "Cite-Right ships an optional native extension at cite_right._core that reimplements prepare, the inverted index, and Smith-Waterman alignment in Rust, published as abi3 wheels (abi3-py311) including linux/aarch64 plus an sdist; the extension and the Python package share the 0.5.0 version, so the public install path is pip install cite-right.",
       "evidence": [
         {
-          "resource": "repo://rust_core/Cargo.toml",
-          "version": "repo-file-v1:sha256:7624cfdebb94a5757a882917d8295c13b17233d19627f9590ee0af377c6d9bad"
+          "resource": "repo://rust_core/Cargo.toml#L1-L16",
+          "version": "repo-lines-v1:sha256:14e7a563d53de5901bf8bfdcaed0d139ac5f5bc95be151d3ecc75cbc73f9cecf:eyJzZWxlY3RlZExpbmVDb3VudCI6MTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhhM2NkNWE4MWIzZjlhNjIxYWE0OTNkOTBjNDVmNDJhYjU3MWQ0ZTQyYjhhZTVhZmYzNTFjYjBhMDJkMDZkODIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZkMmE2Yjc3MjFhZTBkZDdjYzA5YWQ1OTdkNzJjN2RkODczNjUzOWQ3NTJiNzUxMzJlMzdmNWU2ZWRkM2Q1NWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjowLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         },
         {
-          "resource": "repo://rust_core/src/lib.rs",
-          "version": "repo-file-v1:sha256:007205c3e5595e8f4fb446db55b9bd5b0f356a7459bfa3ce164578c34f960d85"
+          "resource": "repo://rust_core/src/lib.rs#L1-L560",
+          "version": "repo-lines-v1:sha256:2adba63ffdf3abc932a6f6fa426fe85a4a228643bed18598014fd908660f226d:eyJzZWxlY3RlZExpbmVDb3VudCI6NTYwLCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI2YWRjNTNjYjljYmQwOTFhMWVjMTNmNTMxZDVmOWNjNjRiNzBjMzY1YjQ2ZWQzY2ViNjFkNjg3MmNhZTU5NmE2IiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiI0MTJjYTM0NWNjZjc1YmY5YzA4MDZiY2U2OTViZThkZTgwOGI3OTk4NDI1MWE3YTU0ZDIwMmNmNjEwMWRkNDUxIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MCwicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
         },
         {
-          "resource": "repo://src/cite_right/_core.pyi",
-          "version": "repo-file-v1:sha256:4f437437e50ab896ab92fc0684268316d2c381116780197fab33872e576389c5"
+          "resource": "repo://src/cite_right/_core.pyi#L1-L268",
+          "version": "repo-lines-v1:sha256:95bdb03a6d60dcb5b1bd6a04b4553559f517749fd2a6927723a2b3ad859fbe1c:eyJzZWxlY3RlZExpbmVDb3VudCI6MjY4LCJmaXJzdFNlbGVjdGVkTGluZUhhc2giOiI1Mzg0YmZkYjJkZjM4MGI2NTU3Y2M3YTcxZDE2ODkxNDE1YmNjYWE4NzY5OTQwNmUyMzZmNzUyYzY0MTUzODlmIiwibGFzdFNlbGVjdGVkTGluZUhhc2giOiIxZDc1ZTcyOTk2Yjc0ZjBmMjI0YWE0MGI0MmEwMzhlYTdiMjNkYzA2MzU4M2JjYTU0NjYyYWZkYmVkNjdmYWJiIiwicHJlY2VkaW5nQ29udGV4dExpbmVDb3VudCI6MCwicHJlY2VkaW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1IiwiZm9sbG93aW5nQ29udGV4dExpbmVDb3VudCI6MCwiZm9sbG93aW5nQ29udGV4dEhhc2giOiJlM2IwYzQ0Mjk4ZmMxYzE0OWFmYmY0Yzg5OTZmYjkyNDI3YWU0MWU0NjQ5YjkzNGNhNDk1OTkxYjc4NTJiODU1In0"
         }
       ]
     },
@@ -30,17 +30,21 @@
         },
         {
           "resource": "repo://src/cite_right/citations.py",
-          "version": "repo-file-v1:sha256:8267869be9c1dd05cc8ca65c96add4ca1ae2188c5c69db5a071c1afc351f21cf"
+          "version": "repo-file-v1:sha256:8bc512166b49a67657b8008597ee17295e27839a6006b1385a2e79e6028275f5"
         }
       ]
     },
     {
       "id": "claim_c56209a5ec9b48a5aa19dca8e63e74c7",
-      "statement": "PreparedCitationCorpus.from_sources takes the Rust prepare path only when use_rust=True (default), cite_right._core imports successfully, the tokenizer is a SimpleTokenizer, and the source segmenter is a SimpleSegmenter; otherwise the Python prepare path runs and the resulting corpus has inverted_index=None and rust_corpus=None.",
+      "statement": "PreparedCitationCorpus.from_sources takes the Rust prepare path only when use_rust=True (default), cite_right._core imports successfully, the tokenizer is a SimpleTokenizer, and the source segmenter is a SimpleSegmenter; a custom tokenizer or segmenter therefore runs the Python prepare path with inverted_index=None and rust_corpus=None, and a Rust-path failure rebuilds the corpus on the Python fallback with a sys.stderr message.",
       "evidence": [
         {
-          "resource": "repo://src/cite_right/core/prepared_corpus.py",
-          "version": "repo-file-v1:sha256:ed1affccdd3e7e2367f6807e8e33608aaa762b17ee7e460a9266430d0463dfee"
+          "resource": "repo://src/cite_right/core/prepared_corpus.py#L143-L156",
+          "version": "repo-lines-v1:sha256:9af6ec24e05f32b3d67b04fe165b34f57c639676e83d860a8b37091e91dc50c9:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjUxMDM0ODFjNTdkMGYwZGMwZjc2Y2QyY2M4YjM2MDRjNGU4Mjk2ZGE0MTIyYWRkMTllODE3NDVkYzdlMzMxYTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZlODMzOGJkZDQwZDdhYmE4YTU1NDE2MjNlYjliM2U3ZGEzMTE2MWI1NzdiNjVmMzAyZjg3Yzg0YmY1ZTJkNjUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjEzYTZhMTkyNWRjMGEwOGRjMjg1MTg2YmE0OGE0MWMxZmFlN2M1MjI0YmE3ZDU2MzAzMmQwY2YxZDk3Yzk2MDkifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/core/prepared_corpus.py#L316-L346",
+          "version": "repo-lines-v1:sha256:8e2bb89ac19cf5113fda503aa72d08feb89ccec38aba6d5213c7e35cc1196e9e:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ0OGEwNmJiOWU2ZWE1NzZhYzYxMTc4MzY1NjZhZTdhZThjZjM0YmM5MTlkYjA1MGUwZjhlODhhNTA3MmE2MmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMxYzFmMDNjZGYwNzEzNGU5MmY0MzFjYmZiNDdlZGY5MDNiMjVhNjkzYjhkMmFjOTQ0NzQ2NzZjZTgyOTgzZDciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImU5NTBiNDg3MDYwZGNlMWJlOTJkYzUwNzAyMGUyZjg2ODRiZGQ2YjEyMWVmN2QyNjUxODBiMmNmNDM2ZjZjYmIifQ"
         }
       ]
     },
@@ -50,21 +54,41 @@
       "evidence": [
         {
           "resource": "repo://src/cite_right/core/prepared_corpus.py",
-          "version": "repo-file-v1:sha256:ed1affccdd3e7e2367f6807e8e33608aaa762b17ee7e460a9266430d0463dfee"
+          "version": "repo-file-v1:sha256:eb9e77d4ea9198939fd0d802862ff750f627dcfd34c80eeff75bbecafe2fd5d7"
         }
       ]
     },
     {
       "id": "claim_5b2f371af2e749039c2db20441710633",
-      "statement": "align_citations and PreparedCitationCorpus.align accept a backend argument with three values: \"auto\" (default, try Rust then fall back), \"python\" (force SmithWatermanAligner), and \"rust\" (require RustSmithWatermanAligner, raise on construction failure).",
+      "statement": "align_citations and PreparedCitationCorpus.align accept a backend argument with three values: \"auto\" (default, try Rust then fall back), \"python\" (force SmithWatermanAligner), and \"rust\" (require RustSmithWatermanAligner, raise on construction failure); on the 0.5.0 bindings, rust_tokenize_and_prepare takes normalize_numbers/normalize_percent/normalize_currency as required keyword-only args and both Rust citation builders require query_stopword_ids and accept optional alias_remap, keyword-only in rust_build_citations_fast.",
       "evidence": [
         {
-          "resource": "repo://src/cite_right/citations.py",
-          "version": "repo-file-v1:sha256:8267869be9c1dd05cc8ca65c96add4ca1ae2188c5c69db5a071c1afc351f21cf"
+          "resource": "repo://docs/upgrading/0.5.md#L39-L49",
+          "version": "repo-lines-v1:sha256:5bae9efc73946f228d5070e887bd956a908b5637f0a3636de481d0c9bb0e1ab6:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJiMmQ4YThiOThkYjhkZGRhMjU3N2VlNmE2Y2EzNWY4YzcwMDA1NGQ5MDkxOWZhZWJkNGViZGExNjdmOWQ1ZWMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM0ZjY3OTljODU0OGJiMjVlZjc4NTIzNTI2N2Q1ODU5ZTQyNmJjOTQ3NmRiMWIwMzU3ZWU3NTA1NDEyMmRjM2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImUxOTNkMDAwY2FhMTNkNTVlZjg4ODdkMDI5ZTlkYWM2ZThhNGU1ZjA2YzdjYjQ5ZWFmYjIzNzRhMGYwZjBiNjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoyLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJmNGQ2YmZmMmY3OTI2NzI3OGZjOWY5ODM2YzYxNGZiNThlMWEyMzQ0NDRkYmViOTllOWU2NDFiNjk5NjNmNjYifQ"
         },
         {
-          "resource": "repo://src/cite_right/core/prepared_corpus.py",
-          "version": "repo-file-v1:sha256:ed1affccdd3e7e2367f6807e8e33608aaa762b17ee7e460a9266430d0463dfee"
+          "resource": "repo://rust_core/src/lib.rs#L117-L140",
+          "version": "repo-lines-v1:sha256:2ff06e95fa094300014cd8d70c1380baa7eb609d5289c82a98717f6f9666ff14:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEzMmEzMjJmN2NmMWE0ZTA3OGJlNzYxZTQyYmY0OWI1NGY1YmQ1YmUxNDA0NTRlYTU5YTJiOGQxMmY3MWIxOGUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAwNWFiYTI5Y2Y1NGFlODVhNDgyZjY1MmYwMTc5ZGU5ZDQwZjIwZTUwZGQ0MmRjMjI2YTdkOGRmYzYzOTMzM2YiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhkYjg3N2QyOGZiMWYzYmNmOGRmZWVjMWE1NDIyM2U5NTdlMDQwMTZlOGEyMjU2YzZlZTJiMTJhODM2OTljYTgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRhOTY4YjY5YTg0N2RkMDE2NDc2NmE1NmQyYzZmYzE5ZWQ0Zjg2MDg2NjlmZGZkZjk4MWJlMmIyN2Q1MWI1ZWUifQ"
+        },
+        {
+          "resource": "repo://rust_core/src/lib.rs#L396-L430",
+          "version": "repo-lines-v1:sha256:91c3fd777e8f64cd7c5d56765ec1c94e4bf0892c7b00ee84b1c336624effdffd:eyJzZWxlY3RlZExpbmVDb3VudCI6MzUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjEyZmIwYTQ2MjBlZDhjNDY4NGZlZjVhY2FjNjY2NDViZjk1OTkyOGVjMzdlMDM3Njc3NzJlOGIwMzNlZmYwZjYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBlYjI1ZDU0MzYzZmViNDQzOWRlZjU1MDNmMzgyNmYwZjc3ZDE0NDgzMTQ0YzgyMDZlYmZiMWM1ZDBhNWU2NmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjAxYjY4MDEzYzRjNDZhODA2ZmJlZTI0OTk5ODE5NzU1YjljODBjY2VjYTkzZDQ2ODE0NjIxNjY1MTRlNjc2YTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk5MzUxNDVmY2RkNmI3YWE4YTdiM2NmZGVlZGVhODAzYjM3NTFjNTU3MjgzZDQ5MWFkYTA1ODlhZTQ1Zjc3ZmEifQ"
+        },
+        {
+          "resource": "repo://rust_core/src/prepared_corpus.rs#L236-L266",
+          "version": "repo-lines-v1:sha256:03c289c325081aee23c65d485386c6fb72d461d5a4113aa5fefcb6285e234db1:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFhMTM5YmJiNjgwOTFkYTJmNjllY2MzNmYzMjYyYjAwODM4OWE4YmFhZGQwZDhmYmIwOGVlNzc5YTE4NmJiZDciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwMzkyYzFiODA2ZTNiMTNmOTczNzlmMGFhZjc3ZDRmMTM2MDZhZTU4NmYwM2Y4YWViN2UwYTJkN2ZmMzliY2MiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjczOTFjMDBlMjU5ZmY1Zjk5Zjg0ZWE1OTk4ZjA2ZWMzMTZmZGIzNzNlYTYzNTQ5MTBiMmZlNjM1MjRmNzNlYzQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcyMGVlZjljYzNiZDc3NDdhMjQ3MGFmYWQxZDIyOWVmMzVjMzhkODMxNTZjNTM3NWE2MzAzZjQ3ZWZiMWIzMDkifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/_core.pyi#L149-L170",
+          "version": "repo-lines-v1:sha256:b966c9d4680f362589b8fade65083817c4913ef5d430b8baf50edaa0c35ba714:eyJzZWxlY3RlZExpbmVDb3VudCI6MjIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAwZTcwN2NhYjljYWNiNmIxYzkzMzJkMThmZDI3OGVlNDExOWNmOGVjYTY5YzUwNjVmMjEzZGZmZGE5MWQ3NDciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZmNjI4YTdiODBiMmYzMzk4Zjk2ZDQxNzYwNmVkZDBlNTA0OWViZTdkMzE5MTNjOGRlNjdiMTk5YWQ5NzViMjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMxOGMzZDVkMjg2Yjg4NWMwZDRhMmE4NTM0YWRlMTU4N2EzZDdiOGEzOTA3ZWU0ZjUyZTg3ZDE0OGRiNTFjMzUifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/_core.pyi#L174-L210",
+          "version": "repo-lines-v1:sha256:edc24eced8485966315d27376b32b2bb47fef694ebe8fb1b67e3e9dc4a49be11:eyJzZWxlY3RlZExpbmVDb3VudCI6MzcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjIxOTk4NjU0OGMzYzVmNzA1MmM3MTc3MDcxYTg3ZDgyNDNlMDE2MWMxYmVlYjM5OGFmM2MzZGMyOGIxNjQ2OWIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijk0ODFiYzFlYTgxYjZkNTA1YjMzMGI2ODAzM2FlNDg2YmVmZmIwOTI5YzBiNmZlZTA2NWRjOTUyNDAzYzg4ZTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjMxOGMzZDVkMjg2Yjg4NWMwZDRhMmE4NTM0YWRlMTU4N2EzZDdiOGEzOTA3ZWU0ZjUyZTg3ZDE0OGRiNTFjMzUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImYzZWJmZmEzY2YxMjgxMTFhZTgwNjcxMDhiODQ0ZDkyOWI0Zjg0OTE5NTI5MmM5N2U4ODVlOTg1YmVkYWQ0ZjMifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/core/prepared_corpus.py#L330-L342",
+          "version": "repo-lines-v1:sha256:4e05857aec88aa7c022f92fdf94acae208454b41ebd08cf9d88e65788bf0b7b3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQ3Y2YzNzNjNWJiYjc3N2MwMWRmYzk2ODQ3MDdkYzNlYzVhZWU2NmQzYWYyZmI2ZDI5YzZjMTIxNjA5OWZkYzIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImQzMmVmMWI1NTgyZTNhNTg2YTEzN2Y3MThhZTNjYzY4YzFkNDY4MDI2M2UxZWM0MmMxNzA2YTg0MDc0YTEwNmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImJjZmRjZjg3ZWI4OTAxNTRjOGFjNGRlMmE4ZWI5YzdiMTcwOGY0N2ExOWVlZTU2ZGY2OWVmZGU2OGY1NmY1NmIifQ"
         }
       ]
     },
@@ -74,7 +98,7 @@
       "evidence": [
         {
           "resource": "repo://src/cite_right/citations.py",
-          "version": "repo-file-v1:sha256:8267869be9c1dd05cc8ca65c96add4ca1ae2188c5c69db5a071c1afc351f21cf"
+          "version": "repo-file-v1:sha256:8bc512166b49a67657b8008597ee17295e27839a6006b1385a2e79e6028275f5"
         }
       ]
     },
@@ -84,11 +108,11 @@
       "evidence": [
         {
           "resource": "repo://src/cite_right/citations.py",
-          "version": "repo-file-v1:sha256:8267869be9c1dd05cc8ca65c96add4ca1ae2188c5c69db5a071c1afc351f21cf"
+          "version": "repo-file-v1:sha256:8bc512166b49a67657b8008597ee17295e27839a6006b1385a2e79e6028275f5"
         },
         {
           "resource": "repo://src/cite_right/core/prepared_corpus.py",
-          "version": "repo-file-v1:sha256:ed1affccdd3e7e2367f6807e8e33608aaa762b17ee7e460a9266430d0463dfee"
+          "version": "repo-file-v1:sha256:eb9e77d4ea9198939fd0d802862ff750f627dcfd34c80eeff75bbecafe2fd5d7"
         }
       ]
     },
@@ -98,7 +122,7 @@
       "evidence": [
         {
           "resource": "repo://src/cite_right/citations.py",
-          "version": "repo-file-v1:sha256:8267869be9c1dd05cc8ca65c96add4ca1ae2188c5c69db5a071c1afc351f21cf"
+          "version": "repo-file-v1:sha256:8bc512166b49a67657b8008597ee17295e27839a6006b1385a2e79e6028275f5"
         }
       ]
     },
@@ -112,7 +136,7 @@
         },
         {
           "resource": "repo://src/cite_right/citations.py",
-          "version": "repo-file-v1:sha256:8267869be9c1dd05cc8ca65c96add4ca1ae2188c5c69db5a071c1afc351f21cf"
+          "version": "repo-file-v1:sha256:8bc512166b49a67657b8008597ee17295e27839a6006b1385a2e79e6028275f5"
         }
       ]
     },
@@ -126,11 +150,11 @@
         },
         {
           "resource": "repo://rust_core/src/lib.rs",
-          "version": "repo-file-v1:sha256:007205c3e5595e8f4fb446db55b9bd5b0f356a7459bfa3ce164578c34f960d85"
+          "version": "repo-file-v1:sha256:2adba63ffdf3abc932a6f6fa426fe85a4a228643bed18598014fd908660f226d"
         },
         {
           "resource": "repo://rust_core/src/prepared_corpus.rs",
-          "version": "repo-file-v1:sha256:3f781f66dcada1e2b69e592dc252fca60569e7888679c6341666356efe4382d1"
+          "version": "repo-file-v1:sha256:bffaaf5c7c50ce6a26c9bc5f41b9c56ce2705f35ed35d9088ef202e592789331"
         },
         {
           "resource": "repo://rust_core/src/smith_waterman.rs",
@@ -164,7 +188,7 @@
     }
   ],
   "verification": {
-    "by": "openwiki/0.4.0",
-    "at": "2026-08-26T03:32:47.432Z"
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-19T03:14:58.424Z"
   }
 }

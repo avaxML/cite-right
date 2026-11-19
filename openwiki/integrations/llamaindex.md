@@ -4,18 +4,22 @@ title: LlamaIndex Integration
 description: How to feed LlamaIndex retrievers into Cite-Right — convert TextNode and NodeWithScore lists to SourceDocument with from_llamaindex_nodes, preserve chunk offsets with from_llamaindex_chunks, and call align_citations. Covers the id_key fallback, the file_name default, start_char_idx handling, and LLAMAINDEX_AVAILABLE.
 tags: [llamaindex, integration, from-llamaindex-nodes, from-llamaindex-chunks, source-document, source-chunk, text-node, node-with-score, file-name, start-char-idx, align-citations, rag, retriever, query-engine, is-llamaindex-available]
 verified:
-  - by: openwiki/0.4.0
-    at: 2026-08-26T03:32:47.432Z
+  - by: openwiki/0.9.0
+    at: 2026-11-19T03:14:58.424Z
 sources:
   - id: openwiki-source-05ccef8d4cf1698187f20464
     resource: repo://pyproject.toml
   - id: openwiki-source-0d7249770abeac51acffd6d9
     resource: repo://src/cite_right/__init__.py
+  - id: openwiki-source-9420301e9a6eeb80c89f2f99
+    resource: repo://src/cite_right/citations.py
+  - id: openwiki-source-b3431af41a97a9253d6038b0
+    resource: repo://src/cite_right/core/prepared_corpus.py
   - id: openwiki-source-32f69dac67cf7ab0d63041c2
     resource: repo://src/cite_right/core/results.py
   - id: openwiki-source-6bdbae01887b73d94b8375db
     resource: repo://src/cite_right/integrations.py
-generated: {by: "openwiki/0.4.0", at: "2026-08-26T03:32:47.432Z"}
+generated: { by: "openwiki/0.9.0", at: "2026-11-19T03:14:58.424Z" }
 ---
 
 # LlamaIndex Integration
@@ -29,7 +33,7 @@ This page walks the two conversions, the `id_key` and `start_key` / `end_key` kn
 The LlamaIndex adapters import `llama_index.core.schema` at module load. If that package is not present, the import paths are still exported but resolve to `None`, the `LLAMAINDEX_AVAILABLE` flag is `False`, and the adapter functions raise `ImportError` with a hint.
 
 ```bash
-pip install "cite-right[llamaindex]==0.4.0"
+pip install "cite-right[llamaindex]==0.5.0"
 ```
 
 The extra is `llama-index-core>=0.11.0` (see `pyproject.toml`). You do not need the full LlamaIndex distribution; `llama-index-core` is enough to use the adapters with any LlamaIndex retriever or query engine (`VectorStoreIndex`, `SimpleDirectoryReader`, the `llama-index-integrations` readers, etc.).
@@ -44,7 +48,7 @@ if is_llamaindex_available():
     ...
 ```
 
-`LLAMAINDEX_AVAILABLE` is also exposed as a module-level boolean. `is_llamaindex_node(obj)` is the type guard for retriever results: it returns `True` for real `llama_index.core.schema.TextNode` and `NodeWithScore` instances, and `False` for anything else.
+`LLAMAINDEX_AVAILABLE` is also exposed as a module-level boolean. `is_llamaindex_node(obj)` is the type guard for retriever results: it returns `True` for real `llama_index.core.schema.TextNode` and `NodeWithScore` instances, and `False` for anything else (including when `llama-index-core` is not installed).
 
 The two type handles are also re-exported from the top-level package so you can use them in `isinstance` checks without an extra import:
 
@@ -141,7 +145,7 @@ for source, node in zip(sources, nodes):
 
 ### Metadata Preservation
 
-The full `node.metadata` dict is copied onto the resulting `SourceDocument.metadata`. Cite-Right does not read it during alignment — it is opaque to the pipeline — but your application code can read it back to recover anything the retriever or splitter attached: file names, page numbers, retrieval scores, custom tags.
+The full `node.metadata` dict is copied onto the resulting `SourceDocument.metadata`. Cite-Right does not read it during alignment — node metadata is opaque to the pipeline, and citations come from localized Smith-Waterman evidence only — but your application code can read it back to recover anything the retriever or splitter attached: file names, page numbers, retrieval scores, custom tags.
 
 ```python
 sources = from_llamaindex_nodes(nodes)
@@ -211,7 +215,7 @@ The chunk adapter does not set `SourceChunk.document_text`, even when the parent
 
 The rebase still produces correct absolute offsets without `document_text`: `_slice_source_text` in the alignment pipeline falls back to chunk-local slicing when `full_text` is not supplied. The rebase contract is in [Custom Sources](custom-sources.md#chunk-rebase-and-the-evidence-equality-invariant).
 
-If you have the parent text in memory and want the slice-equality check, build the `SourceChunk` directly with `document_text=parent_text` rather than going through the adapter.
+If you have the parent text in memory and want the slice-equality check, build the `SourceChunk` directly with `document_text=parent_text` rather than going through the adapter. `SourceChunk` validates that `document_text[doc_char_start:doc_char_end]` exactly equals `text`, so the parent must be the true full document, not another chunk.
 
 ### Missing Offsets
 
@@ -392,7 +396,7 @@ The `is_llamaindex_node(obj)` guard is also useful at the boundary between your 
 
 ## What Cite-Right Does Not Touch
 
-`metadata` is opaque to the alignment pipeline. Cite-Right does not index it, does not score on it, and does not emit it on the resulting `Citation` or `SpanCitations`. Round-trip retrieval scores, file paths, and page numbers back to the user through your own application code. The same is true of the `id` you used to build the `SourceDocument` — that is your handle for joining citations back to your retrieval layer.
+`metadata` is opaque to the alignment pipeline. Cite-Right does not index it, does not score on it, and does not emit it on the resulting `Citation` or `SpanCitations`. Citations are produced from localized Smith-Waterman evidence only; retrieval scores and metadata never influence the alignment. Round-trip retrieval scores, file paths, and page numbers back to the user through your own application code. The same is true of the `id` you used to build the `SourceDocument` — that is your handle for joining citations back to your retrieval layer.
 
 The adapter does not segment, tokenize, or index anything by itself. It is a one-line mapping from `TextNode` to `SourceDocument` (or `SourceChunk`); all of the alignment work happens inside `align_citations` on the same path described in [Citation Alignment](../concepts/citation-alignment.md).
 

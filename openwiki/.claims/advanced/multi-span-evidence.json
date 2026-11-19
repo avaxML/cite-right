@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
-  "pageVersion": "sha256:9a5833a2540b105dc626c4af0a9361b2027bda700b3e3b4041bfe8939ac6d000",
+  "pageVersion": "sha256:11ee1a3a7ff9adb3037b90e212a874a4d8eeebf025c6aa0871579ced8d7e0139",
   "claims": [
     {
       "id": "claim_bd7cae6c11c54fcb9405c4680540eb31",
       "statement": "CitationConfig exposes a master switch multi_span_evidence (default False) and two tuning knobs multi_span_merge_gap_chars (default 16) and multi_span_max_spans (default 5) that control whether citations may return non-contiguous evidence regions.",
       "evidence": [
         {
-          "resource": "repo://src/cite_right/core/citation_config.py#L81-L83",
+          "resource": "repo://src/cite_right/core/citation_config.py#L92-L94",
           "version": "repo-lines-v1:sha256:306e2cd0677b8d135125441bc3ecc45b48bc5649bb53c230fbb625a89f82b195:eyJzZWxlY3RlZExpbmVDb3VudCI6MywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiYTgzZDA3Nzk1YzljMzZkZGUxMzc0MjNlMWExNTk0MTFhYTNhN2I1NzQ4OWY4ZjNlYmUzZGZkYzQ1MmRiNWZmNyIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiZTYzNDkzOTEzYzFlYzFiYWRmZGY0MGE5MjNhZjliM2UyYzg3YmNmZmEwMzQ5ZmE0ZjNjOWRjYzgyYTdjNTIyZSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiYjdlMWRmZDRkY2QyMjhmZDlkMGZkNDY5ODYxOWZiMWVkM2VhNTgzMjFkY2I2YmM0NmFmMGIwNjc2Y2E2YmRiMiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNmYwZDkyMzMzYTE0MGJkNTQ1NDcwOGJiNGQ5MDYzNmZlNzhjZGFhMzI5MDA4MDc3NDEzYjk0OWYxZWUyZTg4ZSJ9"
         }
       ]
@@ -17,11 +17,11 @@
       "statement": "Multi-span evidence is a presentation layer on top of Smith-Waterman: the local aligner still produces one enclosing token_start/token_end window, and when constructed with return_match_blocks=True it additionally populates Alignment.match_blocks with disjoint exact-match regions that _alignment_to_evidence_spans converts into EvidenceSpan objects.",
       "evidence": [
         {
-          "resource": "repo://src/cite_right/citations.py#L1384-L1425",
+          "resource": "repo://src/cite_right/citations.py#L1477-L1518",
           "version": "repo-lines-v1:sha256:c7567b3d59a9f0f6a255aae6cb088daf92a0761002949afd30e0288064eaf59a:eyJzZWxlY3RlZExpbmVDb3VudCI6NDIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2ZDI1MjM3NzYxYTlkZTlmODE0MDM4MDQ5MzkwMGY2MDQ5NjM1Y2IwMmEzNWUzYzg5MzA1YjRlMWY2ZjcwOGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBlZjA4ZDczNmE5ZjJjYmFiYmRhM2RjYjQ1ZDRmOTVjOGY0Y2RhNzI1M2Y3MzZiNjIyMTFkYmU1ODE0ZWIzZGIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZmMjY3NzFiZjhjZGRhYzBhYzg3YjY3ZmFkNzQwODdkYTI1ZTc4ODg2YzFiODIxMjcwYzgxNjFlZjA3OGZiODgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjkyZmI2N2I1MjgyNTc1MjE1NTU2YjgwZTQwYWI2ODY2YTczZWQ3NzljY2Q4M2M0MDU3MmJiNTlhOWZlYjhhNWEifQ"
         },
         {
-          "resource": "repo://src/cite_right/core/results.py#L64-L86",
+          "resource": "repo://src/cite_right/core/results.py#L72-L94",
           "version": "repo-lines-v1:sha256:cdf223752439a6ff7ae3cdc06ff472e96145e6193f32941bebbd6c84781d1f97:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI3ZDhlODk2YzU4YWM4YmJmYzkxNzA0YTMzZmE2OTViYjE4ODJlNTRmOTVmZGQ5ZmZjMmEwMGEwODQzMDY3NTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQyMjVmZjliMGQyNzFlNDc2NjA4ODJhMDBkZGMzNzZlNmQxYThlYjY4MmVkZTNkMWZkNDg1ZmU0MjE0ZmFhMzkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNjYjBmYjM1NTdiNjYxZGIyMDYyMmQxZTJiNzUwMzE0NjExZjkzNzA3ZmRjMjU4YjIzM2Q3NjRkYjJjMWIwYTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImNjYzRkMzZjYjNjYmQ4N2ExYzZmM2FjMjUyMTIxMDc3Y2ViZTVjNTU0MzExMzMzNWI1OWMwMTMzNmM0NzQzZDIifQ"
         }
       ]
@@ -31,7 +31,7 @@
       "statement": "_alignment_to_evidence_spans only emits the multi-span form when CitationConfig.multi_span_evidence is True AND the alignment has more than one disjoint match block; otherwise it falls back to a single enclosing span.",
       "evidence": [
         {
-          "resource": "repo://src/cite_right/citations.py#L1384-L1438",
+          "resource": "repo://src/cite_right/citations.py#L1477-L1531",
           "version": "repo-lines-v1:sha256:e24b0bbbf708fd00bfe8efd28baa0b934a32df62cd9799e054ba520d06aa090f:eyJzZWxlY3RlZExpbmVDb3VudCI6NTUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2ZDI1MjM3NzYxYTlkZTlmODE0MDM4MDQ5MzkwMGY2MDQ5NjM1Y2IwMmEzNWUzYzg5MzA1YjRlMWY2ZjcwOGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjgwNGYwZWJhNzM0MDc2YzNjOWIzY2MzYjI3MDlhMmQ2ODMyYzk3M2Y2MjIzMTJjNzRiYmQ3YTY3ZDc3N2FmZGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZmMjY3NzFiZjhjZGRhYzBhYzg3YjY3ZmFkNzQwODdkYTI1ZTc4ODg2YzFiODIxMjcwYzgxNjFlZjA3OGZiODgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijc4YTU3M2I3NTM3YjRjNDM5Y2UzMWI3NzNiNGU3Y2QwMzAyMjBhYjQ5NTljY2FkY2U5NzEyN2VlMjVhMmIxNTQifQ"
         }
       ]
@@ -41,22 +41,26 @@
       "statement": "_merge_evidence_spans combines adjacent evidence spans when the source-character gap between them is at most multi_span_merge_gap_chars; values <= 0 disable merging and every disjoint match stays as its own span. The merged list is sorted by (char_start, char_end) and the merged EvidenceSpan is re-sliced from the source.",
       "evidence": [
         {
-          "resource": "repo://src/cite_right/citations.py#L1471-L1510",
+          "resource": "repo://src/cite_right/citations.py#L1564-L1603",
           "version": "repo-lines-v1:sha256:5c4560863fdece012d60ff2972de0419abd9e58bf3aa0f6bdedfcfda86632258:eyJzZWxlY3RlZExpbmVDb3VudCI6NDAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJiNWVjZWZlOTFiNmZhY2FkMmY5ZTQ1NDJiOTA1MTFlYmZlZTI4MjFiMjIxNzc0MzA1YmM3ZjRmMWQ2ZGFkY2YiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImY3MjE1ODE2NDg3YTEwNGMyOGM0NTM0ZDY2Nzg4OTU2NDYxMGM0MTQwZTFiMjFkMWUwZDUyMjFkOTdmMjExMDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhjYzRhN2QxY2M3OTZhYmEzZTQ2NzIzMzI3ZjUxN2U5ZjgxMTk4MmQyNTBmMDcwMjk4NmU0YjU3NjRhZDk1ODkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjJjODljNDFmNjZkMGE5ZGUxMDM5Mjc0OGVlMjg0ZDFmYTFlNmEzMTViZmUxYjdhNzBkNTBkNDQzMjdlMDNlY2EifQ"
         }
       ]
     },
     {
       "id": "claim_24a1e2e6eaa64954a8c5e4a1fd93aac6",
-      "statement": "When the post-merge span count exceeds multi_span_max_spans, the citation falls back to a single contiguous enclosing span: evidence_spans becomes a one-element list equal to the enclosing evidence, and exact_evidence equals evidence. The status and overall citation are not dropped.",
+      "statement": "When the post-merge span count exceeds multi_span_max_spans, _extract_multi_span_evidence returns [] (and Rust extract_multi_span_evidence returns None), so _alignment_to_evidence_spans falls through to _extract_single_span_evidence: evidence_spans becomes a one-element list equal to the enclosing evidence, and exact_evidence equals evidence. The status and overall citation are not dropped.",
       "evidence": [
         {
-          "resource": "repo://rust_core/src/citation_fast.rs#L257-L295",
-          "version": "repo-lines-v1:sha256:915405123c083a41d5e91fa959a1bda243e2fed25326223fe64c6776672deb5c:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjA0OTI0MmM3ZmE2Y2VkYjMzMjgwYTM2NzMwNzhmYzg0MTM1MzBjNTIwNGY4ZWVlMTczMTIxNjU2YzBiZmM2ZDkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxMmNhMzQ1Y2NmNzViZjljMDgwNmJjZTY5NWJlOGRlODA4Yjc5OTg0MjUxYTdhNTRkMjAyY2Y2MTAxZGQ0NTEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImExMmVkMzY4ZjgxMDlmNGNlM2YxOTVmOTNmZGI3YzA5NmY1ZmI5OTNlMjExODZmMjUyYjcwNjA4OTQwZGNkMzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVmYjU5NjU2YTlmNjFjMDc3NTFkNDk4YmY3ZjQyMjYzZmJiMDdjMjI2ZjMxOTBhMzdkZTcxMDQ1ZDA4N2Y3ZGYifQ"
+          "resource": "repo://rust_core/src/citation_fast.rs#L284-L307",
+          "version": "repo-lines-v1:sha256:71a0e07e2cbcb5575fc150ed46fe1c2eedf9a229ef861bc61dfafb7b7dab95f0:eyJzZWxlY3RlZExpbmVDb3VudCI6MjQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImI5NzE4MWY0OGEwMmUxZDgyNWYwYmM1NDQ2NzkxYmQ4NDJhY2RjNjBjYjEzMjU0YzQ1M2YzODMzYmJmZWYxMmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQwMmZiMjczNDA4MmFhZTU2OGM2Y2Q4NmFhMTAwOGY2NDM5Nzg0ODEzZDA1NmNlNzZiNjkwM2EyYTI3YWZjODIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjY1ZTk5MThlNDA1M2M3MGQ0M2FjMmJjMTU2MThmOGIwMjIxZWRlMjFjZTVmNWNkNGU3NjllYTFiMWU0OWE5NmMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVkZjNmNGMwOGJhYWExNDY2ZDY2NjgzZTNkODcyM2QxNzExNDRkYjc0YWU5ZWRiYTA0ZjRkMGQxYmM3NjRjOTYifQ"
         },
         {
-          "resource": "repo://src/cite_right/citations.py#L1405-L1425",
-          "version": "repo-lines-v1:sha256:f6d87c26afc492d91a950871a49c08502f4efcf23a333ba29a6f7256fbebb41c:eyJzZWxlY3RlZExpbmVDb3VudCI6MjEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhmNmZlN2ZiMDU3NTZhYjI3Y2UyNDI1N2ZlYzY0ZDEyNjYwNGEyMDU5Yzg1ZGVkNzcwNjg4Nzk2NDllZDExNmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBlZjA4ZDczNmE5ZjJjYmFiYmRhM2RjYjQ1ZDRmOTVjOGY0Y2RhNzI1M2Y3MzZiNjIyMTFkYmU1ODE0ZWIzZGIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYwOGVkMzM5NWNlMmMyNWVjMjA5Y2U4YTJmMjBiZjhlYzM3OWU0NjY2MTIwNDIzOTgxYjg4ZmM1YWZkZWI0MTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjkyZmI2N2I1MjgyNTc1MjE1NTU2YjgwZTQwYWI2ODY2YTczZWQ3NzljY2Q4M2M0MDU3MmJiNTlhOWZlYjhhNWEifQ"
+          "resource": "repo://src/cite_right/citations.py#L1477-L1496",
+          "version": "repo-lines-v1:sha256:829c26562ad7428f2510f99b206e0478c49c8448c41817b99293440a9d77a378:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE2ZDI1MjM3NzYxYTlkZTlmODE0MDM4MDQ5MzkwMGY2MDQ5NjM1Y2IwMmEzNWUzYzg5MzA1YjRlMWY2ZjcwOGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZmMjY3NzFiZjhjZGRhYzBhYzg3YjY3ZmFkNzQwODdkYTI1ZTc4ODg2YzFiODIxMjcwYzgxNjFlZjA3OGZiODgiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjlkODU0M2VhY2U5NTEzNDBmNzJkOWFiZTVmMjU4MDE3ZTBlZTBlY2Y3NWY3NzQ5NGVhODJlMGM3MzE2MGM5ZGEifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/citations.py#L1498-L1517",
+          "version": "repo-lines-v1:sha256:abf691090ab20b4389ea1b1d3521ecc9756e34e1ce3d8397c7d3f42c2520b9f7:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjhmNmZlN2ZiMDU3NTZhYjI3Y2UyNDI1N2ZlYzY0ZDEyNjYwNGEyMDU5Yzg1ZGVkNzcwNjg4Nzk2NDllZDExNmUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImYwOGVkMzM5NWNlMmMyNWVjMjA5Y2U4YTJmMjBiZjhlYzM3OWU0NjY2MTIwNDIzOTgxYjg4ZmM1YWZkZWI0MTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMwMmFmOThmYzRiNGIyZTgzMmQxYjhjNGVhNDUyZmUzNzVhOWJjNDA4ZTZjODVlYmJlZjdhOWFhNGFiN2I3NjEifQ"
         }
       ]
     },
@@ -65,7 +69,7 @@
       "statement": "Citation.evidence_spans and Citation.exact_evidence are additive: the legacy char_start, char_end, and evidence stay a single contiguous enclosing slice so that source.text[citation.char_start:citation.char_end] == citation.evidence still holds, while the new fields expose individual matched regions and their \" ... \"-joined exact text.",
       "evidence": [
         {
-          "resource": "repo://src/cite_right/core/results.py#L212-L283",
+          "resource": "repo://src/cite_right/core/results.py#L220-L291",
           "version": "repo-lines-v1:sha256:bcc38446911239862623829b957c48de7f8913d48f84198f52290b1245742b36:eyJzZWxlY3RlZExpbmVDb3VudCI6NzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjcxYWE2M2Q3Mzg4MmU4MjViZGZlZDJlNWNlNDkxNjUzZjE4MzIwNDQ2ODU5ZjMyNTdjODBiNTlhOGYxODFjODEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE1Zjc3MmVhMmY1OTM3NDYwMzk0OTMwMzJiNGMwZTJkNzFhNTk1MThiODNiNDA2MmJiMWJmYWE5MzAxZGQ4MTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijc4OWQ5YWNiOTlhYmU0ZjFiNWNmMzA2ODIzZTYxOTM1MTcwOGEyM2E1OTNjZDdjZTI5ZmQ1NmU4ZTRmMGExMTIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBlYWNiMWFlZWIyYmMyZWRkZjllNzI5NmVmZmFlMmY4OTdiMjA5ZjM2ZDllN2FmOGI0Y2NhOTlmZmU0MzQyMmEifQ"
         }
       ]
@@ -75,7 +79,7 @@
       "statement": "Citation.exact_evidence is a computed property: when evidence_spans is empty it returns evidence; otherwise it returns \" ... \".join(span.evidence for span in evidence_spans sorted by (char_start, char_end)).",
       "evidence": [
         {
-          "resource": "repo://src/cite_right/core/results.py#L273-L283",
+          "resource": "repo://src/cite_right/core/results.py#L281-L291",
           "version": "repo-lines-v1:sha256:e87e658ce8a190ef803135cd013a1fe4a86f8294127cbde222a4034063aef025:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBmZWQyM2RjNTI5NmY2YTYyNzIyZDQ0MzRjMDYwYWIxZDU2ZmM2ZWI3MjZlNTU1MjYxODRhYWQ4N2ZlNzk2NmEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImE1Zjc3MmVhMmY1OTM3NDYwMzk0OTMwMzJiNGMwZTJkNzFhNTk1MThiODNiNDA2MmJiMWJmYWE5MzAxZGQ4MTciLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFiYTBmNmEwNmUxZTNiODIzZGIwOGYzZjY5MjQ1ZjBmNGFiM2MwNzZkZmFjMGQ0ODIyMmY1MzY4MjM3YzlkNTUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBlYWNiMWFlZWIyYmMyZWRkZjllNzI5NmVmZmFlMmY4OTdiMjA5ZjM2ZDllN2FmOGI0Y2NhOTlmZmU0MzQyMmEifQ"
         }
       ]
@@ -85,7 +89,7 @@
       "statement": "Each EvidenceSpan is a frozen Pydantic model with char_start (inclusive), char_end (exclusive), and evidence, where evidence is the source substring equal to source.text[char_start:char_end] after chunk rebasing. EvidenceSpan is exported from the public API.",
       "evidence": [
         {
-          "resource": "repo://src/cite_right/__init__.py#L113-L113",
+          "resource": "repo://src/cite_right/__init__.py#L114-L114",
           "version": "repo-lines-v1:sha256:068e044de9fbbd8fb3e10d63467363c9e8b8e0d4b1fb14d14a261bbe73770a32:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiMDY4ZTA0NGRlOWZiYmQ4ZmIzZTEwZDYzNDY3MzYzYzllOGI4ZTBkNGIxZmIxNGQxNGEyNjFiYmU3Mzc3MGEzMiIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMDY4ZTA0NGRlOWZiYmQ4ZmIzZTEwZDYzNDY3MzYzYzllOGI4ZTBkNGIxZmIxNGQxNGEyNjFiYmU3Mzc3MGEzMiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOTMzNWRiZGE1YzEzMjYwY2FiYWFkMjkyZGJhOTFhYTQ2YjMyZjcxNWNlOGRhMTVkYzFmZWVjNWQ1MmQyOWNmMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiNzU3NTAwMmJiOGMzNTZmYzM1NzVkZGQ0NTVjMTAzMmYyZWZjNjRmZjQ1NTc4NGFiNjdhYzU0YWZlYjhlZjg1YiJ9"
         },
         {
@@ -93,7 +97,7 @@
           "version": "repo-lines-v1:sha256:8d95360f20ca941bc328c8166eeac719dab09cb4f1204d148f28ed3271d2aa75:eyJzZWxlY3RlZExpbmVDb3VudCI6MSwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiOGQ5NTM2MGYyMGNhOTQxYmMzMjhjODE2NmVlYWM3MTlkYWIwOWNiNGYxMjA0ZDE0OGYyOGVkMzI3MWQyYWE3NSIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiOGQ5NTM2MGYyMGNhOTQxYmMzMjhjODE2NmVlYWM3MTlkYWIwOWNiNGYxMjA0ZDE0OGYyOGVkMzI3MWQyYWE3NSIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMzYxYmUwYzQxNDZmNGY4ZmVjYmIzNDY0OTM2N2Q2NDFkY2MzMmE3ZTY3YWNhNDhhMWQ2OWM0YTVhNjQ2ODczMyIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZTNjNTlhOWIwMWI5NmNhMWQ5MTlhOWEyMzdhMGFkODk2OGM4NmI4OWMxOWE4Y2M3OTlmYjMxZWEyZmI0NGFlZiJ9"
         },
         {
-          "resource": "repo://src/cite_right/core/results.py#L193-L209",
+          "resource": "repo://src/cite_right/core/results.py#L201-L217",
           "version": "repo-lines-v1:sha256:b4a3300440530a0233852d228cf7038fd5893da48fd3e9dbd20d578b1297d6b8:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRhNTRjOGM5ZjUwZGUwNWNhZDk1OTExODBlMjliYzk5ZmJjMTQ3YjQzNzZkMTdkMTBhNWI5NGVhOTA1OTczNzAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg3YjhkOTAxMzBhYjVhMDg1NGFjMjc5ZTkxOWJjMTNiNmIyNmRhZDNkZTRjZDQ0MjZmMmRjMDA3MzgwZjMyMWQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijk3NDliOGUxNjk5OTVkODhhMjM4OTgwMzExYzEwZjRhNWJmNTZjOTM4NzYzZTE0ZDJiYjEzMWJlYjdhMTc3ZWMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRiODdlNDczNjRiNWI5N2YzYzg3ZjRmZmZiMGQ2YzU2YWFhYjk3ZmZiOWQ2NjMyYmM3MThlZGRmOGE1M2M3YTYifQ"
         }
       ]
@@ -103,7 +107,7 @@
       "statement": "CitationConfig.multi_span_evidence drives whether the default aligner is constructed with return_match_blocks=True on every backend (Python, Rust, and the auto fallback), so the multi-span traceback only runs when the feature is on.",
       "evidence": [
         {
-          "resource": "repo://src/cite_right/citations.py#L1105-L1135",
+          "resource": "repo://src/cite_right/citations.py#L1177-L1207",
           "version": "repo-lines-v1:sha256:7643e5fb077d3df99c2310c24e87a7d597b65de1fd99f141e384e79df4f73ff6:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJhYzIxNWIyZGE1MTFhNzk4N2RjNzM3OTQzZTc0MmJlM2RhZGEyMDk1ZTRmYTEwMzAwMGMxZjhmZjg0ZjlmZDUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU5MDlhNTNhNjE4ZDAyOGUxZDMwMDBjMGE3YWJjZWVjYmU1ZmIzN2Y0ZTUxMWVmZTQ2NjQzZmFkNmU2Njg3MmYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImFjMmM2OTQ3N2FmYjY3MzdlMDQzZTUyMDZlMWMyYTE0MTM0MGY4NGNhODI4NGY3YTkyM2IxYzQ2ZGMwZTA0OTciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImVhODJiMjU5OTIxYmM1NzhmMDhmY2UzOWJhMmJhNWNkMzhjYWNkZTY0OGNmYWQwODlmYmQzNWJkYWZiY2Q0MmMifQ"
         }
       ]
@@ -120,19 +124,31 @@
     },
     {
       "id": "claim_aa9f7b740c584f86bcffc9d418742533",
-      "statement": "The Python and Rust backends produce identical multi-span output: Python populates match_blocks through _consolidate_match_blocks on the detailed traceback in src/cite_right/core/aligner_py.py, and Rust populates them through smith_waterman_match_blocks / align_batch_with_match_blocks in rust_core/src/smith_waterman.rs.",
+      "statement": "The Python and Rust backends produce identical multi-span output: Python populates match_blocks through _consolidate_match_blocks on the detailed traceback in src/cite_right/core/aligner_py.py, and Rust populates them through smith_waterman_match_blocks / align_batch_with_match_blocks in rust_core/src/smith_waterman.rs (exposed as align_pair_blocks_details / align_batch_blocks_details). The contract tests compare match_blocks and full multi-span citation output, so backend choice does not change which spans are returned.",
       "evidence": [
         {
           "resource": "repo://rust_core/src/lib.rs#L455-L498",
-          "version": "repo-lines-v1:sha256:f7dae538919ad47f46c5c42a2aff06919a29cb5dcbc0a640fab023ab400be2a2:eyJzZWxlY3RlZExpbmVDb3VudCI6NDQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVhZTQ2YmRiY2E1OTUwMWM5NThlMjE4ZjRjMGM4NjY0ZjA5MWJmZDk3NzZmYTg3YTc3MjA4NTZkOGRiNjA5YzAiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImVlZGNjMDcxMWM4MTYyMDNmOGRjZTVmN2Q3MjdkM2MzZWE0ODZlZmNmOTY4ZTI1Zjc0YzU3YjgwYzA3YzQ2ZmUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjdiYmIwNzFiYzFjZmQ3MWMyMzU5MzJiNGI3NWQxZmUyNTA3MWFiYjgzNTAyYzIwZDI3MjBkNDYyYTcxNTdhYzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjFjMDkxZTIwMTQzNDBkYzlkZWZjZjg3MTBiNTRlZmZkNzg1MTRjYmI1N2I5MmM1M2NlMDJjYzNhNmVkZGZjM2YifQ"
+          "version": "repo-lines-v1:sha256:bcd22aa0a44559a4fe3650ca3870bc76a2ddb997f29336786665dd3c5814a971:eyJzZWxlY3RlZExpbmVDb3VudCI6NDQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY0MTdjN2Y5Y2IzMzVjODhlNTBjYjQ2NDIxZGFhY2U5OGQ3NjI1OTYxNDViNmEwNWRmNDBiMGUxN2VlYTQyODYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM1Y2RlZjgwODVhZTc0YWI2MzZkNjQ1OWY1YzZkNWZiZmIwZGIyNjRmMWIwZDc1YmFjNTE5YzliM2Y2NzE3YWMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImEwNGQ5Mzk5MmZhYWFkODgxMWExOGU5MDEzYmNhYmY2NWYyMzgyMmJlYTQ5NDljZDdhODZlYjMzNTRmNmQ0NjAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImRjMWYxYjczNzA3OTFhYzU0MzRmMGQzMDZhN2MyNTY4YTFkNDY1OTExOTAxYWU5YTViMDU2MzI1ZThkNjMxOWEifQ"
         },
         {
-          "resource": "repo://rust_core/src/smith_waterman.rs#L74-L167",
-          "version": "repo-lines-v1:sha256:b5dce065e4ca0731962ada90a22fd8bc1927a638cbe4650630266aeccee3ee49:eyJzZWxlY3RlZExpbmVDb3VudCI6OTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBiNTFhYTEyZGM4MWI2N2I0ZTRhMjJlYzM0NDc5ZGZkNDFiYzZhMDc3YWEyMjBkMGFmYWJiM2NkMGQxNTQ0MTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImM3OWQwNzFiMzFlNzlhODM2ZmZkOTY5ZmIwYmY3NTQwMmYyOGNlZWYxN2IzMjY0ZGUyOWE5YjA4OWE0MGY3NjkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRhOWIyZmJhMTc5M2RjYzIwODkxNGE3ZDY5MzZhZmM1YzI5OTI5NmRhYWYwOTBmYzExNDViNzE3YWNjMjg1MmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ4ODU5MjEwZWJjYjEyY2Y2OGM2MTYyMjJmYzU2MGMxZjY4ZTJmYTMxZjYzMDQ5M2RmODA5NTg4ODdkNTdhZjkifQ"
+          "resource": "repo://rust_core/src/lib.rs#L63-L89",
+          "version": "repo-lines-v1:sha256:0cc2fb4ff95da0ce53cc922d4ca904cd773ff11e02056a63a5dbe45e1981c789:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImU3ZmJlOGMyOGRhNTQwNjdkOTEyNmJlN2JhMjBiM2Y2ZjkxM2UzZDk5YWNmNmFhMDg0ZmQxMDM4MjZjODY0NGQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY0NzVlOTRhOTA0YWM0OWIzMTU0ZDQ2NzJhNjZlODYyOWI4NmRhYzc0ZTNlMjkzN2JlNjkyN2FlM2RhMTFjNTMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjYwNjNjNGQxYWY4Y2Q4OWJiMGJkZDc2NTdmZmNiZjY4MDZhNjEwZDc5ZDZjOGQ0YzMwN2MyNDFkZjM5MDA1MjIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6Ijk3ZDY2MGJiZGI1Y2QyNTRjZDA3YzY5ZDMzYzI2MTE3YzE0NmM0MmZlNDE2MGM4OTAyODUwYzhmOTg4MDRiNDAifQ"
         },
         {
-          "resource": "repo://src/cite_right/core/aligner_py.py#L486-L550",
-          "version": "repo-lines-v1:sha256:f3785cfe4cd90d85e82de0697615033d907ad4fbe8c4acac7657a7db6d3d79f5:eyJzZWxlY3RlZExpbmVDb3VudCI6NjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFmZjg2N2NiMjBlZGNmZjE4MzJjODdlMTU4ODNkNDlhNWY3Y2FiOWJmNjk0NDQ4NDRkNDg4OTY4YjQ0ZGFkMWYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyMjI5MDk4YWYyMzBiNDQ0YzY2YWFjZDQ0MmFhM2UxNzJlNTg5NjAxNmNjZDFiZjljNmYxZjIxZDgyYTlkYjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6Ijg1MmUxMTQ2NzgzNTNkOWZmZjliYzljM2M4MzNkMzVlZjJkM2NhMTdlNGZkMTRkNmRmY2Q5ZDI3NmE1ODNkNDAiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
+          "resource": "repo://rust_core/src/smith_waterman.rs#L604-L628",
+          "version": "repo-lines-v1:sha256:c332e5872fc1ee1b556a992954f2c58ca23f9e6e35081d51dd229c7ea739a814:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImNiZTlmOTVjMWMwYzQ2ZmYzYzlmMTVmNDA1ZTEwOGRhZGYyNjg2OTg2MTExNGM5ZTBiNWNmNDIwMTk0YmQ2N2MiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAzZjBjMDEyZDVmOTBmYTkyN2M0N2YyZmUzYjE4Yjg5ZDI3YTAwNTBkMTY2NWE2YTRmMDI0ZWQ5YjdlY2M2OWUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImZmNGVlNjc4M2FhY2ZjNjdiNTE3NTZlZWIxN2FhMzI1NWNmNjcxNGRmYzMyMjg5NGRmZTI3NjFhYzgxYjgxNTYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImY2ZmQ3NzBmY2VlMGFlNzM3ZGIzOGNiMDg1MTRjZTk4ZWEwZDJjMWY5ZDUzOTNlYzc1MDg0ZTRhYzRiOTMyZjcifQ"
+        },
+        {
+          "resource": "repo://rust_core/src/smith_waterman.rs#L74-L90",
+          "version": "repo-lines-v1:sha256:4a63e97fd56f188eb4af7bc112e37fbd4e973a9f62466b78e4aff2940ff67fca:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBiNTFhYTEyZGM4MWI2N2I0ZTRhMjJlYzM0NDc5ZGZkNDFiYzZhMDc3YWEyMjBkMGFmYWJiM2NkMGQxNTQ0MTYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFlNzVjNzBkOTQ2MzYyNWUxMDc5ZmQ4ZmM4ZWU2MmFkMmU5MmM0MmJlYWFiZmQ4NWI3OGQ4ZTBhNDk3OWI5NGEiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRhOWIyZmJhMTc5M2RjYzIwODkxNGE3ZDY5MzZhZmM1YzI5OTI5NmRhYWYwOTBmYzExNDViNzE3YWNjMjg1MmEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjI3ZWMyM2EwYzY3ZDFjNWNjMDkxMjNmODg1ZTUyODVlMzMwZDM2YWQ0MmEwNzVhOWM1MWRmNDU1NTMxOGM3ZTUifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/core/aligner_py.py#L501-L531",
+          "version": "repo-lines-v1:sha256:e44bc575cd891df40edc394e9f324afcd0fcf48724be249a20c5255a370ef1cf:eyJzZWxlY3RlZExpbmVDb3VudCI6MzEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijg4ZWMyMDk0NjBmOGNmODc3NmMzYjE5MGZhOGM5MWEyYmVjODA3MTRlNTlhMTU2ZDI3Zjk3NjkwN2NjOGZjYzEiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJkOTZiMWJkYWFkNWMyNjIwZGZhOWIwNzM2OTc2NDIxMTE1MDE0OThiYTkyMzZkOTJiNTQwZGVlMDVlYjhlNjMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjkwYTYzNGRmM2ExOWI4YmEwYzVkNTEzM2M3MDBlMWE3YjA5NTRjMWYzOTc5MmZjNTZlODhiNzIzYzFiMWFjZTQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjM4NTIxMjFhODc5M2MyZDYyZDM2ODVlNTQ0MjI0MjU3NDk0NmVkMDYxZTZjZGU4MmU1NDg3NmZkZGY4MGE0YjYifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/core/aligner_py.py#L531-L550",
+          "version": "repo-lines-v1:sha256:080ac32b459399beffac18a45522f87e4fe710dbbe59027ed9965bef3454991f:eyJzZWxlY3RlZExpbmVDb3VudCI6MjAsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjJkOTZiMWJkYWFkNWMyNjIwZGZhOWIwNzM2OTc2NDIxMTE1MDE0OThiYTkyMzZkOTJiNTQwZGVlMDVlYjhlNjMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUyMjI5MDk4YWYyMzBiNDQ0YzY2YWFjZDQ0MmFhM2UxNzJlNTg5NjAxNmNjZDFiZjljNmYxZjIxZDgyYTlkYjQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjU3YzA5YmIyMGQwODM5NzgzNmNkYjA0YzVmZDQ5OTVjOTRiNzQ5YzhmNjJhMTk3ZDllNTJiMWIzYWRmNWY3YzciLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjowLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImUzYjBjNDQyOThmYzFjMTQ5YWZiZjRjODk5NmZiOTI0MjdhZTQxZTQ2NDliOTM0Y2E0OTU5OTFiNzg1MmI4NTUifQ"
         }
       ]
     },
@@ -141,30 +157,34 @@
       "statement": "Multi-span evidence respects SourceChunk offset rebasing: every EvidenceSpan.char_start and EvidenceSpan.char_end is in the parent document's coordinate system, sliced via _slice_source_text which uses source.full_text[abs_start:abs_end] when available and otherwise subtracts base_doc_offset from chunk-local text.",
       "evidence": [
         {
-          "resource": "repo://src/cite_right/citations.py#L1376-L1381",
+          "resource": "repo://src/cite_right/citations.py#L1469-L1474",
           "version": "repo-lines-v1:sha256:381a97f49f96a995bb156510a3acf6588642911cb50acaa6424525e376b57be7:eyJzZWxlY3RlZExpbmVDb3VudCI6NiwiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiZTNjM2I3MGM2NTIzNWQxZmVkYzVjODE5Y2VmZGUzZDMwOGU2ZmVmODVjNDliM2UwMTBmZGE5ODlkZmIxODIyOCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiYTViZjFiZTQyMzgxNDIxZDdiNzBjNmI0ZDUxOTc0MDAyNjkzZjMwZGZjYjc0ZDRlOTA0MzFiODY1YmM5NTkzMCIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiOGY5NThhZmI0NzdiMTMxOWFmZDU0MmZjNTkxOGFlMDcyNzU4NDdlMzQ0MzczNzhjMmE0OGNlYzFhNzhlMDY2MiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiODI3NDg3ZTNjZDNlY2M3MDJmZmZhMTVhYzlhZmQxZWRmOGUwN2E0MDM3YjU4MDk1YTUxYjZjOTJhZDY5NjVkNSJ9"
         },
         {
-          "resource": "repo://src/cite_right/citations.py#L930-L943",
+          "resource": "repo://src/cite_right/citations.py#L990-L1003",
           "version": "repo-lines-v1:sha256:599763c35832d1ea54f9a843c7bd466c145923ed8fe7f5d526b7c8e9c103ce05:eyJzZWxlY3RlZExpbmVDb3VudCI6MTQsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjlmODI1ZmExNGUzNmY3NjdlYTU5NzhjNGVjZWU0MTI0ZGFlMTZkOWRiMTNjOTRjOTc0NDFjYjc4YTc4ZDQ0NjgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRjNWYwODRlZWY2NzI4YjE2MTExYTMwN2RjNTFlNGQ5YzVlNjljMzZlODljOTZkNDllMWI1YjQ3YTU3MTRkNTYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjhjYzRhN2QxY2M3OTZhYmEzZTQ2NzIzMzI3ZjUxN2U5ZjgxMTk4MmQyNTBmMDcwMjk4NmU0YjU3NjRhZDk1ODkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQwYjBkNzIzNjRjNjYwZGYwYmU1N2UzMWRlYjYzNDdhYmViMjAyMjI0Y2FjMDMxZjRhNThlNTFjMGFkZDYzZWQifQ"
         },
         {
-          "resource": "repo://src/cite_right/core/results.py#L111-L161",
+          "resource": "repo://src/cite_right/core/results.py#L119-L169",
           "version": "repo-lines-v1:sha256:689f379911fcbe5ec52bd48a1dedbf990ed510253dd33857206851df33b68dfa:eyJzZWxlY3RlZExpbmVDb3VudCI6NTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc5ODFiYTU0NjYzZWU3YTZmYjYyMGQ0YTY3MjU3MmI1NmIzMDkxNjg3OTc4NGI2YzZmNDMxNzg0MWYxYWRjOTgiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImRmMjU1OWFlMzA0YWU3Y2ZkNWU4N2JiOWQyY2JiMjRjZTk3YjdmOTIyNzNmYzcyOTQzNTZiNzUwY2JiOTViM2QiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZiZDFhOGU4YWI3NGY2NWU3MDU4MDNlM2RkZjMwZThmZWM0NDRlMmYwMWM2MzNiM2M4ZTRkOGZkOWM0MDcwZWUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRiNTMwZWRlNGYzZTg4MmQ2ZTg1ZTllNmE3N2JiYTI5NTk5OTk3MWU2NTk5NGU0ZTA0MWJjMDAzYjE1NzhkMmYifQ"
         }
       ]
     },
     {
       "id": "claim_b370ead4134d44cbad1b438754d8a08b",
-      "statement": "Citation.components always exposes num_evidence_spans (the count of spans after merging and after any fallback collapse) and evidence_chars_total (the sum of span.char_end - span.char_start across evidence_spans), so callers can detect multi-span behavior without iterating spans.",
+      "statement": "Citation.components always exposes num_evidence_spans (the count of spans after merging and after any fallback collapse) and evidence_chars_total (the sum of span.char_end - span.char_start across evidence_spans), on both the Python and Rust build paths, so callers can detect multi-span behavior without iterating spans.",
       "evidence": [
         {
-          "resource": "repo://src/cite_right/citations.py#L867-L905",
-          "version": "repo-lines-v1:sha256:a119c73952da837aa839dc1eb28c6659bd0b1417a518f2a961c5f39b029c99cb:eyJzZWxlY3RlZExpbmVDb3VudCI6MzksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjMwYzFmMTg4ZjE0MmVkN2E4MjQ2ODBiMjA3MTcyYzU1MTliYzYxNGE0OGZkYTdjZjE2N2VkYjhkZGY3OTk1NmMiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjBmZmNmYzBmYjMxNjM4ZTA5YjE1NzNlMTU0MWI2NzI4ZWE4MWM5ZThmYjQ2OGUwNzllYTZmZjQ1N2MxODAxYWIiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjgyYTIxNzgwMmRkZmQxMjAxMDU3Nzc1M2RmZjM2NTViNGNjOTg5NGFjZTQ1ZGUzMWYwNDZjNDA3M2ExMTQxNzQifQ"
+          "resource": "repo://rust_core/src/citation_fast.rs#L234-L250",
+          "version": "repo-lines-v1:sha256:dd5ad5baae3fceb1dbe4896f8dde1576df58f168b13a4cac6b7fa71ecf43edc3:eyJzZWxlY3RlZExpbmVDb3VudCI6MTcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImJkYWZlOTI0NjM1M2FkZmI3MzY2OWMwYjAyN2Y3ODVlODE1OTE2M2I0ZDM3YmUyNGIwMzc1Y2RkZDE3MWZhZDYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ0YjYwYmJhNTViMWU2ZWFjYWQ5NGI3MjZmY2I4ZjhmZmE4OWU0YmMzMjAyYzU3YjBkNzI5NmQ2Y2JlODc3NDkiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjJlNjBjYzc1NmE2NWEzZDIwNmZlY2E0YmU4YmI0ZjU0MWRjYTg1NzcwOGMzMWIzNzg3NTU5MGZlNmE5NGJjMDYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjcyYzdhZDEwNTEwMGNmNTdkNWRiZTI3YmZmMjc2MmI2MWUxMDU0MDdkMzUzZmExZWI2MWYyN2QwYzBjZThmNzIifQ"
         },
         {
-          "resource": "repo://src/cite_right/core/results.py#L239-L251",
-          "version": "repo-lines-v1:sha256:76195601e0b9cfe9214715ae219b6db40929b83af283be43301ca4f4e756c153:eyJzZWxlY3RlZExpbmVDb3VudCI6MTMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjY1YzVmYzRlZWIxMzIyOTBjYzZiODc4NWQyZTMxNWVkMmJlZGI4OGZlN2Y3Y2RlZmVjNjlkYTgzNjQzYzI5NzkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjM3NGRkZjQzMWI3YTZjODVmODc1OTgxOTkyZGUyNzA2NjllZWYzMmRkOWY0ZjcyZjc4YTk1YTVkNmM1ZWNmNjIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjZlNTNiY2I5MGEzYzJmY2Q2OTEzOTU3MDgyODc0Zjg2ZDhlMGVlYTNhMGM5NDdkZDVmYmVjZGIwNDNjZDE1Y2IiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQyNmZiOTdmY2EwMjQ1ZmExYTJlZDdmMWM5NjZjMWNhNmNkOGM0NGFlZTY3ZmM4ZjRkMDJmNWY0OWJkOGZlYzgifQ"
+          "resource": "repo://src/cite_right/citations.py#L952-L962",
+          "version": "repo-lines-v1:sha256:2714253a47daf97236c5cfd1d1691c538f638cc183dca6b7dd2debfd3be12956:eyJzZWxlY3RlZExpbmVDb3VudCI6MTEsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjBlMmYwYjAzN2YyYmFlM2MyMTY4Y2VjODY3YTY1MzZmYzEzMTFlMzFhNWI0ZWE1YzY2MWE0OGQzNGE0NDQzYmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImQ3Nzk0MmY5ZDMzMjBiZGI0MjZkMDU5ZDRmOWRmNWFmYjA0MWU5YWMxNjkxY2FkNzMxMzc3MzU2ZGQzZTY1MjYiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjliOTVmN2I2MGExNjg2Njk2Zjg5YjYyMjE1NTFmODMzOWU4YmI1NTM5YjNlNTZkMDYyZDdmMjJkYzNlZDdlYzEiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjIwZjI2Y2UzMjc3ODUxZjMyOWE2NzZjM2NlZGY1NzNjZTBlYzk1Mzk3NTQ1MGRlYWZhYzg5ZTkxMDAzNzBkOGMifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/core/results.py#L256-L262",
+          "version": "repo-lines-v1:sha256:4670b41b899b94e0208f528bb32da86f21a124e03b2abb1ebb3e86a46672900f:eyJzZWxlY3RlZExpbmVDb3VudCI6NywiZmlyc3RTZWxlY3RlZExpbmVIYXNoIjoiY2FlYzc4NjQzNmFhOWU4OGIxZDM3MzY4MWRjMGQzMDc2ZjA4MzJjMzBiNzBmNjZlNGY4YWRjZjg2ODczYWM4NCIsImxhc3RTZWxlY3RlZExpbmVIYXNoIjoiMjAxMGU5NmM1MGRkZmQ0Y2EyNjQ3ZTgyOGVmNTI4ZGI5ZWMzNDgyMDZkZGMwOWE5ZmVmZTEyNDAzMWNjMDIxYiIsInByZWNlZGluZ0NvbnRleHRMaW5lQ291bnQiOjMsInByZWNlZGluZ0NvbnRleHRIYXNoIjoiMmUzZWVmNTRkZmE4Yzc5ZmRkNjkzZDczMDA4YjQ0MjFiMThkODQ3MTdhYzRlNWFiODgxNGExYTBmYzI4NmE4MiIsImZvbGxvd2luZ0NvbnRleHRMaW5lQ291bnQiOjMsImZvbGxvd2luZ0NvbnRleHRIYXNoIjoiZWUzZTI3MWVjNDAxY2YyMDJlNmY4ZjJkNTNkMDEzZmIzMmM1ZDMyYmE5MTcxYzFhNTA4MThiODA0ZGZkNWY4NCJ9"
         }
       ]
     },
@@ -173,28 +193,40 @@
       "statement": "SpanCitations status (\"supported\", \"partial\", \"unsupported\") is determined by the best exact citation's answer_coverage and contradiction check, not by the number of evidence spans; multi-span does not change status and does not promote a passage that failed to localize into a Citation.",
       "evidence": [
         {
-          "resource": "repo://src/cite_right/core/results.py#L302-L347",
-          "version": "repo-lines-v1:sha256:e6dde937b9121319b53fc77def965ecdb923c3d764228fbecef8a2dcca981b7f:eyJzZWxlY3RlZExpbmVDb3VudCI6NDYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjZmODM2ZDdmMDdlYmZmZTRiMzJkNGRmY2QxOGYyMmYwYjhkZGRhYzZlM2UyYWM2MzczNTUyMDdhMDg1NWMxNWUiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MDMyZTk2NGQwOTMyMzUxZTVkMTg1MjY5MjgxYjE3MWEzYTA5YjA4YjI4NmU2NjFlYTQ3MDMyM2M4MmViNGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjRiNzA1ZWNhYjIyYjFkYjRkOGNmYTE4ZjQ2Y2I2MmEwMWNlMjBhYTA4NThhYWQ2ZDNiODVlNTEzNzA3ZmE4MTkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEyYWIwOTBiY2QxNjIwZmE2MmVhZWUxNTdhNzRmY2E2MzVhYTI5ZTEyY2JmZmQ2MThiNTc5MmQ4N2JjMDNhM2YifQ"
+          "resource": "repo://src/cite_right/citations.py#L1620-L1648",
+          "version": "repo-lines-v1:sha256:8c23a82a3c5fe3e8d27f48769ae78bf37119ea1ec734b0b9b025b18a3eb3cd14:eyJzZWxlY3RlZExpbmVDb3VudCI6MjksImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFkZDQzOGRjZjJmMjNkNDg5NTMxNWVlMWJlMzM4OThkMWU0Yzg5NmJjOGNhZjNkYWQ2MTllNWVlNzNjMmFjMTIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjAxYmE0NzE5YzgwYjZmZTkxMWIwOTFhN2MwNTEyNGI2NGVlZWNlOTY0ZTA5YzA1OGVmOGY5ODA1ZGFjYTU0NmIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjllMGRjOTM1OTg2ZGY3ZTRhNmI2MzJjODJlNTAwYjY4NzIzYjE1MDgwMDYzOWIwYmM1YjU4MWFkYjYxNjM4NGYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImI3YzgwZjQ2YWRjNmRkOGMwOGFiOTM0MWE4OTk0NzU0OGY2MWE4MmJiNWRiZjg2ZDdlMWRjMzQ5N2M1MGE0OGUifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/core/results.py#L373-L397",
+          "version": "repo-lines-v1:sha256:88e4b28563b467b612146d698051eff0898398e385e153a19f3c91ad2d85d8e0:eyJzZWxlY3RlZExpbmVDb3VudCI6MjUsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImFiNDBiMjVmY2U3NGNlZDkzZDcyZWZmMDM1ZDg3NDBjMmQyNDBjNGNhNzEzYWQ1M2U0YTQ1NmU2NWM1NzE2ZTkiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU1MDMyZTk2NGQwOTMyMzUxZTVkMTg1MjY5MjgxYjE3MWEzYTA5YjA4YjI4NmU2NjFlYTQ3MDMyM2M4MmViNGQiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjIwYTQ2MTlkZjkxZjFkZmI0YjM3MTg1YjAxZDc4NTU5ZWRiODBlNjVlNTY0MTJhZmU0ZmZiYTViMGM2YmMxNzUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjoxLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImEyYWIwOTBiY2QxNjIwZmE2MmVhZWUxNTdhNzRmY2E2MzVhYTI5ZTEyY2JmZmQ2MThiNTc5MmQ4N2JjMDNhM2YifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/core/span_support.py#L101-L127",
+          "version": "repo-lines-v1:sha256:b7c929de6d40bef364d78f1aa97b7c6ae5f39b9e48725dbf126eca08434d4062:eyJzZWxlY3RlZExpbmVDb3VudCI6MjcsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNlNmMzMDcyOGZiYTZlNTA3MjNiZTFkNDM2YmFkYjA3MzEwZGNkZTVlM2M4M2JmZTYyMTUxNTQ0MDQwZmMxMjciLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVmMGQyNmJiODlhMjNhYzY2OGI1NGYzZTZlYmYzNTBjNDdkMmY1ZTNhZTIwMWRiOTYxODFhNjg2ODg3NDJjNTgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImIzNTJkZTNmNWEyM2QyNDhkMjcyMTE0MzU2YzM3ZmI1ZGY3ODZjZmQ3OWE0MzM5NWJiODFiMzk2M2EwODI4MmQiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjAyM2Y0ZjVkZDk4NjU5OWViYTc2MTVmM2QxMzczNDQzN2RkNTE4ZDAwODBlYjYyMWRmOWZkZTgxYjBkNzAwNmYifQ"
         }
       ]
     },
     {
       "id": "claim_f5bed61639a54f0a85a3a5bf2559beaa",
-      "statement": "Rust prepare and the inverted index still run with multi_span_evidence=True on the default SimpleTokenizer + SimpleSegmenter path, and multi-span extraction is a per-alignment step that does not change the prepared corpus surface.",
+      "statement": "Rust prepare and the inverted index take no multi_span_evidence input; the flag is passed only at citation-build time (PreparedCorpus.build_citations / rust_build_citations_fast), and multi-span extraction is a per-alignment step that does not change the prepared corpus surface. Prepare uses SimpleTokenizer + simple_segment on the default path.",
       "evidence": [
         {
-          "resource": "repo://rust_core/src/prepared_corpus.rs#L250-L295",
-          "version": "repo-lines-v1:sha256:310427c98ada5a8b356b8b8366e1a2f4088b1ba03d842fff7007b7ad8bf41e0f:eyJzZWxlY3RlZExpbmVDb3VudCI6NDYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjNjNDM0Y2NiMzQ3YjNjZmJkY2I3MmU3MDY2MGUwMGQ3MmFkZjVjY2ZkYjI5YzViZjc4MDZhOWMxNTA0ZjQ1N2YiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6ImEwYzIxN2MwN2Q3OTAwMTIzNDYyMTA0N2VjNTFmYWUyNzdjNWFjZTdjOTA3YzkzNTc4Y2UzNDA0NzgxZTVkMDIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjlmNWE5MTk1NTRlN2Q0MGJiZjRjZTE0NDVhOGU3Yjk1MjAxOTQ3YWNlNzhmYmIzOWZlZWE0MDQyMjg5NjZkYjkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjVjNTQwYjZmNTc4ZTkzNDlmMjliMDFmNGZmOGQ3ZGUyNTc5ZjEwMzM3MDA4OTkxMzQwZDM5MDI1NDAxYTA4ZjUifQ"
+          "resource": "repo://rust_core/src/lib.rs#L278-L345",
+          "version": "repo-lines-v1:sha256:7a77e9580848123cff5e90f5ab47b130e854e26be01378de36fcfb0528a2ab73:eyJzZWxlY3RlZExpbmVDb3VudCI6NjgsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjFhMDllYTBkYzBlNzlkZWI3MzAwY2QyMGNjYjBmY2JhNDYzNGM5M2FhNDFlOGYxYWM0ZWRiZDcyMTkyMjY1NmYiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6Ijc1NTY1YTMwZDk0OTRmY2UzMTZmNjdiNjE5M2EwZDQxZDJlZWEyMjI5NGMwMzc3ZTU5Yjk4M2M3YjliODQ4OWIiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6IjQ0OGEwYTk2NmYzM2U3ZWE3ODQ4OTBhOGY2NmNkYWZjMDEwYzdiZjljM2E3MGQ1N2VmMmU2Y2M2ZmFmZWIyMjYiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjRlOTRmYzhkNGY1MTM3NWViMmI3YTk5N2UxZGVlNWYyMDFlMDFmODE0NDNkZjMwYjcyYmFlN2IwNTcwZDAzYWUifQ"
         },
         {
-          "resource": "repo://rust_core/src/prepared_corpus.rs#L585-L680",
-          "version": "repo-lines-v1:sha256:f34223732e9b157dbd4caf69bb8346704f7c10708cd1b9c2c819692352feca00:eyJzZWxlY3RlZExpbmVDb3VudCI6OTYsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImUxNmQ4MTdhNjk4ZWY5ZTg5YmFiN2FlMDk5ZTBmOTRlNmIzYWVjZDc4MzQ1MThmYWI2NmRlYTAxYTFhMjhiNmQiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjkzYjA1OTc4OTYyMWM0YjJhYTk2NTk3ZGJkNTQ0MWY1MjEwNmU0OWY1YmZiN2FiZjVlNzdjODlhNDQ0M2VjMDAiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImNhMzdjODFiN2U4MDRlMjE5ZGQ4ZGIyZTAzODgwN2JiYTIzZmUxMzM1YjMyN2QyMjQ5ZDExYjgxNzI4OGM3OGMiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjBmNzQ4MDg1NGFhN2ZjMGM3ZDNkNDVkNjFlNmVmNWQxZDlkMDk3ZGY3ODAwYTIzOTRmNWZhYzQzYjc4YTBmODAifQ"
+          "resource": "repo://rust_core/src/prepared_corpus.rs#L282-L313",
+          "version": "repo-lines-v1:sha256:79565b642950007533cc1a7e5495fbafffa0ea3a8c454b4ca3bcde8cc97573ab:eyJzZWxlY3RlZExpbmVDb3VudCI6MzIsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6IjQxNmI2OWMwZjhjZTYwNmM4YzYyMjg2NDlhZTlhYjMwNjlkNDM4ZjgzMTlkYjZjZDcxNTExMzA1MzUwM2M1MmMiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjU2MTBlODNkYjM2MWI5ZGJlMDUxYzNkNjdiN2UxZDYwYjhhZWJmOTZhMzNmODc3ZjgyYWJlMTBmNWU1MjQ2MGUiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImRjY2EzMjMyM2Q2MmZiYTk0MWVmNmNlM2I3ZGY0NjZhN2JiMTgwMGFhOGJlOTQ2MTgwZThiNWNhNWM3MjM4NmUiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6IjMzMTZkZjU1MDQzODY5ZjJmOWYyMjVmM2Q5NzJjMzNkYmMwMjAzZjUxM2YxOGY2NmJmYjYxOGQ4NzM3OGNmMWQifQ"
+        },
+        {
+          "resource": "repo://src/cite_right/core/prepared_corpus.py#L141-L163",
+          "version": "repo-lines-v1:sha256:5844b695b4561f2212ea502a8fc0e63bb47ddda6d3d0f6c171c26229e3f66e32:eyJzZWxlY3RlZExpbmVDb3VudCI6MjMsImZpcnN0U2VsZWN0ZWRMaW5lSGFzaCI6ImIzOTUxNDE5N2Y1OTU5NzYwOTZjZTMxZGY5MWVhNzY5YjM3MTQ1NjI5MTczYmNkZjA5ZmI3NDE4MGIwOWUxYjIiLCJsYXN0U2VsZWN0ZWRMaW5lSGFzaCI6IjVlN2Y3ZWMyMzMxZTUwNGQ0YTMyNjEzZDdmNTQ0MmM3MjI3YWE4NGE3NzdiMDRiNjQxOWQ3ZWY4YjZkNGE0MjgiLCJwcmVjZWRpbmdDb250ZXh0TGluZUNvdW50IjozLCJwcmVjZWRpbmdDb250ZXh0SGFzaCI6ImM4MDc1ZDM3OTUwMWJiZmVmN2Q5NDc1ZTk0Y2I2YTg3ZDE0ZDdhMTFjNzMyMWQyZGEyZmE2ZGFkZmM3MjIxMDkiLCJmb2xsb3dpbmdDb250ZXh0TGluZUNvdW50IjozLCJmb2xsb3dpbmdDb250ZXh0SGFzaCI6ImQ2YjFkZWFhYmY4YzQ2YmU5NmY0NjMzMDQyZjFjOWIzZWQyYjYzNGZhMWNiYTY4MDRmNTc0MmFlNTMwNGQ2MmYifQ"
         }
       ]
     }
   ],
   "verification": {
-    "by": "openwiki/0.4.0",
-    "at": "2026-08-26T03:32:47.432Z"
+    "by": "openwiki/0.9.0",
+    "at": "2026-11-19T03:14:58.424Z"
   }
 }

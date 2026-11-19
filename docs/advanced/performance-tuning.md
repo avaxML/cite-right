@@ -1,7 +1,7 @@
 
 # Performance Tuning
 
-Cite-Right uses an inverted index and rare-token intersection to choose which source windows Smith-Waterman should align. An optional embedder can add candidates. Index-first retrieval was the main reason `align_citations` was faster in 0.4.0 than in 0.3.x. This page covers the cost model, configuration options that affect steady-state latency, reuse patterns for high-volume workloads, and per-span metrics.
+Cite-Right's 0.4.0 pipeline is index-first: an inverted index plus rare-token intersect chooses which source windows are worth aligning, then Smith-Waterman localizes the citation on those hits (plus any optional embedding extras). That choice is the single biggest reason `align_citations` is faster in 0.4.0 than in 0.3.x. This page covers the cost model, the configuration levers that actually move steady-state latency, the reuse patterns that matter for high-volume workloads, and how to read the per-span metrics the library can emit.
 
 ## The Cost Model
 
@@ -105,7 +105,9 @@ for answer in workload:
     results = corpus.align(answer)
 ```
 
-`PreparedCitationCorpus.from_sources` runs the Rust prepare path when `SimpleTokenizer` and `SimpleSegmenter` are in use and `cite_right._core` is importable. The inverted index, IDF, and passages are then built in Rust. The Python fallback path is taken when the Rust extension is missing or a custom tokenizer / segmenter is supplied. With an embedder set, Rust prepare still runs and the embedding index is built on the prepared candidates; the 0.3.x skip on the embedder path is gone.
+`PreparedCitationCorpus.from_sources` runs the Rust prepare path when `SimpleTokenizer` and `SimpleSegmenter` are in use and `cite_right._core` is importable, and falls back to the Python path when the Rust extension is missing or a custom tokenizer / segmenter is supplied; `inverted_index` is left as `None` on the Python fallback. With an embedder set, Rust prepare still runs and the embedding index is built on the prepared candidates; the 0.3.x skip on the embedder path is gone.
+
+Because `PreparedCitationCorpus` holds the source-side state — inverted index, IDF, passages, and embedding index — across calls, reusing it avoids re-encoding the source side. Embedder encoding is therefore a one-time corpus-build cost plus per-answer-span encoding, not a per-answer full-corpus cost.
 
 `corpus.embedding_build_time_ms` is exposed on the prepared corpus. `align_citations` adds that to the per-answer `embedding_time_ms` when the optional `on_metrics` callback is supplied.
 

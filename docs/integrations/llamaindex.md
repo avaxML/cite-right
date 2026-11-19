@@ -25,7 +25,7 @@ if is_llamaindex_available():
     ...
 ```
 
-`LLAMAINDEX_AVAILABLE` is also exposed as a module-level boolean. `is_llamaindex_node(obj)` is the type guard for retriever results: it returns `True` for real `llama_index.core.schema.TextNode` and `NodeWithScore` instances, and `False` for anything else.
+`LLAMAINDEX_AVAILABLE` is also exposed as a module-level boolean. `is_llamaindex_node(obj)` is the type guard for retriever results: it returns `True` for real `llama_index.core.schema.TextNode` and `NodeWithScore` instances, and `False` for anything else (including when `llama-index-core` is not installed).
 
 The two type handles are also re-exported from the top-level package so you can use them in `isinstance` checks without an extra import:
 
@@ -122,7 +122,7 @@ for source, node in zip(sources, nodes):
 
 ### Metadata Preservation
 
-The full `node.metadata` dict is copied onto the resulting `SourceDocument.metadata`. Cite-Right does not read it during alignment — it is opaque to the pipeline — but your application code can read it back to recover anything the retriever or splitter attached: file names, page numbers, retrieval scores, custom tags.
+The full `node.metadata` dict is copied onto the resulting `SourceDocument.metadata`. Cite-Right does not read it during alignment — node metadata is opaque to the pipeline, and citations come from localized Smith-Waterman evidence only — but your application code can read it back to recover anything the retriever or splitter attached: file names, page numbers, retrieval scores, custom tags.
 
 ```python
 sources = from_llamaindex_nodes(nodes)
@@ -192,7 +192,7 @@ The chunk adapter does not set `SourceChunk.document_text`, even when the parent
 
 The rebase still produces correct absolute offsets without `document_text`: `_slice_source_text` in the alignment pipeline falls back to chunk-local slicing when `full_text` is not supplied. The rebase contract is in [Custom Sources](custom-sources.md#chunk-rebase-and-the-evidence-equality-invariant).
 
-If you have the parent text in memory and want the slice-equality check, build the `SourceChunk` directly with `document_text=parent_text` rather than going through the adapter.
+If you have the parent text in memory and want the slice-equality check, build the `SourceChunk` directly with `document_text=parent_text` rather than going through the adapter. `SourceChunk` validates that `document_text[doc_char_start:doc_char_end]` exactly equals `text`, so the parent must be the true full document, not another chunk.
 
 ### Missing Offsets
 
@@ -373,7 +373,7 @@ The `is_llamaindex_node(obj)` guard is also useful at the boundary between your 
 
 ## What Cite-Right Does Not Touch
 
-`metadata` is opaque to the alignment pipeline. Cite-Right does not index it, does not score on it, and does not emit it on the resulting `Citation` or `SpanCitations`. Round-trip retrieval scores, file paths, and page numbers back to the user through your own application code. The same is true of the `id` you used to build the `SourceDocument` — that is your handle for joining citations back to your retrieval layer.
+`metadata` is opaque to the alignment pipeline. Cite-Right does not index it, does not score on it, and does not emit it on the resulting `Citation` or `SpanCitations`. Citations are produced from localized Smith-Waterman evidence only; retrieval scores and metadata never influence the alignment. Round-trip retrieval scores, file paths, and page numbers back to the user through your own application code. The same is true of the `id` you used to build the `SourceDocument` — that is your handle for joining citations back to your retrieval layer.
 
 The adapter does not segment, tokenize, or index anything by itself. It is a one-line mapping from `TextNode` to `SourceDocument` (or `SourceChunk`); all of the alignment work happens inside `align_citations` on the same path described in [Citation Alignment](../concepts/citation-alignment.md).
 

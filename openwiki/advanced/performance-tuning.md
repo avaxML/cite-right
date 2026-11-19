@@ -4,16 +4,24 @@ title: Performance Tuning
 description: How Cite-Right's index-first pipeline scales, which configuration levers actually move steady-state latency, and how to reuse PreparedCitationCorpus for high-volume workloads.
 tags: [performance, index-first, candidate-selection, citation-config, prepared-corpus, rust, threading, memory, smith-waterman]
 verified:
-  - by: openwiki/0.4.0
-    at: 2026-08-26T03:32:47.432Z
+  - by: openwiki/0.9.0
+    at: 2026-11-19T03:14:58.424Z
 sources:
+  - id: openwiki-source-8325f870bd59e577c0f6b6b3
+    resource: repo://bench_rust.py
+  - id: openwiki-source-91f3630f8a21f16b6af8a13e
+    resource: repo://rust_core/src/inverted_index.rs
+  - id: openwiki-source-5e3251d7fd54ced7f7fb97fd
+    resource: repo://rust_core/src/lib.rs
+  - id: openwiki-source-547a8756cc6b03449d99ed3f
+    resource: repo://rust_core/src/prepared_corpus.rs
   - id: openwiki-source-9420301e9a6eeb80c89f2f99
     resource: repo://src/cite_right/citations.py
   - id: openwiki-source-376cf838d701ccf9f40efc03
     resource: repo://src/cite_right/core/citation_config.py
   - id: openwiki-source-b3431af41a97a9253d6038b0
     resource: repo://src/cite_right/core/prepared_corpus.py
-generated: {by: "openwiki/0.4.0", at: "2026-08-26T03:32:47.432Z"}
+generated: { by: "openwiki/0.9.0", at: "2026-11-19T03:14:58.424Z" }
 ---
 
 # Performance Tuning
@@ -122,7 +130,9 @@ for answer in workload:
     results = corpus.align(answer)
 ```
 
-`PreparedCitationCorpus.from_sources` runs the Rust prepare path when `SimpleTokenizer` and `SimpleSegmenter` are in use and `cite_right._core` is importable. The inverted index, IDF, and passages are then built in Rust. The Python fallback path is taken when the Rust extension is missing or a custom tokenizer / segmenter is supplied. With an embedder set, Rust prepare still runs and the embedding index is built on the prepared candidates; the 0.3.x skip on the embedder path is gone.
+`PreparedCitationCorpus.from_sources` runs the Rust prepare path when `SimpleTokenizer` and `SimpleSegmenter` are in use and `cite_right._core` is importable, and falls back to the Python path when the Rust extension is missing or a custom tokenizer / segmenter is supplied; `inverted_index` is left as `None` on the Python fallback. With an embedder set, Rust prepare still runs and the embedding index is built on the prepared candidates; the 0.3.x skip on the embedder path is gone.
+
+Because `PreparedCitationCorpus` holds the source-side state — inverted index, IDF, passages, and embedding index — across calls, reusing it avoids re-encoding the source side. Embedder encoding is therefore a one-time corpus-build cost plus per-answer-span encoding, not a per-answer full-corpus cost.
 
 `corpus.embedding_build_time_ms` is exposed on the prepared corpus. `align_citations` adds that to the per-answer `embedding_time_ms` when the optional `on_metrics` callback is supplied.
 
