@@ -10,7 +10,7 @@ This page walks the two conversions, the `id_key` and `start_key` / `end_key` kn
 The LlamaIndex adapters import `llama_index.core.schema` at module load. If that package is not present, the import paths are still exported but resolve to `None`, the `LLAMAINDEX_AVAILABLE` flag is `False`, and the adapter functions raise `ImportError` with a hint.
 
 ```bash
-pip install "cite-right[llamaindex]==0.5.0"
+pip install "cite-right[llamaindex]==0.4.0"
 ```
 
 The extra is `llama-index-core>=0.11.0` (see `pyproject.toml`). You do not need the full LlamaIndex distribution; `llama-index-core` is enough to use the adapters with any LlamaIndex retriever or query engine (`VectorStoreIndex`, `SimpleDirectoryReader`, the `llama-index-integrations` readers, etc.).

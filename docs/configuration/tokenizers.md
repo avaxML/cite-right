@@ -112,7 +112,7 @@ tokenizer = SimpleTokenizer(TokenizerConfig(
 Install the extra before importing:
 
 ```bash
-pip install "cite-right[huggingface]==0.5.0"
+pip install "cite-right[huggingface]==0.4.0"
 ```
 
 The constructor accepts either a `tokenizers.Tokenizer` or a `transformers.PreTrainedTokenizerBase`. `_check_tokenizer_type` discriminates the two paths. Anything else raises `TypeError` with a message that names both expected types.
@@ -143,7 +143,7 @@ The `add_special_tokens=False` default is intentional: `[CLS]`, `[SEP]`, and sim
 Install the extra before importing:
 
 ```bash
-pip install "cite-right[tiktoken]==0.5.0"
+pip install "cite-right[tiktoken]==0.4.0"
 ```
 
 The constructor takes `encoding_name` (default `"cl100k_base"`, used by GPT-4, GPT-3.5-turbo, and `text-embedding-ada-002`) or a pre-initialized `tiktoken.Encoding`. With no `tiktoken` installed, the constructor raises `ImportError` pointing at `cite-right[tiktoken]`. The `encoding_name` property returns the resolved encoding name.
