@@ -1,7 +1,7 @@
 
 # Rust Acceleration
 
-Cite-Right ships an optional internal native extension, `cite_right._core`, that reimplements the prepare phase, the inverted index, and Smith-Waterman alignment in Rust. The extension is published as abi3 wheels (`abi3-py311`), including linux/aarch64, plus an sdist. When the extension is importable, the library uses it automatically. When it is not, the same pipeline runs on a pure-Python fallback path so the public API is unchanged.
+Cite-Right 0.4.0 ships an optional native extension, `cite_right._core`, that reimplements the prepare phase, the inverted index, and Smith-Waterman alignment in Rust. The extension is published as abi3 wheels (`abi3-py311`), including linux/aarch64, plus an sdist. When the extension is importable, the library uses it automatically. When it is not, the same pipeline runs on a pure-Python fallback path so the public API is unchanged.
 
 The hot path stays the same shape either way: prepare tokenizes sources, builds passage windows, computes IDF, and (on the default path) fills an inverted index; per answer span the pipeline picks candidate windows, then Smith-Waterman localizes the citation. The Rust extension accelerates each of those stages; it does not change which stages run. The inverted index only chooses which windows to align. Smith-Waterman still localizes `char_start` / `char_end`.
 
@@ -9,15 +9,13 @@ The hot path stays the same shape either way: prepare tokenizes sources, builds 
 
 The Rust extension exposes three layers over the existing Python API.
 
-The internal binding `rust_tokenize_and_prepare(source_texts, window_size, stride, *, normalize_numbers, normalize_percent, normalize_currency) -> PreparedCorpus` takes three required keyword-only booleans from the Python `SimpleTokenizer`'s `TokenizerConfig`. It tokenizes the source corpus using those flags, generates passage windows, computes IDF, and builds the inverted index in one Rust call. The Python `SimpleTokenizer` vocabulary is then synchronized from the Rust side so the answer-side tokenizer maps tokens to the same IDs. Per-passage `token_ids` and `token_spans` are kept on the Rust `PreparedCorpus` and fetched on demand at alignment time, avoiding the cost of copying large token arrays back to Python after prepare.
+`rust_tokenize_and_prepare(source_texts, window_size, stride) -> PreparedCorpus` tokenizes the source corpus, generates passage windows, computes IDF, and builds the inverted index in one Rust call. The Python `SimpleTokenizer` vocabulary is then synchronized from the Rust side so the answer-side tokenizer maps tokens to the same IDs. Per-passage `token_ids` and `token_spans` are kept on the Rust `PreparedCorpus` and fetched on demand at alignment time, avoiding the cost of copying large token arrays back to Python after prepare.
 
 `query_index(query_tokens, max_candidates) -> list[int]` and `InvertedIndex.query(query_tokens, max_candidates) -> list[int]` both implement the same conjunctive rare-token intersect: tokens are sorted by posting count, the intersection of the rarest tokens is taken first, and the result is capped at `max_candidates`. The result is a list of candidate global indices that survive to Smith-Waterman.
 
 `align_pair`, `align_pair_details`, `align_pair_blocks_details`, `align_batch_details`, `align_batch_blocks_details`, `align_best`, `align_best_details`, and `align_topk_details` are the alignment entry points. `align_pair_blocks_details` and `align_batch_blocks_details` additionally return the per-alignment `match_blocks` needed by `CitationConfig(multi_span_evidence=True)`. The Rust `RustSmithWatermanAligner` selects between these depending on the configuration; the construction-time check requires the relevant entry point to be present, so a mismatched extension fails fast rather than silently producing empty `evidence_spans`.
 
-`cite_right._core` is a private module. Its internal `rust_build_citations_fast` function accepts candidate data from Python and returns citations and retrieval support as JSON. The internal `PreparedCorpus.build_citations` method keeps source texts and offsets in Rust and returns citation and retrieval support structs.
-
-Both builders require `query_stopword_ids: Sequence[int]` for query token IDs excluded from content coverage. Both accept `alias_remap: AliasRemap | None = None` for equivalent token IDs in alignment and coverage. These arguments are keyword-only for `rust_build_citations_fast`.
+The legacy JSON-shaped `rust_build_citations_fast` is also exposed on `_core` and is used by `citations.py` to build a `Citation` / `RetrievalSupport` list without round-tripping source text through Python. The newer `PreparedCorpus.build_citations` path on the Rust `PreparedCorpus` object eliminates that round-trip further: source texts and offsets stay in Rust and the result returns only the citation and support structs.
 
 ## When Rust Prepare Runs
 
@@ -135,7 +133,7 @@ uv sync --frozen
 uv run maturin develop --release
 ```
 
-`--release` enables optimizations; development builds without it are significantly slower. The Rust extension requires a C compiler in addition to Rust. On Linux install `build-essential` or the platform equivalent; on macOS install the Xcode command line tools; on Windows install Visual Studio Build Tools with the C++ workload. When you do not need a source build, install from PyPI with `pip install cite-right==0.5.0`.
+`--release` enables optimizations; development builds without it are significantly slower. The Rust extension requires a C compiler in addition to Rust. On Linux install `build-essential` or the platform equivalent; on macOS install the Xcode command line tools; on Windows install Visual Studio Build Tools with the C++ workload. When you do not need a source build, install from PyPI with `pip install cite-right==0.4.0`.
 
 ## When To Use The Pure-Python Backend
 

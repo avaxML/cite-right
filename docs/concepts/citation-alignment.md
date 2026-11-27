@@ -74,27 +74,21 @@ A bare `str` is treated as a `SourceDocument` with an auto-assigned id (`"source
 
 ### SpanCitations
 
-The default `SpanCitations` result has four fields.
+A `SpanCitations` has four fields.
 
 `answer_span` is the `AnswerSpan` this set of citations belongs to. It carries the segment text plus `char_start` / `char_end` in the full answer string, and a `kind` of `"sentence"`, `"clause"`, or `"paragraph"`.
 
 `citations` is a list of `Citation` objects, ranked best first. Empty when no citation met the minimum thresholds. Each `Citation` is exact and localized: a `source_id`, a half-open `char_start` / `char_end` into the source, and an `evidence` string that slices cleanly from the source.
 
-`retrieval_support` is a list of `RetrievalSupport` objects. It can include passages retrieved without an admitted citation and secondary passages demoted for failing the support checks on a `supported` span.
+`retrieval_support` is a list of `RetrievalSupport` objects. These are passages the candidate selector picked up (by inverted index, lexical prefilter, or embedding similarity) that did not localize into a `Citation`. They are evidence-of-interest, not a grounded citation.
 
 `status` is one of `"supported"`, `"partial"`, or `"unsupported"`. It comes from the best exact `Citation`, never from embedding similarity. A high embedding score that never localizes is a `RetrievalSupport`, not a `Citation`, and it does not flip the status. The model validator on `SpanCitations` enforces that `"unsupported"` requires an empty `citations` list, and that `"supported"` or `"partial"` requires at least one.
 
-Set `CitationConfig(report_possible_source=True)` to include a `status_reason`
-and the names of any `contradiction_checks` that fired. A qualifying partial or
-unsupported result can also include a `possible_source` with the source ID,
-source index, half-open passage offsets, and retrieval score. A related
-passage can be the likely source of a claim it does not establish.
-
 ### Status Rules
 
-`"supported"` means the top-ranked citation meets `supported_answer_coverage` (default 0.6) and no contradiction check fired. With `term_aliases` enabled, its `content_coverage` must also equal `1.0`.
+`"supported"` means the top-ranked `Citation` has `answer_coverage >= supported_answer_coverage` (default 0.6) and the cheap contradiction check did not fire.
 
-`"partial"` means a citation exists and fails one or more of the support checks.
+`"partial"` means citations exist but the supported threshold was not met, **or** the contradiction check fired. The literal is `"partial"`, never `"partially_supported"`. Contradiction (negation, number mismatch, leftover n-gram slot, entity swap) downgrades to `"partial"`, not `"unsupported"`, because the evidence exists — it just conflicts with the claim.
 
 `"unsupported"` means no citation survived filtering. The span may be hallucinated, or it may be content from outside the provided sources. `"unsupported"` is "no localized citation survived," not a high-precision hallucination label.
 
@@ -110,7 +104,7 @@ for result in results:
         print(citation.score, citation.components)
 ```
 
-`source_id` is the document identifier. `source_index` is the position in the input list. `char_start` and `char_end` are the half-open offsets of the legacy contiguous evidence view in the source. `evidence` is the text sliced by that range. `components` includes alignment metrics, lexical and embedding scores, and `content_coverage`, the fraction of answer content tokens matched in the full candidate passage.
+`source_id` is the document identifier. `source_index` is the position in the input list. `char_start` and `char_end` are the half-open offsets of the legacy contiguous evidence view in the source. `evidence` is the text sliced by that range. `score` is a weighted sum of `components` (`alignment_score`, `normalized_alignment`, `matches`, `answer_coverage`, `evidence_coverage`, `lexical_score`, `embedding_score`).
 
 When `CitationConfig(multi_span_evidence=True)`, `evidence_spans` carries the precise non-contiguous regions and `exact_evidence` joins them with `" ... "`. The legacy `char_start` / `char_end` / `evidence` stay a contiguous enclosing span in that mode. See [Multi-Span Evidence](../advanced/multi-span-evidence.md).
 
@@ -124,12 +118,9 @@ The rule that ties inputs and outputs together is the evidence equality invarian
 
 ## What Status Comes From
 
-The [status rules](#status-rules) use coverage from the best exact citation.
-Contradiction checks inspect that citation's full candidate passage.
+Status is driven by the best exact citation's `answer_coverage` and the contradiction check. Embedding similarity, lexical overlap, and the inverted index are used to **select** candidate passages; they are not what flips a span to `"supported"`. A passage that scores well on embedding but never localizes into a `Citation` lands in `retrieval_support` and does not change the status.
 
-Embedding similarity, lexical overlap, and the inverted index select candidate
-passages. A passage that scores well on embedding but never localizes into a
-`Citation` lands in `retrieval_support` and does not change the status.
+Concretely: the per-span logic in `_span_status` looks at `citations[0].components["answer_coverage"]`. If that coverage meets `supported_answer_coverage` and `check_contradiction` is clean, the status is `"supported"`. If contradiction fires, the status is `"partial"` (not `"unsupported"`). If coverage is below the threshold, the status is `"partial"`. If `citations` is empty, the status is `"unsupported"`.
 
 ## How Candidates Get Chosen
 
